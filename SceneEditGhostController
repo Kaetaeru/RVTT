@@ -1,0 +1,262 @@
+-- SceneEditGhostController
+-- Client-only placement ghost preview.
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+
+local PlacementAssetCodec = require(
+	ReplicatedStorage:WaitForChild("Modules"):WaitForChild("Shared"):WaitForChild("SceneEditPlacementAssetCodec")
+)
+
+local SceneEditGhostController = {}
+
+local initialized = false
+local active = false
+local placementController = nil
+local RENDER_STEP_NAME = "SceneEditGhostPreview"
+local COLLISION_ON_TRANSPARENCY = 0.55
+local OUTLINE_COLOR = Color3.fromRGB(255, 196, 72)
+local updateCount = 0
+local visualFolder = nil
+local ghost = nil
+local ghostSource = nil
+local ghostOutline = nil
+local lastCollisionStyle = nil
+local placementChangedConnection = nil
+local lastDiagnostic = "Not updated"
+
+local function ensureVisualFolder()
+	if visualFolder and visualFolder.Parent then
+		return visualFolder
+	end
+	local root = Workspace:FindFirstChild("_SceneEditLocalVisuals")
+	if not root then
+		root = Instance.new("Folder")
+		root.Name = "_SceneEditLocalVisuals"
+		root.Parent = Workspace
+	end
+	visualFolder = root:FindFirstChild("GhostPreview")
+	if not visualFolder then
+		visualFolder = Instance.new("Folder")
+		visualFolder.Name = "GhostPreview"
+		visualFolder.Parent = root
+	end
+	return visualFolder
+end
+
+local function clearGhostOutline()
+	if ghostOutline then
+		ghostOutline:Destroy()
+		ghostOutline = nil
+	end
+end
+
+local function setPartsTransparency(root, transparency, includeDecals)
+	local function visit(instance)
+		if instance:IsA("BasePart") then
+			instance.Transparency = transparency
+			instance.LocalTransparencyModifier = 0
+		elseif includeDecals and (instance:IsA("Decal") or instance:IsA("Texture")) then
+			instance.Transparency = transparency
+		end
+		for _, child in ipairs(instance:GetChildren()) do
+			visit(child)
+		end
+	end
+	visit(root)
+end
+
+local function getPlacementController()
+	if placementController then
+		return placementController
+	end
+	local ok, module = pcall(function()
+		return require(script.Parent:WaitForChild("SceneEditPlacementController"))
+	end)
+	if ok and module then
+		placementController = module
+	end
+	return placementController
+end
+
+local function applyGhostVisualStyle(force)
+	if not ghost then
+		lastCollisionStyle = nil
+		return
+	end
+
+	local controller = getPlacementController()
+	local collisionOn = controller
+		and controller.IsCollisionEnabled
+		and controller:IsCollisionEnabled()
+	local styleKey = collisionOn and "on" or "off"
+	if not force and styleKey == lastCollisionStyle then
+		return
+	end
+
+	clearGhostOutline()
+	-- ConfigureAsVisual uses math.max(current, boost), so after OFF (T=1)
+	-- we must explicitly reset part transparency for ON.
+	PlacementAssetCodec.ConfigureAsVisual(ghost, 0)
+	if collisionOn then
+		setPartsTransparency(ghost, COLLISION_ON_TRANSPARENCY, true)
+	else
+		setPartsTransparency(ghost, 1, true)
+		local highlight = Instance.new("Highlight")
+		highlight.Name = "CollisionOffOutline"
+		highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+		highlight.FillTransparency = 1
+		highlight.OutlineTransparency = 0
+		highlight.OutlineColor = OUTLINE_COLOR
+		highlight.Adornee = ghost
+		highlight.Parent = ghost
+		ghostOutline = highlight
+	end
+	lastCollisionStyle = styleKey
+end
+
+local function clearGhost()
+	clearGhostOutline()
+	if ghost then
+		ghost:Destroy()
+	end
+	ghost = nil
+	ghostSource = nil
+	lastCollisionStyle = nil
+end
+
+local function rebuildGhost(source)
+	clearGhost()
+	if not source or not source.Parent then
+		lastDiagnostic = "Source missing or unparented"
+		return
+	end
+	local clone, reason = PlacementAssetCodec.ClonePlacementSource(source)
+	if not clone then
+		lastDiagnostic = reason or "Clone failed"
+		return
+	end
+	clone.Name = "_Ghost_" .. source.Name
+	clone.Parent = ensureVisualFolder()
+	ghost = clone
+	ghostSource = source
+	applyGhostVisualStyle(true)
+	lastDiagnostic = "Ghost ready"
+end
+
+local function setGhostVisible(isVisible)
+	if not ghost then
+		return
+	end
+	if isVisible then
+		if ghost.Parent == nil then
+			ghost.Parent = ensureVisualFolder()
+		end
+	else
+		ghost.Parent = nil
+	end
+end
+
+local function updateGhost()
+	updateCount += 1
+	local controller = getPlacementController()
+	if not active then
+		setGhostVisible(false)
+		lastDiagnostic = "Ghost inactive"
+		return
+	end
+	if not controller then
+		setGhostVisible(false)
+		lastDiagnostic = "Waiting for placement controller"
+		return
+	end
+	local selection = controller:GetSelectedPlacement()
+	local source = selection and selection.Instance or nil
+	if typeof(source) == "table" and source.Instance ~= nil then
+		source = source.Instance
+	end
+	if source ~= ghostSource or (source and not ghost) then
+		rebuildGhost(source)
+	end
+	if not ghost then
+		if source == nil then
+			lastDiagnostic = "Empty cursor"
+		end
+		return
+	end
+	applyGhostVisualStyle(false)
+	local placementCFrame = controller:GetPlacementTransform()
+	if not placementCFrame or controller:IsPointerOverEditorChrome() then
+		setGhostVisible(false)
+		lastDiagnostic = placementCFrame and "Pointer over chrome" or "No placement transform"
+		return
+	end
+	setGhostVisible(true)
+	PlacementAssetCodec.PlaceAtAnchor(ghost, placementCFrame)
+	lastDiagnostic = "Ghost visible"
+end
+
+function SceneEditGhostController:Init(dependencies)
+	dependencies = dependencies or {}
+	if dependencies.SceneEditPlacementController then
+		placementController = dependencies.SceneEditPlacementController
+	end
+	if initialized then
+		return
+	end
+	initialized = true
+	assert(getPlacementController(), "SceneEditGhostController requires SceneEditPlacementController")
+	if placementController.PlacementChanged then
+		placementChangedConnection = placementController.PlacementChanged:Connect(function(selection, reason)
+			if reason == "collision-toggle" then
+				if active then
+					applyGhostVisualStyle(true)
+					updateGhost()
+				end
+				return
+			end
+			if not selection then
+				clearGhost()
+				lastDiagnostic = "Empty cursor"
+				return
+			end
+			if active then
+				updateGhost()
+			end
+		end)
+	end
+	RunService:BindToRenderStep(
+		RENDER_STEP_NAME,
+		Enum.RenderPriority.Last.Value,
+		updateGhost
+	)
+end
+
+function SceneEditGhostController:SetActive(isActive)
+	active = isActive == true
+	if active then
+		updateGhost()
+	else
+		clearGhost()
+	end
+end
+
+function SceneEditGhostController:Refresh()
+	updateGhost()
+end
+
+function SceneEditGhostController:GetGhostState()
+	return {
+		Active = active,
+		HasGhost = ghost ~= nil,
+		Ghost = ghost,
+		Source = ghostSource,
+		CollisionStyle = lastCollisionStyle,
+		PlacementCFrame = placementController and placementController:GetPlacementTransform() or nil,
+		UpdateCount = updateCount,
+		Diagnostic = lastDiagnostic,
+	}
+end
+
+return SceneEditGhostController
