@@ -6,6 +6,7 @@ Roblox 기반의 DM 중심 D&D/TRPG 가상 테이블탑 프로젝트입니다.
 
 - [에이전트 작업 규약](AGENTS.md)
 - [RVTT Remake 기획 허브](docs/remake/README.md)
+- [DM·플레이어 핵심 세션 흐름](docs/remake/02-core-session-loop.md)
 
 저장소에서 기획이나 구현을 시작하는 에이전트는 먼저 `AGENTS.md`, 기획 허브와 관련 ADR을 읽어야 합니다.
 
