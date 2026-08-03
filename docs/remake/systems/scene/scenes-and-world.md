@@ -1,459 +1,550 @@
-# 04. 장면과 월드의 이동 판정 구조
+# Semantic Scene, World와 Runtime Build 모델
 
-- 상태: 초안
+- 상태: 확정
+- 문서 종류: System Planning
+- 즉시 구현 명세 가능성: `READY_WITH_DEFAULTS`
+- 남은 기본값:
+  - 새 Scene 생성 시 제공할 기본 Entry Anchor 수
+  - Build 완료 알림과 자동 저장 표시 시간
+  - Runtime Quick Edit의 기본 유지 범위
+  - 구조적 Live Patch 시 기본 일시정지 정책
+  - Scene 목록의 기본 정렬과 미리보기 이미지 갱신 시점
 - 작성일: 2026-08-03
-- 관련 결정:
-  - ADR-0004 DM이 있는 발더스 게이트형 세션 조작
-  - ADR-0005 성능, 안정성과 클린코드를 필수 기능으로 취급
-  - ADR-0006 리그 없는 3D 토큰의 연속 이동
+- 관련 ADR:
+  - [`ADR-0005`](../../decisions/ADR-0005-performance-reliability-clean-code.md)
+  - [`ADR-0006`](../../decisions/ADR-0006-rigless-3d-token-continuous-movement.md)
+  - [`ADR-0054`](../../decisions/ADR-0054-compiled-semantic-runtime-and-query-authority-principles.md)
+  - [`ADR-0057`](../../decisions/ADR-0057-canonical-scene-source-and-atomic-compiled-build-activation.md)
+- 관련 문서:
+  - [`Runtime Architecture Principles`](../../architecture/runtime-architecture-principles.md)
+  - [`Scene Compiler와 Compiled Runtime Scene 계약`](../../architecture/scene-compiler-and-compiled-runtime-scene-contract.md)
+  - [`Semantic Scene 기반 Navigation Authoring Pipeline`](../navigation/navigation-authoring-pipeline.md)
+  - [`인게임 Scene Editor와 맵 제작 도구`](ingame-scene-editor-tools.md)
 
-## 1. 문서 목적
+## 1. 목적
 
-이 문서는 연속 이동을 사용하는 RVTT에서 맵과 구조물이 다음 질문에 어떻게 답하는지 정의한다.
+Scene은 단순한 Roblox Model 묶음이 아니다.
 
-- 이 위치에 설 수 있는가
-- 이 경로로 지나갈 수 있는가
-- 벽이나 구조물에 막히는가
-- 이동 비용이 더 드는 험지인가
-- 문, 장애물과 주문 효과가 이동 판정을 어떻게 바꾸는가
-- 투명한 연출용 파트가 이동을 잘못 막지 않게 하려면 어떻게 해야 하는가
-
-정확한 경로 탐색 알고리즘과 Roblox 구현 API는 아직 확정하지 않는다. 먼저 장면 데이터가 가져야 할 의미를 정한다.
-
----
-
-## 2. 핵심 원칙: 보이는 구조와 이동 판정을 분리한다
-
-장면의 3D 모델과 Roblox 물리 속성을 그대로 이동 규칙으로 사용하지 않는다.
-
-> 시각적 오브젝트는 장면이 어떻게 보이는지를 담당하고, 이동 판정용 데이터는 토큰이 어디를 걷고 어디에서 막히는지를 담당한다.
-
-따라서 다음 항목만으로 이동을 결정하지 않는다.
-
-- 오브젝트가 보이는지
-- 투명한지
-- MeshPart의 실제 외곽이 어떤지
-- 연출용 파트가 존재하는지
-- 일반 물리 충돌이 켜져 있는지
-
-이동 시스템은 RVTT가 명시적으로 등록한 이동 표면, 차단 영역, 지형 비용과 연결 정보만 사용한다.
-
-이 원칙을 통해 다음 문제를 방지한다.
-
-- 투명한 VFX 파트에 길이 막힘
-- 선택 원과 범위 표시가 바닥 판정을 가로챔
-- 장식용 풀과 작은 돌 때문에 이동 불가
-- 복잡한 MeshPart 외곽 때문에 경로가 불안정해짐
-- 모델 교체 후 이동 가능 영역이 달라짐
-
----
-
-## 3. 장면을 세 레이어로 구분한다
-
-### 3.1 시각 레이어
-
-플레이어가 실제로 보는 장면이다.
-
-예시:
-
-- 지형 메시
-- 건물과 벽 모델
-- 가구와 장식
-- 나무, 풀과 잔해
-- 투명한 안개와 마법 효과
-- 조명과 파티클
-- 선택 표시와 범위 표시
-
-시각 레이어의 오브젝트는 기본적으로 이동 판정에 참여하지 않는다.
-
-### 3.2 이동 의미 레이어
-
-토큰의 이동 가능 여부를 판단하는 단순한 보조 구조다.
-
-이 레이어는 플레이어에게 보이지 않으며 다음 의미를 가진다.
-
-- 이동 가능한 표면
-- 이동 차단 영역
-- 험지와 이동 비용 영역
-- 층과 표면 사이의 연결
-- 위험과 이벤트 영역
-
-복잡한 외형 대신 단순한 면, 부피와 연결 정보로 구성한다.
-
-### 3.3 런타임 변경 레이어
-
-플레이 도중 바뀌는 이동 상태다.
-
-예시:
-
-- 열린 문과 닫힌 문
-- 이동한 상자와 바리케이드
-- 무너진 벽
-- 새로 생긴 잔해
-- 주문으로 만들어진 험지
-- 얼음, 불길과 가시 지역
-- DM 빠른 편집으로 추가한 임시 차단물
-
-기본 장면의 정적 이동 데이터 전체를 다시 만들지 않고, 바뀐 영역만 런타임 변경으로 반영한다.
-
----
-
-## 4. 이동 의미의 기본 종류
-
-### 4.1 이동 가능 표면
-
-토큰이 서고 이동할 수 있는 바닥이다.
-
-예시:
-
-- 평지
-- 건물 바닥
-- 다리
-- 경사로
-- 계단
-- 이동 가능한 지붕
-
-이동 가능 표면은 최소한 다음 정보를 제공해야 한다.
-
-- 표면의 범위와 높이
-- 허용하는 이동 유형
-- 기본 이동 비용
-- 다른 표면과의 연결
-- 현재 활성 여부
-
-시각적으로 바닥처럼 보여도 이동 가능 표면으로 등록되지 않았다면 토큰은 그곳에 설 수 없다.
-
-### 4.2 이동 차단 영역
-
-토큰이 통과하거나 점유할 수 없는 영역이다.
-
-예시:
-
-- 벽
-- 닫힌 문
-- 큰 기둥
-- 절벽의 막힌 면
-- 통과할 수 없는 가구
-- 대형 바리케이드
-
-차단 영역은 실제 모델 외곽보다 단순한 판정 형태를 사용한다.
-
-벽 모델에 장식이 많더라도 이동 판정은 단순한 벽 두께와 높이만 사용한다. 문 모델은 외형과 별도로 열림 상태에 따라 차단 영역이 켜지고 꺼진다.
-
-### 4.3 지형 비용 영역
-
-이동은 가능하지만 더 많은 이동력을 소비하는 영역이다.
-
-예시:
-
-- 진흙
-- 얕은 물
-- 빽빽한 덤불
-- 잔해
-- 미끄러운 얼음
-- 주문으로 생성된 험지
-
-험지는 장애물이 아니다. 경로를 완전히 막지 않고 해당 구간의 이동 비용을 높인다.
-
-개념적으로 각 영역은 이동 비용 배율 또는 별도 비용 규칙을 가진다.
+RVTT의 Scene은 다음 세 상태를 분리해 관리한다.
 
 ```text
-보통 지형: 기본 비용
-험지: 증가한 비용
-특수 지형: 토큰의 능력과 이동 유형에 따라 다른 비용
+DM이 편집하는 Scene Source
+→ Compiler가 만든 Compiled Runtime Scene Build
+→ 세션 중 변하는 Authoritative Runtime State
 ```
 
-정확한 배율, 중첩과 면역 규칙은 D&D 규칙 콘텐츠 문서에서 정한다.
+이 문서는 DM이 Scene을 만들고, Runtime을 생성하고, 검토하고, 게시하고, 실제 세션에서 사용하는 전체 흐름을 정의한다.
 
-### 4.4 표면 연결
+Navigation의 내부 경로 자료구조, Spatial Query의 API와 Compiler Artifact Schema는 관련 Architecture 문서가 소유한다.
 
-서로 다른 이동 표면 사이를 어떻게 오갈 수 있는지 정의한다.
+## 2. 사용자 목표
 
-예시:
+DM은 다음 흐름으로 Scene을 사용할 수 있어야 한다.
 
-- 계단
-- 경사로
-- 사다리
-- 점프 가능한 틈
-- 등반 가능한 벽
-- 문과 통로
-- 층간 이동 지점
+```text
+Scene 만들기
+→ 벽·바닥·문·계단·소품 배치
+→ 의미 있는 예외와 연결 설정
+→ Scene Runtime 만들기
+→ 오류 또는 검토 항목 확인
+→ 게시
+→ 플레이 시작
+```
+
+일반적인 Scene에서는 다음이 필요하지 않아야 한다.
+
+- 내부 Polygon과 Graph 편집
+- Model 안에 기술용 Attribute 삽입
+- 문 상태를 Navigation, 시야와 상호작용에서 각각 설정
+- Scene 파일을 Roblox Studio에서 별도 가공
+- 플레이 시작 전 Workspace 구조 수동 검사
 
-연결은 단순히 두 위치가 가깝다는 이유만으로 자동 생성하지 않는다. 이동 방식, 높이 차이와 통과 조건을 명시한다.
+## 3. World와 Scene의 관계
 
-초기 구현에서는 평지, 완만한 경사, 계단과 일반 문을 우선한다. 점프, 비행, 수영과 등반은 별도 이동 유형으로 확장한다.
+### 3.1 Campaign World
 
-### 4.5 위험과 이벤트 영역
+Campaign World는 여러 Scene의 논리적 집합이다.
 
-토큰이 진입하거나 통과할 때 규칙 이벤트를 발생시키는 영역이다.
+```text
+CampaignWorld
+├─ campaignId
+├─ sceneRecords[]
+├─ defaultSceneId?
+├─ worldMetadata
+├─ sceneLinkDefinitions[]
+└─ revision
+```
 
-예시:
+RVTT는 모든 장소를 하나의 거대한 Seamless World로 합칠 것을 요구하지 않는다.
 
-- 함정
-- 불길
-- 낙석 지역
-- 경보 범위
-- 전투 시작 트리거
-- 장면 전환 지점
+마을, 던전, 건물 내부와 전투 전용 장소는 별도 Scene이 될 수 있다.
 
-위험 영역은 반드시 이동을 막지는 않는다.
+### 3.2 Scene은 권위 경계다
 
-`통과 가능 여부`, `이동 비용`, `진입 시 효과`를 서로 다른 속성으로 관리한다. 함정이 있다는 이유만으로 항상 길이 막히는 것은 아니다.
+각 Scene은 다음을 독립적으로 가진다.
 
-### 4.6 내비게이션 제외 오브젝트
+- Scene Source Revision
+- Published Build
+- Runtime Dynamic State
+- 권한별 공개 정보
+- Entry와 Exit Anchor
+- 저장·복구 기록
 
-시각과 연출에는 필요하지만 이동 판정에는 전혀 참여하지 않는 요소다.
+다른 Scene으로 이동하는 연결은 `sceneId + entryAnchorId`를 사용한다.
 
-예시:
+```text
+현재 Scene Exit Anchor
+→ Scene Transition 요청
+→ 대상 Scene Build 준비 확인
+→ 대상 Entry Anchor 배치 검증
+→ 전환 확정
+```
 
-- 투명 VFX 파트
-- 파티클 보조 파트
-- 선택 원
-- 핑 표시
-- 사거리와 범위 표시
-- 카메라용 보조 오브젝트
-- 컷신 트리거의 시각적 표현
-- 편집용 핸들과 기즈모
+정확한 Streaming과 Client Ready 순서는 후속 계약에서 정의한다.
 
-이 오브젝트는 이동용 바닥 검사, 차단 검사와 경로 생성 대상에서 제외한다.
+## 4. Scene Record
 
----
+```text
+SceneRecord
+├─ sceneId
+├─ campaignId
+├─ displayName
+├─ description?
+├─ thumbnailRef?
+├─ authoringStatus
+├─ currentSourceRevision
+├─ publishedBuildId?
+├─ lastKnownGoodBuildId?
+├─ activeSessionBindings[]
+├─ entryAnchorIds[]
+├─ sourcePackDependencies[]
+├─ createdBy
+├─ updatedAt
+└─ revision
+```
 
-## 5. 오브젝트별 기본 처리
+Scene 이름을 바꾸어도 `sceneId`는 바뀌지 않는다.
 
-| 장면 요소 | 시각 표현 | 이동 의미 |
-|---|---|---|
-| 일반 바닥 | 바닥 메시 | 이동 가능 표면 |
-| 벽 | 벽 모델 | 단순한 차단 영역 |
-| 열린 문 | 열린 문 모델 | 차단 영역 비활성 |
-| 닫힌 문 | 닫힌 문 모델 | 차단 영역 활성 |
-| 안개 VFX | 투명 파트·파티클 | 내비게이션 제외 |
-| 작은 풀과 돌 | 장식 메시 | 기본적으로 내비게이션 제외 |
-| 큰 바위 | 바위 모델 | 필요할 때만 차단 영역 추가 |
-| 잔해 | 잔해 모델 | 험지 또는 차단 영역으로 명시 |
-| 얕은 물 | 물 표현 | 이동 가능 표면 + 지형 비용 |
-| 깊은 구덩이 | 구덩이 모델 | 이동 가능 표면 없음 |
-| 계단 | 계단 모델 | 연결된 이동 가능 표면 |
-| 함정 | 숨김 또는 공개 모델 | 위험 영역, 필요 시 지형 비용 |
+Scene 복제는 새로운 `sceneId`와 Source Object ID 집합을 만든다.
 
-장면 오브젝트의 외형만 보고 자동으로 의미를 추측하지 않는다. DM 또는 장면 제작 도구가 명시적으로 이동 의미를 부여한다.
+## 5. 세 가지 Scene 상태
 
----
+### 5.1 Scene Source
 
-## 6. 한 위치가 이동 가능한지 판정하는 순서
+DM이 편집하고 저장하는 원본이다.
 
-토큰이 목적지로 이동하려 할 때 다음을 확인한다.
+포함:
 
-1. 토큰이 현재 사용할 수 있는 이동 유형을 확인한다.
-2. 목적지 아래 또는 주변에 유효한 이동 가능 표면이 있는지 확인한다.
-3. 토큰의 규칙용 점유 범위가 해당 위치에 들어가는지 확인한다.
-4. 벽, 닫힌 문과 다른 차단 영역과 겹치는지 확인한다.
-5. 현재 장면의 동적 차단물이 경로를 막는지 확인한다.
-6. 경사, 높이 차이와 표면 연결이 허용되는지 확인한다.
-7. 지형 비용과 상태 효과를 적용해 이동 비용을 계산한다.
-8. 전투 중이라면 남은 이동력으로 도달 가능한지 확인한다.
-9. 유효한 경로가 존재하면 이동을 승인한다.
+- 배치된 Asset과 Transform
+- 벽, 방, 계단 같은 Parametric Object 원본
+- 외부 Semantic Profile 참조
+- Scene Instance Override
+- Rule Region과 Trigger
+- 오브젝트와 Anchor 사이의 명시적 Link
+- Entry·Exit Anchor
+- 조명과 Scene 표시 설정
+- DM Metadata
 
-토큰의 중심점만 통과한다고 허용하지 않는다. 토큰의 전체 점유 범위가 문과 통로를 통과할 수 있어야 한다.
+포함하지 않음:
 
----
+- Runtime Polygon과 Path Node
+- Spatial Index
+- Roblox Instance 참조
+- 플레이 중 Actor 위치
+- 현재 문 열림 상태
+- Compiler Cache
 
-## 7. 투명 파트와 보조 파트 처리
+### 5.2 Compiled Runtime Scene Build
 
-투명도는 이동 의미가 아니다.
+Scene Source를 검증해 만든 불변 Runtime Package다.
 
-투명한 파트가 다음 중 무엇인지 외형만으로 알 수 없기 때문이다.
+포함:
 
-- 보이지 않는 벽
-- VFX 보조 파트
-- 함정 범위
-- 카메라 차단용 파트
-- 편집 도구
-- 실제 충돌 영역
+- Navigation Layer
+- Visibility Layer
+- Interaction Layer
+- Rule Layer
+- Permission-aware Metadata
+- Runtime Object Blueprint
+- State Binding
+- Spatial Index와 Chunk Manifest
+- Dependency Graph와 Diagnostic Summary
 
-따라서 다음 원칙을 사용한다.
+Build는 고유 `buildId`를 가진다.
 
-1. 이동 판정은 일반 Workspace 전체를 무차별적으로 검사하지 않는다.
-2. 이동 시스템 전용으로 등록된 표면과 차단 영역만 질의한다.
-3. VFX, 선택 표시와 편집용 오브젝트는 이동 의미 레이어에 등록하지 않는다.
-4. 보이지 않는 벽이 필요하면 투명 파트 자체가 아니라 명시적인 이동 차단 영역으로 만든다.
-5. 장면 검증 도구는 이동 판정에 잘못 포함된 연출 오브젝트를 경고한다.
+### 5.3 Authoritative Runtime State
 
-이 방식이면 투명 VFX 파트가 우연히 길을 막는 문제가 구조적으로 발생하지 않는다.
+세션 중 서버가 변경하는 상태다.
 
----
+포함:
 
-## 8. 험지 판정
+- Actor 위치와 상태
+- 문, 함정, 상자와 파괴 오브젝트의 현재 상태
+- 활성 Scene Effect와 Rule Volume
+- Fog 공개 상태
+- Encounter와 Turn 상태
+- Runtime Quick Edit Overlay
 
-험지는 공간에 적용되는 지형 수정자로 다룬다.
+Runtime State는 Scene Source를 자동 수정하지 않는다.
 
-각 지형 비용 영역은 최소한 다음 정보를 가진다.
+## 6. Scene 제작 흐름
 
-- 영역 ID
-- 적용 범위
-- 지형 태그
-- 이동 비용 규칙
-- 활성 여부
-- 정적 또는 동적 여부
-- 표시 방식
+### 6.1 새 Scene 만들기
 
-험지는 세 종류로 나눌 수 있다.
+```text
+새 Scene
+→ Scene 이름과 기본 설정
+→ Scene Source와 기본 Entry Anchor 생성
+→ 편집 모드 진입
+```
 
-### 8.1 정적 험지
+빈 Scene도 안정적인 `sceneId`, Source Schema Version과 Authoring Revision을 가진다.
 
-장면 원본에 포함된다.
+### 6.2 Asset과 구조 배치
 
-예시:
+DM은 다음을 배치한다.
 
-- 늪
-- 진흙길
-- 잔해밭
-- 빽빽한 숲
+- 벽과 방
+- 바닥과 지형
+- 문과 창문
+- 계단, 사다리와 연결 지점
+- 프리팹과 소품
+- Rule Region과 Trigger
+- 조명과 장면 표시 요소
 
-### 8.2 동적 험지
+Editor Tool은 최종 Runtime Layer를 직접 만들지 않는다.
 
-세션 도중 생성되거나 제거된다.
+```text
+Editor 입력
+→ Scene Source 변경
+→ Authoring Revision 증가
+→ Runtime Build 갱신 필요 표시
+```
 
-예시:
+### 6.3 의미와 예외 편집
 
-- 주문 효과
-- 무너진 구조물
-- 쏟아진 기름
-- 얼어붙은 바닥
+대부분의 Asset은 Asset Library의 Semantic Profile을 자동 사용한다.
 
-### 8.3 조건부 험지
+DM은 자동 의미가 맞지 않는 경우에만 다음을 수정한다.
 
-토큰의 이동 능력에 따라 비용이 달라진다.
+- 이 Scene에서만 다른 Semantic Profile 사용
+- 특정 오브젝트를 규칙 Layer에서 제외
+- 명시적 Obstacle, Support, Rule Field Region
+- 문·레버·함정 사이 Link
+- 계단, 사다리, Jump와 Drop 연결
+- 비밀 정보와 공개 정책
 
-예시:
+DM은 `Walkable`, `Deniable`, Polygon ID와 Portal 폭을 편집하지 않는다.
 
-- 수영 능력이 없는 토큰에게만 느린 얕은 물
-- 특정 지형을 무시하는 특성이 있는 토큰
-- 비행 중에는 영향을 받지 않는 지상 험지
+## 7. Scene Runtime 만들기
 
-경로 탐색은 험지를 막힌 길로 취급하지 않고 비용이 높은 길로 취급한다. 따라서 더 멀지만 평탄한 길과 더 짧지만 험한 길 중 실제 이동 비용이 낮은 경로를 선택할 수 있어야 한다.
+DM이 `Scene Runtime 만들기 / 갱신`을 실행하면:
 
----
+```text
+Source 저장 확인
+→ Asset과 Profile 참조 확인
+→ Semantic Contribution 생성
+→ Runtime Layer와 Index Build
+→ Cross-layer 상태 연결 검사
+→ Entry Anchor와 Critical Route 검사
+→ Client Disclosure Package 검사
+→ Candidate Build 완성
+```
 
-## 9. 정적 데이터와 동적 데이터
+Compiler가 자동으로 만든 작은 수치 보정은 결과 요약에서 확인할 수 있다.
 
-### 정적 데이터
+의미가 불명확한 문제는 DM에게 내부 자료구조가 아니라 선택 가능한 해석으로 제시한다.
 
-씬 게시 또는 준비 단계에서 미리 계산할 수 있다.
+예:
 
-- 기본 이동 가능 표면
-- 고정 벽과 기둥
-- 계단과 경사 연결
-- 정적 험지
-- 기본 위험 영역
+```text
+이 계단의 위쪽 연결을 확정할 수 없습니다.
 
-### 동적 데이터
+1. 위층 복도 Anchor에 연결
+2. 발코니 Anchor에 연결
+3. 이동 연결 없이 장식으로 처리
+```
 
-세션 중 상태 변화가 있을 때만 갱신한다.
+## 8. Scene 상태 표시
 
-- 문 열림과 닫힘
-- 이동 가능한 장애물
-- 파괴된 구조물
-- 주문과 임시 지형
-- 토큰 점유
-- DM 빠른 편집 변경
+DM UI는 다음 상태를 사용한다.
 
-문 하나가 열렸다고 전체 맵의 이동 데이터를 다시 계산하지 않는다. 영향을 받는 좁은 영역만 갱신한다.
+```text
+draft
+runtime_outdated
+building
+review_recommended
+ready_to_publish
+published
+build_failed
+```
 
----
+### draft
 
-## 10. 성능 원칙
+새 Scene이거나 아직 정상 Runtime Build가 없다.
 
-- Workspace의 모든 Part와 MeshPart를 매 프레임 검사하지 않는다.
-- 모든 시각 오브젝트에 이동 스크립트를 붙이지 않는다.
-- 모든 토큰마다 독립된 길 찾기 루프를 만들지 않는다.
-- 정지한 토큰은 이동 판정 업데이트를 수행하지 않는다.
-- 정적 이동 데이터는 장면 준비 단계에서 계산한다.
-- 동적 변경은 변경된 지역만 무효화하고 갱신한다.
-- 이동 질의는 가까운 표면, 차단 영역과 지형 수정자만 확인한다.
-- 이동 경로가 필요할 때만 길 찾기를 실행한다.
-- 클릭 미리보기 중에도 목적지가 실제로 바뀌었을 때만 경로를 다시 계산한다.
+### runtime_outdated
 
----
+Published Build 이후 Scene Source가 변경되었다.
 
-## 11. 씬 편집 도구
+현재 Build는 계속 사용할 수 있지만 새 변경은 반영되지 않았다.
 
-전체 씬 편집에서는 `이동 판정 보기`를 제공한다.
+### building
 
-예시 표시:
+Candidate Build를 생성 중이다.
 
-- 이동 가능 표면: 초록색
-- 차단 영역: 빨간색
-- 험지 영역: 노란색
-- 표면 연결: 파란색
-- 위험과 이벤트 영역: 보라색
-- 내비게이션 제외 오브젝트: 필요할 때만 별도 표시
+현재 Published Build와 활성 세션은 영향을 받지 않는다.
 
-DM은 다음 작업을 수행할 수 있어야 한다.
+### review_recommended
 
-- 바닥을 이동 가능 표면으로 지정
-- 벽과 구조물에 단순 차단 영역 배치
-- 험지 영역 칠하기
-- 문과 차단 영역 연결
-- 계단과 층간 연결 지정
-- 시각 오브젝트를 내비게이션에서 제외
-- 테스트 토큰으로 경로와 통과 여부 확인
+Build는 사용할 수 있지만 확인하면 좋은 경고가 있다.
 
-씬 게시 전 검증 항목:
+### ready_to_publish
 
-- 진입 지점이 이동 가능 표면 위에 있는가
-- 주요 이동 구역이 서로 연결되어 있는가
-- 문이 열린 상태에서도 차단되는가
-- 투명 연출 파트가 이동 판정에 포함되었는가
-- 험지 비용이 누락되었는가
-- 대형 토큰이 필요한 통로를 통과할 수 있는가
-- 이동 가능 표면 아래에 잘못된 층이 선택되는가
+모든 필수 검증을 통과한 Candidate Build가 있다.
 
----
+### published
 
-## 12. 빠른 편집에서의 이동 변경
+Candidate Build가 Scene의 기본 Published Build가 되었다.
 
-빠른 편집에서는 장면 원본을 다시 제작하지 않고 런타임 이동 변경을 추가한다.
+### build_failed
 
-우선 지원할 작업:
+Candidate Build 생성에 실패했다.
 
-- 임시 차단물 배치와 제거
-- 문 차단 상태 수정
-- 임시 험지 영역 배치와 제거
-- 위험 영역 배치
-- 이동 가능 여부 강제 수정
-- 잘못된 경로 판정 임시 우회
+Last Known Good Build가 있으면 기존 Scene은 계속 사용할 수 있다.
 
-이 변경은 라이브 패치에 기록하고 세션 종료 시 유지, 원본 승격 또는 폐기를 선택한다.
+## 9. 게시
 
----
+게시 전 최소 조건:
 
-## 13. 우선 확정하는 방향
+- 필수 Asset과 Semantic Profile 참조 정상
+- 필수 Layer와 Index Build 성공
+- Entry Anchor 유효
+- 게시 차단 Critical Route 정상
+- Cross-layer State Binding 일치
+- Secret Disclosure 검사 통과
+- Build Manifest와 Chunk 참조 정상
 
-1. OBJ 또는 MeshPart의 시각 외형은 이동 충돌에 직접 사용하지 않는다.
-2. 이동 가능 표면과 이동 차단 영역을 별도 의미 레이어로 관리한다.
-3. 투명도와 일반 물리 충돌 속성만으로 이동 여부를 판단하지 않는다.
-4. VFX, 선택 표시와 편집 도구는 기본적으로 내비게이션에서 제외한다.
-5. 험지는 차단물이 아니라 이동 비용을 수정하는 영역이다.
-6. 문과 이동 장애물은 동적 차단 상태를 가진다.
-7. 토큰 크기는 메시 크기가 아니라 규칙용 점유 범위로 판정한다.
-8. 정적 이동 데이터는 미리 계산하고 동적 변경만 부분 갱신한다.
-9. 씬 편집기에 이동 판정 전용 보기와 검증 기능을 둔다.
-10. 빠른 편집으로 임시 차단물과 험지를 추가할 수 있다.
+게시 흐름:
 
----
+```text
+Ready Candidate Build 선택
+→ 게시 확인
+→ Build Manifest 봉인
+→ Published Build Pointer 원자적 교체
+→ Scene 상태 published
+```
 
-## 14. 다음에 결정할 항목
+Layer 일부만 새 Build로 교체할 수 없다.
 
-다음 항목은 비교 후 별도로 확정한다.
+## 10. 테스트 플레이
 
-1. 이동 가능 표면을 Roblox PathfindingService, 사용자 정의 내비게이션 메시 또는 샘플링 그래프 중 무엇으로 표현할지
-2. 토큰의 규칙용 점유 범위를 원형, 캡슐형 또는 크기별 다른 형태로 할지
-3. Roblox stud와 D&D 피트의 정확한 환산 비율
-4. 허용할 최대 경사와 자동으로 넘을 수 있는 높이
-5. 계단을 실제 표면으로 판정할지 단순 연결로 처리할지
-6. 다른 토큰을 경로 장애물로 언제 반영할지
-7. 험지 중첩과 토큰별 면역 규칙
-8. 낙하, 점프, 비행, 수영과 등반의 이동 구조
+DM은 게시 전 Candidate Build에서 테스트 플레이를 실행할 수 있다.
 
-다음 논의에서는 먼저 **이동 가능 표면을 어떤 데이터로 만들 것인지**를 비교한다.
+테스트 항목:
+
+- Entry Anchor에서 시작
+- 대표 Actor로 클릭 이동
+- 문 열기와 닫기
+- 시야 차단과 상호작용
+- Critical Route
+- Trigger와 Rule Field 진입
+- Scene Exit와 대상 Entry Anchor
+
+테스트 플레이의 Runtime State는 기본적으로 실제 Campaign 진행 상태에 반영하지 않는다.
+
+DM이 명시적으로 선택한 경우에만 테스트 결과 일부를 Authoring Source나 Campaign State에 반영한다.
+
+## 11. 활성 세션
+
+활성 세션은 다음 조합을 사용한다.
+
+```text
+sceneId
++ buildId
++ dynamicStateRevision
+```
+
+플레이어가 Scene에 입장할 때 서버는 정확한 Build와 권한별 Runtime View를 준비한다.
+
+Scene Source가 편집 중이거나 새 Candidate Build가 존재한다는 이유만으로 현재 세션의 Build를 바꾸지 않는다.
+
+## 12. Live Authoring과 Runtime Quick Edit
+
+### 12.1 구조적 Authoring 변경
+
+다음은 Scene Source를 변경하고 새 Candidate Build가 필요하다.
+
+- 벽과 바닥 구조 변경
+- 계단과 Portal 연결 변경
+- 대형 오브젝트 배치·삭제
+- Semantic Profile과 Rule Region 변경
+- Scene Entry·Exit 구조 변경
+
+활성 세션에 적용하려면 세션을 안전 지점에서 일시정지하거나 호환 가능한 Patch 절차를 사용한다.
+
+### 12.2 Runtime Quick Edit
+
+다음은 Runtime Command와 Semantic Overlay로 처리할 수 있다.
+
+- 임시 차단 영역
+- 즉석 위험 지역
+- 임시 조명·가림 Field
+- DM이 세션 중 만든 일회성 Trigger
+- 현재 문 상태와 오브젝트 상태 조정
+
+Quick Edit는 활성 Runtime에 즉시 적용할 수 있지만 기본적으로 Scene Source를 바꾸지 않는다.
+
+### 12.3 Source로 승격
+
+DM이 임시 변경을 영구 Scene 요소로 남기려면 `Source로 승격`을 실행한다.
+
+```text
+Runtime Overlay 선택
+→ 저장 가능한 Authoring 데이터로 변환
+→ Scene Source에 새 ID로 추가
+→ Authoring Revision 증가
+→ 새 Candidate Build 필요
+```
+
+Runtime State를 그대로 직렬화해 Scene Source에 복사하지 않는다.
+
+## 13. Build 실패와 복구
+
+Candidate Build가 실패하면:
+
+- Published Build Pointer를 바꾸지 않는다.
+- 활성 세션을 중단하지 않는다.
+- 실패한 Layer 일부를 Runtime에 적용하지 않는다.
+- 관련 Source Object와 위치를 표시한다.
+- 수정 후 영향 범위만 다시 Build할 수 있다.
+
+Last Known Good Build도 손상되었다면 Source에서 전체 Build를 다시 생성한다.
+
+Compiled Artifact와 Cache는 재생성 가능한 데이터이므로 영구 Authoring 원본처럼 취급하지 않는다.
+
+## 14. Scene 삭제와 보관
+
+Scene 삭제는 즉시 영구 제거보다 보관 상태를 우선한다.
+
+```text
+active
+→ archived
+→ pending_deletion
+→ deleted
+```
+
+다음 참조가 있으면 삭제 전 경고한다.
+
+- 다른 Scene의 Transition Link
+- Campaign 기본 Scene
+- 저장된 Character 위치
+- Journal Link
+- 활성 세션
+- Snapshot과 Rollback 기록
+
+보관된 Scene은 새 세션 진입 대상에서 제외하지만 복구할 수 있다.
+
+## 15. 권한과 공개
+
+### DM
+
+- Scene Source 전체 편집
+- Compiler Diagnostic 확인
+- Secret Metadata 확인
+- Build와 게시 관리
+- Runtime Quick Edit
+- Live Patch 승인
+
+### Player
+
+- 권한에 맞는 Published Runtime View만 수신
+- 발견되지 않은 비밀문과 함정의 실제 Runtime Definition을 수신하지 않음
+- Scene Source와 Compiler Diagnostic에 접근하지 않음
+
+### Observer
+
+- 별도 Information Visibility 정책에 따른 View 사용
+- 관찰 권한이 Actor 제어권이나 DM Metadata 권한을 부여하지 않음
+
+## 16. 저장과 Revision
+
+Scene은 다음 Revision을 구분한다.
+
+```text
+Authoring Revision
+→ Scene Source 변경
+
+Build ID
+→ 특정 Source와 Compiler Version으로 만든 불변 Runtime Build
+
+Dynamic State Revision
+→ 플레이 중 상태 변경
+
+Snapshot ID
+→ 특정 Build와 Dynamic State의 조회 시점
+```
+
+네 값을 하나의 `sceneRevision`으로 합치지 않는다.
+
+자동 저장은 Scene Source Draft를 보존한다. 게시 여부와 Build 상태는 별도 기록한다.
+
+## 17. 성능 원칙
+
+- Scene Source 편집 중 매 입력마다 전체 Build를 만들지 않는다.
+- 작은 변경은 Dependency Graph로 영향 범위를 계산한다.
+- Build는 Editor 작업 큐에서 수행하고 현재 Published Runtime을 방해하지 않는다.
+- 동일 Asset과 Semantic Profile 결과는 안전하게 Cache할 수 있다.
+- 활성 세션은 문자열, Model 이름과 임의 Attribute를 반복 해석하지 않는다.
+- Runtime Query는 Compiled Layer와 Index를 사용한다.
+- Scene 전체 Build가 필요한 경우에도 진행 상태와 취소를 제공한다.
+
+## 18. 실패 UX
+
+나쁜 표시:
+
+```text
+Provider 3 failed at node 8421
+Nav graph invalid
+```
+
+좋은 표시:
+
+```text
+북쪽 계단이 어느 위층 바닥과 연결되는지 확정할 수 없습니다.
+계단을 선택해 연결 대상을 지정하세요.
+```
+
+오류 선택 시:
+
+- 카메라가 문제 위치로 이동
+- 관련 오브젝트 선택
+- 현재 Source 의미 표시
+- 추천 수정 선택지 제공
+- 수정 후 해당 영역만 다시 검사
+
+## 19. 완료 기준
+
+Scene 시스템 구현 명세는 최소한 다음 사용자 흐름을 검증해야 한다.
+
+1. 새 Scene을 만들고 Source를 저장할 수 있다.
+2. Attribute 없는 일반 Asset을 Semantic Profile과 함께 배치할 수 있다.
+3. Scene Runtime Build를 생성하고 게시할 수 있다.
+4. Candidate Build 실패 중에도 기존 Published Scene을 플레이할 수 있다.
+5. Source 변경 후 `runtime_outdated` 상태가 표시된다.
+6. 문 상태가 Navigation, Visibility와 Interaction에서 일관되게 바뀐다.
+7. Secret Object가 권한 없는 Client View에 포함되지 않는다.
+8. Runtime Quick Edit가 Source를 자동 변경하지 않는다.
+9. Overlay를 명시적으로 Source로 승격할 수 있다.
+10. Scene Transition이 안정적 Scene ID와 Entry Anchor를 사용한다.
+11. Build와 Dynamic State Revision을 혼합하지 않고 복구할 수 있다.
+12. Scene 삭제 전 외부 참조와 활성 세션을 확인한다.
+
+## 20. 비목표
+
+- 모든 Campaign Scene을 하나의 Seamless World로 합치지 않는다.
+- Scene Editor를 정밀 3D 모델링 프로그램으로 만들지 않는다.
+- Runtime Polygon, Node와 Spatial Index를 일반 DM 편집 항목으로 노출하지 않는다.
+- Roblox Workspace 구조를 Scene 저장 원본으로 사용하지 않는다.
+- 새 Build를 활성 세션에 자동 강제 적용하지 않는다.
+- Scene Streaming의 정확한 클라이언트 Ready Protocol을 이 문서에서 확정하지 않는다.
