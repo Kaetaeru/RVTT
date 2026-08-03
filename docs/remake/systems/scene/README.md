@@ -1,6 +1,6 @@
 # Scene 시스템
 
-Scene Source, Compiled Runtime Build, 세션 Dynamic State, 라이브 패치와 인게임 제작 도구를 다룬다.
+Scene Source, Compiled Runtime Build, 세션 Dynamic State, Runtime Object Lifecycle, 라이브 패치와 인게임 제작 도구를 다룬다.
 
 ## 권위 문서
 
@@ -22,6 +22,15 @@ Scene Source, Compiled Runtime Build, 세션 Dynamic State, 라이브 패치와 
   - 부분 컴파일, 원자적 Build 게시와 Last Known Good Build
   - 권한별 Client Disclosure Segment
 
+### Runtime Object와 Lifecycle
+
+- [`../../architecture/runtime-object-system-and-entity-lifecycle-contract.md`](../../architecture/runtime-object-system-and-entity-lifecycle-contract.md)
+  - Actor, 문, 함정, 소환체와 Scene Effect Presence의 공통 Identity
+  - RuntimeObjectId, Incarnation, Component와 Registry
+  - Spawn·Suspend·Archive·Restore·Destroy
+  - Scene Transfer, Build Rebind, Tombstone과 Ownership Cleanup
+  - Workspace Model과 권위 Object Lifecycle 분리
+
 ### Scene Editor
 
 - [`ingame-scene-editor-tools.md`](ingame-scene-editor-tools.md)
@@ -35,6 +44,8 @@ Scene Source, Compiled Runtime Build, 세션 Dynamic State, 라이브 패치와 
 
 - Scene Editor는 Scene Source를 편집하고 Runtime Layer를 직접 편집하지 않는다.
 - Compiler Build는 불변이며 Layer 일부만 혼합해 게시하지 않는다.
+- Compiler는 Runtime Object Blueprint를 만들고 Live RuntimeObjectId는 Runtime Registry가 바인딩한다.
 - 플레이 중 상태 변경은 Dynamic State와 Runtime Overlay에 기록한다.
+- Runtime Object Lifecycle은 서버 권위 Command로만 변경한다.
 - Quick Edit는 명시적 승격 전까지 Scene Source를 변경하지 않는다.
 - Workspace Instance와 Compiler Cache는 저장 원본이 아니다.
