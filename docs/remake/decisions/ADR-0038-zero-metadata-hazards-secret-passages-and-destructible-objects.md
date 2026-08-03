@@ -8,7 +8,7 @@
   - [`ADR-0028`](ADR-0028-effect-recipes-pending-effects-and-commit-groups.md)
   - [`ADR-0036`](ADR-0036-observer-relative-perception-senses-stealth-and-rule-points.md)
   - [`ADR-0037`](ADR-0037-zero-metadata-interaction-prefabs-and-state-snapshot-transitions.md)
-  - [`32. 무설정 함정·비밀문·파괴 오브젝트 모델`](../32-zero-metadata-trap-secret-door-and-destructible-object-model.md)
+  - [`32. 무설정 함정·비밀문·파괴 오브젝트 모델`](../systems/interaction/trap-secret-door-and-destructible-object-model.md)
 
 ## 배경
 

@@ -3,11 +3,11 @@
 - 상태: 초안
 - 작성일: 2026-08-03
 - 관련 문서:
-  - [`19. 트리거와 다른 턴 실행 모델`](19-feat-feature-trigger-and-cross-turn-execution-model.md)
-  - [`22. EffectRecipe와 효과 해결·확정 모델`](22-effect-recipe-resolution-and-commit-model.md)
-  - [`25. HP 0·죽음 내성·휴식·자원 회복 모델`](25-zero-hit-points-death-saves-rest-and-resource-recovery-model.md)
-  - [`26. 몬스터·NPC 스탯블록과 JSON 가져오기 모델`](26-monster-npc-statblock-and-ingame-json-import-model.md)
-  - [`ADR-0033`](decisions/ADR-0033-server-authoritative-dice-rolls-and-presentation-gated-resolution.md)
+  - [`19. 트리거와 다른 턴 실행 모델`](../rules/feat-feature-trigger-and-cross-turn-execution-model.md)
+  - [`22. EffectRecipe와 효과 해결·확정 모델`](../../architecture/effect-recipe-resolution-and-commit-model.md)
+  - [`25. HP 0·죽음 내성·휴식·자원 회복 모델`](../character/zero-hit-points-death-saves-rest-and-resource-recovery-model.md)
+  - [`26. 몬스터·NPC 스탯블록과 JSON 가져오기 모델`](../character/monster-npc-statblock-and-ingame-json-import-model.md)
+  - [`ADR-0033`](../../decisions/ADR-0033-server-authoritative-dice-rolls-and-presentation-gated-resolution.md)
 
 ## 1. 문서 목적
 

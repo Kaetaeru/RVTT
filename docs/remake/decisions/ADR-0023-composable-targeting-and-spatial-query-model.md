@@ -5,8 +5,8 @@
 - 관련 문서:
   - [`ADR-0018`](ADR-0018-source-scoped-spellcasting-profiles.md)
   - [`ADR-0020`](ADR-0020-typed-spell-resource-pools-and-explicit-cast-payments.md)
-  - [`11. 공통 실행 계약과 마법 처리 모델`](../11-rules-content-execution-and-spell-contract.md)
-  - [`17. 주문 대상 지정·영역·공간 질의 모델`](../17-spell-targeting-area-and-spatial-query-model.md)
+  - [`11. 공통 실행 계약과 마법 처리 모델`](../architecture/rules-content-execution-and-spell-contract.md)
+  - [`17. 주문 대상 지정·영역·공간 질의 모델`](../systems/rules/spell-targeting-area-and-spatial-query-model.md)
 
 ## 배경
 

@@ -5,9 +5,9 @@
 - 관련 문서:
   - [`ADR-0011`](ADR-0011-persistent-character-current-state.md)
   - [`ADR-0018`](ADR-0018-source-scoped-spellcasting-profiles.md)
-  - [`11. 공통 실행 계약과 마법 처리 모델`](../11-rules-content-execution-and-spell-contract.md)
-  - [`12. 주문 획득·준비·시전 권한 모델`](../12-spell-acquisition-preparation-and-cast-access-model.md)
-  - [`14. 주문 자원 풀과 시전 결제 모델`](../14-spell-resource-pools-and-cast-payment-model.md)
+  - [`11. 공통 실행 계약과 마법 처리 모델`](../architecture/rules-content-execution-and-spell-contract.md)
+  - [`12. 주문 획득·준비·시전 권한 모델`](../systems/character/spell-acquisition-preparation-and-cast-access-model.md)
+  - [`14. 주문 자원 풀과 시전 결제 모델`](../systems/rules/spell-resource-pools-and-cast-payment-model.md)
 
 ## 배경
 

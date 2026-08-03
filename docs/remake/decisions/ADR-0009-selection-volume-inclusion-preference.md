@@ -3,7 +3,7 @@
 - 상태: 확정
 - 결정일: 2026-08-03
 - 관련 문서:
-  - [`07-scene-editor-interaction-and-layout.md`](../07-scene-editor-interaction-and-layout.md)
+  - [`07-scene-editor-interaction-and-layout.md`](../ui/scene-editor/scene-editor-interaction-and-layout.md)
   - [`ADR-0007`](ADR-0007-view-y-and-world-scale.md)
 
 ## 배경

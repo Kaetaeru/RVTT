@@ -3,12 +3,12 @@
 - 상태: 확정
 - 결정일: 2026-08-03
 - 관련 문서:
-  - [`ADR-0010`](ADR-0010-common-input-grammar.md)
+  - [`ADR-0010`](../ui/common-input/common-input-grammar.md)
   - [`ADR-0034`](ADR-0034-encounter-initiative-turn-order-and-control-authority.md)
   - [`ADR-0039`](ADR-0039-baldurs-gate-style-combat-hud-and-contextual-action-ui.md)
   - [`ADR-0042`](ADR-0042-authoritative-checkpoints-command-journal-and-session-recovery.md)
   - [`ADR-0045`](ADR-0045-dm-workspace-and-scene-lighting-authoring.md)
-  - [`41. DM Quick Action과 문맥 명령 실행 모델`](../41-dm-quick-action-and-context-command-model.md)
+  - [`41. DM Quick Action과 문맥 명령 실행 모델`](../ui/dm-workspace/dm-quick-action-and-context-command.md)
 
 ## 배경
 

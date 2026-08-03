@@ -3,10 +3,10 @@
 - 상태: 확정
 - 결정일: 2026-08-03
 - 관련 문서:
-  - [`07. 장면 편집 상호작용과 레이아웃`](../07-scene-editor-interaction-and-layout.md)
-  - [`29. 수동 Fog 모델`](../29-manual-fog-of-war-and-optional-assist-model.md)
-  - [`33. 전투 HUD`](../33-baldurs-gate-style-combat-hud-and-contextual-action-ui-model.md)
-  - [`39. DM 작업공간과 Scene 라이팅`](../39-dm-workspace-and-scene-lighting-model.md)
+  - [`07. 장면 편집 상호작용과 레이아웃`](../ui/scene-editor/scene-editor-interaction-and-layout.md)
+  - [`29. 수동 Fog 모델`](../systems/perception/manual-fog-of-war-and-optional-assist-model.md)
+  - [`33. 전투 HUD`](../ui/combat-hud/baldurs-gate-style-combat-hud.md)
+  - [`39. DM 작업공간과 Scene 라이팅`](../ui/dm-workspace/dm-workspace-and-scene-lighting.md)
 
 ## 결정
 

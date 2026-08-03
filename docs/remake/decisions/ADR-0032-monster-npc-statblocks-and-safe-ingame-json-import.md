@@ -8,7 +8,7 @@
   - [`ADR-0028`](ADR-0028-effect-recipes-pending-effects-and-commit-groups.md)
   - [`ADR-0030`](ADR-0030-item-instances-attack-profiles-and-weapon-mastery.md)
   - [`ADR-0031`](ADR-0031-zero-hit-points-death-saves-rests-and-resource-recovery.md)
-  - [`26. 몬스터·NPC 스탯블록과 인게임 JSON 가져오기 모델`](../26-monster-npc-statblock-and-ingame-json-import-model.md)
+  - [`26. 몬스터·NPC 스탯블록과 인게임 JSON 가져오기 모델`](../systems/character/monster-npc-statblock-and-ingame-json-import-model.md)
 
 ## 배경
 

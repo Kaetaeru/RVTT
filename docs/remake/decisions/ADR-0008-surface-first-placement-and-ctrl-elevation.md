@@ -3,7 +3,7 @@
 - 상태: 확정
 - 결정일: 2026-08-03
 - 관련 문서:
-  - [`06-ingame-scene-editor-tools.md`](../06-ingame-scene-editor-tools.md)
+  - [`06-ingame-scene-editor-tools.md`](../systems/scene/ingame-scene-editor-tools.md)
   - [`ADR-0007`](ADR-0007-view-y-and-world-scale.md)
 
 ## 배경

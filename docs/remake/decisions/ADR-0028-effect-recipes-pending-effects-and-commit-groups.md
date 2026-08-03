@@ -7,11 +7,11 @@
   - [`ADR-0025`](ADR-0025-typed-rule-events-timing-windows-and-usage-gates.md)
   - [`ADR-0026`](ADR-0026-active-capabilities-action-containers-and-unit-replacements.md)
   - [`ADR-0027`](ADR-0027-passive-modifiers-rule-overrides-and-conditional-activation.md)
-  - [`11. 공통 실행 계약`](../11-rules-content-execution-and-spell-contract.md)
-  - [`19. 트리거와 다른 턴 실행 모델`](../19-feat-feature-trigger-and-cross-turn-execution-model.md)
-  - [`20. 능동형 특성과 행동 내부 실행 모델`](../20-active-feature-and-action-container-execution-model.md)
-  - [`21. 패시브 특성 모델`](../21-passive-modifier-and-rule-override-model.md)
-  - [`22. EffectRecipe와 효과 해결 모델`](../22-effect-recipe-resolution-and-commit-model.md)
+  - [`11. 공통 실행 계약`](../architecture/rules-content-execution-and-spell-contract.md)
+  - [`19. 트리거와 다른 턴 실행 모델`](../systems/rules/feat-feature-trigger-and-cross-turn-execution-model.md)
+  - [`20. 능동형 특성과 행동 내부 실행 모델`](../systems/rules/active-feature-and-action-container-execution-model.md)
+  - [`21. 패시브 특성 모델`](../architecture/passive-modifier-and-rule-override-model.md)
+  - [`22. EffectRecipe와 효과 해결 모델`](../architecture/effect-recipe-resolution-and-commit-model.md)
 
 ## 배경
 

@@ -7,8 +7,8 @@
   - [`ADR-0025`](ADR-0025-typed-rule-events-timing-windows-and-usage-gates.md)
   - [`ADR-0027`](ADR-0027-passive-modifiers-rule-overrides-and-conditional-activation.md)
   - [`ADR-0028`](ADR-0028-effect-recipes-pending-effects-and-commit-groups.md)
-  - [`22. EffectRecipe와 효과 해결·확정 모델`](../22-effect-recipe-resolution-and-commit-model.md)
-  - [`23. 상태·지속 효과·집중 수명주기 모델`](../23-condition-ongoing-effect-duration-and-concentration-model.md)
+  - [`22. EffectRecipe와 효과 해결·확정 모델`](../architecture/effect-recipe-resolution-and-commit-model.md)
+  - [`23. 상태·지속 효과·집중 수명주기 모델`](../systems/rules/condition-ongoing-effect-duration-and-concentration-model.md)
 
 ## 배경
 

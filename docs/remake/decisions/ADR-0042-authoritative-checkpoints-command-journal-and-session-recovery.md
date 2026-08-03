@@ -4,12 +4,12 @@
 - 결정일: 2026-08-03
 - 관련 문서:
   - [`ADR-0005`](ADR-0005-performance-reliability-clean-code.md)
-  - [`ADR-0018`](ADR-0018-authoritative-action-intent-and-pending-resolution.md)
+  - [`ADR-0018`](../architecture/effect-recipe-resolution-and-commit-model.md)
   - [`ADR-0028`](ADR-0028-effect-recipes-pending-effects-and-commit-groups.md)
   - [`ADR-0033`](ADR-0033-server-authoritative-dice-rolls-and-presentation-gated-resolution.md)
   - [`ADR-0034`](ADR-0034-encounter-initiative-turn-order-and-control-authority.md)
   - [`ADR-0037`](ADR-0037-zero-metadata-interaction-prefabs-and-state-snapshot-transitions.md)
-  - [`36. 저장·자동 저장·재접속·서버 종료·세션 복구 모델`](../36-save-autosave-reconnect-shutdown-and-session-recovery-model.md)
+  - [`36. 저장·자동 저장·재접속·서버 종료·세션 복구 모델`](../architecture/persistence-and-session-recovery-model.md)
 
 ## 배경
 

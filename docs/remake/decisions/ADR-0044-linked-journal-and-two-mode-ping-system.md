@@ -3,10 +3,10 @@
 - 상태: 확정
 - 결정일: 2026-08-03
 - 관련 문서:
-  - [`08. 공통 입력 교과서`](../08-common-input-grammar.md)
-  - [`30. 시야·감각·은신·탐지 모델`](../30-visibility-senses-stealth-and-detection-model.md)
-  - [`31. 상호작용 프리팹 모델`](../31-zero-metadata-interaction-prefab-and-state-transition-model.md)
-  - [`38. 링크형 문서와 핑 시스템`](../38-linked-journal-and-two-mode-ping-model.md)
+  - [`08. 공통 입력 교과서`](../ui/common-input/common-input-grammar.md)
+  - [`30. 시야·감각·은신·탐지 모델`](../systems/perception/visibility-senses-stealth-and-detection-model.md)
+  - [`31. 상호작용 프리팹 모델`](../systems/interaction/zero-metadata-interaction-prefab-and-state-transition-model.md)
+  - [`38. 링크형 문서와 핑 시스템`](../systems/journal/linked-journal-and-two-mode-ping-model.md)
 
 ## 결정
 

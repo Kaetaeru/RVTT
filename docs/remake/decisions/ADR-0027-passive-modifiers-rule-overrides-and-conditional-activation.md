@@ -6,9 +6,9 @@
   - [`ADR-0017`](ADR-0017-derived-fixed-grants-and-stored-selections.md)
   - [`ADR-0025`](ADR-0025-typed-rule-events-timing-windows-and-usage-gates.md)
   - [`ADR-0026`](ADR-0026-active-capabilities-action-containers-and-unit-replacements.md)
-  - [`10. Grant Graph와 Capability 모델`](../10-rules-content-grant-capability-model.md)
-  - [`11. 공통 실행 계약`](../11-rules-content-execution-and-spell-contract.md)
-  - [`21. 패시브 특성, 수치 수정과 규칙 오버라이드 모델`](../21-passive-modifier-and-rule-override-model.md)
+  - [`10. Grant Graph와 Capability 모델`](../architecture/rules-content-grant-capability-model.md)
+  - [`11. 공통 실행 계약`](../architecture/rules-content-execution-and-spell-contract.md)
+  - [`21. 패시브 특성, 수치 수정과 규칙 오버라이드 모델`](../architecture/passive-modifier-and-rule-override-model.md)
 
 ## 배경
 

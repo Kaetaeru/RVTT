@@ -3,9 +3,9 @@
 - 상태: 초안
 - 작성일: 2026-08-03
 - 관련 문서:
-  - [`04-scenes-and-world.md`](04-scenes-and-world.md)
-  - [`ADR-0005`](decisions/ADR-0005-performance-reliability-clean-code.md)
-  - [`ADR-0006`](decisions/ADR-0006-rigless-3d-token-continuous-movement.md)
+  - [`04-scenes-and-world.md`](../scene/scenes-and-world.md)
+  - [`ADR-0005`](../../decisions/ADR-0005-performance-reliability-clean-code.md)
+  - [`ADR-0006`](../../decisions/ADR-0006-rigless-3d-token-continuous-movement.md)
 
 ## 1. 목표
 

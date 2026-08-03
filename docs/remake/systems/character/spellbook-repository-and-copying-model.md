@@ -3,11 +3,11 @@
 - 상태: 초안
 - 작성일: 2026-08-03
 - 관련 문서:
-  - [`10. Grant Graph와 Capability 모델`](10-rules-content-grant-capability-model.md)
-  - [`11. 공통 실행 계약과 마법 처리 모델`](11-rules-content-execution-and-spell-contract.md)
-  - [`12. 주문 획득·준비·시전 권한 모델`](12-spell-acquisition-preparation-and-cast-access-model.md)
-  - [`ADR-0018`](decisions/ADR-0018-source-scoped-spellcasting-profiles.md)
-  - [`ADR-0019`](decisions/ADR-0019-item-bound-persistent-spellbook-repositories.md)
+  - [`10. Grant Graph와 Capability 모델`](../../architecture/rules-content-grant-capability-model.md)
+  - [`11. 공통 실행 계약과 마법 처리 모델`](../../architecture/rules-content-execution-and-spell-contract.md)
+  - [`12. 주문 획득·준비·시전 권한 모델`](spell-acquisition-preparation-and-cast-access-model.md)
+  - [`ADR-0018`](../../decisions/ADR-0018-source-scoped-spellcasting-profiles.md)
+  - [`ADR-0019`](../../decisions/ADR-0019-item-bound-persistent-spellbook-repositories.md)
 
 ## 1. 문서 목적
 

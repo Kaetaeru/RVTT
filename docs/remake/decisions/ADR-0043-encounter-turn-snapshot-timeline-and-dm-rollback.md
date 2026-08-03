@@ -3,12 +3,12 @@
 - 상태: 확정
 - 결정일: 2026-08-03
 - 관련 문서:
-  - [`ADR-0018`](ADR-0018-authoritative-action-intent-and-pending-resolution.md)
+  - [`ADR-0018`](../architecture/effect-recipe-resolution-and-commit-model.md)
   - [`ADR-0028`](ADR-0028-effect-recipes-pending-effects-and-commit-groups.md)
   - [`ADR-0033`](ADR-0033-server-authoritative-dice-rolls-and-presentation-gated-resolution.md)
   - [`ADR-0034`](ADR-0034-encounter-initiative-turn-order-and-control-authority.md)
   - [`ADR-0042`](ADR-0042-authoritative-checkpoints-command-journal-and-session-recovery.md)
-  - [`37. 전투 턴 스냅샷 타임라인과 DM 되돌리기 모델`](../37-encounter-turn-snapshot-timeline-and-dm-rollback-model.md)
+  - [`37. 전투 턴 스냅샷 타임라인과 DM 되돌리기 모델`](../systems/combat/encounter-turn-snapshot-and-dm-rollback-model.md)
 
 ## 배경
 

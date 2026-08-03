@@ -8,7 +8,7 @@
   - [`ADR-0028`](ADR-0028-effect-recipes-pending-effects-and-commit-groups.md)
   - [`ADR-0030`](ADR-0030-item-instances-attack-profiles-and-weapon-mastery.md)
   - [`ADR-0036`](ADR-0036-observer-relative-perception-senses-stealth-and-rule-points.md)
-  - [`31. 무설정 상호작용 프리팹과 상태 전환 모델`](../31-zero-metadata-interaction-prefab-and-state-transition-model.md)
+  - [`31. 무설정 상호작용 프리팹과 상태 전환 모델`](../systems/interaction/zero-metadata-interaction-prefab-and-state-transition-model.md)
 
 ## 배경
 

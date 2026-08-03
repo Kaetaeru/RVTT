@@ -8,7 +8,7 @@
   - [`ADR-0026`](ADR-0026-active-capabilities-action-containers-and-unit-replacements.md)
   - [`ADR-0027`](ADR-0027-passive-modifiers-rule-overrides-and-conditional-activation.md)
   - [`ADR-0028`](ADR-0028-effect-recipes-pending-effects-and-commit-groups.md)
-  - [`24. 무기·아이템·공격 프로필 모델`](../24-item-weapon-attack-profile-and-mastery-model.md)
+  - [`24. 무기·아이템·공격 프로필 모델`](../systems/inventory/item-weapon-attack-profile-and-mastery-model.md)
 
 ## 배경
 

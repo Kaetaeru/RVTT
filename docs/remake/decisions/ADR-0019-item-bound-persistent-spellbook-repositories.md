@@ -4,8 +4,8 @@
 - 결정일: 2026-08-03
 - 관련 문서:
   - [`ADR-0018`](ADR-0018-source-scoped-spellcasting-profiles.md)
-  - [`12. 주문 획득·준비·시전 권한 모델`](../12-spell-acquisition-preparation-and-cast-access-model.md)
-  - [`13. 주문책 저장소와 복사 모델`](../13-spellbook-repository-and-copying-model.md)
+  - [`12. 주문 획득·준비·시전 권한 모델`](../systems/character/spell-acquisition-preparation-and-cast-access-model.md)
+  - [`13. 주문책 저장소와 복사 모델`](../systems/character/spellbook-repository-and-copying-model.md)
 
 ## 배경
 

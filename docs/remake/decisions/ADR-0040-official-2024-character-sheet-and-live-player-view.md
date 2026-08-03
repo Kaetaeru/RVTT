@@ -9,7 +9,7 @@
   - [`ADR-0030`](ADR-0030-item-instances-attack-profiles-and-weapon-mastery.md)
   - [`ADR-0033`](ADR-0033-server-authoritative-dice-rolls-and-presentation-gated-resolution.md)
   - [`ADR-0039`](ADR-0039-baldurs-gate-style-combat-hud-and-contextual-action-ui.md)
-  - [`34. 공식 2024 형식 캐릭터 시트와 실시간 플레이어 UI 모델`](../34-official-2024-character-sheet-and-live-player-ui-model.md)
+  - [`34. 공식 2024 형식 캐릭터 시트와 실시간 플레이어 UI 모델`](../ui/character-sheet/official-2024-character-sheet-and-live-player-ui.md)
 
 ## 배경
 

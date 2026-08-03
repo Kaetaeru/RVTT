@@ -5,8 +5,8 @@
 - 관련 문서:
   - [`ADR-0020`](ADR-0020-typed-spell-resource-pools-and-explicit-cast-payments.md)
   - [`ADR-0021`](ADR-0021-typed-spell-components-and-inventory-backed-materials.md)
-  - [`15. 주문 구성요소와 재료 인벤토리 계약`](../15-spell-components-and-material-inventory-contract.md)
-  - [`16. 캠페인 물질 구성요소 정책`](../16-campaign-material-component-policy.md)
+  - [`15. 주문 구성요소와 재료 인벤토리 계약`](../systems/rules/spell-components-and-material-inventory-contract.md)
+  - [`16. 캠페인 물질 구성요소 정책`](../product/campaign-material-component-policy.md)
 
 ## 배경
 

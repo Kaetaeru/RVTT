@@ -3,12 +3,12 @@
 - 상태: 초안
 - 작성일: 2026-08-03
 - 관련 문서:
-  - [`08. 공통 입력 교과서`](08-common-input-grammar.md)
-  - [`27. 주사위 굴림·연출·결과 확정 모델`](27-dice-roll-presentation-and-resolution-gating-model.md)
-  - [`28. 인카운터·주도권·턴과 제어권 모델`](28-encounter-initiative-turn-and-control-authority-model.md)
-  - [`33. Baldur's Gate 3형 전투 HUD와 행동 UI 모델`](33-baldurs-gate-style-combat-hud-and-contextual-action-ui-model.md)
-  - [`34. 공식 2024 형식 캐릭터 시트와 실시간 플레이어 UI 모델`](34-official-2024-character-sheet-and-live-player-ui-model.md)
-  - [`ADR-0041`](decisions/ADR-0041-shared-combat-hud-character-sheet-layout-and-ui-layering.md)
+  - [`08. 공통 입력 교과서`](../common-input/common-input-grammar.md)
+  - [`27. 주사위 굴림·연출·결과 확정 모델`](../../systems/combat/dice-roll-presentation-and-resolution-gating-model.md)
+  - [`28. 인카운터·주도권·턴과 제어권 모델`](../../systems/combat/encounter-initiative-turn-and-control-authority-model.md)
+  - [`33. Baldur's Gate 3형 전투 HUD와 행동 UI 모델`](../combat-hud/baldurs-gate-style-combat-hud.md)
+  - [`34. 공식 2024 형식 캐릭터 시트와 실시간 플레이어 UI 모델`](../character-sheet/official-2024-character-sheet-and-live-player-ui.md)
+  - [`ADR-0041`](../../decisions/ADR-0041-shared-combat-hud-character-sheet-layout-and-ui-layering.md)
 
 ## 1. 문서 목적
 

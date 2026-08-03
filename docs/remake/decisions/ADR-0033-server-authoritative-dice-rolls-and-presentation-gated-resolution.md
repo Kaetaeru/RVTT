@@ -6,7 +6,7 @@
   - [`ADR-0025`](ADR-0025-typed-rule-events-timing-windows-and-usage-gates.md)
   - [`ADR-0028`](ADR-0028-effect-recipes-pending-effects-and-commit-groups.md)
   - [`ADR-0031`](ADR-0031-zero-hit-points-death-saves-rests-and-resource-recovery.md)
-  - [`27. 주사위 굴림·연출·결과 확정 모델`](../27-dice-roll-presentation-and-resolution-gating-model.md)
+  - [`27. 주사위 굴림·연출·결과 확정 모델`](../systems/combat/dice-roll-presentation-and-resolution-gating-model.md)
 
 ## 배경
 

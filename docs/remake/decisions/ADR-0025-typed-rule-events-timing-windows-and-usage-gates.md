@@ -5,9 +5,9 @@
 - 관련 문서:
   - [`ADR-0017`](ADR-0017-derived-fixed-grants-and-stored-selections.md)
   - [`ADR-0024`](ADR-0024-hybrid-rule-recipes-and-reusable-advanced-operations.md)
-  - [`10. Grant Graph와 Capability 모델`](../10-rules-content-grant-capability-model.md)
-  - [`11. 공통 실행 계약`](../11-rules-content-execution-and-spell-contract.md)
-  - [`19. 재주·특성의 트리거와 다른 턴 실행 모델`](../19-feat-feature-trigger-and-cross-turn-execution-model.md)
+  - [`10. Grant Graph와 Capability 모델`](../architecture/rules-content-grant-capability-model.md)
+  - [`11. 공통 실행 계약`](../architecture/rules-content-execution-and-spell-contract.md)
+  - [`19. 재주·특성의 트리거와 다른 턴 실행 모델`](../systems/rules/feat-feature-trigger-and-cross-turn-execution-model.md)
 
 ## 배경
 

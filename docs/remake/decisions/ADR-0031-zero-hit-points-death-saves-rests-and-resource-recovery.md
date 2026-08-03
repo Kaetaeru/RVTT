@@ -6,8 +6,8 @@
   - [`ADR-0025`](ADR-0025-typed-rule-events-timing-windows-and-usage-gates.md)
   - [`ADR-0028`](ADR-0028-effect-recipes-pending-effects-and-commit-groups.md)
   - [`ADR-0029`](ADR-0029-unified-effect-instances-duration-concentration-and-suppression.md)
-  - [`23. 상태·지속 효과·집중 수명주기 모델`](../23-condition-ongoing-effect-duration-and-concentration-model.md)
-  - [`25. HP 0·죽음 내성·휴식·자원 회복 모델`](../25-zero-hit-points-death-saves-rest-and-resource-recovery-model.md)
+  - [`23. 상태·지속 효과·집중 수명주기 모델`](../systems/rules/condition-ongoing-effect-duration-and-concentration-model.md)
+  - [`25. HP 0·죽음 내성·휴식·자원 회복 모델`](../systems/character/zero-hit-points-death-saves-rest-and-resource-recovery-model.md)
 
 ## 배경
 

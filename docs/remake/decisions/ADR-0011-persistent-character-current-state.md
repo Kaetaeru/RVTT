@@ -3,7 +3,7 @@
 - 상태: 확정
 - 결정일: 2026-08-03
 - 관련 문서:
-  - [`02-core-session-loop.md`](../02-core-session-loop.md)
+  - [`02-core-session-loop.md`](../product/core-session-loop.md)
   - [`AGENTS.md`](../../../AGENTS.md)
 
 ## 배경

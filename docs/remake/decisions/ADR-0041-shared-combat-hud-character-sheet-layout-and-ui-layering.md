@@ -3,12 +3,12 @@
 - 상태: 확정
 - 결정일: 2026-08-03
 - 관련 문서:
-  - [`ADR-0010`](ADR-0010-common-input-grammar.md)
+  - [`ADR-0010`](../ui/common-input/common-input-grammar.md)
   - [`ADR-0033`](ADR-0033-server-authoritative-dice-rolls-and-presentation-gated-resolution.md)
   - [`ADR-0034`](ADR-0034-encounter-initiative-turn-order-and-control-authority.md)
   - [`ADR-0039`](ADR-0039-baldurs-gate-style-combat-hud-and-contextual-action-ui.md)
   - [`ADR-0040`](ADR-0040-official-2024-character-sheet-and-live-player-view.md)
-  - [`35. 전투 HUD·캐릭터 시트 와이어프레임과 공통 UI 규격`](../35-combat-hud-character-sheet-wireframe-and-shared-ui-spec.md)
+  - [`35. 전투 HUD·캐릭터 시트 와이어프레임과 공통 UI 규격`](../ui/shared/combat-hud-character-sheet-wireframe-and-shared-ui.md)
 
 ## 배경
 

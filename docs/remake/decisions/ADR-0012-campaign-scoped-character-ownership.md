@@ -3,7 +3,7 @@
 - 상태: 확정
 - 결정일: 2026-08-03
 - 관련 문서:
-  - [`ADR-0011`](ADR-0011-persistent-character-runtime-state.md)
+  - [`ADR-0011`](ADR-0011-persistent-character-current-state.md)
   - [`AGENTS.md`](../../../AGENTS.md)
 
 ## 배경

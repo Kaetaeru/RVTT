@@ -8,7 +8,7 @@
   - [`ADR-0028`](ADR-0028-effect-recipes-pending-effects-and-commit-groups.md)
   - [`ADR-0032`](ADR-0032-monster-npc-statblocks-and-safe-ingame-json-import.md)
   - [`ADR-0033`](ADR-0033-server-authoritative-dice-rolls-and-presentation-gated-resolution.md)
-  - [`28. 인카운터·주도권·턴과 제어권 모델`](../28-encounter-initiative-turn-and-control-authority-model.md)
+  - [`28. 인카운터·주도권·턴과 제어권 모델`](../systems/combat/encounter-initiative-turn-and-control-authority-model.md)
 
 ## 배경
 

@@ -7,10 +7,10 @@
   - [`ADR-0018`](ADR-0018-source-scoped-spellcasting-profiles.md)
   - [`ADR-0020`](ADR-0020-typed-spell-resource-pools-and-explicit-cast-payments.md)
   - [`ADR-0022`](ADR-0022-campaign-material-component-policy.md)
-  - [`11. 공통 실행 계약과 마법 처리 모델`](../11-rules-content-execution-and-spell-contract.md)
-  - [`14. 주문 자원 풀과 시전 결제 모델`](../14-spell-resource-pools-and-cast-payment-model.md)
-  - [`15. 주문 구성요소와 재료 인벤토리 계약`](../15-spell-components-and-material-inventory-contract.md)
-  - [`16. 캠페인 물질 구성요소 정책`](../16-campaign-material-component-policy.md)
+  - [`11. 공통 실행 계약과 마법 처리 모델`](../architecture/rules-content-execution-and-spell-contract.md)
+  - [`14. 주문 자원 풀과 시전 결제 모델`](../systems/rules/spell-resource-pools-and-cast-payment-model.md)
+  - [`15. 주문 구성요소와 재료 인벤토리 계약`](../systems/rules/spell-components-and-material-inventory-contract.md)
+  - [`16. 캠페인 물질 구성요소 정책`](../product/campaign-material-component-policy.md)
 
 ## 배경
 

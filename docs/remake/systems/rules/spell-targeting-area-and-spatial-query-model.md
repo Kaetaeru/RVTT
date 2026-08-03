@@ -3,10 +3,10 @@
 - 상태: 초안
 - 작성일: 2026-08-03
 - 관련 문서:
-  - [`11. 공통 실행 계약과 마법 처리 모델`](11-rules-content-execution-and-spell-contract.md)
-  - [`14. 주문 자원 풀과 시전 결제 모델`](14-spell-resource-pools-and-cast-payment-model.md)
-  - [`16. 캠페인 물질 구성요소 정책`](16-campaign-material-component-policy.md)
-  - [`ADR-0023`](decisions/ADR-0023-composable-targeting-and-spatial-query-model.md)
+  - [`11. 공통 실행 계약과 마법 처리 모델`](../../architecture/rules-content-execution-and-spell-contract.md)
+  - [`14. 주문 자원 풀과 시전 결제 모델`](spell-resource-pools-and-cast-payment-model.md)
+  - [`16. 캠페인 물질 구성요소 정책`](../../product/campaign-material-component-policy.md)
+  - [`ADR-0023`](../../decisions/ADR-0023-composable-targeting-and-spatial-query-model.md)
 
 ## 1. 문서 목적
 

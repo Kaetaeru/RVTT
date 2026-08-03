@@ -8,7 +8,7 @@
   - [`ADR-0027`](ADR-0027-passive-modifiers-rule-overrides-and-conditional-activation.md)
   - [`ADR-0028`](ADR-0028-effect-recipes-pending-effects-and-commit-groups.md)
   - [`ADR-0035`](ADR-0035-manual-fog-masks-and-optional-region-assist.md)
-  - [`30. 시야·감각·은신·탐지 모델`](../30-visibility-senses-stealth-and-detection-model.md)
+  - [`30. 시야·감각·은신·탐지 모델`](../systems/perception/visibility-senses-stealth-and-detection-model.md)
 
 ## 배경
 

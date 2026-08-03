@@ -2,7 +2,7 @@
 
 - 상태: 초안
 - 작성일: 2026-08-03
-- 관련 결정: [`ADR-0045`](decisions/ADR-0045-dm-workspace-and-scene-lighting-authoring.md)
+- 관련 결정: [`ADR-0045`](../../decisions/ADR-0045-dm-workspace-and-scene-lighting-authoring.md)
 
 ## 1. DMWorkspace
 

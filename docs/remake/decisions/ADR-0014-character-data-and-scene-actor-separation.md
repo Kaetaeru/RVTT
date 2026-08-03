@@ -3,10 +3,10 @@
 - 상태: 확정
 - 결정일: 2026-08-03
 - 관련 문서:
-  - [`ADR-0011`](ADR-0011-persistent-character-runtime-state.md)
+  - [`ADR-0011`](ADR-0011-persistent-character-current-state.md)
   - [`ADR-0012`](ADR-0012-campaign-scoped-character-ownership.md)
   - [`ADR-0013`](ADR-0013-single-character-and-scene-scoped-npcs.md)
-  - [`04-scenes-and-world.md`](../04-scenes-and-world.md)
+  - [`04-scenes-and-world.md`](../systems/scene/scenes-and-world.md)
 
 ## 배경
 

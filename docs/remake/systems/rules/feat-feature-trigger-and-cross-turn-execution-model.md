@@ -3,12 +3,12 @@
 - 상태: 초안
 - 작성일: 2026-08-03
 - 관련 문서:
-  - [`10. Grant Graph와 Capability 모델`](10-rules-content-grant-capability-model.md)
-  - [`11. 공통 실행 계약`](11-rules-content-execution-and-spell-contract.md)
-  - [`17. 주문 대상 지정·영역·공간 질의 모델`](17-spell-targeting-area-and-spatial-query-model.md)
-  - [`18. RuleRecipe 사례`](18-rule-recipe-examples-magic-missile-and-witch-bolt.md)
-  - [`ADR-0024`](decisions/ADR-0024-hybrid-rule-recipes-and-reusable-advanced-operations.md)
-  - [`ADR-0025`](decisions/ADR-0025-typed-rule-events-timing-windows-and-usage-gates.md)
+  - [`10. Grant Graph와 Capability 모델`](../../architecture/rules-content-grant-capability-model.md)
+  - [`11. 공통 실행 계약`](../../architecture/rules-content-execution-and-spell-contract.md)
+  - [`17. 주문 대상 지정·영역·공간 질의 모델`](spell-targeting-area-and-spatial-query-model.md)
+  - [`18. RuleRecipe 사례`](rule-recipe-examples-magic-missile-and-witch-bolt.md)
+  - [`ADR-0024`](../../decisions/ADR-0024-hybrid-rule-recipes-and-reusable-advanced-operations.md)
+  - [`ADR-0025`](../../decisions/ADR-0025-typed-rule-events-timing-windows-and-usage-gates.md)
 
 ## 1. 문서 목적
 

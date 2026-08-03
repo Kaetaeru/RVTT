@@ -3,8 +3,8 @@
 - 상태: 확정
 - 결정일: 2026-08-03
 - 관련 문서:
-  - [`06-ingame-scene-editor-tools.md`](../06-ingame-scene-editor-tools.md)
-  - [`09-scene-editor-tool-module-architecture.md`](../09-scene-editor-tool-module-architecture.md)
+  - [`06-ingame-scene-editor-tools.md`](../systems/scene/ingame-scene-editor-tools.md)
+  - [`09-scene-editor-tool-module-architecture.md`](../architecture/scene-editor-tool-module-architecture.md)
 
 ## 배경
 

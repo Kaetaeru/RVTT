@@ -31,15 +31,15 @@ RVTT 리메이크의 제품 결정, 시스템 기획, UI, 구현 명세와 감�
 
 | 경로 | 역할 |
 |---|---|
-| [`product/`](product/) | 제품 범위, 비목표, 전체 사용자 흐름과 지원 정책 |
-| [`architecture/`](architecture/) | 여러 시스템이 공유하는 권위·Recipe·Capability·저장·확장 계약 |
-| [`systems/`](systems/) | 기능 영역별 사용자 흐름과 시스템 동작 |
-| [`ui/`](ui/) | 화면 배치, 입력 문맥, 패널 상태와 사용자 피드백 |
-| [`decisions/`](decisions/) | 전역 번호를 가진 Architecture Decision Record |
-| [`audits/`](audits/) | 기획 완성도, 충돌, 준비도와 마이그레이션 감사 |
-| [`specs/`](specs/) | 구현 직전 모듈·타입·명령·네트워크·테스트 계약 |
-| [`templates/`](templates/) | 기획·ADR·구현 명세·감사 템플릿 |
-| [`archive/`](archive/) | 현재 권위가 아닌 역사적 문서 |
+| [`product/`](product) | 제품 범위, 비목표, 전체 사용자 흐름과 지원 정책 |
+| [`architecture/`](architecture) | 여러 시스템이 공유하는 권위·Recipe·Capability·저장·확장 계약 |
+| [`systems/`](systems) | 기능 영역별 사용자 흐름과 시스템 동작 |
+| [`ui/`](ui) | 화면 배치, 입력 문맥, 패널 상태와 사용자 피드백 |
+| [`decisions/`](decisions) | 전역 번호를 가진 Architecture Decision Record |
+| [`audits/`](audits) | 기획 완성도, 충돌, 준비도와 마이그레이션 감사 |
+| [`specs/`](specs) | 구현 직전 모듈·타입·명령·네트워크·테스트 계약 |
+| [`templates/`](templates) | 기획·ADR·구현 명세·감사 템플릿 |
+| [`archive/`](archive) | 현재 권위가 아닌 역사적 문서 |
 
 ## 추천 읽기 순서
 

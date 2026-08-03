@@ -5,7 +5,7 @@
 - 관련 문서:
   - [`ADR-0002`](ADR-0002-integrated-character-progression.md)
   - [`ADR-0017`](ADR-0017-derived-fixed-grants-and-stored-selections.md)
-  - [`12. 주문 획득·준비·시전 권한 모델`](../12-spell-acquisition-preparation-and-cast-access-model.md)
+  - [`12. 주문 획득·준비·시전 권한 모델`](../systems/character/spell-acquisition-preparation-and-cast-access-model.md)
 
 ## 배경
 

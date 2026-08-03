@@ -4,9 +4,9 @@
 - 결정일: 2026-08-03
 - 관련 문서:
   - [`ADR-0023`](ADR-0023-composable-targeting-and-spatial-query-model.md)
-  - [`11. 공통 실행 계약과 마법 처리 모델`](../11-rules-content-execution-and-spell-contract.md)
-  - [`17. 주문 대상 지정·영역·공간 질의 모델`](../17-spell-targeting-area-and-spatial-query-model.md)
-  - [`18. 매직 미사일과 마녀의 번개 RuleRecipe 사례`](../18-rule-recipe-examples-magic-missile-and-witch-bolt.md)
+  - [`11. 공통 실행 계약과 마법 처리 모델`](../architecture/rules-content-execution-and-spell-contract.md)
+  - [`17. 주문 대상 지정·영역·공간 질의 모델`](../systems/rules/spell-targeting-area-and-spatial-query-model.md)
+  - [`18. 매직 미사일과 마녀의 번개 RuleRecipe 사례`](../systems/rules/rule-recipe-examples-magic-missile-and-witch-bolt.md)
 
 ## 배경
 

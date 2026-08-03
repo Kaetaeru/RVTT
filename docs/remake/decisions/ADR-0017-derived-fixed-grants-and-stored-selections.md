@@ -5,7 +5,7 @@
 - 관련 문서:
   - [`ADR-0002`](ADR-0002-integrated-character-progression.md)
   - [`ADR-0003`](ADR-0003-ruleset-source-packs-localization.md)
-  - [`10. Grant Graph와 Capability 모델`](../10-rules-content-grant-capability-model.md)
+  - [`10. Grant Graph와 Capability 모델`](../architecture/rules-content-grant-capability-model.md)
 
 ## 배경
 

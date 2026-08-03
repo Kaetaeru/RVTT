@@ -3,10 +3,10 @@
 - 상태: 확정
 - 결정일: 2026-08-03
 - 관련 문서:
-  - [`22. EffectRecipe`](../22-effect-recipe-resolution-and-commit-model.md)
-  - [`27. 주사위 연출`](../27-dice-roll-presentation-and-resolution-gating-model.md)
-  - [`33. 전투 HUD`](../33-baldurs-gate-style-combat-hud-and-contextual-action-ui-model.md)
-  - [`40. 모듈형 VFX와 프레젠테이션 레시피`](../40-modular-vfx-and-presentation-recipe-model.md)
+  - [`22. EffectRecipe`](../architecture/effect-recipe-resolution-and-commit-model.md)
+  - [`27. 주사위 연출`](../systems/combat/dice-roll-presentation-and-resolution-gating-model.md)
+  - [`33. 전투 HUD`](../ui/combat-hud/baldurs-gate-style-combat-hud.md)
+  - [`40. 모듈형 VFX와 프레젠테이션 레시피`](../architecture/modular-vfx-and-presentation-recipe-model.md)
 
 ## 결정
 

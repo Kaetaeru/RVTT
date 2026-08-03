@@ -3,10 +3,10 @@
 - 상태: 초안
 - 작성일: 2026-08-03
 - 관련 문서:
-  - [`02-core-session-loop.md`](02-core-session-loop.md)
-  - [`06-ingame-scene-editor-tools.md`](06-ingame-scene-editor-tools.md)
-  - [`07-scene-editor-interaction-and-layout.md`](07-scene-editor-interaction-and-layout.md)
-  - [`09-scene-editor-tool-module-architecture.md`](09-scene-editor-tool-module-architecture.md)
+  - [`02-core-session-loop.md`](../../product/core-session-loop.md)
+  - [`06-ingame-scene-editor-tools.md`](../../systems/scene/ingame-scene-editor-tools.md)
+  - [`07-scene-editor-interaction-and-layout.md`](../scene-editor/scene-editor-interaction-and-layout.md)
+  - [`09-scene-editor-tool-module-architecture.md`](../../architecture/scene-editor-tool-module-architecture.md)
 
 ## 1. 범위
 

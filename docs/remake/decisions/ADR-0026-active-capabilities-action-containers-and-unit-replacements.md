@@ -7,9 +7,9 @@
   - [`ADR-0023`](ADR-0023-composable-targeting-and-spatial-query-model.md)
   - [`ADR-0024`](ADR-0024-hybrid-rule-recipes-and-reusable-advanced-operations.md)
   - [`ADR-0025`](ADR-0025-typed-rule-events-timing-windows-and-usage-gates.md)
-  - [`10. Grant Graph와 Capability 모델`](../10-rules-content-grant-capability-model.md)
-  - [`11. 공통 실행 계약`](../11-rules-content-execution-and-spell-contract.md)
-  - [`20. 능동형 특성과 행동 내부 실행 모델`](../20-active-feature-and-action-container-execution-model.md)
+  - [`10. Grant Graph와 Capability 모델`](../architecture/rules-content-grant-capability-model.md)
+  - [`11. 공통 실행 계약`](../architecture/rules-content-execution-and-spell-contract.md)
+  - [`20. 능동형 특성과 행동 내부 실행 모델`](../systems/rules/active-feature-and-action-container-execution-model.md)
 
 ## 배경
 

@@ -7,7 +7,7 @@
   - [`ADR-0009`](ADR-0009-selection-volume-inclusion-preference.md)
   - [`ADR-0023`](ADR-0023-composable-targeting-and-spatial-query-model.md)
   - [`ADR-0034`](ADR-0034-encounter-initiative-turn-order-and-control-authority.md)
-  - [`29. 수동 Fog of War와 선택형 Assist 모델`](../29-manual-fog-of-war-and-optional-assist-model.md)
+  - [`29. 수동 Fog of War와 선택형 Assist 모델`](../systems/perception/manual-fog-of-war-and-optional-assist-model.md)
 
 ## 배경
 

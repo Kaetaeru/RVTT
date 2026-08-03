@@ -4,13 +4,13 @@
 - 결정일: 2026-08-03
 - 관련 문서:
   - [`ADR-0004`](ADR-0004-baldurs-gate-style-session-interaction.md)
-  - [`ADR-0010`](ADR-0010-common-input-grammar.md)
+  - [`ADR-0010`](../ui/common-input/common-input-grammar.md)
   - [`ADR-0023`](ADR-0023-composable-targeting-and-spatial-query-model.md)
   - [`ADR-0025`](ADR-0025-typed-rule-events-timing-windows-and-usage-gates.md)
   - [`ADR-0033`](ADR-0033-server-authoritative-dice-rolls-and-presentation-gated-resolution.md)
   - [`ADR-0034`](ADR-0034-encounter-initiative-turn-order-and-control-authority.md)
   - [`ADR-0036`](ADR-0036-observer-relative-perception-senses-stealth-and-rule-points.md)
-  - [`33. Baldur's Gate 3형 전투 HUD와 행동 UI 모델`](../33-baldurs-gate-style-combat-hud-and-contextual-action-ui-model.md)
+  - [`33. Baldur's Gate 3형 전투 HUD와 행동 UI 모델`](../ui/combat-hud/baldurs-gate-style-combat-hud.md)
 
 ## 배경
 
