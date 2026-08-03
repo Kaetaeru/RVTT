@@ -6,7 +6,7 @@
   - [`08. 공통 입력 교과서`](../../../common-input/common-input-grammar.md)
   - [`28. 인카운터·주도권·턴과 제어권 모델`](../../../../systems/combat/encounter-initiative-turn-and-control-authority-model.md)
   - [`37. 전투 턴 스냅샷 타임라인`](../../../../systems/combat/encounter-turn-snapshot-and-dm-rollback-model.md)
-  - [`39. DM 작업공간과 씬 라이팅 모델`](../../dm-workspace-and-scene-lighting.md)
+  - [`39. DM 작업공간과 씬 라이팅 모델`](../../../../dm-workspace-and-scene-lighting.md)
   - [`ADR-0047`](../../../../decisions/ADR-0047-contextual-dm-quick-actions-and-safe-command-execution.md)
 
 ## 1. 목적

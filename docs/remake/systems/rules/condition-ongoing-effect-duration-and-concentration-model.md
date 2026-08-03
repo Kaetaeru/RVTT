@@ -4,7 +4,7 @@
 - 작성일: 2026-08-03
 - 관련 문서:
   - [`10. Grant Graph와 Capability 모델`](../../../../architecture/rules-content-grant-capability-model.md)
-  - [`19. 트리거와 다른 턴 실행 모델`](../../feat-feature-trigger-and-cross-turn-execution-model.md)
+  - [`19. 트리거와 다른 턴 실행 모델`](../../../../feat-feature-trigger-and-cross-turn-execution-model.md)
   - [`21. 패시브 특성 모델`](../../../../architecture/passive-modifier-and-rule-override-model.md)
   - [`22. EffectRecipe와 효과 해결·확정 모델`](../../../../architecture/effect-recipe-resolution-and-commit-model.md)
   - [`ADR-0029`](../../../../decisions/ADR-0029-unified-effect-instances-duration-concentration-and-suppression.md)

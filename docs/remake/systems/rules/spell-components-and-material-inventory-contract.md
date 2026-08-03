@@ -5,7 +5,7 @@
 - 관련 문서:
   - [`11. 공통 실행 계약과 마법 처리 모델`](../../../../architecture/rules-content-execution-and-spell-contract.md)
   - [`12. 주문 획득·준비·시전 권한 모델`](../../../character/spell-acquisition-preparation-and-cast-access-model.md)
-  - [`14. 주문 자원 풀과 시전 결제 모델`](../../spell-resource-pools-and-cast-payment-model.md)
+  - [`14. 주문 자원 풀과 시전 결제 모델`](../../../../spell-resource-pools-and-cast-payment-model.md)
   - [`ADR-0020`](../../../../decisions/ADR-0020-typed-spell-resource-pools-and-explicit-cast-payments.md)
   - [`ADR-0021`](../../../../decisions/ADR-0021-typed-spell-components-and-inventory-backed-materials.md)
 

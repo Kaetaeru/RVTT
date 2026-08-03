@@ -3,11 +3,11 @@
 - 상태: 초안
 - 작성일: 2026-08-03
 - 관련 문서:
-  - [`10. Grant Graph와 Capability 모델`](../rules-content-grant-capability-model.md)
-  - [`11. 공통 실행 계약`](../rules-content-execution-and-spell-contract.md)
-  - [`19. 트리거와 다른 턴 실행 모델`](../../systems/rules/feat-feature-trigger-and-cross-turn-execution-model.md)
-  - [`20. 능동형 특성과 행동 내부 실행 모델`](../../systems/rules/active-feature-and-action-container-execution-model.md)
-  - [`ADR-0027`](../../decisions/ADR-0027-passive-modifiers-rule-overrides-and-conditional-activation.md)
+  - [`10. Grant Graph와 Capability 모델`](../../rules-content-grant-capability-model.md)
+  - [`11. 공통 실행 계약`](../../rules-content-execution-and-spell-contract.md)
+  - [`19. 트리거와 다른 턴 실행 모델`](../../../systems/rules/feat-feature-trigger-and-cross-turn-execution-model.md)
+  - [`20. 능동형 특성과 행동 내부 실행 모델`](../../../systems/rules/active-feature-and-action-container-execution-model.md)
+  - [`ADR-0027`](../../../decisions/ADR-0027-passive-modifiers-rule-overrides-and-conditional-activation.md)
 
 ## 1. 문서 목적
 

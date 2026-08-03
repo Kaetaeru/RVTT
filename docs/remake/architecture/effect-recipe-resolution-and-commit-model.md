@@ -3,13 +3,13 @@
 - 상태: 초안
 - 작성일: 2026-08-03
 - 관련 문서:
-  - [`11. 공통 실행 계약`](../rules-content-execution-and-spell-contract.md)
-  - [`17. 주문 대상 지정·영역·공간 질의 모델`](../../systems/rules/spell-targeting-area-and-spatial-query-model.md)
-  - [`18. RuleRecipe 사례`](../../systems/rules/rule-recipe-examples-magic-missile-and-witch-bolt.md)
-  - [`19. 트리거와 다른 턴 실행 모델`](../../systems/rules/feat-feature-trigger-and-cross-turn-execution-model.md)
-  - [`20. 능동형 특성과 행동 내부 실행 모델`](../../systems/rules/active-feature-and-action-container-execution-model.md)
-  - [`21. 패시브 특성 모델`](../passive-modifier-and-rule-override-model.md)
-  - [`ADR-0028`](../../decisions/ADR-0028-effect-recipes-pending-effects-and-commit-groups.md)
+  - [`11. 공통 실행 계약`](../../rules-content-execution-and-spell-contract.md)
+  - [`17. 주문 대상 지정·영역·공간 질의 모델`](../../../systems/rules/spell-targeting-area-and-spatial-query-model.md)
+  - [`18. RuleRecipe 사례`](../../../systems/rules/rule-recipe-examples-magic-missile-and-witch-bolt.md)
+  - [`19. 트리거와 다른 턴 실행 모델`](../../../systems/rules/feat-feature-trigger-and-cross-turn-execution-model.md)
+  - [`20. 능동형 특성과 행동 내부 실행 모델`](../../../systems/rules/active-feature-and-action-container-execution-model.md)
+  - [`21. 패시브 특성 모델`](../../passive-modifier-and-rule-override-model.md)
+  - [`ADR-0028`](../../../decisions/ADR-0028-effect-recipes-pending-effects-and-commit-groups.md)
 
 ## 1. 문서 목적
 

@@ -7,7 +7,7 @@
   - [`20. 능동형 특성과 행동 내부 실행 모델`](../../../rules/active-feature-and-action-container-execution-model.md)
   - [`22. EffectRecipe와 효과 해결·확정 모델`](../../../../architecture/effect-recipe-resolution-and-commit-model.md)
   - [`26. 몬스터·NPC 스탯블록과 JSON 가져오기 모델`](../../../character/monster-npc-statblock-and-ingame-json-import-model.md)
-  - [`27. 주사위 굴림·연출·결과 확정 모델`](../../dice-roll-presentation-and-resolution-gating-model.md)
+  - [`27. 주사위 굴림·연출·결과 확정 모델`](../../../../dice-roll-presentation-and-resolution-gating-model.md)
   - [`ADR-0034`](../../../../decisions/ADR-0034-encounter-initiative-turn-order-and-control-authority.md)
 
 ## 1. 문서 목적

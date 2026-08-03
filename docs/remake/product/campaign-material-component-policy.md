@@ -3,10 +3,10 @@
 - 상태: 초안
 - 작성일: 2026-08-03
 - 관련 문서:
-  - [`14. 주문 자원 풀과 시전 결제 모델`](../../systems/rules/spell-resource-pools-and-cast-payment-model.md)
-  - [`15. 주문 구성요소와 재료 인벤토리 계약`](../../systems/rules/spell-components-and-material-inventory-contract.md)
-  - [`ADR-0021`](../../decisions/ADR-0021-typed-spell-components-and-inventory-backed-materials.md)
-  - [`ADR-0022`](../../decisions/ADR-0022-campaign-material-component-policy.md)
+  - [`14. 주문 자원 풀과 시전 결제 모델`](../../../systems/rules/spell-resource-pools-and-cast-payment-model.md)
+  - [`15. 주문 구성요소와 재료 인벤토리 계약`](../../../systems/rules/spell-components-and-material-inventory-contract.md)
+  - [`ADR-0021`](../../../decisions/ADR-0021-typed-spell-components-and-inventory-backed-materials.md)
+  - [`ADR-0022`](../../../decisions/ADR-0022-campaign-material-component-policy.md)
 
 ## 1. 문서 목적
 

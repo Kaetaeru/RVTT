@@ -4,7 +4,7 @@
 - 작성일: 2026-08-03
 - 관련 문서:
   - [`02-core-session-loop.md`](../../../../product/core-session-loop.md)
-  - [`04-scenes-and-world.md`](../../scenes-and-world.md)
+  - [`04-scenes-and-world.md`](../../../../scenes-and-world.md)
   - [`05-navigation-authoring-pipeline.md`](../../../navigation/navigation-authoring-pipeline.md)
   - [`07-scene-editor-interaction-and-layout.md`](../../../../ui/scene-editor/scene-editor-interaction-and-layout.md)
   - [`ADR-0005`](../../../../decisions/ADR-0005-performance-reliability-clean-code.md)

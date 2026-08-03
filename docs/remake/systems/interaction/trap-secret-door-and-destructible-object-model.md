@@ -9,7 +9,7 @@
   - [`21. 패시브 특성 모델`](../../../../architecture/passive-modifier-and-rule-override-model.md)
   - [`22. EffectRecipe와 효과 해결·확정 모델`](../../../../architecture/effect-recipe-resolution-and-commit-model.md)
   - [`30. 시야·감각·은신·탐지 모델`](../../../perception/visibility-senses-stealth-and-detection-model.md)
-  - [`31. 무설정 상호작용 프리팹과 상태 전환 모델`](../../zero-metadata-interaction-prefab-and-state-transition-model.md)
+  - [`31. 무설정 상호작용 프리팹과 상태 전환 모델`](../../../../zero-metadata-interaction-prefab-and-state-transition-model.md)
   - [`ADR-0038`](../../../../decisions/ADR-0038-zero-metadata-hazards-secret-passages-and-destructible-objects.md)
 
 ## 1. 문서 목적

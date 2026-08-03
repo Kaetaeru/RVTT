@@ -3,14 +3,14 @@
 - 상태: 초안
 - 작성일: 2026-08-03
 - 관련 문서:
-  - [`10. Grant Graph와 Capability 모델`](../rules-content-grant-capability-model.md)
-  - [`ADR-0001`](../../decisions/ADR-0001-authored-rules-content.md)
-  - [`ADR-0002`](../../decisions/ADR-0002-integrated-character-progression.md)
-  - [`ADR-0003`](../../decisions/ADR-0003-ruleset-source-packs-localization.md)
-  - [`ADR-0011`](../../decisions/ADR-0011-persistent-character-current-state.md)
-  - [`ADR-0014`](../../decisions/ADR-0014-character-data-and-scene-actor-separation.md)
-  - [`ADR-0017`](../../decisions/ADR-0017-derived-fixed-grants-and-stored-selections.md)
-  - [`08. 공통 입력 교과서`](../../ui/common-input/common-input-grammar.md)
+  - [`10. Grant Graph와 Capability 모델`](../../rules-content-grant-capability-model.md)
+  - [`ADR-0001`](../../../decisions/ADR-0001-authored-rules-content.md)
+  - [`ADR-0002`](../../../decisions/ADR-0002-integrated-character-progression.md)
+  - [`ADR-0003`](../../../decisions/ADR-0003-ruleset-source-packs-localization.md)
+  - [`ADR-0011`](../../../decisions/ADR-0011-persistent-character-current-state.md)
+  - [`ADR-0014`](../../../decisions/ADR-0014-character-data-and-scene-actor-separation.md)
+  - [`ADR-0017`](../../../decisions/ADR-0017-derived-fixed-grants-and-stored-selections.md)
+  - [`08. 공통 입력 교과서`](../../../ui/common-input/common-input-grammar.md)
 
 ## 1. 문서 목적
 

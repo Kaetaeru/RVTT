@@ -9,7 +9,7 @@
   - [`22. EffectRecipe와 효과 해결·확정 모델`](../../../../architecture/effect-recipe-resolution-and-commit-model.md)
   - [`23. 상태·지속 효과·집중 수명주기 모델`](../../../rules/condition-ongoing-effect-duration-and-concentration-model.md)
   - [`24. 무기·아이템·공격 프로필 모델`](../../../inventory/item-weapon-attack-profile-and-mastery-model.md)
-  - [`25. HP 0·죽음 내성·휴식·자원 회복 모델`](../../zero-hit-points-death-saves-rest-and-resource-recovery-model.md)
+  - [`25. HP 0·죽음 내성·휴식·자원 회복 모델`](../../../../zero-hit-points-death-saves-rest-and-resource-recovery-model.md)
   - [`ADR-0032`](../../../../decisions/ADR-0032-monster-npc-statblocks-and-safe-ingame-json-import.md)
 
 ## 1. 문서 목적
