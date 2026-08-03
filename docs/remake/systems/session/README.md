@@ -1,6 +1,6 @@
 # Session 시스템
 
-캠페인 로비, 중도 참여, 영구 Owner, 런타임 Controller, Observer와 Client 동기화를 다룬다.
+캠페인 로비, 중도 참여, 영구 Owner, 런타임 Controller, Observer, Client 동기화와 Scene Streaming Ready를 다룬다.
 
 ## 권위 문서
 
@@ -21,6 +21,16 @@
   - Command Idempotency, Result 복구와 Event Gap 처리
   - 사용자별 Disclosure Projection
 
+### Scene Streaming과 Ready
+
+- [`../../architecture/scene-streaming-client-interest-and-ready-activation-contract.md`](../../architecture/scene-streaming-client-interest-and-ready-activation-contract.md)
+  - Scene Entry Essential과 Controlled Actor Activation Set
+  - Client-safe Chunk, Cache, Materialization과 Ready Ack
+  - Camera·Movement Prefetch와 Gameplay Scope Gate
+  - 중도 참여·재접속 Chunk 재사용
+  - Prepare·Commit 기반 Scene Transition
+  - 준비되지 않은 Controller와 그룹 전환 정책
+
 ### 저장과 서버 복구
 
 - [`../../architecture/persistence-and-session-recovery-model.md`](../../architecture/persistence-and-session-recovery-model.md)
@@ -34,5 +44,7 @@
 - Lobby Ready는 사용자의 시작 의사이고 Client Ready는 기술 동기화 상태다.
 - 중도 참여자는 Raw Server State가 아니라 권한별 Projection Snapshot을 받는다.
 - Authority Ready 전에는 권위 Gameplay Command를 허용하지 않는다.
-- 재접속 Client가 보낸 로컬 상태를 권위 상태로 사용하지 않는다.
+- Presentation Ready는 모든 장식이 아니라 현재 Scene Essential Activation Set 준비를 뜻한다.
+- Scene Transition은 공개 가능한 정적 Chunk를 먼저 Stage한 뒤 안전 경계에서 Presence를 옮긴다.
+- 재접속 Client가 보낸 로컬 상태와 Cache를 권위 상태로 사용하지 않고 Hash·Grant·Cursor를 다시 검증한다.
 - 이전 Connection Epoch의 Command와 Ready 신호를 무효화한다.
