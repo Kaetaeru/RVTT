@@ -99,3 +99,77 @@
 - 저장 한도 초과 데이터는 manifest와 chunk로 나눈다.
 
 기존 문서가 이 전제와 충돌하면 새 기능을 덧붙이기 전에 충돌을 표시하고 수정 대상으로 등록한다.
+
+## 5. 공통 런타임 아키텍처 게이트
+
+기획과 구현명세를 작성하기 전에 [`Runtime Architecture Principles`](architecture/runtime-architecture-principles.md)와 [`ADR-0054`](decisions/ADR-0054-compiled-semantic-runtime-and-query-authority-principles.md)를 확인한다.
+
+### 사용자 경험이 상위 제약이다
+
+내부 계산, Compiler와 Index는 복잡해질 수 있다. 다만 다음을 요구하는 설계는 채택하지 않는다.
+
+- DM이 일반 에셋 내부에 기술용 Attribute나 Value를 직접 추가
+- DM이 내비게이션 Polygon, Portal 폭과 Clearance를 일상적으로 관리
+- 플레이어가 내부 계산 때문에 눈에 띄는 입력 지연과 불안정한 이동을 경험
+- Scene 제작자가 엔진 내부 Graph와 Cache를 이해해야 함
+
+복잡성은 Compiler와 Runtime이 소유한다.
+
+### 권위와 계층을 명시한다
+
+새 문서는 최소한 다음 질문에 답해야 한다.
+
+1. 저장 원본은 무엇인가
+2. 어떤 Compiled Runtime 데이터가 생성되는가
+3. 어느 Layer와 Provider가 책임지는가
+4. 어떤 Snapshot과 revision을 읽는가
+5. 조회는 어떤 Query를 사용하는가
+6. 변경은 어떤 Command 또는 CommitGroup을 사용하는가
+7. Cache와 Index는 무엇에 의해 무효화되는가
+8. 롤백·재접속·중도 참여 시 무엇을 복구하는가
+9. Roblox Instance와 Physics를 어디까지 사용하는가
+10. DM과 플레이어에게 추가되는 조작 부담은 무엇인가
+
+중요한 답이 빠져 있으면 `READY`로 표시하지 않는다.
+
+### 직접 Workspace 조회를 권위 판정에 사용하지 않는다
+
+Rules, Recipe, UI와 일반 기능 서비스는 `Workspace` 탐색, Raycast와 overlap을 직접 호출해 권위 결과를 만들지 않는다.
+
+필요한 Roblox 공간 API는 다음 경계 안에 둔다.
+
+- Scene Compiler Geometry Adapter
+- 등록된 Spatial Provider
+- 비권위 Presentation
+- 검증·진단 도구
+
+### Legacy Attribute 관례를 복원하지 않는다
+
+리메이크의 권위 데이터로 다음 모델 내부 관례를 다시 도입하지 않는다.
+
+```text
+Walkable
+Deniable
+IsDeniable
+DifficultTerrain
+IsDifficultTerrain
+```
+
+Semantic Profile은 Asset Definition, Content Pack, Scene Metadata 또는 명시적 Override에 저장한다. 원본 Model은 Attribute와 Value가 없어도 등록 가능해야 한다.
+
+### Query와 Mutation을 분리한다
+
+- Query는 Snapshot-bound, 읽기 전용, 결정적이며 불변 결과를 반환한다.
+- 상태 변경은 서버 권위 Command, transaction 또는 CommitGroup만 수행한다.
+- Presentation, Query와 Step Handler는 권위 상태를 직접 변경하지 않는다.
+- Recipe의 BindingStore는 실행 범위 Blackboard이며 전역 월드 상태를 소유하지 않는다.
+
+### 확장은 신뢰된 Registry로 제한한다
+
+Builder, Provider, Step Handler와 Presentation Module은 고정 ID, 버전, Schema와 Budget을 가진 신뢰된 모듈만 등록한다.
+
+사용자 콘텐츠가 임의 Luau, 무제한 반복, 전체 Workspace 접근과 권위 Command 우회를 제공하도록 설계하지 않는다.
+
+### 한 결정에는 하나의 권위 문서만 둔다
+
+하위 문서는 전체 원칙을 다시 정의하지 않는다. 해당 개념의 권위 문서를 링크하고, 자신의 범위에서 추가되는 계약만 기록한다.
