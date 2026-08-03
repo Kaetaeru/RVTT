@@ -24,6 +24,13 @@
   - Ownership·Link Graph, Tombstone과 Scene Transfer
   - Snapshot·Rollback, Build Rebind와 Presentation Materialization 경계
   - Character·Item·Effect 원본과 Runtime Scene Presence 분리
+- [`Networking Command, Event와 Client Synchronization 계약`](networking-command-event-and-client-synchronization-contract.md)
+  - Versioned Protocol Envelope와 고정 Message Lane
+  - Command·Read Request, Receipt·Result와 구조화 Error
+  - Idempotency, Ordering Key, Rate Limit과 Backpressure
+  - 사용자별 Authority Projection Stream과 Disclosure
+  - Projection Snapshot, Event Catch-up, 재접속과 Client Ready
+  - 권위 Event와 병합 가능한 Presentation Signal 분리
 - [`Spatial Query Engine과 Provider 계약`](spatial-query-engine-and-provider-contract.md)
   - Runtime Scene Snapshot에 고정된 공간 질의 계약
   - 타입 있는 Spatial Reference, Shape, Request와 Immutable Result
@@ -40,7 +47,8 @@
 ## 포함 범위
 
 - 서버·클라이언트 책임
-- Command, revision, transaction과 Result
+- Command, Read Request, revision, transaction과 Result
+- Versioned Protocol, Projection Stream, Snapshot Sync와 Client Ready
 - Registry와 고정 ID
 - Scene Source, Compiler Build, Runtime Scene Snapshot과 Spatial Query
 - Runtime Layer, State Binding, Chunk와 Dependency Graph
@@ -59,6 +67,8 @@
 Scene Source, Semantic Profile, Runtime Layer, Index, Chunk, Build와 게시를 다루는 문서는 [`Scene Compiler 계약`](scene-compiler-and-compiled-runtime-scene-contract.md)을 따른다.
 
 Actor, 문, 함정, 소환체, 지속 영역과 기타 Scene Presence의 생성·참조·비활성·복원·파괴를 다루는 문서는 [`Runtime Object System 계약`](runtime-object-system-and-entity-lifecycle-contract.md)을 따른다.
+
+Remote, Client Command, Read Request, Event 복제, 중도 참여, 재접속, Snapshot Sync와 Client Ready를 다루는 문서는 [`Networking 계약`](networking-command-event-and-client-synchronization-contract.md)을 따른다.
 
 공간, 거리, 점유, 시야 증거, 영역 포함이나 이동 가능성을 사용하는 문서는 [`Spatial Query Engine과 Provider 계약`](spatial-query-engine-and-provider-contract.md)을 추가로 따른다.
 
