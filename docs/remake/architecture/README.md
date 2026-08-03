@@ -51,6 +51,12 @@
   - Navigation Planner, Movement Coordinator와 Movement Executor
   - Progress Checkpoint, Swept Body, 이동력 소비와 Timing Window
   - 탐험 클릭·WASD, 전투 이동, Dynamic Replan과 Occupancy
+- [`Rule Runtime Orchestrator와 Pending Execution 계약`](rule-runtime-orchestrator-and-pending-execution-contract.md)
+  - 모든 공격·주문·Feature·Item·Trigger의 공통 RuleExecution 상태기계
+  - Capability 검증, 비용 예약, Recipe 실행과 PendingEffect 수집
+  - RuleEvent, 중첩 TimingWindow, Capability Offer와 Child Execution
+  - CommitGroup 준비, 사후 Event, 저장·재접속과 Rollback
+  - Presentation Gate, 실행 Budget, Cycle 방지와 사용자별 Projection
 
 ## 포함 범위
 
@@ -63,7 +69,7 @@
 - Runtime Object Identity, Component, Lifecycle, Ownership과 Link
 - Client Interest, Streaming Activation Set, Cache, Eviction과 Scene Transition Ready
 - Traversal Domain, 경로 계획과 Movement Execution
-- Capability, Recipe와 Effect
+- Capability, RuleExecution, Recipe, TimingWindow와 Effect
 - 저장·복구와 마이그레이션
 - PresentationRecipe와 확장 계약
 
@@ -84,5 +90,7 @@ Scene Chunk, Client Interest, Presentation Materialization, Camera·이동 Prefe
 공간, 거리, 점유, 시야 증거, 영역 포함이나 이동 가능성을 사용하는 문서는 [`Spatial Query Engine과 Provider 계약`](spatial-query-engine-and-provider-contract.md)을 추가로 따른다.
 
 경로 계획, 이동 비용, 중단, 점유와 위치 변경을 사용하는 문서는 [`Runtime Navigation 계약`](runtime-navigation-path-planning-and-movement-execution-contract.md)을 따른다.
+
+Capability 실행, Recipe 시작·중단·재개, RuleEvent, TimingWindow, Reaction, PendingEffect, CommitGroup과 Pending Execution 복구를 다루는 문서는 [`Rule Runtime Orchestrator 계약`](rule-runtime-orchestrator-and-pending-execution-contract.md)을 따른다.
 
 동일한 결정을 여러 문서에 반복하지 않는다. 전체 계층과 권위 원칙은 이 문서에 연결하고, 각 하위 문서는 자신의 데이터·상태·실패·성능 계약만 추가한다.
