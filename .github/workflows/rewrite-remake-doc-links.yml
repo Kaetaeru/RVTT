@@ -2,20 +2,12 @@ name: Rewrite remake documentation links
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - planning/rvtt-remake
-    paths:
-      - "docs/remake/**"
-      - "scripts/docs/rewrite_remake_doc_links.py"
-      - ".github/workflows/rewrite-remake-doc-links.yml"
 
 permissions:
   contents: write
 
 jobs:
   rewrite:
-    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - name: Check out planning branch
