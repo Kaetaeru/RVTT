@@ -19,3 +19,11 @@
   - BindingStore
   - StepExecutor
   - Guided·Assisted 대기와 복구
+
+- [`002. Standard Recipe Step Handler Contracts`](shared/002-standard-step-handler-contracts.md)
+  - StepHandler와 StepHandlerRegistry
+  - 제한된 HandlerServices
+  - config·입력·출력 검증
+  - Guided·Assisted execute/resume 계약
+  - PendingEffect·Branch·Presentation 반환 경계
+  - 오류 격리, 멱등성, 진단과 테스트
