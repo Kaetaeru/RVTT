@@ -10,6 +10,13 @@
   - Runtime 계층, Query와 Command 경계를 고정한다.
   - Legacy `Walkable` Attribute 관례를 리메이크 권위 데이터에서 제외한다.
   - 모든 하위 Architecture·System·Spec 문서가 따라야 하는 공통 원칙이다.
+- [`Scene Compiler와 Compiled Runtime Scene 계약`](scene-compiler-and-compiled-runtime-scene-contract.md)
+  - Canonical Scene Source와 정규화 Semantic Contribution
+  - Layer Builder, Runtime Object Blueprint와 State Binding
+  - 불변 Build Package, Chunk, Spatial Index와 Dependency Graph
+  - 부분 컴파일과 전체 Build 동일성
+  - 원자적 게시, Last Known Good Build와 Live Patch 경계
+  - 서버 Raw Build와 권한별 Client Disclosure Segment 분리
 - [`Spatial Query Engine과 Provider 계약`](spatial-query-engine-and-provider-contract.md)
   - Runtime Scene Snapshot에 고정된 공간 질의 계약
   - 타입 있는 Spatial Reference, Shape, Request와 Immutable Result
@@ -28,7 +35,8 @@
 - 서버·클라이언트 책임
 - Command, revision, transaction과 Result
 - Registry와 고정 ID
-- Compiled Runtime Scene, Snapshot과 Spatial Query
+- Scene Source, Compiler Build, Runtime Scene Snapshot과 Spatial Query
+- Runtime Layer, State Binding, Chunk와 Dependency Graph
 - Traversal Domain, 경로 계획과 Movement Execution
 - Capability, Recipe와 Effect
 - 저장·복구와 마이그레이션
@@ -39,6 +47,8 @@
 ## 작성 원칙
 
 새 Architecture 문서는 먼저 [`Runtime Architecture Principles`](runtime-architecture-principles.md)를 따른다.
+
+Scene Source, Semantic Profile, Runtime Layer, Index, Chunk, Build와 게시를 다루는 문서는 [`Scene Compiler 계약`](scene-compiler-and-compiled-runtime-scene-contract.md)을 따른다.
 
 공간, 거리, 점유, 시야 증거, 영역 포함이나 이동 가능성을 사용하는 문서는 [`Spatial Query Engine과 Provider 계약`](spatial-query-engine-and-provider-contract.md)을 추가로 따른다.
 
