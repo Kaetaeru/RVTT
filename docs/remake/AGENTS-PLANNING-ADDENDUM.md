@@ -258,3 +258,114 @@ Runtime Object를 추가하거나 변경하는 문서는 다음을 명시해야 
 10. 실패 후 남아야 할 안전 상태
 
 중요한 항목이 빠져 있으면 `READY`로 표시하지 않는다.
+
+## 7. Networking, Command와 Client Synchronization 게이트
+
+Remote, Client 입력, Command, Read Request, 서버 Event, 중도 참여, 재접속 또는 Client Ready를 다루는 문서는 [`Networking Command, Event와 Client Synchronization 계약`](architecture/networking-command-event-and-client-synchronization-contract.md)과 [`ADR-0059`](decisions/ADR-0059-versioned-command-protocol-and-projection-stream-synchronization.md)를 확인한다.
+
+### Remote를 기능 계약으로 사용하지 않는다
+
+Roblox RemoteEvent와 RemoteFunction은 Protocol Message를 전달하는 Adapter다.
+
+다음을 금지한다.
+
+- 기능마다 Schema 없는 임의 Remote와 Payload Table 추가
+- Remote 도착 순서를 Authority 순서로 사용
+- RemoteFunction 호출 Stack을 장기 권위 Mutation의 생명주기로 사용
+- UI 코드가 Remote를 호출한 뒤 직접 권위 Store를 갱신
+
+### Command와 Read Request를 분리한다
+
+상태를 바꿀 가능성이 있는 입력은 Versioned Command Registry를 사용한다.
+
+Preview, Query와 상세 조회는 Read Request Registry를 사용하고 상태를 변경하지 않는다.
+
+Read Result를 이후 Mutation의 권위 증거로 그대로 신뢰하지 않고 Commit 시 최신 상태를 재검증한다.
+
+### 멱등성과 연결 세대를 명시한다
+
+권위 Command는 최소한 다음을 가진다.
+
+- requestId
+- idempotencyKey
+- clientCommandSequence
+- connectionSessionId
+- connectionEpoch
+- commandTypeId와 Schema Version
+- 필요한 타입 있는 Precondition
+
+같은 Idempotency Key에 다른 Payload를 허용하지 않는다. 이전 Connection Epoch의 Command와 Ready 신호를 현재 연결에 적용하지 않는다.
+
+### 전역 Revision과 Client Projection을 구분한다
+
+Server 내부 AuthorityRevision과 Player Client의 Projection Cursor를 같은 값으로 사용하지 않는다.
+
+Player는 Role, Control, Perception, Fog와 Disclosure가 적용된 Projection Snapshot과 Event Stream을 받는다.
+
+Raw Domain Event와 숨겨진 Runtime Object를 모든 Client에 Broadcast한 뒤 UI에서만 숨기지 않는다.
+
+### Event Gap을 조용히 무시하지 않는다
+
+Client는 `projectionEpoch + viewSequence`의 연속성을 검사한다.
+
+Gap, Epoch 변경 또는 Integrity 실패가 발생하면 다음을 수행한다.
+
+```text
+권위 State 적용과 Gameplay Command 일시 중지
+→ Event Catch-up 또는 Full Projection Resync
+→ 연속성 검증
+→ 입력 재활성화
+```
+
+최신 Event부터 임의로 적용해 계속 플레이하지 않는다.
+
+### Client Ready를 사용자 Ready와 분리한다
+
+Lobby Ready는 사용자의 시작 의사다.
+
+Client Ready는 Protocol, Snapshot, Catch-up과 Presentation 준비 상태다.
+
+Command별 Readiness Scope를 정하고 `authority_ready` 이전에 권위 Gameplay Command를 허용하지 않는다.
+
+### 권위 Event와 Presentation Signal을 분리한다
+
+HP, 문 상태, 이동 Checkpoint, Action Execution과 Roll 공개는 Authority Projection이다.
+
+토큰 보간 Sample, VFX, Camera Cue와 Animation 시작은 Presentation Signal이며 병합·만료할 수 있다.
+
+Presentation 실패가 Authority State를 변경하거나 복구 Journal을 되돌리지 않는다.
+
+### Rate, Budget와 실패 정책을 명시한다
+
+새 Network Message는 최소한 다음을 정의한다.
+
+- Payload Schema와 최대 크기
+- Authorization과 Disclosure
+- Idempotency와 Ordering Policy
+- Rate Limit과 Compute Budget
+- Receipt·Result 또는 Read Result
+- Retryable 여부와 Retry Budget
+- Event Projection과 Catch-up 영향
+- Client Ready Scope
+- 감사와 Trace 필드
+
+권위 Event를 조용히 Drop하지 않는다. Client가 따라오지 못하면 Catch-up 또는 Snapshot Resync를 사용한다.
+
+### 준비도 확인 항목
+
+Network를 사용하는 문서는 다음을 명시해야 한다.
+
+1. Command인지 Read Request인지
+2. Message Type·Schema Version과 Registry 소유자
+3. Client가 제출하는 Intent와 Server가 다시 계산하는 값
+4. Idempotency Key와 중복 Result 정책
+5. Ordering Key와 Concurrency Policy
+6. 필요한 Object Incarnation·Epoch·Revision Precondition
+7. Receipt·Terminal Result·Error 계약
+8. 사용자별 Projection Event와 공개 정책
+9. Event Gap·Reconnect·Snapshot Resync 흐름
+10. Client Ready Scope와 Authority 전 입력 차단
+11. Rate Limit·Payload·Compute Budget
+12. Presentation Signal과 권위 Event의 경계
+
+중요한 항목이 빠져 있으면 `READY`로 표시하지 않는다.
