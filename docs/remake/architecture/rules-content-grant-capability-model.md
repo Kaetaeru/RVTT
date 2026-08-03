@@ -3,12 +3,12 @@
 - 상태: 초안
 - 작성일: 2026-08-03
 - 관련 문서:
-  - [`ADR-0001`](../decisions/ADR-0001-authored-rules-content.md)
-  - [`ADR-0002`](../decisions/ADR-0002-integrated-character-progression.md)
-  - [`ADR-0003`](../decisions/ADR-0003-ruleset-source-packs-localization.md)
-  - [`ADR-0016`](../decisions/ADR-0016-player-selected-ability-score-generation.md)
-  - [`ADR-0017`](../decisions/ADR-0017-derived-fixed-grants-and-stored-selections.md)
-  - [`11. 규칙 콘텐츠 공통 실행 계약`](rules-content-execution-and-spell-contract.md)
+  - [`ADR-0001`](../../decisions/ADR-0001-authored-rules-content.md)
+  - [`ADR-0002`](../../decisions/ADR-0002-integrated-character-progression.md)
+  - [`ADR-0003`](../../decisions/ADR-0003-ruleset-source-packs-localization.md)
+  - [`ADR-0016`](../../decisions/ADR-0016-player-selected-ability-score-generation.md)
+  - [`ADR-0017`](../../decisions/ADR-0017-derived-fixed-grants-and-stored-selections.md)
+  - [`11. 규칙 콘텐츠 공통 실행 계약`](../rules-content-execution-and-spell-contract.md)
   - [`AGENTS.md`](../../../AGENTS.md)
 
 ## 1. 문서 목적

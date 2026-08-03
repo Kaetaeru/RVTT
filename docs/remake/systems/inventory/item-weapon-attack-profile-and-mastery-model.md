@@ -3,12 +3,12 @@
 - 상태: 초안
 - 작성일: 2026-08-03
 - 관련 문서:
-  - [`10. Grant Graph와 Capability 모델`](../../architecture/rules-content-grant-capability-model.md)
-  - [`20. 능동형 특성과 행동 내부 실행 모델`](../rules/active-feature-and-action-container-execution-model.md)
-  - [`21. 패시브 특성 모델`](../../architecture/passive-modifier-and-rule-override-model.md)
-  - [`22. EffectRecipe와 효과 해결·확정 모델`](../../architecture/effect-recipe-resolution-and-commit-model.md)
-  - [`23. 상태·지속 효과·집중 수명주기 모델`](../rules/condition-ongoing-effect-duration-and-concentration-model.md)
-  - [`ADR-0030`](../../decisions/ADR-0030-item-instances-attack-profiles-and-weapon-mastery.md)
+  - [`10. Grant Graph와 Capability 모델`](../../../../architecture/rules-content-grant-capability-model.md)
+  - [`20. 능동형 특성과 행동 내부 실행 모델`](../../../rules/active-feature-and-action-container-execution-model.md)
+  - [`21. 패시브 특성 모델`](../../../../architecture/passive-modifier-and-rule-override-model.md)
+  - [`22. EffectRecipe와 효과 해결·확정 모델`](../../../../architecture/effect-recipe-resolution-and-commit-model.md)
+  - [`23. 상태·지속 효과·집중 수명주기 모델`](../../../rules/condition-ongoing-effect-duration-and-concentration-model.md)
+  - [`ADR-0030`](../../../../decisions/ADR-0030-item-instances-attack-profiles-and-weapon-mastery.md)
 
 ## 1. 문서 목적
 

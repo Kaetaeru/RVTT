@@ -3,15 +3,15 @@
 - 상태: 초안
 - 작성일: 2026-08-03
 - 관련 문서:
-  - [`03. 캐릭터 생성과 성장`](../../architecture/rules-content-grant-capability-model.md)
-  - [`19. 트리거와 다른 턴 실행 모델`](../../systems/rules/feat-feature-trigger-and-cross-turn-execution-model.md)
-  - [`20. 능동형 특성과 행동 내부 실행 모델`](../../systems/rules/active-feature-and-action-container-execution-model.md)
-  - [`21. 패시브 특성 모델`](../../architecture/passive-modifier-and-rule-override-model.md)
-  - [`23. 아이템 인스턴스와 장비 모델`](../../systems/inventory/item-weapon-attack-profile-and-mastery-model.md)
-  - [`25. HP 0·죽음 내성·휴식·자원 회복 모델`](../../systems/character/zero-hit-points-death-saves-rest-and-resource-recovery-model.md)
-  - [`27. 주사위 굴림·연출·결과 확정 모델`](../../systems/combat/dice-roll-presentation-and-resolution-gating-model.md)
-  - [`33. Baldur's Gate 3형 전투 HUD와 행동 UI 모델`](../combat-hud/baldurs-gate-style-combat-hud.md)
-  - [`ADR-0040`](../../decisions/ADR-0040-official-2024-character-sheet-and-live-player-view.md)
+  - [`03. 캐릭터 생성과 성장`](../../../../architecture/rules-content-grant-capability-model.md)
+  - [`19. 트리거와 다른 턴 실행 모델`](../../../../systems/rules/feat-feature-trigger-and-cross-turn-execution-model.md)
+  - [`20. 능동형 특성과 행동 내부 실행 모델`](../../../../systems/rules/active-feature-and-action-container-execution-model.md)
+  - [`21. 패시브 특성 모델`](../../../../architecture/passive-modifier-and-rule-override-model.md)
+  - [`23. 아이템 인스턴스와 장비 모델`](../../../../systems/inventory/item-weapon-attack-profile-and-mastery-model.md)
+  - [`25. HP 0·죽음 내성·휴식·자원 회복 모델`](../../../../systems/character/zero-hit-points-death-saves-rest-and-resource-recovery-model.md)
+  - [`27. 주사위 굴림·연출·결과 확정 모델`](../../../../systems/combat/dice-roll-presentation-and-resolution-gating-model.md)
+  - [`33. Baldur's Gate 3형 전투 HUD와 행동 UI 모델`](../../../combat-hud/baldurs-gate-style-combat-hud.md)
+  - [`ADR-0040`](../../../../decisions/ADR-0040-official-2024-character-sheet-and-live-player-view.md)
 
 ## 1. 문서 목적
 

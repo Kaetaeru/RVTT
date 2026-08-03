@@ -3,11 +3,11 @@
 - 상태: 초안
 - 작성일: 2026-08-03
 - 관련 문서:
-  - [`19. 트리거와 다른 턴 실행 모델`](../rules/feat-feature-trigger-and-cross-turn-execution-model.md)
-  - [`22. EffectRecipe와 효과 해결·확정 모델`](../../architecture/effect-recipe-resolution-and-commit-model.md)
-  - [`23. 상태·지속 효과·집중 수명주기 모델`](../rules/condition-ongoing-effect-duration-and-concentration-model.md)
-  - [`24. 무기·아이템·공격 프로필 모델`](../inventory/item-weapon-attack-profile-and-mastery-model.md)
-  - [`ADR-0031`](../../decisions/ADR-0031-zero-hit-points-death-saves-rests-and-resource-recovery.md)
+  - [`19. 트리거와 다른 턴 실행 모델`](../../../rules/feat-feature-trigger-and-cross-turn-execution-model.md)
+  - [`22. EffectRecipe와 효과 해결·확정 모델`](../../../../architecture/effect-recipe-resolution-and-commit-model.md)
+  - [`23. 상태·지속 효과·집중 수명주기 모델`](../../../rules/condition-ongoing-effect-duration-and-concentration-model.md)
+  - [`24. 무기·아이템·공격 프로필 모델`](../../../inventory/item-weapon-attack-profile-and-mastery-model.md)
+  - [`ADR-0031`](../../../../decisions/ADR-0031-zero-hit-points-death-saves-rests-and-resource-recovery.md)
 
 ## 1. 문서 목적
 

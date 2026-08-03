@@ -2,7 +2,7 @@
 
 - 상태: 초안
 - 작성일: 2026-08-03
-- 관련 결정: [`ADR-0044`](../../decisions/ADR-0044-linked-journal-and-two-mode-ping-system.md)
+- 관련 결정: [`ADR-0044`](../../../../decisions/ADR-0044-linked-journal-and-two-mode-ping-system.md)
 
 ## 1. 문서 화면
 

@@ -3,17 +3,17 @@
 - 상태: 초안
 - 작성일: 2026-08-03
 - 관련 문서:
-  - [`02. 핵심 세션 루프`](../product/core-session-loop.md)
-  - [`04. 장면과 월드`](../systems/scene/scenes-and-world.md)
-  - [`07. 장면 편집 상호작용과 레이아웃`](../ui/scene-editor/scene-editor-interaction-and-layout.md)
-  - [`22. EffectRecipe와 효과 해결·확정 모델`](effect-recipe-resolution-and-commit-model.md)
-  - [`25. HP 0·죽음 내성·휴식·자원 회복 모델`](../systems/character/zero-hit-points-death-saves-rest-and-resource-recovery-model.md)
-  - [`27. 주사위 굴림·연출·결과 확정 모델`](../systems/combat/dice-roll-presentation-and-resolution-gating-model.md)
-  - [`28. 인카운터·주도권·턴과 제어권 모델`](../systems/combat/encounter-initiative-turn-and-control-authority-model.md)
-  - [`31. 무설정 상호작용 프리팹과 상태 전환 모델`](../systems/interaction/zero-metadata-interaction-prefab-and-state-transition-model.md)
-  - [`32. 무설정 함정·비밀문·파괴 오브젝트 모델`](../systems/interaction/trap-secret-door-and-destructible-object-model.md)
-  - [`34. 공식 2024 형식 캐릭터 시트와 실시간 플레이어 UI 모델`](../ui/character-sheet/official-2024-character-sheet-and-live-player-ui.md)
-  - [`ADR-0042`](../decisions/ADR-0042-authoritative-checkpoints-command-journal-and-session-recovery.md)
+  - [`02. 핵심 세션 루프`](../../product/core-session-loop.md)
+  - [`04. 장면과 월드`](../../systems/scene/scenes-and-world.md)
+  - [`07. 장면 편집 상호작용과 레이아웃`](../../ui/scene-editor/scene-editor-interaction-and-layout.md)
+  - [`22. EffectRecipe와 효과 해결·확정 모델`](../effect-recipe-resolution-and-commit-model.md)
+  - [`25. HP 0·죽음 내성·휴식·자원 회복 모델`](../../systems/character/zero-hit-points-death-saves-rest-and-resource-recovery-model.md)
+  - [`27. 주사위 굴림·연출·결과 확정 모델`](../../systems/combat/dice-roll-presentation-and-resolution-gating-model.md)
+  - [`28. 인카운터·주도권·턴과 제어권 모델`](../../systems/combat/encounter-initiative-turn-and-control-authority-model.md)
+  - [`31. 무설정 상호작용 프리팹과 상태 전환 모델`](../../systems/interaction/zero-metadata-interaction-prefab-and-state-transition-model.md)
+  - [`32. 무설정 함정·비밀문·파괴 오브젝트 모델`](../../systems/interaction/trap-secret-door-and-destructible-object-model.md)
+  - [`34. 공식 2024 형식 캐릭터 시트와 실시간 플레이어 UI 모델`](../../ui/character-sheet/official-2024-character-sheet-and-live-player-ui.md)
+  - [`ADR-0042`](../../decisions/ADR-0042-authoritative-checkpoints-command-journal-and-session-recovery.md)
 
 ## 1. 문서 목적
 

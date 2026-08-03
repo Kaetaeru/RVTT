@@ -3,16 +3,16 @@
 - 상태: 초안
 - 작성일: 2026-08-03
 - 관련 문서:
-  - [`08. 공통 입력 교과서`](../common-input/common-input-grammar.md)
-  - [`17. 주문 대상·범위·공간 질의 모델`](../../systems/rules/spell-targeting-area-and-spatial-query-model.md)
-  - [`19. 트리거와 다른 턴 실행 모델`](../../systems/rules/feat-feature-trigger-and-cross-turn-execution-model.md)
-  - [`20. 능동형 특성과 행동 내부 실행 모델`](../../systems/rules/active-feature-and-action-container-execution-model.md)
-  - [`21. 패시브 특성 모델`](../../architecture/passive-modifier-and-rule-override-model.md)
-  - [`22. EffectRecipe와 효과 해결·확정 모델`](../../architecture/effect-recipe-resolution-and-commit-model.md)
-  - [`27. 주사위 굴림·연출·결과 확정 모델`](../../systems/combat/dice-roll-presentation-and-resolution-gating-model.md)
-  - [`28. 인카운터·주도권·턴과 제어권 모델`](../../systems/combat/encounter-initiative-turn-and-control-authority-model.md)
-  - [`30. 시야·감각·은신·탐지 모델`](../../systems/perception/visibility-senses-stealth-and-detection-model.md)
-  - [`ADR-0039`](../../decisions/ADR-0039-baldurs-gate-style-combat-hud-and-contextual-action-ui.md)
+  - [`08. 공통 입력 교과서`](../../../common-input/common-input-grammar.md)
+  - [`17. 주문 대상·범위·공간 질의 모델`](../../../../systems/rules/spell-targeting-area-and-spatial-query-model.md)
+  - [`19. 트리거와 다른 턴 실행 모델`](../../../../systems/rules/feat-feature-trigger-and-cross-turn-execution-model.md)
+  - [`20. 능동형 특성과 행동 내부 실행 모델`](../../../../systems/rules/active-feature-and-action-container-execution-model.md)
+  - [`21. 패시브 특성 모델`](../../../../architecture/passive-modifier-and-rule-override-model.md)
+  - [`22. EffectRecipe와 효과 해결·확정 모델`](../../../../architecture/effect-recipe-resolution-and-commit-model.md)
+  - [`27. 주사위 굴림·연출·결과 확정 모델`](../../../../systems/combat/dice-roll-presentation-and-resolution-gating-model.md)
+  - [`28. 인카운터·주도권·턴과 제어권 모델`](../../../../systems/combat/encounter-initiative-turn-and-control-authority-model.md)
+  - [`30. 시야·감각·은신·탐지 모델`](../../../../systems/perception/visibility-senses-stealth-and-detection-model.md)
+  - [`ADR-0039`](../../../../decisions/ADR-0039-baldurs-gate-style-combat-hud-and-contextual-action-ui.md)
 
 ## 1. 문서 목적
 

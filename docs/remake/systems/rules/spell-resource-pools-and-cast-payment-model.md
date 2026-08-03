@@ -3,12 +3,12 @@
 - 상태: 초안
 - 작성일: 2026-08-03
 - 관련 문서:
-  - [`11. 공통 실행 계약과 마법 처리 모델`](../../architecture/rules-content-execution-and-spell-contract.md)
-  - [`12. 주문 획득·준비·시전 권한 모델`](../character/spell-acquisition-preparation-and-cast-access-model.md)
-  - [`13. 주문책 저장소와 복사 모델`](../character/spellbook-repository-and-copying-model.md)
-  - [`ADR-0011`](../../decisions/ADR-0011-persistent-character-current-state.md)
-  - [`ADR-0018`](../../decisions/ADR-0018-source-scoped-spellcasting-profiles.md)
-  - [`ADR-0020`](../../decisions/ADR-0020-typed-spell-resource-pools-and-explicit-cast-payments.md)
+  - [`11. 공통 실행 계약과 마법 처리 모델`](../../../../architecture/rules-content-execution-and-spell-contract.md)
+  - [`12. 주문 획득·준비·시전 권한 모델`](../../../character/spell-acquisition-preparation-and-cast-access-model.md)
+  - [`13. 주문책 저장소와 복사 모델`](../../../character/spellbook-repository-and-copying-model.md)
+  - [`ADR-0011`](../../../../decisions/ADR-0011-persistent-character-current-state.md)
+  - [`ADR-0018`](../../../../decisions/ADR-0018-source-scoped-spellcasting-profiles.md)
+  - [`ADR-0020`](../../../../decisions/ADR-0020-typed-spell-resource-pools-and-explicit-cast-payments.md)
 
 ## 1. 문서 목적
 

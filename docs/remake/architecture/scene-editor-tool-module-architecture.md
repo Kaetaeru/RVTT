@@ -3,11 +3,11 @@
 - 상태: 초안
 - 작성일: 2026-08-03
 - 관련 문서:
-  - [`06-ingame-scene-editor-tools.md`](../systems/scene/ingame-scene-editor-tools.md)
-  - [`07-scene-editor-interaction-and-layout.md`](../ui/scene-editor/scene-editor-interaction-and-layout.md)
-  - [`08-common-input-grammar.md`](../ui/common-input/common-input-grammar.md)
-  - [`ADR-0005`](../decisions/ADR-0005-performance-reliability-clean-code.md)
-  - [`ADR-0008`](../decisions/ADR-0008-surface-first-placement-and-ctrl-elevation.md)
+  - [`06-ingame-scene-editor-tools.md`](../../systems/scene/ingame-scene-editor-tools.md)
+  - [`07-scene-editor-interaction-and-layout.md`](../../ui/scene-editor/scene-editor-interaction-and-layout.md)
+  - [`08-common-input-grammar.md`](../../ui/common-input/common-input-grammar.md)
+  - [`ADR-0005`](../../decisions/ADR-0005-performance-reliability-clean-code.md)
+  - [`ADR-0008`](../../decisions/ADR-0008-surface-first-placement-and-ctrl-elevation.md)
 
 ## 1. 목표
 

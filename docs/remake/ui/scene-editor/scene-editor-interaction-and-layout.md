@@ -3,9 +3,9 @@
 - 상태: 초안
 - 작성일: 2026-08-03
 - 관련 문서:
-  - [`06-ingame-scene-editor-tools.md`](../../systems/scene/ingame-scene-editor-tools.md)
-  - [`ADR-0007`](../../decisions/ADR-0007-view-y-and-world-scale.md)
-  - [`ADR-0008`](../../decisions/ADR-0008-surface-first-placement-and-ctrl-elevation.md)
+  - [`06-ingame-scene-editor-tools.md`](../../../../systems/scene/ingame-scene-editor-tools.md)
+  - [`ADR-0007`](../../../../decisions/ADR-0007-view-y-and-world-scale.md)
+  - [`ADR-0008`](../../../../decisions/ADR-0008-surface-first-placement-and-ctrl-elevation.md)
 
 ## 1. 목표
 

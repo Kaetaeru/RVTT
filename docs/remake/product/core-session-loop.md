@@ -5,14 +5,14 @@
 - 대상: DM, 플레이어
 - 관련 문서:
   - [`AGENTS.md`](../../../AGENTS.md)
-  - [`README.md`](../README.md)
-  - [`ADR-0001`](../decisions/ADR-0001-authored-rules-content.md)
-  - [`ADR-0002`](../decisions/ADR-0002-integrated-character-progression.md)
-  - [`ADR-0003`](../decisions/ADR-0003-ruleset-source-packs-localization.md)
-  - [`ADR-0004`](../decisions/ADR-0004-baldurs-gate-style-session-interaction.md)
-  - [`ADR-0005`](../decisions/ADR-0005-performance-reliability-clean-code.md)
-  - [`ADR-0006`](../decisions/ADR-0006-rigless-3d-token-continuous-movement.md)
-  - [`04. 장면과 월드`](../systems/scene/scenes-and-world.md)
+  - [`README.md`](../../README.md)
+  - [`ADR-0001`](../../decisions/ADR-0001-authored-rules-content.md)
+  - [`ADR-0002`](../../decisions/ADR-0002-integrated-character-progression.md)
+  - [`ADR-0003`](../../decisions/ADR-0003-ruleset-source-packs-localization.md)
+  - [`ADR-0004`](../../decisions/ADR-0004-baldurs-gate-style-session-interaction.md)
+  - [`ADR-0005`](../../decisions/ADR-0005-performance-reliability-clean-code.md)
+  - [`ADR-0006`](../../decisions/ADR-0006-rigless-3d-token-continuous-movement.md)
+  - [`04. 장면과 월드`](../../systems/scene/scenes-and-world.md)
 
 ## 1. 문서 목적
 

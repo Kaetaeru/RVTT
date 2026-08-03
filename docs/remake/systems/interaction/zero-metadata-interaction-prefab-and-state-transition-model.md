@@ -3,13 +3,13 @@
 - 상태: 초안
 - 작성일: 2026-08-03
 - 관련 문서:
-  - [`06. 인게임 장면 편집기 도구`](../scene/ingame-scene-editor-tools.md)
-  - [`07. 장면 편집 상호작용과 레이아웃`](../../ui/scene-editor/scene-editor-interaction-and-layout.md)
-  - [`09. 장면 편집 도구 모듈 구조`](../../architecture/scene-editor-tool-module-architecture.md)
-  - [`22. EffectRecipe와 효과 해결·확정 모델`](../../architecture/effect-recipe-resolution-and-commit-model.md)
-  - [`29. 수동 Fog of War와 선택형 Assist 모델`](../perception/manual-fog-of-war-and-optional-assist-model.md)
-  - [`30. 시야·감각·은신·탐지 모델`](../perception/visibility-senses-stealth-and-detection-model.md)
-  - [`ADR-0037`](../../decisions/ADR-0037-zero-metadata-interaction-prefabs-and-state-snapshot-transitions.md)
+  - [`06. 인게임 장면 편집기 도구`](../../../scene/ingame-scene-editor-tools.md)
+  - [`07. 장면 편집 상호작용과 레이아웃`](../../../../ui/scene-editor/scene-editor-interaction-and-layout.md)
+  - [`09. 장면 편집 도구 모듈 구조`](../../../../architecture/scene-editor-tool-module-architecture.md)
+  - [`22. EffectRecipe와 효과 해결·확정 모델`](../../../../architecture/effect-recipe-resolution-and-commit-model.md)
+  - [`29. 수동 Fog of War와 선택형 Assist 모델`](../../../perception/manual-fog-of-war-and-optional-assist-model.md)
+  - [`30. 시야·감각·은신·탐지 모델`](../../../perception/visibility-senses-stealth-and-detection-model.md)
+  - [`ADR-0037`](../../../../decisions/ADR-0037-zero-metadata-interaction-prefabs-and-state-snapshot-transitions.md)
 
 ## 1. 문서 목적
 

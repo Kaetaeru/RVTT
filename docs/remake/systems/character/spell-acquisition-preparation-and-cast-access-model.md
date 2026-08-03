@@ -3,10 +3,10 @@
 - 상태: 초안
 - 작성일: 2026-08-03
 - 관련 문서:
-  - [`10. Grant Graph와 Capability 모델`](../../architecture/rules-content-grant-capability-model.md)
-  - [`11. 규칙 콘텐츠 공통 실행 계약과 마법 처리 모델`](../../architecture/rules-content-execution-and-spell-contract.md)
-  - [`ADR-0011`](../../decisions/ADR-0011-persistent-character-current-state.md)
-  - [`ADR-0017`](../../decisions/ADR-0017-derived-fixed-grants-and-stored-selections.md)
+  - [`10. Grant Graph와 Capability 모델`](../../../../architecture/rules-content-grant-capability-model.md)
+  - [`11. 규칙 콘텐츠 공통 실행 계약과 마법 처리 모델`](../../../../architecture/rules-content-execution-and-spell-contract.md)
+  - [`ADR-0011`](../../../../decisions/ADR-0011-persistent-character-current-state.md)
+  - [`ADR-0017`](../../../../decisions/ADR-0017-derived-fixed-grants-and-stored-selections.md)
 
 ## 1. 문서 목적
 

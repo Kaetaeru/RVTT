@@ -3,12 +3,12 @@
 - 상태: 초안
 - 작성일: 2026-08-03
 - 관련 문서:
-  - [`04. 장면과 월드`](../scene/scenes-and-world.md)
-  - [`07. 장면 편집 상호작용과 레이아웃`](../../ui/scene-editor/scene-editor-interaction-and-layout.md)
-  - [`08. 공통 입력 교과서`](../../ui/common-input/common-input-grammar.md)
-  - [`17. 주문 대상·범위·공간 질의 모델`](../rules/spell-targeting-area-and-spatial-query-model.md)
-  - [`28. 인카운터·주도권·턴과 제어권 모델`](../combat/encounter-initiative-turn-and-control-authority-model.md)
-  - [`ADR-0035`](../../decisions/ADR-0035-manual-fog-masks-and-optional-region-assist.md)
+  - [`04. 장면과 월드`](../../../scene/scenes-and-world.md)
+  - [`07. 장면 편집 상호작용과 레이아웃`](../../../../ui/scene-editor/scene-editor-interaction-and-layout.md)
+  - [`08. 공통 입력 교과서`](../../../../ui/common-input/common-input-grammar.md)
+  - [`17. 주문 대상·범위·공간 질의 모델`](../../../rules/spell-targeting-area-and-spatial-query-model.md)
+  - [`28. 인카운터·주도권·턴과 제어권 모델`](../../../combat/encounter-initiative-turn-and-control-authority-model.md)
+  - [`ADR-0035`](../../../../decisions/ADR-0035-manual-fog-masks-and-optional-region-assist.md)
 
 ## 1. 문서 목적
 
