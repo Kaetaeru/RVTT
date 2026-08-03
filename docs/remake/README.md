@@ -12,10 +12,11 @@ RVTT 리메이크의 제품 결정, 시스템 기획, UI, 구현 명세와 감�
 2. [`AGENTS.md`](AGENTS.md)
 3. [`AGENTS-PLANNING-ADDENDUM.md`](AGENTS-PLANNING-ADDENDUM.md)
 4. [`Runtime Architecture Principles`](architecture/runtime-architecture-principles.md)
-5. [`Spatial Query Engine과 Provider 계약`](architecture/spatial-query-engine-and-provider-contract.md)
-6. 공간 이동을 다루는 경우 [`Runtime Navigation 계약`](architecture/runtime-navigation-path-planning-and-movement-execution-contract.md)
-7. [`DOCUMENT-GUIDE.md`](DOCUMENT-GUIDE.md)
-8. 관련 ADR과 영역 README
+5. Scene Source·Layer·Build를 다루는 경우 [`Scene Compiler 계약`](architecture/scene-compiler-and-compiled-runtime-scene-contract.md)
+6. [`Spatial Query Engine과 Provider 계약`](architecture/spatial-query-engine-and-provider-contract.md)
+7. 공간 이동을 다루는 경우 [`Runtime Navigation 계약`](architecture/runtime-navigation-path-planning-and-movement-execution-contract.md)
+8. [`DOCUMENT-GUIDE.md`](DOCUMENT-GUIDE.md)
+9. 관련 ADR과 영역 README
 
 ## 제품 고정 전제
 
@@ -26,7 +27,10 @@ RVTT 리메이크의 제품 결정, 시스템 기획, UI, 구현 명세와 감�
 - 권위 이동은 연속 무격자 좌표, 월드 비율은 `5 ft = 4 studs`
 - 탐험에서는 클릭 이동과 WASD 이동, 전투에서는 클릭 경로 이동만 지원
 - 서버가 중요 규칙과 영구 상태의 최종 권한을 소유
-- Scene Editor는 Semantic Object와 명시적 예외를 편집하고, Compiler가 Runtime Layer와 Index를 생성
+- Scene Editor는 Semantic Object와 명시적 예외를 Scene Source에 기록
+- Scene Compiler가 Navigation, Visibility, Interaction, Rule, Metadata Layer와 Index를 불변 Build로 생성
+- Runtime Layer 일부만 서로 다른 Build Revision으로 혼합해 게시하지 않음
+- Candidate Build 실패 시 Last Known Good Build와 활성 세션을 유지
 - 가져온 원본 Model은 기술용 Attribute와 Value가 없어도 등록 가능
 - Workspace와 Roblox Physics는 권위 규칙 상태의 원본이 아님
 - 권위 공간 질문은 Snapshot 고정형 Spatial Query를 사용하고, 전체 경로 탐색은 Navigation Planner가 담당
@@ -41,7 +45,7 @@ RVTT 리메이크의 제품 결정, 시스템 기획, UI, 구현 명세와 감�
 | 경로 | 역할 |
 |---|---|
 | [`product/`](product) | 제품 범위, 비목표, 전체 사용자 흐름과 지원 정책 |
-| [`architecture/`](architecture) | Runtime 원칙, 권위·Query·Navigation·Recipe·Capability·저장·확장 계약 |
+| [`architecture/`](architecture) | Runtime 원칙, Scene Compiler, 권위·Query·Navigation·Recipe·Capability·저장·확장 계약 |
 | [`systems/`](systems) | 기능 영역별 사용자 흐름과 시스템 동작 |
 | [`ui/`](ui) | 화면 배치, 입력 문맥, 패널 상태와 사용자 피드백 |
 | [`decisions/`](decisions) | 전역 번호를 가진 Architecture Decision Record |
@@ -56,11 +60,13 @@ RVTT 리메이크의 제품 결정, 시스템 기획, UI, 구현 명세와 감�
 
 1. [`architecture/runtime-architecture-principles.md`](architecture/runtime-architecture-principles.md)
 2. [`decisions/ADR-0054-compiled-semantic-runtime-and-query-authority-principles.md`](decisions/ADR-0054-compiled-semantic-runtime-and-query-authority-principles.md)
-3. [`architecture/spatial-query-engine-and-provider-contract.md`](architecture/spatial-query-engine-and-provider-contract.md)
-4. [`decisions/ADR-0055-snapshot-bound-typed-spatial-query-and-navigation-boundary.md`](decisions/ADR-0055-snapshot-bound-typed-spatial-query-and-navigation-boundary.md)
-5. [`architecture/runtime-navigation-path-planning-and-movement-execution-contract.md`](architecture/runtime-navigation-path-planning-and-movement-execution-contract.md)
-6. [`decisions/ADR-0056-hybrid-traversal-domain-and-checkpointed-movement-execution.md`](decisions/ADR-0056-hybrid-traversal-domain-and-checkpointed-movement-execution.md)
-7. [`audits/cross-system-foundation-contract-gap-audit.md`](audits/cross-system-foundation-contract-gap-audit.md)
+3. [`architecture/scene-compiler-and-compiled-runtime-scene-contract.md`](architecture/scene-compiler-and-compiled-runtime-scene-contract.md)
+4. [`decisions/ADR-0057-canonical-scene-source-and-atomic-compiled-build-activation.md`](decisions/ADR-0057-canonical-scene-source-and-atomic-compiled-build-activation.md)
+5. [`architecture/spatial-query-engine-and-provider-contract.md`](architecture/spatial-query-engine-and-provider-contract.md)
+6. [`decisions/ADR-0055-snapshot-bound-typed-spatial-query-and-navigation-boundary.md`](decisions/ADR-0055-snapshot-bound-typed-spatial-query-and-navigation-boundary.md)
+7. [`architecture/runtime-navigation-path-planning-and-movement-execution-contract.md`](architecture/runtime-navigation-path-planning-and-movement-execution-contract.md)
+8. [`decisions/ADR-0056-hybrid-traversal-domain-and-checkpointed-movement-execution.md`](decisions/ADR-0056-hybrid-traversal-domain-and-checkpointed-movement-execution.md)
+9. [`audits/cross-system-foundation-contract-gap-audit.md`](audits/cross-system-foundation-contract-gap-audit.md)
 
 ### 제품과 세션
 
@@ -72,11 +78,12 @@ RVTT 리메이크의 제품 결정, 시스템 기획, UI, 구현 명세와 감�
 ### 장면 제작과 이동
 
 1. [`systems/scene/scenes-and-world.md`](systems/scene/scenes-and-world.md)
-2. [`systems/navigation/navigation-authoring-pipeline.md`](systems/navigation/navigation-authoring-pipeline.md)
-3. [`architecture/runtime-navigation-path-planning-and-movement-execution-contract.md`](architecture/runtime-navigation-path-planning-and-movement-execution-contract.md)
-4. [`systems/scene/ingame-scene-editor-tools.md`](systems/scene/ingame-scene-editor-tools.md)
-5. [`ui/scene-editor/scene-editor-interaction-and-layout.md`](ui/scene-editor/scene-editor-interaction-and-layout.md)
-6. [`architecture/scene-editor-tool-module-architecture.md`](architecture/scene-editor-tool-module-architecture.md)
+2. [`architecture/scene-compiler-and-compiled-runtime-scene-contract.md`](architecture/scene-compiler-and-compiled-runtime-scene-contract.md)
+3. [`systems/navigation/navigation-authoring-pipeline.md`](systems/navigation/navigation-authoring-pipeline.md)
+4. [`architecture/runtime-navigation-path-planning-and-movement-execution-contract.md`](architecture/runtime-navigation-path-planning-and-movement-execution-contract.md)
+5. [`systems/scene/ingame-scene-editor-tools.md`](systems/scene/ingame-scene-editor-tools.md)
+6. [`ui/scene-editor/scene-editor-interaction-and-layout.md`](ui/scene-editor/scene-editor-interaction-and-layout.md)
+7. [`architecture/scene-editor-tool-module-architecture.md`](architecture/scene-editor-tool-module-architecture.md)
 
 ### 규칙과 전투
 
