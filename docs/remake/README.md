@@ -1,200 +1,92 @@
-# RVTT Remake Planning
+# RVTT Remake Documentation
 
-> 상태: 초기 기획
->
-> 이 문서는 새 RVTT 리메이크의 기획 허브다. 아직 확정되지 않은 내용은 제안으로 분리하고, 합의된 결정만 확정 사항으로 기록한다.
->
-> 저장소에서 작업하는 모든 에이전트는 먼저 루트의 [`AGENTS.md`](../../AGENTS.md), 이 기획 허브와 관련 ADR을 읽고 따라야 한다.
+- 상태: 활성 문서 허브
+- 문서 종류: Documentation Index
+- 즉시 구현 명세 가능성: 해당 없음
 
-## 1. 현재 확정된 방향
+RVTT 리메이크의 제품 결정, 시스템 기획, UI, 구현 명세와 감사를 역할·영역별로 관리한다.
 
-1. 기존 RVTT를 점진적으로 고치는 대신 처음부터 다시 설계한다.
-2. 기존 구조나 코드와의 하위 호환성을 목표로 하지 않는다.
-3. 불특정 다수의 사용자가 자유롭게 확장하는 범용 VTT 플랫폼을 목표로 하지 않는다.
-4. 플레이어가 시스템을 직접 확장하거나 복잡한 설정을 다루게 만들 필요가 없다.
-5. 필요한 기능과 콘텐츠는 RVTT 개발자이자 DM이 직접 코드, Roblox Studio, 저장소를 통해 추가한다.
-6. 플레이어가 마법·특성·효과 프리셋을 직접 조립하는 범용 제작기를 핵심 기능으로 만들지 않는다.
-7. 지원하는 마법, 클래스 특성, 종족 특성, 몬스터 능력, 아이템 행동은 RVTT의 정식 콘텐츠로 하나씩 구현한다.
-8. 가능한 한 모든 규칙 요소가 단순 설명문이 아니라 실제 대상 지정, 자원 소비, 판정, 상태 적용, 연출을 가진 실행 가능한 기능이 되게 한다.
-9. 구현에 들어가기 전에 핵심 플레이 흐름과 기능 범위를 문서로 먼저 확정한다.
+문서를 작성하거나 수정하기 전에 다음 순서로 읽는다.
 
-## 2. 제품 정의 초안
+1. 저장소 루트 [`AGENTS.md`](../../AGENTS.md)
+2. [`AGENTS.md`](AGENTS.md)
+3. [`AGENTS-PLANNING-ADDENDUM.md`](AGENTS-PLANNING-ADDENDUM.md)
+4. [`DOCUMENT-GUIDE.md`](DOCUMENT-GUIDE.md)
+5. 관련 ADR과 영역 README
 
-RVTT는 Roblox 안에서 실제 D&D/TRPG 세션을 진행하기 위한 DM 중심의 가상 테이블탑이다.
+## 제품 고정 전제
 
-플레이어는 세션 중 필요한 기능만 단순하고 빠르게 사용한다. DM은 장면, 토큰, 전투, 정보 공개와 세션 진행을 통제한다. 범용성보다 실제 세션에서의 속도, 명확성, 안정성을 우선한다.
+- Roblox에서 DM이 실시간으로 진행하는 Baldur's Gate형 D&D VTT
+- 기본 규칙 세트 `dnd5e-2024`, 기본 표시 언어 `ko-KR`
+- 초기 지원 플랫폼은 PC 키보드·마우스
+- Roblox 아바타가 아닌 리그 없는 OBJ·MeshPart 3D 토큰
+- 권위 이동은 연속 무격자 좌표, 월드 비율은 `5 ft = 4 studs`
+- 탐험에서는 클릭 이동과 WASD 이동, 전투에서는 클릭 경로 이동만 지원
+- 서버가 중요 규칙과 영구 상태의 최종 권한을 소유
+- 2024 기본 규칙의 플레이어 캐릭터 콘텐츠 전체를 최종 지원 범위로 삼음
+- NPC 대화 시스템, 음악과 모든 사운드 이펙트는 비목표
+- 최적화, 안정성, 오류 격리와 클린코드를 모든 기능의 완료 조건으로 적용
 
-RVTT는 사용자가 규칙을 직접 조립하는 툴킷이 아니라, 개발자가 구현한 D&D 콘텐츠를 플레이어가 바로 사용할 수 있는 게임형 VTT를 지향한다.
+## 문서 구조
 
-이 정의는 아직 초안이며, 이후 `제품 범위` 문서에서 확정한다.
+| 경로 | 역할 |
+|---|---|
+| [`product/`](product/) | 제품 범위, 비목표, 전체 사용자 흐름과 지원 정책 |
+| [`architecture/`](architecture/) | 여러 시스템이 공유하는 권위·Recipe·Capability·저장·확장 계약 |
+| [`systems/`](systems/) | 기능 영역별 사용자 흐름과 시스템 동작 |
+| [`ui/`](ui/) | 화면 배치, 입력 문맥, 패널 상태와 사용자 피드백 |
+| [`decisions/`](decisions/) | 전역 번호를 가진 Architecture Decision Record |
+| [`audits/`](audits/) | 기획 완성도, 충돌, 준비도와 마이그레이션 감사 |
+| [`specs/`](specs/) | 구현 직전 모듈·타입·명령·네트워크·테스트 계약 |
+| [`templates/`](templates/) | 기획·ADR·구현 명세·감사 템플릿 |
+| [`archive/`](archive/) | 현재 권위가 아닌 역사적 문서 |
 
-## 3. 설계 원칙
+## 추천 읽기 순서
 
-### 세션 우선
+### 제품과 세션
 
-기능의 기준은 "이 기능이 실제 세션을 더 빠르고 재미있게 만드는가"다. 구현할 수 있다는 이유만으로 기능을 추가하지 않는다.
+1. [`product/platform-movement-and-input-scope.md`](product/platform-movement-and-input-scope.md)
+2. [`product/core-session-loop.md`](product/core-session-loop.md)
+3. [`systems/session/campaign-lobby-hot-join-ownership-and-control.md`](systems/session/campaign-lobby-hot-join-ownership-and-control.md)
+4. [`systems/camera/free-tactical-camera-model.md`](systems/camera/free-tactical-camera-model.md)
 
-### DM 중심
+### 장면 제작
 
-복잡한 설정, 준비, 편집, 데이터 관리는 DM 측에 집중한다. 플레이어 UI에는 현재 행동에 필요한 정보만 보여준다.
+1. [`systems/scene/scenes-and-world.md`](systems/scene/scenes-and-world.md)
+2. [`systems/navigation/navigation-authoring-pipeline.md`](systems/navigation/navigation-authoring-pipeline.md)
+3. [`systems/scene/ingame-scene-editor-tools.md`](systems/scene/ingame-scene-editor-tools.md)
+4. [`ui/scene-editor/scene-editor-interaction-and-layout.md`](ui/scene-editor/scene-editor-interaction-and-layout.md)
+5. [`architecture/scene-editor-tool-module-architecture.md`](architecture/scene-editor-tool-module-architecture.md)
 
-### 정해진 방식의 편리함
+### 규칙과 전투
 
-플러그인, 범용 스키마, 자유로운 사용자 확장보다 RVTT에 맞게 잘 정리된 고정 워크플로를 우선한다.
+1. [`architecture/rules-content-grant-capability-model.md`](architecture/rules-content-grant-capability-model.md)
+2. [`architecture/rules-content-execution-and-spell-contract.md`](architecture/rules-content-execution-and-spell-contract.md)
+3. [`architecture/effect-recipe-resolution-and-commit-model.md`](architecture/effect-recipe-resolution-and-commit-model.md)
+4. [`systems/combat/encounter-initiative-turn-and-control-authority-model.md`](systems/combat/encounter-initiative-turn-and-control-authority-model.md)
+5. [`systems/combat/dice-roll-presentation-and-resolution-gating-model.md`](systems/combat/dice-roll-presentation-and-resolution-gating-model.md)
+6. [`systems/combat/encounter-turn-snapshot-and-dm-rollback-model.md`](systems/combat/encounter-turn-snapshot-and-dm-rollback-model.md)
 
-### 정식 콘텐츠 중심
+### 플레이어와 DM UI
 
-마법과 특성은 이름, 설명, 색상만 저장하는 프리셋이 아니다. 각 콘텐츠는 사용 조건, 대상 지정 방식, 자원 소비, 판정, 효과, 지속시간, 종료 조건, 시각·음향 연출을 포함하는 독립적인 게임 기능이다.
+1. [`ui/common-input/common-input-grammar.md`](ui/common-input/common-input-grammar.md)
+2. [`ui/combat-hud/baldurs-gate-style-combat-hud.md`](ui/combat-hud/baldurs-gate-style-combat-hud.md)
+3. [`ui/character-sheet/official-2024-character-sheet-and-live-player-ui.md`](ui/character-sheet/official-2024-character-sheet-and-live-player-ui.md)
+4. [`ui/dm-workspace/dm-workspace-and-scene-lighting.md`](ui/dm-workspace/dm-workspace-and-scene-lighting.md)
+5. [`ui/dm-workspace/dm-quick-action-and-context-command.md`](ui/dm-workspace/dm-quick-action-and-context-command.md)
 
-### 공통 엔진과 전용 구현의 결합
+## 문서 상태와 구현 준비도
 
-피해, 회복, 내성 굴림, 상태, 이동, 범위, 지속시간, 집중, 자원 소비처럼 반복되는 규칙은 공통 엔진으로 처리한다. 공통 요소만으로 표현할 수 없는 마법과 특성은 해당 콘텐츠의 전용 실행 모듈로 구현한다.
+기획 문서는 다음 구현 명세 준비도 중 하나를 표시한다.
 
-모든 콘텐츠를 거대한 설정 데이터만으로 표현하려 하지 않으며, 반대로 같은 로직을 마법마다 복사하지도 않는다.
+- `READY`: 중요한 제품 결정이 끝남
+- `READY_WITH_DEFAULTS`: 구조는 확정됐고 수치·표시 기본값만 남음
+- `BLOCKED`: 구현자가 추측해야 하는 제품 결정이나 문서 충돌이 남음
 
-### 폭넓은 구현, DM 판정 유지
+`BLOCKED` 문서를 근거로 프로덕션 구현을 시작하지 않는다.
 
-가능한 한 거의 모든 마법과 특성을 실제로 사용할 수 있게 구현한다. 다만 해석과 창의적 판단이 필요한 효과까지 시스템이 임의로 결정하지는 않는다. 이런 기능도 전용 UI, 선택 절차, 상태 추적, DM 승인 흐름을 제공하여 단순 텍스트보다 높은 수준으로 구현한다.
+## 문서 이동 상태
 
-### 명확한 모드
+기존 번호형 상세 기획 46개는 [`DOCUMENT-MIGRATION-MAP.md`](DOCUMENT-MIGRATION-MAP.md)에 따라 역할·영역별 폴더로 이동되었다. 내부 상대 링크, ADR 참조와 문서 메타데이터 정합성 검사는 마이그레이션 감사 절차를 따른다.
 
-플레이, 탐험, 전투, 장면 편집 등 서로 다른 상태가 입력과 UI에서 확실하게 구분되어야 한다.
-
-### 서버 권한과 안정된 상태
-
-토큰 위치, 전투 상태, 권한, 장면 데이터처럼 중요한 정보는 서버가 최종 권한을 가진다. 클라이언트는 표시와 입력을 담당한다.
-
-## 4. 명시적인 비목표
-
-초기 리메이크에서는 다음을 목표로 하지 않는다.
-
-- 외부 사용자를 위한 플러그인 또는 모드 API
-- 플레이어가 직접 만드는 커스텀 마법·특성·효과 제작기
-- 플레이어가 직접 정의하는 범용 데이터 스키마
-- 모든 TRPG 규칙을 지원하는 범용 엔진
-- DM의 해석과 판정이 전혀 필요 없는 완전 자동 판정기
-- 기존 RVTT 코드와 데이터의 호환성 유지
-- 대규모 공개 서비스 운영을 전제로 한 계정·마켓·커뮤니티 기능
-- Roblox Studio를 대체하는 완전한 범용 3D 제작 툴
-
-## 5. 규칙 콘텐츠 구현 목표
-
-모든 마법과 특성은 가능한 한 다음 요소를 가진다.
-
-1. **정의** — 이름, 설명, 출처, 레벨, 분류, 태그
-2. **사용 조건** — 행동 종류, 횟수, 주문 슬롯, 충전, 휴식, 장비, 상태
-3. **대상 지정** — 자신, 단일 대상, 다중 대상, 지점, 범위, 경로, 오브젝트
-4. **유효성 검사** — 거리, 시야, 엄폐, 대상 유형, 현재 턴과 반응 조건
-5. **판정** — 공격 굴림, 내성 굴림, 능력 판정, 피해 및 회복 계산
-6. **효과 적용** — 피해, 상태, 이동, 소환, 지형, 시야, 지속 효과
-7. **수명 관리** — 지속시간, 집중, 턴 시작·종료, 재사용, 해제 조건
-8. **표현** — 애니메이션, VFX, SFX, 카메라, 로그, 전투 피드백
-9. **예외 처리** — DM 승인, 선택지, 수동 수정, 강제 종료
-
-콘텐츠마다 필요한 요소만 사용한다.
-
-### 구현 수준
-
-- **완전 실행형** — 선택부터 결과 적용까지 시스템이 처리한다.
-- **유도 실행형** — 시스템이 대상, 선택지, 판정, 상태 추적을 제공하고 DM 또는 플레이어가 의미 있는 결정을 내린다.
-- **판정 보조형** — 자유도가 매우 높은 효과에 전용 도구와 기록 기능을 제공하고 최종 결과는 DM이 확정한다.
-
-목표는 모든 콘텐츠를 무조건 완전 자동화하는 것이 아니다. 목표는 거의 모든 콘텐츠에 그 능력에 맞는 실제 상호작용과 실행 흐름을 제공하는 것이다.
-
-## 6. 기획 순서
-
-기술 구조부터 정하지 않고, 실제 세션의 흐름에서 아래 순서로 설계한다.
-
-1. **제품 범위** — RVTT가 반드시 해야 하는 일과 하지 않을 일
-2. **핵심 세션 흐름** — 입장부터 장면 진행, 전투, 종료와 저장까지
-3. **역할과 권한** — DM, 플레이어, 관전자와 각 역할의 행동 범위
-4. **장면과 월드** — 맵, 장면 전환, 가시성, 조명, Fog of War, 편집 방식
-5. **토큰과 액터** — 캐릭터, NPC, 오브젝트, 선택, 이동, 정보 표시
-6. **규칙 콘텐츠** — 마법, 특성, 능력, 아이템과 실행 구조
-7. **전투 시스템** — 이니셔티브, 턴, 행동, 거리, 공격, 상태, 판정
-8. **UI와 입력** — 플레이 모드와 편집 모드의 화면, 단축키, 모바일 범위
-9. **데이터와 저장** — 캠페인, 장면, 액터, 콘텐츠, 세션 상태의 저장 단위
-10. **기술 아키텍처** — 서버·클라이언트 책임, 모듈 경계, Remote 구조
-11. **MVP 로드맵** — 실제 한 세션을 돌릴 수 있는 최소 구현 순서
-
-## 7. 예정 문서 구조
-
-```text
-docs/remake/
-├─ README.md
-├─ 01-product-scope.md
-├─ 02-core-session-loop.md
-├─ 03-roles-and-permissions.md
-├─ 04-scenes-and-world.md
-├─ 05-tokens-and-actors.md
-├─ 06-rules-content.md
-├─ 07-combat-system.md
-├─ 08-ui-and-input.md
-├─ 09-data-and-persistence.md
-├─ 10-technical-architecture.md
-├─ 11-mvp-roadmap.md
-└─ decisions/
-   └─ ADR-XXXX-title.md
-```
-
-문서는 필요해질 때 하나씩 만든다. 빈 문서를 미리 대량으로 만들지는 않는다.
-
-## 8. 가장 먼저 결정할 문제
-
-### 플레이어가 실제로 할 수 있어야 하는 일
-
-플레이어 기능을 어디까지 제한할지 먼저 정해야 한다. 예를 들면 다음과 같다.
-
-- 자신의 토큰 선택과 이동
-- 대상 지정
-- 주사위 굴림
-- 행동, 주문, 특성 사용
-- 캐릭터 정보 열람
-- 핑과 측정
-- 메모 또는 핸드아웃 열람
-
-### DM의 장면 편집 방식
-
-- 세션 중 같은 서버에서 즉시 편집할 것인지
-- 준비 모드와 플레이 모드를 분리할 것인지
-- Studio에서 만든 맵과 인게임 월드 에디터의 역할을 어떻게 나눌 것인지
-
-### 규칙 콘텐츠의 우선순위
-
-- 어떤 D&D 버전과 출처를 기준으로 삼을 것인지
-- 플레이어 캐릭터용 콘텐츠를 어디까지 우선 구현할 것인지
-- 몬스터 능력과 아이템을 어떤 순서로 구현할 것인지
-- 완전 실행형, 유도 실행형, 판정 보조형의 기준을 어떻게 정할 것인지
-
-### 저장 단위
-
-- 캠페인
-- 장면
-- 액터와 토큰 프리셋
-- 플레이어 캐릭터
-- 규칙 콘텐츠 정의와 현재 효과
-- 진행 중 세션 상태
-
-각 데이터가 언제 저장되고 어떻게 복구되는지 정의해야 한다.
-
-## 9. 기획 문서 작성 규칙
-
-- 확정, 제안, 보류를 명확히 구분한다.
-- 기능 이름보다 사용자가 실제로 하는 행동을 먼저 적는다.
-- 모든 주요 기능은 DM 흐름과 플레이어 흐름을 함께 설명한다.
-- 구현 세부사항은 제품 요구가 정해진 뒤 작성한다.
-- 큰 결정은 `decisions/` 아래 ADR로 남긴다.
-- 사용하지 않을 가능성이 높은 확장 지점은 미리 만들지 않는다.
-
-## 10. 다음 기획 주제
-
-첫 번째 상세 문서는 `01-product-scope.md`로 한다.
-
-여기서 다음을 확정한다.
-
-1. RVTT를 사용하는 사람과 세션 형태
-2. 플레이어가 사용할 기능의 최소 범위
-3. DM이 준비와 진행 중 수행하는 핵심 작업
-4. 기존 RVTT에서 반드시 유지할 경험
-5. 과감히 제거할 기능과 구조
-6. 첫 MVP가 성공했다고 판단할 기준
+이 브랜치는 리메이크 기획 브랜치다. 사용자가 명시적으로 구현을 요청하기 전에는 프로덕션 코드를 작성하지 않는다.
