@@ -16,6 +16,12 @@
   - Geometry, Occupancy, Visibility Evidence, Rule Field와 Interaction Query
   - Provider Registry, Budget, Cache, Trace와 비밀 정보 공개 정책
   - Perception, Navigation Planner와 Movement Executor의 책임 경계
+- [`Runtime Navigation, Path Planning과 Movement Execution 계약`](runtime-navigation-path-planning-and-movement-execution-contract.md)
+  - Hybrid Traversal Domain과 연속 Path Corridor
+  - SpatialBodyProfile과 구성 공간 Clearance
+  - Navigation Planner, Movement Coordinator와 Movement Executor
+  - Progress Checkpoint, Swept Body, 이동력 소비와 Timing Window
+  - 탐험 클릭·WASD, 전투 이동, Dynamic Replan과 Occupancy
 
 ## 포함 범위
 
@@ -23,6 +29,7 @@
 - Command, revision, transaction과 Result
 - Registry와 고정 ID
 - Compiled Runtime Scene, Snapshot과 Spatial Query
+- Traversal Domain, 경로 계획과 Movement Execution
 - Capability, Recipe와 Effect
 - 저장·복구와 마이그레이션
 - PresentationRecipe와 확장 계약
@@ -34,5 +41,7 @@
 새 Architecture 문서는 먼저 [`Runtime Architecture Principles`](runtime-architecture-principles.md)를 따른다.
 
 공간, 거리, 점유, 시야 증거, 영역 포함이나 이동 가능성을 사용하는 문서는 [`Spatial Query Engine과 Provider 계약`](spatial-query-engine-and-provider-contract.md)을 추가로 따른다.
+
+경로 계획, 이동 비용, 중단, 점유와 위치 변경을 사용하는 문서는 [`Runtime Navigation 계약`](runtime-navigation-path-planning-and-movement-execution-contract.md)을 따른다.
 
 동일한 결정을 여러 문서에 반복하지 않는다. 전체 계층과 권위 원칙은 이 문서에 연결하고, 각 하위 문서는 자신의 데이터·상태·실패·성능 계약만 추가한다.
