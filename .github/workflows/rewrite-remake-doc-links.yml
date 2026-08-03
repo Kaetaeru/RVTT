@@ -2,12 +2,20 @@ name: Rewrite remake documentation links
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - planning/rvtt-remake
+    paths:
+      - "docs/remake/**"
+      - "scripts/docs/rewrite_remake_doc_links.py"
+      - ".github/workflows/rewrite-remake-doc-links.yml"
 
 permissions:
   contents: write
 
 jobs:
   rewrite:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - name: Check out planning branch
@@ -32,5 +40,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add docs/remake
-          git commit -m "docs: rewrite migrated documentation links"
+          git commit -m "docs: repair migrated documentation links"
           git push origin HEAD:planning/rvtt-remake
