@@ -7,3 +7,15 @@
 영역별 명세는 하위 폴더에 3자리 번호와 의미 있는 이름으로 작성한다.
 
 예: `combat/001-encounter-bootstrap.md`
+
+## 현재 명세
+
+### Shared
+
+- [`001. Recipe Step Runtime Foundation`](shared/001-recipe-step-runtime-foundation.md)
+  - StepDefinition
+  - StepRegistry
+  - RecipeCompiler
+  - BindingStore
+  - StepExecutor
+  - Guided·Assisted 대기와 복구
