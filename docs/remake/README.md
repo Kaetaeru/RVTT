@@ -11,8 +11,9 @@ RVTT 리메이크의 제품 결정, 시스템 기획, UI, 구현 명세와 감�
 1. 저장소 루트 [`AGENTS.md`](../../AGENTS.md)
 2. [`AGENTS.md`](AGENTS.md)
 3. [`AGENTS-PLANNING-ADDENDUM.md`](AGENTS-PLANNING-ADDENDUM.md)
-4. [`DOCUMENT-GUIDE.md`](DOCUMENT-GUIDE.md)
-5. 관련 ADR과 영역 README
+4. [`Runtime Architecture Principles`](architecture/runtime-architecture-principles.md)
+5. [`DOCUMENT-GUIDE.md`](DOCUMENT-GUIDE.md)
+6. 관련 ADR과 영역 README
 
 ## 제품 고정 전제
 
@@ -23,6 +24,9 @@ RVTT 리메이크의 제품 결정, 시스템 기획, UI, 구현 명세와 감�
 - 권위 이동은 연속 무격자 좌표, 월드 비율은 `5 ft = 4 studs`
 - 탐험에서는 클릭 이동과 WASD 이동, 전투에서는 클릭 경로 이동만 지원
 - 서버가 중요 규칙과 영구 상태의 최종 권한을 소유
+- Scene Editor는 Semantic Object와 명시적 예외를 편집하고, Compiler가 Runtime Layer와 Index를 생성
+- 가져온 원본 Model은 기술용 Attribute와 Value가 없어도 등록 가능
+- Workspace와 Roblox Physics는 권위 규칙 상태의 원본이 아님
 - 2024 기본 규칙의 플레이어 캐릭터 콘텐츠 전체를 최종 지원 범위로 삼음
 - NPC 대화 시스템, 음악과 모든 사운드 이펙트는 비목표
 - 최적화, 안정성, 오류 격리와 클린코드를 모든 기능의 완료 조건으로 적용
@@ -32,7 +36,7 @@ RVTT 리메이크의 제품 결정, 시스템 기획, UI, 구현 명세와 감�
 | 경로 | 역할 |
 |---|---|
 | [`product/`](product) | 제품 범위, 비목표, 전체 사용자 흐름과 지원 정책 |
-| [`architecture/`](architecture) | 여러 시스템이 공유하는 권위·Recipe·Capability·저장·확장 계약 |
+| [`architecture/`](architecture) | Runtime 원칙, 권위·Query·Recipe·Capability·저장·확장 계약 |
 | [`systems/`](systems) | 기능 영역별 사용자 흐름과 시스템 동작 |
 | [`ui/`](ui) | 화면 배치, 입력 문맥, 패널 상태와 사용자 피드백 |
 | [`decisions/`](decisions) | 전역 번호를 가진 Architecture Decision Record |
@@ -42,6 +46,12 @@ RVTT 리메이크의 제품 결정, 시스템 기획, UI, 구현 명세와 감�
 | [`archive/`](archive) | 현재 권위가 아닌 역사적 문서 |
 
 ## 추천 읽기 순서
+
+### 전체 아키텍처
+
+1. [`architecture/runtime-architecture-principles.md`](architecture/runtime-architecture-principles.md)
+2. [`decisions/ADR-0054-compiled-semantic-runtime-and-query-authority-principles.md`](decisions/ADR-0054-compiled-semantic-runtime-and-query-authority-principles.md)
+3. [`audits/cross-system-foundation-contract-gap-audit.md`](audits/cross-system-foundation-contract-gap-audit.md)
 
 ### 제품과 세션
 
