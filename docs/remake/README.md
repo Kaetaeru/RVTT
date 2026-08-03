@@ -15,10 +15,11 @@ RVTT 리메이크의 제품 결정, 시스템 기획, UI, 구현 명세와 감�
 5. Scene Source·Layer·Build를 다루는 경우 [`Scene Compiler 계약`](architecture/scene-compiler-and-compiled-runtime-scene-contract.md)
 6. Actor·문·함정·소환체와 Scene Presence를 다루는 경우 [`Runtime Object System 계약`](architecture/runtime-object-system-and-entity-lifecycle-contract.md)
 7. Remote·Command·Event·재접속·Client Ready를 다루는 경우 [`Networking 계약`](architecture/networking-command-event-and-client-synchronization-contract.md)
-8. [`Spatial Query Engine과 Provider 계약`](architecture/spatial-query-engine-and-provider-contract.md)
-9. 공간 이동을 다루는 경우 [`Runtime Navigation 계약`](architecture/runtime-navigation-path-planning-and-movement-execution-contract.md)
-10. [`DOCUMENT-GUIDE.md`](DOCUMENT-GUIDE.md)
-11. 관련 ADR과 영역 README
+8. Scene Chunk·Client Interest·Presentation Ready·Scene 전환을 다루는 경우 [`Scene Streaming 계약`](architecture/scene-streaming-client-interest-and-ready-activation-contract.md)
+9. [`Spatial Query Engine과 Provider 계약`](architecture/spatial-query-engine-and-provider-contract.md)
+10. 공간 이동을 다루는 경우 [`Runtime Navigation 계약`](architecture/runtime-navigation-path-planning-and-movement-execution-contract.md)
+11. [`DOCUMENT-GUIDE.md`](DOCUMENT-GUIDE.md)
+12. 관련 ADR과 영역 README
 
 ## 제품 고정 전제
 
@@ -37,7 +38,13 @@ RVTT 리메이크의 제품 결정, 시스템 기획, UI, 구현 명세와 감�
 - Actor, 문, 함정, 소환체와 지속 영역은 Stable RuntimeObjectId와 Command 기반 Lifecycle을 사용
 - Character, ItemInstance와 순수 EffectInstance 원본은 Scene Runtime Object와 분리
 - RuntimeObjectId를 재사용하지 않고 Incarnation과 AuthorityEpoch로 오래된 참조를 차단
-- Streaming과 Workspace Presentation 상태는 권위 Object Lifecycle과 분리
+- Client Chunk의 Ready·Evicted·Failed와 Runtime Object의 Active·Suspended·Archived·Destroyed를 분리
+- Projection Interest와 Camera·이동 기반 Presentation Interest를 분리
+- 활성 Scene의 권위 Layer와 Trigger는 Client Camera와 Chunk Eviction에 영향받지 않음
+- Scene Entry Essential과 Controlled Actor Activation Set 준비 전에는 관련 Gameplay Command를 허용하지 않음
+- Player Client에 전체 Raw Scene Build와 비밀 Geometry를 미리 보내지 않고 Disclosure Chunk Grant를 사용
+- Scene Transition은 공개 가능한 정적 자료를 Prepare한 뒤 안전 경계에서 Target Spawn과 Source Archive를 원자 Commit
+- Roblox StreamingEnabled와 Workspace Presentation은 권위 Object Lifecycle과 Client Ready의 원본이 아님
 - Client는 Intent만 보내며 권위 Mutation은 Versioned Command와 서버 Transaction을 사용
 - Command는 Idempotency Key, Connection Epoch, 타입 있는 Precondition과 Ordering Policy를 사용
 - Player Client는 Raw Server Event가 아니라 권한별 Projection Snapshot과 Event Stream을 받음
@@ -58,7 +65,7 @@ RVTT 리메이크의 제품 결정, 시스템 기획, UI, 구현 명세와 감�
 | 경로 | 역할 |
 |---|---|
 | [`product/`](product) | 제품 범위, 비목표, 전체 사용자 흐름과 지원 정책 |
-| [`architecture/`](architecture) | Runtime 원칙, Scene Compiler, Runtime Object, Networking, 권위·Query·Navigation·Recipe·Capability·저장·확장 계약 |
+| [`architecture/`](architecture) | Runtime 원칙, Scene Compiler, Runtime Object, Networking, Streaming, 권위·Query·Navigation·Recipe·Capability·저장·확장 계약 |
 | [`systems/`](systems) | 기능 영역별 사용자 흐름과 시스템 동작 |
 | [`ui/`](ui) | 화면 배치, 입력 문맥, 패널 상태와 사용자 피드백 |
 | [`decisions/`](decisions) | 전역 번호를 가진 Architecture Decision Record |
@@ -79,20 +86,23 @@ RVTT 리메이크의 제품 결정, 시스템 기획, UI, 구현 명세와 감�
 6. [`decisions/ADR-0058-stable-runtime-object-identity-and-command-driven-lifecycle.md`](decisions/ADR-0058-stable-runtime-object-identity-and-command-driven-lifecycle.md)
 7. [`architecture/networking-command-event-and-client-synchronization-contract.md`](architecture/networking-command-event-and-client-synchronization-contract.md)
 8. [`decisions/ADR-0059-versioned-command-protocol-and-projection-stream-synchronization.md`](decisions/ADR-0059-versioned-command-protocol-and-projection-stream-synchronization.md)
-9. [`architecture/spatial-query-engine-and-provider-contract.md`](architecture/spatial-query-engine-and-provider-contract.md)
-10. [`decisions/ADR-0055-snapshot-bound-typed-spatial-query-and-navigation-boundary.md`](decisions/ADR-0055-snapshot-bound-typed-spatial-query-and-navigation-boundary.md)
-11. [`architecture/runtime-navigation-path-planning-and-movement-execution-contract.md`](architecture/runtime-navigation-path-planning-and-movement-execution-contract.md)
-12. [`decisions/ADR-0056-hybrid-traversal-domain-and-checkpointed-movement-execution.md`](decisions/ADR-0056-hybrid-traversal-domain-and-checkpointed-movement-execution.md)
-13. [`audits/cross-system-foundation-contract-gap-audit.md`](audits/cross-system-foundation-contract-gap-audit.md)
+9. [`architecture/scene-streaming-client-interest-and-ready-activation-contract.md`](architecture/scene-streaming-client-interest-and-ready-activation-contract.md)
+10. [`decisions/ADR-0060-authority-independent-interest-managed-scene-streaming.md`](decisions/ADR-0060-authority-independent-interest-managed-scene-streaming.md)
+11. [`architecture/spatial-query-engine-and-provider-contract.md`](architecture/spatial-query-engine-and-provider-contract.md)
+12. [`decisions/ADR-0055-snapshot-bound-typed-spatial-query-and-navigation-boundary.md`](decisions/ADR-0055-snapshot-bound-typed-spatial-query-and-navigation-boundary.md)
+13. [`architecture/runtime-navigation-path-planning-and-movement-execution-contract.md`](architecture/runtime-navigation-path-planning-and-movement-execution-contract.md)
+14. [`decisions/ADR-0056-hybrid-traversal-domain-and-checkpointed-movement-execution.md`](decisions/ADR-0056-hybrid-traversal-domain-and-checkpointed-movement-execution.md)
+15. [`audits/cross-system-foundation-contract-gap-audit.md`](audits/cross-system-foundation-contract-gap-audit.md)
 
 ### 제품과 세션
 
 1. [`product/platform-movement-and-input-scope.md`](product/platform-movement-and-input-scope.md)
 2. [`product/core-session-loop.md`](product/core-session-loop.md)
 3. [`architecture/networking-command-event-and-client-synchronization-contract.md`](architecture/networking-command-event-and-client-synchronization-contract.md)
-4. [`systems/session/campaign-lobby-hot-join-ownership-and-control.md`](systems/session/campaign-lobby-hot-join-ownership-and-control.md)
-5. [`architecture/persistence-and-session-recovery-model.md`](architecture/persistence-and-session-recovery-model.md)
-6. [`systems/camera/free-tactical-camera-model.md`](systems/camera/free-tactical-camera-model.md)
+4. [`architecture/scene-streaming-client-interest-and-ready-activation-contract.md`](architecture/scene-streaming-client-interest-and-ready-activation-contract.md)
+5. [`systems/session/campaign-lobby-hot-join-ownership-and-control.md`](systems/session/campaign-lobby-hot-join-ownership-and-control.md)
+6. [`architecture/persistence-and-session-recovery-model.md`](architecture/persistence-and-session-recovery-model.md)
+7. [`systems/camera/free-tactical-camera-model.md`](systems/camera/free-tactical-camera-model.md)
 
 ### 장면 제작과 이동
 
@@ -100,11 +110,12 @@ RVTT 리메이크의 제품 결정, 시스템 기획, UI, 구현 명세와 감�
 2. [`architecture/scene-compiler-and-compiled-runtime-scene-contract.md`](architecture/scene-compiler-and-compiled-runtime-scene-contract.md)
 3. [`architecture/runtime-object-system-and-entity-lifecycle-contract.md`](architecture/runtime-object-system-and-entity-lifecycle-contract.md)
 4. [`architecture/networking-command-event-and-client-synchronization-contract.md`](architecture/networking-command-event-and-client-synchronization-contract.md)
-5. [`systems/navigation/navigation-authoring-pipeline.md`](systems/navigation/navigation-authoring-pipeline.md)
-6. [`architecture/runtime-navigation-path-planning-and-movement-execution-contract.md`](architecture/runtime-navigation-path-planning-and-movement-execution-contract.md)
-7. [`systems/scene/ingame-scene-editor-tools.md`](systems/scene/ingame-scene-editor-tools.md)
-8. [`ui/scene-editor/scene-editor-interaction-and-layout.md`](ui/scene-editor/scene-editor-interaction-and-layout.md)
-9. [`architecture/scene-editor-tool-module-architecture.md`](architecture/scene-editor-tool-module-architecture.md)
+5. [`architecture/scene-streaming-client-interest-and-ready-activation-contract.md`](architecture/scene-streaming-client-interest-and-ready-activation-contract.md)
+6. [`systems/navigation/navigation-authoring-pipeline.md`](systems/navigation/navigation-authoring-pipeline.md)
+7. [`architecture/runtime-navigation-path-planning-and-movement-execution-contract.md`](architecture/runtime-navigation-path-planning-and-movement-execution-contract.md)
+8. [`systems/scene/ingame-scene-editor-tools.md`](systems/scene/ingame-scene-editor-tools.md)
+9. [`ui/scene-editor/scene-editor-interaction-and-layout.md`](ui/scene-editor/scene-editor-interaction-and-layout.md)
+10. [`architecture/scene-editor-tool-module-architecture.md`](architecture/scene-editor-tool-module-architecture.md)
 
 ### 규칙과 전투
 
@@ -113,11 +124,12 @@ RVTT 리메이크의 제품 결정, 시스템 기획, UI, 구현 명세와 감�
 3. [`architecture/effect-recipe-resolution-and-commit-model.md`](architecture/effect-recipe-resolution-and-commit-model.md)
 4. [`architecture/runtime-object-system-and-entity-lifecycle-contract.md`](architecture/runtime-object-system-and-entity-lifecycle-contract.md)
 5. [`architecture/networking-command-event-and-client-synchronization-contract.md`](architecture/networking-command-event-and-client-synchronization-contract.md)
-6. [`architecture/spatial-query-engine-and-provider-contract.md`](architecture/spatial-query-engine-and-provider-contract.md)
-7. [`architecture/runtime-navigation-path-planning-and-movement-execution-contract.md`](architecture/runtime-navigation-path-planning-and-movement-execution-contract.md)
-8. [`systems/combat/encounter-initiative-turn-and-control-authority-model.md`](systems/combat/encounter-initiative-turn-and-control-authority-model.md)
-9. [`systems/combat/dice-roll-presentation-and-resolution-gating-model.md`](systems/combat/dice-roll-presentation-and-resolution-gating-model.md)
-10. [`systems/combat/encounter-turn-snapshot-and-dm-rollback-model.md`](systems/combat/encounter-turn-snapshot-and-dm-rollback-model.md)
+6. [`architecture/scene-streaming-client-interest-and-ready-activation-contract.md`](architecture/scene-streaming-client-interest-and-ready-activation-contract.md)
+7. [`architecture/spatial-query-engine-and-provider-contract.md`](architecture/spatial-query-engine-and-provider-contract.md)
+8. [`architecture/runtime-navigation-path-planning-and-movement-execution-contract.md`](architecture/runtime-navigation-path-planning-and-movement-execution-contract.md)
+9. [`systems/combat/encounter-initiative-turn-and-control-authority-model.md`](systems/combat/encounter-initiative-turn-and-control-authority-model.md)
+10. [`systems/combat/dice-roll-presentation-and-resolution-gating-model.md`](systems/combat/dice-roll-presentation-and-resolution-gating-model.md)
+11. [`systems/combat/encounter-turn-snapshot-and-dm-rollback-model.md`](systems/combat/encounter-turn-snapshot-and-dm-rollback-model.md)
 
 ### 플레이어와 DM UI
 
