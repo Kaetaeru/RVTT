@@ -17,6 +17,13 @@
   - 부분 컴파일과 전체 Build 동일성
   - 원자적 게시, Last Known Good Build와 Live Patch 경계
   - 서버 Raw Build와 권한별 Client Disclosure Segment 분리
+- [`Runtime Object System과 Entity Lifecycle 계약`](runtime-object-system-and-entity-lifecycle-contract.md)
+  - Scene Presence의 공통 RuntimeObjectId, Incarnation과 AuthorityEpoch
+  - Blueprint, Component 조합, Registry와 Specialized Store
+  - Spawn·Suspend·Archive·Restore·Destroy Lifecycle Command
+  - Ownership·Link Graph, Tombstone과 Scene Transfer
+  - Snapshot·Rollback, Build Rebind와 Presentation Materialization 경계
+  - Character·Item·Effect 원본과 Runtime Scene Presence 분리
 - [`Spatial Query Engine과 Provider 계약`](spatial-query-engine-and-provider-contract.md)
   - Runtime Scene Snapshot에 고정된 공간 질의 계약
   - 타입 있는 Spatial Reference, Shape, Request와 Immutable Result
@@ -37,6 +44,7 @@
 - Registry와 고정 ID
 - Scene Source, Compiler Build, Runtime Scene Snapshot과 Spatial Query
 - Runtime Layer, State Binding, Chunk와 Dependency Graph
+- Runtime Object Identity, Component, Lifecycle, Ownership과 Link
 - Traversal Domain, 경로 계획과 Movement Execution
 - Capability, Recipe와 Effect
 - 저장·복구와 마이그레이션
@@ -49,6 +57,8 @@
 새 Architecture 문서는 먼저 [`Runtime Architecture Principles`](runtime-architecture-principles.md)를 따른다.
 
 Scene Source, Semantic Profile, Runtime Layer, Index, Chunk, Build와 게시를 다루는 문서는 [`Scene Compiler 계약`](scene-compiler-and-compiled-runtime-scene-contract.md)을 따른다.
+
+Actor, 문, 함정, 소환체, 지속 영역과 기타 Scene Presence의 생성·참조·비활성·복원·파괴를 다루는 문서는 [`Runtime Object System 계약`](runtime-object-system-and-entity-lifecycle-contract.md)을 따른다.
 
 공간, 거리, 점유, 시야 증거, 영역 포함이나 이동 가능성을 사용하는 문서는 [`Spatial Query Engine과 Provider 계약`](spatial-query-engine-and-provider-contract.md)을 추가로 따른다.
 
