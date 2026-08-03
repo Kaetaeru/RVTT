@@ -173,3 +173,88 @@ Builder, Provider, Step Handler와 Presentation Module은 고정 ID, 버전, Sch
 ### 한 결정에는 하나의 권위 문서만 둔다
 
 하위 문서는 전체 원칙을 다시 정의하지 않는다. 해당 개념의 권위 문서를 링크하고, 자신의 범위에서 추가되는 계약만 기록한다.
+
+## 6. Runtime Object와 Entity Lifecycle 게이트
+
+Actor, 문, 함정, 상자, 소환체, 지속 영역, 임시 장애물과 기타 Scene Presence를 다루는 문서는 [`Runtime Object System과 Entity Lifecycle 계약`](architecture/runtime-object-system-and-entity-lifecycle-contract.md)과 [`ADR-0058`](decisions/ADR-0058-stable-runtime-object-identity-and-command-driven-lifecycle.md)를 확인한다.
+
+### ID 의미를 섞지 않는다
+
+최소한 다음을 구분한다.
+
+```text
+SceneObjectId
+→ Authoring Source ID
+
+RuntimeObjectBlueprintId
+→ Compiled Build Definition ID
+
+RuntimeObjectId
+→ Live Scene Presence ID
+
+CharacterId / ItemInstanceId / EffectInstanceId
+→ 각 도메인 영구 원본 ID
+```
+
+SceneObjectId와 Workspace Instance 경로를 Live Runtime 참조처럼 사용하지 않는다.
+
+### Runtime Object 범위를 과도하게 넓히지 않는다
+
+정적 Geometry, Character 원본, 인벤토리 안 ItemInstance, Scene Presence가 없는 EffectInstance, UI와 VFX를 억지로 Runtime Object로 만들지 않는다.
+
+Scene 안에서 독립된 Identity, Lifecycle, 공간 점유, 선택, 상호작용 또는 안정적 참조가 필요한 경우에만 Runtime Object를 사용한다.
+
+### Lifecycle Mutation은 Command만 사용한다
+
+Spawn, Suspend, Resume, Archive, Restore, Destroy와 Reconfigure는 서버 권위 Lifecycle Command와 원자적 CommitGroup을 사용한다.
+
+다음을 금지한다.
+
+- `Model:Destroy()`를 권위 Destroy로 취급
+- Workspace에 Model을 먼저 만든 뒤 Spawn 성공으로 처리
+- Component Store와 Index를 각각 따로 변경
+- Destroyed ID를 새 Object에 재사용
+- Archived와 Destroyed를 같은 상태로 취급
+
+### 오래된 참조를 검증한다
+
+Runtime Object를 비동기로 참조하는 기능은 필요에 따라 다음을 확인한다.
+
+- RuntimeObjectId
+- RuntimeIncarnation
+- AuthorityEpoch 또는 Branch
+- SceneId
+- Object Revision
+
+Rollback, 서버 복구, Archive Restore와 Build Rebind 이후 오래된 작업이 자동으로 새 Object에 적용되지 않게 한다.
+
+### Streaming과 Presentation을 Lifecycle과 분리한다
+
+Client Model의 `loading`, `ready`, `evicted`, `failed`와 Runtime Object의 `active`, `suspended`, `archived`, `destroyed`를 같은 상태 기계로 만들지 않는다.
+
+Chunk가 보이지 않거나 Model 생성에 실패해도 서버 권위 Object를 삭제하거나 Suspend하지 않는다.
+
+### Ownership과 Link를 구분한다
+
+소환체와 Effect-owned Object의 Cleanup 관계는 Runtime Ownership Edge로 기록한다.
+
+레버와 문, Journal과 Object, Trigger와 대상의 연결은 일반 Link이며 Cleanup Ownership과 동일하지 않다.
+
+Gameplay Owner, Character Owner, Control Assignment와 Runtime Cleanup Owner를 하나의 `ownerId`로 합치지 않는다.
+
+### 준비도 확인 항목
+
+Runtime Object를 추가하거나 변경하는 문서는 다음을 명시해야 한다.
+
+1. Blueprint와 Live Identity 정책
+2. 필요한 Component와 각 권위 Store
+3. 허용 Lifecycle 상태와 전이
+4. Spawn·Cleanup의 Transaction 경계
+5. Ownership·Link 무효화 정책
+6. Persistence Class와 Snapshot 포함 방식
+7. Rollback·복구 시 Identity와 Incarnation 처리
+8. Disclosure와 Client Materialization 경계
+9. Build 교체 시 Rebind 또는 Migration 정책
+10. 실패 후 남아야 할 안전 상태
+
+중요한 항목이 빠져 있으면 `READY`로 표시하지 않는다.
