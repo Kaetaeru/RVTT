@@ -1,6 +1,6 @@
 # Scene 시스템
 
-Scene Source, Compiled Runtime Build, 세션 Dynamic State, Runtime Object Lifecycle, 라이브 패치와 인게임 제작 도구를 다룬다.
+Scene Source, Compiled Runtime Build, 세션 Dynamic State, Runtime Object Lifecycle, Client Streaming, 라이브 패치와 인게임 제작 도구를 다룬다.
 
 ## 권위 문서
 
@@ -31,6 +31,16 @@ Scene Source, Compiled Runtime Build, 세션 Dynamic State, Runtime Object Lifec
   - Scene Transfer, Build Rebind, Tombstone과 Ownership Cleanup
   - Workspace Model과 권위 Object Lifecycle 분리
 
+### Streaming과 Scene 전환
+
+- [`../../architecture/scene-streaming-client-interest-and-ready-activation-contract.md`](../../architecture/scene-streaming-client-interest-and-ready-activation-contract.md)
+  - Client-safe Scene Chunk와 Projection·Presentation 분리
+  - Projection Interest와 Camera·Movement Presentation Interest
+  - Entry Essential, Controlled Actor와 Encounter Activation Set
+  - Streaming Veil, Prefetch, Cache, Eviction과 실패 격리
+  - Prepare·Commit 기반 Scene Transition과 그룹 전환
+  - Chunk Stream Out과 Runtime Object Lifecycle 분리
+
 ### Scene Editor
 
 - [`ingame-scene-editor-tools.md`](ingame-scene-editor-tools.md)
@@ -47,5 +57,8 @@ Scene Source, Compiled Runtime Build, 세션 Dynamic State, Runtime Object Lifec
 - Compiler는 Runtime Object Blueprint를 만들고 Live RuntimeObjectId는 Runtime Registry가 바인딩한다.
 - 플레이 중 상태 변경은 Dynamic State와 Runtime Overlay에 기록한다.
 - Runtime Object Lifecycle은 서버 권위 Command로만 변경한다.
+- Client Chunk의 Ready·Evicted·Failed는 Runtime Object의 Active·Suspended·Archived·Destroyed와 별개다.
+- Scene Entry Essential이 준비되기 전에 Gameplay Command를 허용하지 않는다.
+- Scene Transition은 Target Preload 후 안전 경계의 원자적 Presence Transfer를 사용한다.
 - Quick Edit는 명시적 승격 전까지 Scene Source를 변경하지 않는다.
 - Workspace Instance와 Compiler Cache는 저장 원본이 아니다.
