@@ -3,13 +3,13 @@
 - 상태: 초안
 - 작성일: 2026-08-03
 - 관련 문서:
-  - [`17. 주문 대상·범위·공간 질의 모델`](../../../rules/spell-targeting-area-and-spatial-query-model.md)
-  - [`19. 트리거와 다른 턴 실행 모델`](../../../rules/feat-feature-trigger-and-cross-turn-execution-model.md)
-  - [`21. 패시브 특성 모델`](../../../../architecture/passive-modifier-and-rule-override-model.md)
-  - [`22. EffectRecipe와 효과 해결·확정 모델`](../../../../architecture/effect-recipe-resolution-and-commit-model.md)
-  - [`28. 인카운터·주도권·턴과 제어권 모델`](../../../combat/encounter-initiative-turn-and-control-authority-model.md)
-  - [`29. 수동 Fog of War와 선택형 Assist 모델`](../../../../manual-fog-of-war-and-optional-assist-model.md)
-  - [`ADR-0036`](../../../../decisions/ADR-0036-observer-relative-perception-senses-stealth-and-rule-points.md)
+  - [`17. 주문 대상·범위·공간 질의 모델`](../rules/spell-targeting-area-and-spatial-query-model.md)
+  - [`19. 트리거와 다른 턴 실행 모델`](../rules/feat-feature-trigger-and-cross-turn-execution-model.md)
+  - [`21. 패시브 특성 모델`](../../architecture/passive-modifier-and-rule-override-model.md)
+  - [`22. EffectRecipe와 효과 해결·확정 모델`](../../architecture/effect-recipe-resolution-and-commit-model.md)
+  - [`28. 인카운터·주도권·턴과 제어권 모델`](../combat/encounter-initiative-turn-and-control-authority-model.md)
+  - [`29. 수동 Fog of War와 선택형 Assist 모델`](manual-fog-of-war-and-optional-assist-model.md)
+  - [`ADR-0036`](../../decisions/ADR-0036-observer-relative-perception-senses-stealth-and-rule-points.md)
 
 ## 1. 문서 목적
 

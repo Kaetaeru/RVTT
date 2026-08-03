@@ -3,11 +3,11 @@
 - 상태: 초안
 - 작성일: 2026-08-03
 - 관련 문서:
-  - [`11. 공통 실행 계약과 마법 처리 모델`](../../../../architecture/rules-content-execution-and-spell-contract.md)
-  - [`14. 주문 자원 풀과 시전 결제 모델`](../../../../spell-resource-pools-and-cast-payment-model.md)
-  - [`17. 주문 대상 지정·영역·공간 질의 모델`](../../../../spell-targeting-area-and-spatial-query-model.md)
-  - [`ADR-0023`](../../../../decisions/ADR-0023-composable-targeting-and-spatial-query-model.md)
-  - [`ADR-0024`](../../../../decisions/ADR-0024-hybrid-rule-recipes-and-reusable-advanced-operations.md)
+  - [`11. 공통 실행 계약과 마법 처리 모델`](../../architecture/rules-content-execution-and-spell-contract.md)
+  - [`14. 주문 자원 풀과 시전 결제 모델`](spell-resource-pools-and-cast-payment-model.md)
+  - [`17. 주문 대상 지정·영역·공간 질의 모델`](spell-targeting-area-and-spatial-query-model.md)
+  - [`ADR-0023`](../../decisions/ADR-0023-composable-targeting-and-spatial-query-model.md)
+  - [`ADR-0024`](../../decisions/ADR-0024-hybrid-rule-recipes-and-reusable-advanced-operations.md)
 
 ## 1. 문서 목적
 

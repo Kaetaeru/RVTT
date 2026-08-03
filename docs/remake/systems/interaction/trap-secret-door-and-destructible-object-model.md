@@ -3,14 +3,14 @@
 - 상태: 초안
 - 작성일: 2026-08-03
 - 관련 문서:
-  - [`06. 인게임 장면 편집기 도구`](../../../scene/ingame-scene-editor-tools.md)
-  - [`07. 장면 편집 상호작용과 레이아웃`](../../../../ui/scene-editor/scene-editor-interaction-and-layout.md)
-  - [`17. 주문 대상·범위·공간 질의 모델`](../../../rules/spell-targeting-area-and-spatial-query-model.md)
-  - [`21. 패시브 특성 모델`](../../../../architecture/passive-modifier-and-rule-override-model.md)
-  - [`22. EffectRecipe와 효과 해결·확정 모델`](../../../../architecture/effect-recipe-resolution-and-commit-model.md)
-  - [`30. 시야·감각·은신·탐지 모델`](../../../perception/visibility-senses-stealth-and-detection-model.md)
-  - [`31. 무설정 상호작용 프리팹과 상태 전환 모델`](../../../../zero-metadata-interaction-prefab-and-state-transition-model.md)
-  - [`ADR-0038`](../../../../decisions/ADR-0038-zero-metadata-hazards-secret-passages-and-destructible-objects.md)
+  - [`06. 인게임 장면 편집기 도구`](../scene/ingame-scene-editor-tools.md)
+  - [`07. 장면 편집 상호작용과 레이아웃`](../../ui/scene-editor/scene-editor-interaction-and-layout.md)
+  - [`17. 주문 대상·범위·공간 질의 모델`](../rules/spell-targeting-area-and-spatial-query-model.md)
+  - [`21. 패시브 특성 모델`](../../architecture/passive-modifier-and-rule-override-model.md)
+  - [`22. EffectRecipe와 효과 해결·확정 모델`](../../architecture/effect-recipe-resolution-and-commit-model.md)
+  - [`30. 시야·감각·은신·탐지 모델`](../perception/visibility-senses-stealth-and-detection-model.md)
+  - [`31. 무설정 상호작용 프리팹과 상태 전환 모델`](zero-metadata-interaction-prefab-and-state-transition-model.md)
+  - [`ADR-0038`](../../decisions/ADR-0038-zero-metadata-hazards-secret-passages-and-destructible-objects.md)
 
 ## 1. 문서 목적
 

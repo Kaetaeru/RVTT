@@ -3,13 +3,13 @@
 - 상태: 초안
 - 작성일: 2026-08-03
 - 관련 문서:
-  - [`10. Grant Graph와 Capability 모델`](../../../../architecture/rules-content-grant-capability-model.md)
-  - [`11. 공통 실행 계약`](../../../../architecture/rules-content-execution-and-spell-contract.md)
-  - [`17. 주문 대상 지정·영역·공간 질의 모델`](../../../../spell-targeting-area-and-spatial-query-model.md)
-  - [`19. 재주·특성의 트리거와 다른 턴 실행 모델`](../../../../feat-feature-trigger-and-cross-turn-execution-model.md)
-  - [`ADR-0024`](../../../../decisions/ADR-0024-hybrid-rule-recipes-and-reusable-advanced-operations.md)
-  - [`ADR-0025`](../../../../decisions/ADR-0025-typed-rule-events-timing-windows-and-usage-gates.md)
-  - [`ADR-0026`](../../../../decisions/ADR-0026-active-capabilities-action-containers-and-unit-replacements.md)
+  - [`10. Grant Graph와 Capability 모델`](../../architecture/rules-content-grant-capability-model.md)
+  - [`11. 공통 실행 계약`](../../architecture/rules-content-execution-and-spell-contract.md)
+  - [`17. 주문 대상 지정·영역·공간 질의 모델`](spell-targeting-area-and-spatial-query-model.md)
+  - [`19. 재주·특성의 트리거와 다른 턴 실행 모델`](feat-feature-trigger-and-cross-turn-execution-model.md)
+  - [`ADR-0024`](../../decisions/ADR-0024-hybrid-rule-recipes-and-reusable-advanced-operations.md)
+  - [`ADR-0025`](../../decisions/ADR-0025-typed-rule-events-timing-windows-and-usage-gates.md)
+  - [`ADR-0026`](../../decisions/ADR-0026-active-capabilities-action-containers-and-unit-replacements.md)
 
 ## 1. 문서 목적
 

@@ -2,7 +2,7 @@
 
 - 상태: 초안
 - 작성일: 2026-08-03
-- 관련 결정: [`ADR-0046`](../../../decisions/ADR-0046-modular-presentation-recipes-and-extension-contracts.md)
+- 관련 결정: [`ADR-0046`](../decisions/ADR-0046-modular-presentation-recipes-and-extension-contracts.md)
 
 ## 1. 목적
 

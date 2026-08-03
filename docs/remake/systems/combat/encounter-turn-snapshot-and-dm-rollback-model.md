@@ -3,15 +3,15 @@
 - 상태: 초안
 - 작성일: 2026-08-03
 - 관련 문서:
-  - [`22. EffectRecipe와 효과 해결·확정 모델`](../../../../architecture/effect-recipe-resolution-and-commit-model.md)
-  - [`27. 주사위 굴림·연출·결과 확정 모델`](../../../../dice-roll-presentation-and-resolution-gating-model.md)
-  - [`28. 인카운터·주도권·턴과 제어권 모델`](../../../../encounter-initiative-turn-and-control-authority-model.md)
-  - [`29. 수동 Fog of War와 선택형 Assist 모델`](../../../perception/manual-fog-of-war-and-optional-assist-model.md)
-  - [`30. 시야·감각·은신·탐지 모델`](../../../perception/visibility-senses-stealth-and-detection-model.md)
-  - [`31. 무설정 상호작용 프리팹과 상태 전환 모델`](../../../interaction/zero-metadata-interaction-prefab-and-state-transition-model.md)
-  - [`32. 무설정 함정·비밀문·파괴 오브젝트 모델`](../../../interaction/trap-secret-door-and-destructible-object-model.md)
-  - [`36. 저장·자동 저장·재접속·서버 종료·세션 복구 모델`](../../../../architecture/persistence-and-session-recovery-model.md)
-  - [`ADR-0043`](../../../../decisions/ADR-0043-encounter-turn-snapshot-timeline-and-dm-rollback.md)
+  - [`22. EffectRecipe와 효과 해결·확정 모델`](../../architecture/effect-recipe-resolution-and-commit-model.md)
+  - [`27. 주사위 굴림·연출·결과 확정 모델`](dice-roll-presentation-and-resolution-gating-model.md)
+  - [`28. 인카운터·주도권·턴과 제어권 모델`](encounter-initiative-turn-and-control-authority-model.md)
+  - [`29. 수동 Fog of War와 선택형 Assist 모델`](../perception/manual-fog-of-war-and-optional-assist-model.md)
+  - [`30. 시야·감각·은신·탐지 모델`](../perception/visibility-senses-stealth-and-detection-model.md)
+  - [`31. 무설정 상호작용 프리팹과 상태 전환 모델`](../interaction/zero-metadata-interaction-prefab-and-state-transition-model.md)
+  - [`32. 무설정 함정·비밀문·파괴 오브젝트 모델`](../interaction/trap-secret-door-and-destructible-object-model.md)
+  - [`36. 저장·자동 저장·재접속·서버 종료·세션 복구 모델`](../../architecture/persistence-and-session-recovery-model.md)
+  - [`ADR-0043`](../../decisions/ADR-0043-encounter-turn-snapshot-timeline-and-dm-rollback.md)
 
 ## 1. 문서 목적
 

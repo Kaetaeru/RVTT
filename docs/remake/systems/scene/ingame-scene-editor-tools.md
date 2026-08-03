@@ -3,14 +3,14 @@
 - 상태: 초안
 - 작성일: 2026-08-03
 - 관련 문서:
-  - [`02-core-session-loop.md`](../../../../product/core-session-loop.md)
-  - [`04-scenes-and-world.md`](../../../../scenes-and-world.md)
-  - [`05-navigation-authoring-pipeline.md`](../../../navigation/navigation-authoring-pipeline.md)
-  - [`07-scene-editor-interaction-and-layout.md`](../../../../ui/scene-editor/scene-editor-interaction-and-layout.md)
-  - [`ADR-0005`](../../../../decisions/ADR-0005-performance-reliability-clean-code.md)
-  - [`ADR-0006`](../../../../decisions/ADR-0006-rigless-3d-token-continuous-movement.md)
-  - [`ADR-0007`](../../../../decisions/ADR-0007-view-y-and-world-scale.md)
-  - [`ADR-0008`](../../../../decisions/ADR-0008-surface-first-placement-and-ctrl-elevation.md)
+  - [`02-core-session-loop.md`](../../product/core-session-loop.md)
+  - [`04-scenes-and-world.md`](scenes-and-world.md)
+  - [`05-navigation-authoring-pipeline.md`](../navigation/navigation-authoring-pipeline.md)
+  - [`07-scene-editor-interaction-and-layout.md`](../../ui/scene-editor/scene-editor-interaction-and-layout.md)
+  - [`ADR-0005`](../../decisions/ADR-0005-performance-reliability-clean-code.md)
+  - [`ADR-0006`](../../decisions/ADR-0006-rigless-3d-token-continuous-movement.md)
+  - [`ADR-0007`](../../decisions/ADR-0007-view-y-and-world-scale.md)
+  - [`ADR-0008`](../../decisions/ADR-0008-surface-first-placement-and-ctrl-elevation.md)
 
 ## 1. 목표
 
@@ -73,7 +73,7 @@ ViewY로 작업 공간 열기
 - Ctrl + 수직 드래그: 현재 배치 고스트와 가상 격자의 높이 조절
 - Shift 유지: 현재 배치 또는 기즈모의 스냅 임시 해제
 
-선택 모드, 연속 배치 모드, 스포이드, 복제, 3차원 셀렉션 박스와 도킹 창의 세부 조작은 [`07-scene-editor-interaction-and-layout.md`](../../../../ui/scene-editor/scene-editor-interaction-and-layout.md)에서 정의한다.
+선택 모드, 연속 배치 모드, 스포이드, 복제, 3차원 셀렉션 박스와 도킹 창의 세부 조작은 [`07-scene-editor-interaction-and-layout.md`](../../ui/scene-editor/scene-editor-interaction-and-layout.md)에서 정의한다.
 
 정확한 키와 버튼 배치는 입력·UI 문서에서 확정한다.
 
@@ -723,7 +723,7 @@ Roblox Terrain을 직접 조각하는 고급 브러시는 이후 성능과 저�
 - 기본 레이아웃으로 초기화
 - 사용자별 레이아웃 저장
 
-세부 창 조작은 [`07-scene-editor-interaction-and-layout.md`](../../../../ui/scene-editor/scene-editor-interaction-and-layout.md)에서 정의한다.
+세부 창 조작은 [`07-scene-editor-interaction-and-layout.md`](../../ui/scene-editor/scene-editor-interaction-and-layout.md)에서 정의한다.
 
 ---
 
