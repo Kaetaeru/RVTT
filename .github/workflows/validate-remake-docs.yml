@@ -1,0 +1,33 @@
+name: Validate remake documentation
+
+on:
+  pull_request:
+    paths:
+      - "docs/remake/**"
+      - "scripts/docs/validate_remake_docs.py"
+      - ".github/workflows/validate-remake-docs.yml"
+  push:
+    branches:
+      - planning/rvtt-remake
+    paths:
+      - "docs/remake/**"
+      - "scripts/docs/validate_remake_docs.py"
+      - ".github/workflows/validate-remake-docs.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate remake documentation
+        run: python scripts/docs/validate_remake_docs.py
