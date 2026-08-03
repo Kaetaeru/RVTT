@@ -31,6 +31,14 @@
   - 사용자별 Authority Projection Stream과 Disclosure
   - Projection Snapshot, Event Catch-up, 재접속과 Client Ready
   - 권위 Event와 병합 가능한 Presentation Signal 분리
+- [`Scene Streaming, Client Interest와 Ready Activation 계약`](scene-streaming-client-interest-and-ready-activation-contract.md)
+  - Server Authority Runtime과 Client Streaming 분리
+  - Client-safe Chunk, Projection Segment와 Presentation Bundle
+  - Projection Interest와 Presentation Interest
+  - Activation Set, Essential Ready, Camera·Movement Prefetch와 Eviction
+  - 공개 범위 기반 Chunk Grant와 비밀 Geometry 보호
+  - Prepare·Commit 기반 Scene Transition과 그룹 전환
+  - Roblox StreamingEnabled를 저수준 Adapter로 제한
 - [`Spatial Query Engine과 Provider 계약`](spatial-query-engine-and-provider-contract.md)
   - Runtime Scene Snapshot에 고정된 공간 질의 계약
   - 타입 있는 Spatial Reference, Shape, Request와 Immutable Result
@@ -53,6 +61,7 @@
 - Scene Source, Compiler Build, Runtime Scene Snapshot과 Spatial Query
 - Runtime Layer, State Binding, Chunk와 Dependency Graph
 - Runtime Object Identity, Component, Lifecycle, Ownership과 Link
+- Client Interest, Streaming Activation Set, Cache, Eviction과 Scene Transition Ready
 - Traversal Domain, 경로 계획과 Movement Execution
 - Capability, Recipe와 Effect
 - 저장·복구와 마이그레이션
@@ -69,6 +78,8 @@ Scene Source, Semantic Profile, Runtime Layer, Index, Chunk, Build와 게시를 
 Actor, 문, 함정, 소환체, 지속 영역과 기타 Scene Presence의 생성·참조·비활성·복원·파괴를 다루는 문서는 [`Runtime Object System 계약`](runtime-object-system-and-entity-lifecycle-contract.md)을 따른다.
 
 Remote, Client Command, Read Request, Event 복제, 중도 참여, 재접속, Snapshot Sync와 Client Ready를 다루는 문서는 [`Networking 계약`](networking-command-event-and-client-synchronization-contract.md)을 따른다.
+
+Scene Chunk, Client Interest, Presentation Materialization, Camera·이동 Prefetch, Chunk Eviction과 Scene Transition 준비를 다루는 문서는 [`Scene Streaming 계약`](scene-streaming-client-interest-and-ready-activation-contract.md)을 따른다.
 
 공간, 거리, 점유, 시야 증거, 영역 포함이나 이동 가능성을 사용하는 문서는 [`Spatial Query Engine과 Provider 계약`](spatial-query-engine-and-provider-contract.md)을 추가로 따른다.
 
