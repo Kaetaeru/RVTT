@@ -6,6 +6,12 @@
 
 - [`Runtime Architecture Principles`](runtime-architecture-principles.md)
 - [`Compiled Build와 Authoritative State 분리 패턴`](compiled-build-and-authoritative-state-pattern.md)
+- [`Ruleset Policy Registry, Composition과 Frozen Snapshot Runtime 계약`](ruleset-policy-registry-composition-and-frozen-snapshot-runtime-contract.md)
+  - Policy Family·Implementation·Merger Registry와 Version
+  - Gameplay·Disclosure·Operational·Presentation Policy Plane
+  - Ruleset·Source Pack·Campaign·Scope Binding의 결정적 Composition
+  - Campaign·Scope Frozen Snapshot과 Execution Effective Policy View
+  - Conflict, Hard Invariant, DM Override, Hot Swap와 Migration
 - [`Session Play Mode, Context, Overlay와 Transition 계약`](session-play-mode-context-overlay-and-transition-contract.md)
   - Exploration·Encounter·Downtime Base Play Mode
   - Stealth·Travel·Hazard 등의 겹칠 수 있는 Context
@@ -93,6 +99,7 @@
 
 - 서버·클라이언트 책임
 - Source, Compiler, Immutable Build, Authoritative State, Migration과 Projection
+- Ruleset·Source Pack·Campaign·Scope Policy Composition과 Frozen Snapshot
 - Session Base Mode, Context, Overlay, Transition과 Command Gate
 - Exploration 실시간 이동, Actor별 실행 충돌, Hazard와 Encounter 전환
 - Encounter Participant, Initiative Timeline, Turn, Opportunity, Objective와 종료
@@ -120,6 +127,7 @@
 
 - 모든 Architecture 문서는 [`Runtime Architecture Principles`](runtime-architecture-principles.md)를 따른다.
 - Source·Build·State·Migration을 다루면 [`Compiled Build 패턴`](compiled-build-and-authoritative-state-pattern.md)을 따른다.
+- 교체 가능한 규칙 방식, Ruleset·Campaign·Scope 설정, Policy 우선순위·충돌·Version과 진행 중 실행의 규칙 고정을 다루면 [`Ruleset Policy Runtime 계약`](ruleset-policy-registry-composition-and-frozen-snapshot-runtime-contract.md)을 따른다.
 - Exploration·Encounter·Downtime, Context, UI·Authoring Overlay, Scene Transition·Join·Recovery를 다루면 [`Session Runtime 계약`](session-play-mode-context-overlay-and-transition-contract.md)을 따른다.
 - 탐험 WASD·클릭 이동, 실시간 행동 충돌, Hazard와 Encounter 진입을 다루면 [`Exploration Runtime 계약`](exploration-real-time-movement-action-and-encounter-transition-runtime-contract.md)을 따른다.
 - Initiative, Timeline, Turn·Round, Opportunity, Participant, Objective와 Encounter 종료를 다루면 [`Encounter Runtime 계약`](encounter-timeline-turn-opportunity-and-objective-runtime-contract.md)을 따른다.
