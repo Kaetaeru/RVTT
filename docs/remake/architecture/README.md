@@ -42,6 +42,12 @@
   - World Anchor 수명주기, Source Object·Runtime Incarnation과 명시적 Retarget
   - Permission-partitioned Search·Backlink·Outline과 비밀 정보 차단
   - 안전한 Journal Navigation Capability와 Camera·Selection·Scene Transition 연결
+- [`Cross-Domain Outcome Cascade와 Integration Boundary Runtime 계약`](cross-domain-outcome-cascade-and-integration-boundary-runtime-contract.md)
+  - Immediate Closure와 Deferred Consequence의 공통 분류
+  - Domain Provider Contribution, Cross-Domain Outcome Plan과 Invariant
+  - Damage·Healing·Vital·Death·Encounter 통합
+  - Runtime Object·Scene·Derived Index와 Downtime·Build·Inventory 통합
+  - Follow-up Consequence Ledger, Integration Gate와 Projection Barrier
 - [`Exploration 실시간 이동, 행동과 Encounter 전환 Runtime 계약`](exploration-real-time-movement-action-and-encounter-transition-runtime-contract.md)
   - 클릭 이동과 WASD 토큰 이동의 공통 권위 경계
   - Actor별 Movement·RuleExecution·Interaction 실행 슬롯
@@ -134,6 +140,7 @@
 - Correlated Authority Trace, Decision Record, Error·Incident, Health, Budget와 Diagnostic Projection
 - Versioned Scenario·Fixture, Deterministic Adapter, Fault Injection, Concurrency·Recovery·Disclosure Test Harness
 - Journal Document·Section Identity, Permission, Anchor Lifecycle, Search·Backlink와 Navigation Projection
+- Cross-Domain Outcome, Immediate Closure, Deferred Consequence, Integration Gate와 Projection Barrier
 - Exploration 실시간 이동, Actor별 실행 충돌, Hazard와 Encounter 전환
 - Encounter Participant, Initiative Timeline, Turn, Opportunity, Objective와 종료
 - Encounter Temporal Boundary, Campaign Time Atomic Commit, Scheduler Due Bridge와 Boundary Gate
@@ -167,6 +174,7 @@
 - Trace Context, Decision Record, Error·Incident, 성능 Budget, Diagnostic Query와 역할별 Redaction을 다루면 [`Diagnostics Runtime 계약`](diagnostics-observability-correlated-trace-and-incident-runtime-contract.md)을 따른다.
 - Scenario, Fixture, Seed, Virtual Clock·Network·Storage, Fault Injection, Interleaving, Golden·Digest와 Disclosure Regression을 다루면 [`Deterministic Simulation과 Test Harness 계약`](deterministic-simulation-scenario-and-test-harness-runtime-contract.md)을 따른다.
 - Journal Document·Section Identity, Markdown Compile, Permission, Search·Backlink, World Anchor와 Camera·Selection Navigation을 다루면 [`Journal Runtime 계약`](journal-document-section-anchor-permission-search-and-projection-runtime-contract.md)을 따른다.
+- 여러 Domain의 결과, Damage·Vital·Death·Encounter 연쇄, Immediate Closure·Deferred Consequence, Index Invalidation과 Projection Barrier를 다루면 [`Cross-Domain Integration 계약`](cross-domain-outcome-cascade-and-integration-boundary-runtime-contract.md)을 따른다.
 - 탐험 WASD·클릭 이동, 실시간 행동 충돌, Hazard와 Encounter 진입을 다루면 [`Exploration Runtime 계약`](exploration-real-time-movement-action-and-encounter-transition-runtime-contract.md)을 따른다.
 - Initiative, Timeline, Turn·Round, Opportunity, Participant, Objective와 Encounter 종료를 다루면 [`Encounter Runtime 계약`](encounter-timeline-turn-opportunity-and-objective-runtime-contract.md)을 따른다.
 - Encounter Round Boundary와 Campaign Time, Scheduler Due와 다음 Round Gate의 통합을 다루면 [`Encounter–Game Time 통합 계약`](encounter-game-time-temporal-boundary-and-scheduler-integration-contract.md)을 따른다.
