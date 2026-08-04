@@ -12,12 +12,28 @@ Audit은 제품 동작을 새로 정의하지 않는다. 새 결정이 필요하
 
 ## 현재 유효한 문서
 
+- [`main-system-guide-consistency-and-document-hub-completion-audit.md`](main-system-guide-consistency-and-document-hub-completion-audit.md)
+  - 계획된 12개 Main System Guide의 상태, Template, Authority 계층과 책임 분리를 검사한다.
+  - `SUPERSEDED`, `DISCONTINUED`, `ARCHIVED` 문서 제외와 Root·Remake·Guide·System·Spec Hub 정합성을 검사한다.
+  - Main System Guide 단계를 `COMPLETE`, Implementation Specs 단계를 `READY TO START`로 판정한다.
 - [`runtime-architecture-completion-and-main-guide-readiness-audit.md`](runtime-architecture-completion-and-main-guide-readiness-audit.md)
   - 이전 감사의 Policy, UI, Diagnostics, Simulation, Journal과 Integration BLOCKER 해소를 재검증한다.
   - 현재 제품 범위의 Core·Support Runtime과 Cross-System Integration을 완료로 판정한다.
-  - Main System Guide 단계는 `READY`, Production Implementation은 Guide·Spec 전이므로 아직 미시작으로 판정한다.
+  - Main System Guide 작성의 Architecture 준비 근거를 제공한다.
 - [`document-migration-validation.md`](document-migration-validation.md)
   - 문서 이동 결과, 누락·중복·링크 상태를 검증한다.
+
+## 감사 관계
+
+```text
+Runtime Architecture Completion Audit
+→ Main System Guide 작성 준비 판정
+→ 12개 Main System Guide 작성
+→ Guide Consistency·Document Hub Completion Audit
+→ Implementation Specs 단계
+```
+
+새 Guide Completion Audit은 Runtime Architecture Completion Audit의 Architecture 판정을 대체하지 않는다. Guide 작성 결과와 다음 단계 전환만 추가로 판정한다.
 
 ## Superseded·Discontinued Audit
 
