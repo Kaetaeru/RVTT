@@ -2,6 +2,13 @@
 
 Obsidian형 Markdown 문서, Docs형 빠른 탐색, 안정적 Document·Section Identity, World Anchor, 권한별 Search·Backlink와 안전한 월드 이동을 다룬다.
 
+## Main System Guide
+
+- [`Journal과 Ping Guide`](../../guides/journal/README.md)
+  - Journal Source·Compiled Document·Viewer Projection과 안정적 Document·Section Identity
+  - Permission-aware Search·Backlink, Anchor Lifecycle와 안전한 Camera·Selection·Scene Navigation
+  - 위치·경로 Ping의 비권위 Audience·Presentation·Lifetime 경계
+
 ## 권위 문서
 
 - [`Journal Document, Section, Anchor, Permission, Search와 Projection Runtime 계약`](../../architecture/journal-document-section-anchor-permission-search-and-projection-runtime-contract.md)
@@ -82,7 +89,7 @@ Journal Link 클릭
 ## Guide 상태
 
 ```text
-Guide Status: READY_TO_WRITE
+Guide Status: CURRENT
 ```
 
-최신 Completion Audit에서 Journal Architecture와 Ping Feature Model의 구조적 차단 항목이 없으며, 남은 값은 구현·성능 측정형 기본값이다.
+현재 권위 문서 관계와 Journal·Ping 사용자 흐름은 Main System Guide에 반영되어 있다. 권위 계약이 변경되면 Guide를 `UPDATE_REQUIRED`로 전환한다.
