@@ -7,6 +7,9 @@
 - [`Combat와 Encounter Guide`](../../guides/combat/README.md)
   - Damage·Temporary HP·Current HP·VitalState·DeathSave Immediate Closure
   - Death 이후 Objective·Turn Advance Follow-up, Encounter End Transaction과 Projection Barrier
+- [`Character, Inventory와 Downtime Guide`](../../guides/character/README.md)
+  - Character Source·Build Ref·State Migration의 Atomic Activation
+  - Crafting Input·Output·Ground Presence, RecoveryPlan과 Downtime Completion 통합
 - [`Rules, Character Action, Spell, Dice와 Effect Guide`](../../guides/rules/README.md)
   - Roll·PendingEffect·CommitGroup·EffectInstance가 Cross-Domain Outcome으로 진입하는 경계
 
@@ -50,6 +53,7 @@ Commit 직후 권위 상태가 유효하기 위해 필요한 변화다.
 - Encounter End + Encounter-bound Effect + Session Mode Binding
 - Character Build Activation + State Migration
 - Crafting Input Consumption + Output Item + Ground Presence
+- Rest Recovery + Resource·Effect·Condition Settlement
 
 Provider 하나라도 실패하면 전체 Transaction을 Abort한다.
 
@@ -74,10 +78,12 @@ Subscriber가 Store를 직접 수정하지 않고 새 Command 또는 RuleExecuti
 - Domain Provider는 자신의 Store에 대한 Mutation Proposal만 만든다.
 - Damage Provider가 Encounter Timeline Cursor를 직접 이동하지 않는다.
 - Encounter Objective와 End는 Encounter Runtime이 소유한다.
+- Downtime Runtime이 Character·Inventory·Rest Store Mutation을 직접 작성하지 않는다.
+- Character Compiler가 Item·Actor·Encounter Live State를 직접 수정하지 않는다.
 - UI·Presentation·Workspace Instance는 Authority Mutation Provider가 아니다.
 - Derived Index 실패가 이미 Commit된 권위 결과를 되돌리지 않는다.
 - 오래된 Index로 권위 판정을 할 위험이 있으면 관련 Command Scope만 Gate한다.
-- 같은 Transaction의 HP·Vital·Effect·Encounter Projection은 Barrier Batch로 적용한다.
+- 같은 Transaction의 HP·Vital·Effect·Encounter 또는 Build·State·Item Projection은 Barrier Batch로 적용한다.
 - Root Outcome과 Follow-up Consequence는 각각 멱등성을 가진다.
 - 이전 AuthorityEpoch의 Follow-up과 ACK는 새 Branch에 적용하지 않는다.
 
@@ -89,7 +95,9 @@ Subscriber가 Store를 직접 수정하지 않고 새 Command 또는 RuleExecuti
 - Current Turn Actor 사망과 Turn Advance
 - Last Hostile Death와 Encounter End Candidate
 - Encounter End 후 Actor·Item 상태 보존
+- Character Source·Build Ref·State Migration 원자성
 - Crafting Input·Output·Ground Presence 원자성
+- Rest Recovery와 Resource·Effect Settlement
 - Runtime Object 파괴와 Index Failure
 - Journal Anchor 비자동 Retarget
 - Rollback 이전 Follow-up 차단
@@ -114,4 +122,4 @@ Subscriber가 Store를 직접 수정하지 않고 새 Command 또는 RuleExecuti
 Guide Status: READY_FOR_MAIN_GUIDE_PHASE
 ```
 
-Combat·Encounter 관련 통합 흐름은 현재 Guide에 연결됐다. Build·Inventory·Crafting·Downtime을 포함한 전체 Cross-System Integration은 후속 Main System Guides에서 계속 통합한다.
+Combat·Encounter, Rules, Character·Inventory·Downtime 관련 Integration 흐름은 현재 각 Main System Guide에 연결됐다. 나머지 UI·Journal·Authoring·Operations 영역은 후속 Guide 순서에서 계속 통합한다.
