@@ -35,6 +35,10 @@ Guide는 새로운 제품 규칙, Architecture 결정, API, 데이터 구조나 
   - Guide Status: `CURRENT`
   - Scene Source·Compiled Build·Runtime Object Presence·Runtime Scene Snapshot의 권위 계층
   - Client-safe Streaming·Ready Activation·Spatial Query·Path Planning·Checkpoint Movement의 월드 Runtime 흐름
+- [`Exploration, Selection, Interaction과 Perception`](exploration/README.md)
+  - Guide Status: `CURRENT`
+  - 실시간 Exploration 실행, Input Context, Candidate·Selection·Frozen Binding과 Capability 기반 Interaction
+  - Observer별 Visibility·Detection·Knowledge·Disclosure, Fog와 Hover Projection, Hazard·Encounter 전환 흐름
 
 ## 1. Guide의 역할
 
