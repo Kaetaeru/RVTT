@@ -1,7 +1,11 @@
 --!strict
 
+export type Disconnectable = {
+	Disconnect: (self: Disconnectable) -> (),
+}
+
 export type ChangedSignal = {
-	Connect: (self: ChangedSignal, callback: (payload: any, envelope: any) -> ()) -> RBXScriptConnection,
+	Connect: (self: ChangedSignal, callback: (payload: any, envelope: any) -> ()) -> Disconnectable,
 }
 
 export type ProjectionReplica = {
