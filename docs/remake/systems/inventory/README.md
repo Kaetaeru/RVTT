@@ -2,6 +2,16 @@
 
 아이템 정의와 인스턴스, 장비, 무기 공격 프로필, Weapon Mastery, 전리품, 소유권 이전과 바닥 World Presence를 다룬다.
 
+## 관련 Main System Guide
+
+- `Character, Inventory와 Downtime Guide`
+  - 현재 Main System Guide 작업 순서 7번에서 작성 중이다.
+  - ItemDefinition·CompiledItemBuild·ItemInstance·Equipment·Location Binding·World Presence와 Crafting Completion을 통합한다.
+- [`Rules, Character Action, Spell, Dice와 Effect Guide`](../../guides/rules/README.md)
+  - Item Capability·Attack Profile·소비 자원이 RuleExecution과 PendingEffect로 이어지는 경계
+- [`Combat와 Encounter Guide`](../../guides/combat/README.md)
+  - 전투 중 Pickup·Drop·Equip·Throw가 Opportunity·Movement·Turn 경계를 사용하는 방식
+
 ## 상위 권위 문서
 
 - [`Inventory, ItemInstance와 World Presence Runtime 계약`](../../architecture/inventory-item-instance-and-world-presence-runtime-contract.md)
@@ -16,6 +26,10 @@
   - Scene에 놓인 Item Presence의 ID, Lifecycle, Spatial·Interaction Binding
 - [`Command Ordering과 Transaction Coordinator 계약`](../../architecture/command-ordering-logical-time-and-transaction-coordinator-contract.md)
   - Item, Inventory, Presence와 행동 자원의 원자적 Commit
+- [`Cross-Domain Outcome Cascade와 Integration Boundary Runtime 계약`](../../architecture/cross-domain-outcome-cascade-and-integration-boundary-runtime-contract.md)
+  - Crafting 입력 소비·Output ItemInstance·Container 또는 Ground Presence의 Atomic Closure
+- [`Runtime Architecture Completion과 Main System Guide 준비도 감사`](../../audits/runtime-architecture-completion-and-main-guide-readiness-audit.md)
+  - ItemInstance Registry와 Crafting·Character Integration 완료 및 Guide 단계 준비 판정
 
 ## 시스템 문서
 
@@ -72,6 +86,8 @@ DM이 Actor 제어권을 통해 일반 줍기·사용·드롭을 수행할 때�
 
 ## Guide Status
 
-`NOT_READY`
+```text
+READY_TO_WRITE
+```
 
-Item 구현 명세, Character·Effect 연결과 Inventory Completion Audit가 끝난 뒤 Main System Guide를 작성한다.
+최신 Completion Audit에서 Inventory Runtime과 Character·Downtime·Crafting Integration이 Main System Guide 작성 가능 상태로 판정됐다.
