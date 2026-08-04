@@ -31,6 +31,10 @@ Guide는 새로운 제품 규칙, Architecture 결정, API, 데이터 구조나 
   - Guide Status: `CURRENT`
   - Campaign Membership·Owner·Controller·Role, Lobby·Join·Reconnect와 Session Mode·Transition
   - Versioned Command·Projection Sync·Scene Ready·Snapshot·Journal·Restart·Rollback 흐름
+- [`Scene, Streaming, Runtime Object, Spatial Query와 Navigation`](scene/README.md)
+  - Guide Status: `CURRENT`
+  - Scene Source·Compiled Build·Runtime Object Presence·Runtime Scene Snapshot의 권위 계층
+  - Client-safe Streaming·Ready Activation·Spatial Query·Path Planning·Checkpoint Movement의 월드 Runtime 흐름
 
 ## 1. Guide의 역할
 
