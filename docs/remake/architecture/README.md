@@ -12,6 +12,13 @@
   - Selection·DM Authoring·Pause·Presentation·Rollback Review Overlay
   - Scene Transition·Join·Reconnect·Recovery·Build Migration Gate
   - Role·Mode·Overlay·Transition을 결합한 Effective Command Policy
+- [`Selection, Targeting, Preview와 Frozen Binding Runtime 계약`](selection-targeting-preview-and-frozen-binding-runtime-contract.md)
+  - Input Context와 Intent에서 Selection Session으로 이어지는 공통 입력 경계
+  - Exploration과 Encounter의 서로 다른 Selection Policy
+  - Spatial Query 기반 Candidate, Hover·Focus·Selection·Target 분리
+  - Client Preview와 서버 FrozenSelectionBinding 분리
+  - Q Universal Back·Reject와 E Universal Confirm·Approve 계약
+  - DM Hidden Selection·Journal Link·Authoring 권한 경계
 - [`Scene Compiler와 Compiled Runtime Scene 계약`](scene-compiler-and-compiled-runtime-scene-contract.md)
 - [`Character Runtime과 Compiled Character Build 계약`](character-runtime-and-compiled-character-build-contract.md)
 - [`Character Action Opportunity와 2024 Core Action Runtime 계약`](character-action-opportunity-and-2024-core-action-runtime-contract.md)
@@ -38,6 +45,7 @@
 - 서버·클라이언트 책임
 - Source, Compiler, Immutable Build, Authoritative State, Migration과 Projection
 - Session Base Mode, Context, Overlay, Transition과 Command Gate
+- Input Context, Intent, Selection Session, Candidate, Preview와 Frozen Binding
 - Command, revision, transaction, Ordering, Reservation과 Journal
 - Scene Source, Runtime Scene, Spatial Query, Navigation과 Streaming
 - Character, Character Action, Spell, Roll Resolution, Effect, ItemInstance와 Runtime Object의 권위 경계
@@ -55,6 +63,7 @@
 - 모든 Architecture 문서는 [`Runtime Architecture Principles`](runtime-architecture-principles.md)를 따른다.
 - Source·Build·State·Migration을 다루면 [`Compiled Build 패턴`](compiled-build-and-authoritative-state-pattern.md)을 따른다.
 - Exploration·Encounter·Downtime, Context, UI·Authoring Overlay, Scene Transition·Join·Recovery를 다루면 [`Session Runtime 계약`](session-play-mode-context-overlay-and-transition-contract.md)을 따른다.
+- 클릭·Hover·Focus·대상 지정·범위 Preview·DM Hidden Selection·Q/E 승인과 취소를 다루면 [`Selection Runtime 계약`](selection-targeting-preview-and-frozen-binding-runtime-contract.md)을 따른다.
 - 기본 행동과 Action Economy는 [`Character Action Runtime`](character-action-opportunity-and-2024-core-action-runtime-contract.md)을 따른다.
 - 주문 시전은 [`Spell Runtime`](spell-casting-route-and-2024-spell-runtime-contract.md)을 따른다.
 - 주사위, 공격 판정, 능력 판정, 내성, 이니셔티브, 죽음 내성, 피해·회복 굴림은 [`Dice와 Resolution Runtime`](dice-roll-check-save-attack-and-resolution-runtime-contract.md)을 따른다.
