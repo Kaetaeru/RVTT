@@ -4,6 +4,10 @@
 
 ## 관련 Main System Guide
 
+- [`Diagnostics, Simulation과 Operations Guide`](../../guides/diagnostics/README.md)
+  - Versioned Scenario·Fixture·Deterministic Adapter·Action Schedule·Fault Point의 전체 검증 흐름
+  - Trace·Incident·Support에서 최소 재현 Artifact와 Regression Catalog로 이어지는 Operations 연결
+  - Restart·Reconnect·Rollback·Disclosure·Budget의 Production-parity 검증
 - [`UI, Camera와 Presentation Guide`](../../guides/ui/README.md)
   - Projection Batch, Prompt·Input·Camera·Presentation Failure와 Epoch-safe Recovery Scenario
 - [`Journal과 Ping Guide`](../../guides/journal/README.md)
@@ -157,7 +161,7 @@ Required Suite 실패를 무제한 Retry로 숨기지 않는다. Flaky 결과는
 ## Guide 상태
 
 ```text
-Guide Status: READY_TO_WRITE
+Guide Status: CURRENT
 ```
 
-Deterministic Simulation·Fault Injection·Recovery·Disclosure 검증 경계는 구현 가능한 권위 계약과 Completion Audit를 충족한다. Main System Guide 작성 후 `CURRENT`로 전환한다.
+Deterministic Simulation·Fault Injection·Operations·Recovery·Disclosure 검증의 권위 문서 관계와 실행 흐름은 Main System Guide에 반영되어 있다. 관련 권위 계약이 변경되면 Guide를 `UPDATE_REQUIRED`로 전환한다.
