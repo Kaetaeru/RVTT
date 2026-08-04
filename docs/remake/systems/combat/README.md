@@ -2,6 +2,12 @@
 
 주사위 결과 확정, Encounter·Initiative Timeline·Turn·제어권, Damage·Death Integration과 전투 Rollback Timeline을 다룬다.
 
+## 관련 Main System Guide
+
+- [`Rules, Character Action, Spell, Dice와 Effect Guide`](../../guides/rules/README.md)
+  - Encounter가 제공한 Opportunity에서 Action·Spell·Roll·PendingEffect·Effect 실행이 완료되는 경계
+  - Initiative Timeline·Turn·Objective·Encounter 종료의 전체 Guide는 다음 작업 순서를 따른다.
+
 ## 상위 권위 문서
 
 - [`Session Play Mode, Context, Overlay와 Transition 계약`](../../architecture/session-play-mode-context-overlay-and-transition-contract.md)
