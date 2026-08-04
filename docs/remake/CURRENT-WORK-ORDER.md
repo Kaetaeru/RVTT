@@ -5,21 +5,21 @@
 - 최종 갱신일: 2026-08-05
 - Architecture 완료 근거: [`Runtime Architecture Completion과 Main System Guide 준비도 감사`](audits/runtime-architecture-completion-and-main-guide-readiness-audit.md)
 - Guide 완료 근거: [`Main System Guide 일관성과 문서 허브 완료 감사`](audits/main-system-guide-consistency-and-document-hub-completion-audit.md)
-- User Guide 최초 완료 근거: [`Player·DM User Guide 완료 감사`](audits/player-and-dm-user-guide-completion-audit.md)
-- User Guide 간소화 완료 근거: [`User Guide Quick Flow와 Flowchart 보완 감사`](audits/user-guide-quick-flow-and-flowchart-audit.md)
+- User Guide 완료 근거: [`Player·DM User Guide 완료 감사`](audits/player-and-dm-user-guide-completion-audit.md)
+- Quick Flow 완료 근거: [`User Guide Quick Flow와 Flowchart 보완 감사`](audits/user-guide-quick-flow-and-flowchart-audit.md)
 - 문서 연결 완료 근거: [`구현 명세 전 최종 문서 연결 감사`](audits/pre-implementation-document-linkage-audit.md)
+- Spec 세부 작업 순서: [`specs/CURRENT-SPEC-WORK-ORDER.md`](specs/CURRENT-SPEC-WORK-ORDER.md)
 
-이 문서는 RVTT 리메이크 기획·사용자 가이드·명세·구현의 **단일 작업 순서 기준**이다.
+이 문서는 RVTT 리메이크 기획·사용자 가이드·명세·구현의 **단일 상위 작업 순서 기준**이다.
 
 ## 운영 규칙
 
-1. 둘 이상의 다음 작업 순서를 제안하거나 변경할 때는 작업을 시작하기 전에 이 문서를 먼저 갱신한다.
-2. 별도 대화·메모·체크리스트가 이 문서와 충돌하면 이 문서의 순서를 따른다.
-3. 가장 위의 `IN_PROGRESS` 항목을 먼저 끝내고, 완료 후 `DONE`으로 변경한 뒤 다음 `QUEUED` 항목을 `IN_PROGRESS`로 올린다.
-4. 우선순위를 바꾸거나 중간에 새 항목을 삽입하면 이유와 날짜를 변경 기록에 남긴다.
-5. 현재 항목 내부의 세부 작업 순서는 별도 Work Order로 만들 수 있지만 상위 단계가 달라지면 이 문서도 갱신한다.
-6. 각 항목은 권위 문서·인덱스 연결·완료 검사와 문서 검증까지 끝나야 완료로 처리한다.
-7. `BLOCKED` 항목을 건너뛸 때는 차단 이유와 임시 진행 대상을 기록한다.
+1. 가장 위의 `IN_PROGRESS` 항목을 먼저 완료한다.
+2. 둘 이상의 세부 작업 순서는 해당 단계의 별도 Work Order로 관리하고 이 문서에서 연결한다.
+3. 별도 대화·메모가 이 문서 또는 세부 Work Order와 충돌하면 Work Order를 따른다.
+4. 각 단계는 권위 문서, Hub 연결, 완료 감사와 문서 검증까지 끝나야 `DONE`으로 전환한다.
+5. `BLOCKED`를 건너뛸 때는 이유와 임시 진행 대상을 기록한다.
+6. Production Code는 승인된 현재 Slice Spec과 사용자의 명시적 구현 요청 없이 시작하지 않는다.
 
 상태 값:
 
@@ -35,17 +35,17 @@ DEFERRED
 
 | 순서 | 상태 | 작업 | 완료 조건 |
 |---:|---|---|---|
-| 1 | `DONE` | Ruleset Policy Registry, Composition과 Frozen Snapshot Runtime | Architecture 계약, ADR-0081, 인덱스 연결, Policy 우선순위·Version·Conflict·Snapshot 계약과 문서 검증 완료 |
-| 2 | `DONE` | Encounter–Game Time Boundary 통합 계약 | `TemporalBoundaryOccurrence`, Campaign Time 반영, Scheduler Due 역방향 연결과 직접 상호 호출 금지 확정 |
-| 3 | `DONE` | UI Runtime | Projection→ViewModel→Component→Intent 흐름, Panel·Modal·Focus·Q/E·Reconnect·Rollback 복구 계약 완료 |
-| 4 | `DONE` | Diagnostics와 Observability Runtime | Command→RuleExecution→Transaction→Event→Projection Trace, 권한별 진단, 성능·오류 Budget 계약 완료 |
-| 5 | `DONE` | Deterministic Simulation과 Test Harness | 고정 Seed·Snapshot Scenario·동시성·Reconnect·Rollback·정보 누출 테스트 계약 완료 |
-| 6 | `DONE` | Journal Anchor, Permission과 Projection 계약 | Document·Section Identity, World Anchor, 권한별 Search Index, 안전한 Camera·Selection Intent 계약 완료 |
-| 7 | `DONE` | Cross-System Integration Contracts와 Completion Audit | Damage·Death·Combat 및 남은 Runtime 연결 계약, 순환·중복·공백 재감사 완료 |
-| 8 | `DONE` | Main System Guides | 12개 Guide, 권위 읽기 순서, 상태·책임 경계, 문서 Hub와 완료 감사 확정 |
-| 9 | `DONE` | Player·DM User Guides와 Quick Flow | 상세 Guide, 코딩 용어 없는 Quick Flow, 전체·Player·DM·반복·예외 Flowchart 완료 |
-| 10 | `DONE` | 구현 명세 전 최종 문서 연결 감사 | Root부터 Quick Flow·User Guide·Main Guide·Authority·Spec까지 탐색 경로, 상태, Template, 수명주기와 역방향 링크 검사 완료 |
-| 11 | `IN_PROGRESS` | Implementation Specs | 수직 단위별 Type·Module·Command·Network·Persistence·Migration·Diagnostics·Test 계약 작성 |
+| 1 | `DONE` | Ruleset Policy Registry, Composition과 Frozen Snapshot Runtime | Architecture 계약, ADR-0081과 문서 검증 완료 |
+| 2 | `DONE` | Encounter–Game Time Boundary 통합 계약 | Campaign Time·Scheduler 통합과 원자 경계 완료 |
+| 3 | `DONE` | UI Runtime | Projection→ViewModel→Input→Intent와 Recovery 계약 완료 |
+| 4 | `DONE` | Diagnostics와 Observability Runtime | Correlated Trace·Error·Budget·Health 계약 완료 |
+| 5 | `DONE` | Deterministic Simulation과 Test Harness | Production-parity Scenario·Fault·Disclosure 계약 완료 |
+| 6 | `DONE` | Journal Anchor, Permission과 Projection 계약 | Stable Identity·Permission·Search·Navigation 계약 완료 |
+| 7 | `DONE` | Cross-System Integration Contracts와 Completion Audit | Domain Outcome·Event·Projection 연결과 재감사 완료 |
+| 8 | `DONE` | Main System Guides | 12개 Guide와 문서 Hub·완료 감사 확정 |
+| 9 | `DONE` | Player·DM User Guides와 Quick Flow | 상세 Guide와 전체·역할·반복·예외 Flowchart 완료 |
+| 10 | `DONE` | 구현 명세 전 최종 문서 연결 감사 | Root→User Flow→Guide→Authority→Spec 경로와 수명주기 검사 완료 |
+| 11 | `IN_PROGRESS` | Implementation Specs | 수직 Slice별 Type·Module·Command·Network·Persistence·Migration·Diagnostics·Test 계약 작성 |
 | 12 | `QUEUED` | Production Implementation | 승인된 Spec 순서대로 구현·테스트·리뷰·마이그레이션 수행 |
 
 ## 현재 단계
@@ -54,126 +54,155 @@ DEFERRED
 Implementation Specs
 ```
 
-현재 첫 세부 작업:
+현재 수직 Slice:
 
 ```text
-specs/CURRENT-SPEC-WORK-ORDER.md 작성
-→ 기존 Shared Spec 001·002 재검토
-→ Quick Flow와 Player·DM Acceptance Flow를 포함한 첫 수직 Slice 선택
+First Session Walking Skeleton
 ```
 
-둘 이상의 Spec 작성 순서를 확정하기 전에 `specs/` 아래에 세부 Work Order를 만들고 이 문서와 연결한다.
-
-## 작업 진행 방식
+현재 세부 작업:
 
 ```text
-CURRENT-WORK-ORDER 확인
-→ 한눈에 보는 세션 흐름의 대상 구간 확인
-→ 관련 Player 또는 DM 상세 Guide 확인
-→ Runtime Foundation과 Domain Main System Guide 확인
-→ Guide가 연결한 Product·Architecture·System·UI·ADR 수집
+First Slice 구현 기준선·공통 계약 조사
+→ runtime/001-core-authority-identity-version-and-result.md 작성
+```
+
+상세 순서와 완료 조건은 [`specs/CURRENT-SPEC-WORK-ORDER.md`](specs/CURRENT-SPEC-WORK-ORDER.md)를 따른다.
+
+## First Session Walking Skeleton
+
+### Player
+
+```text
+세션 참가
+→ Character 선택
+→ Ready
+→ Scene 동기화
+→ Token 선택
+→ 클릭 이동
+→ 연결 종료
+→ 재접속
+→ 같은 권위 상태로 복귀
+```
+
+### DM
+
+```text
+Campaign·Scene·Player 상태 확인
+→ User Ready·Client Ready 확인
+→ 세션 시작
+→ Player 입장·이동 확인
+→ Disconnect·Reconnect와 상태 복귀 확인
+```
+
+명세 의존 순서:
+
+```text
+Core Authority Identity·Version·Result
+→ Command·Projection Protocol
+→ Campaign Join·Character Selection·Ready
+→ Scene Entry Essential·Controlled Actor Bootstrap
+→ Click Movement·Position Projection
+→ Snapshot·Journal·Reconnect
+→ Deterministic·Roblox Integration Scenario
+→ First Slice Spec Audit
+```
+
+첫 Slice는 WASD 이동, Interaction, Fog, Rules Recipe, Encounter와 Scene Editor 전체를 포함하지 않는다.
+
+## Shared Spec 001·002 재검토 결과
+
+- 완료 감사: [`Shared Spec 001·002 재검토 감사`](audits/shared-spec-001-002-revalidation-audit.md)
+- Shared Index: [`specs/shared/README.md`](specs/shared/README.md)
+
+판정:
+
+```text
+001 Recipe Step Runtime Foundation
+→ UPDATE_REQUIRED
+
+002 Standard Recipe Step Handler Contracts
+→ UPDATE_REQUIRED
+```
+
+두 문서는 폐기하지 않지만 현재 `준비 완료`로 사용할 수 없다. First Session Walking Skeleton의 선행 조건에서 제외하고 Character Action·Rules Slice에서 최신 RuleExecution·Transaction·Outbox·Projection·Recovery·Diagnostics·Simulation 계약에 맞춰 갱신한다.
+
+## Implementation Specs 단계 원칙
+
+1. Spec은 Quick Flow와 Player·DM User Guide의 대상 구간을 Acceptance Flow로 연결한다.
+2. 직접 구현 계약은 Product·Architecture·System·UI·ADR을 근거로 한다.
+3. User Guide와 Main System Guide를 Type·Schema·Command의 권위 원본으로 사용하지 않는다.
+4. 새 Product 동작이나 Architecture 결정이 필요하면 Spec을 멈추고 권위 문서를 먼저 수정한다.
+5. Source·Build·State·Projection·Presentation을 혼합하지 않는다.
+6. Client Intent와 Server Authority 검증을 구분한다.
+7. Version·Migration·Deprecation·Recovery·Rollback을 포함한다.
+8. Ordering·Reservation·Transaction·Outbox·Projection Barrier를 필요한 범위에서 명시한다.
+9. Trace·Stable Error·Budget·Health·Support Reference를 포함한다.
+10. 사용자에게 보이는 Loading·Waiting·Denied·Retrying·Resync 상태를 정의한다.
+11. Deterministic Scenario·Fault Injection·Negative Disclosure와 실제 Roblox Integration 경계를 포함한다.
+12. 측정 근거 없이 Budget·Timeout·Cache 수치를 확정하지 않는다.
+13. `SUPERSEDED`, `DISCONTINUED`, `ARCHIVED`와 충돌 Draft를 근거로 사용하지 않는다.
+14. 실제 코드·Schema·Test 조사가 없는 Spec은 `준비 완료`로 올리지 않는다.
+15. 승인된 Spec 없이 Production Code를 작성하지 않는다.
+
+## 표준 작업 흐름
+
+```text
+CURRENT-SPEC-WORK-ORDER 확인
+→ Quick Flow 대상 구간 확인
+→ 관련 Player·DM Guide 확인
+→ Runtime·Domain Guide 확인
+→ 직접 Authority Documents 수집
 → 기존 Code·Schema·Test 조사
-→ Implementation Spec Template으로 Spec 작성
-→ 사용자 Acceptance Flow·Migration·Diagnostics·Budget·Test 포함
+→ Implementation Spec Template 작성
+→ Acceptance·Migration·Diagnostics·Test Gate 검사
 → 문서 검증
 → 현재 Spec DONE
 → 다음 Spec IN_PROGRESS
 ```
 
-## 완료된 Main System Guide 단계
+## 완료된 문서 단계
 
-- 완료된 세부 순서: [`guides/CURRENT-GUIDE-WORK-ORDER.md`](guides/CURRENT-GUIDE-WORK-ORDER.md)
-- Guide 허브: [`guides/README.md`](guides/README.md)
-- 완료 감사: [`audits/main-system-guide-consistency-and-document-hub-completion-audit.md`](audits/main-system-guide-consistency-and-document-hub-completion-audit.md)
+### Main System Guides
 
-완료 Guide:
+- [`Guide Work Order`](guides/CURRENT-GUIDE-WORK-ORDER.md)
+- [`Guide Hub`](guides/README.md)
+- [`Guide 완료 감사`](audits/main-system-guide-consistency-and-document-hub-completion-audit.md)
 
-1. [`Runtime Foundation과 Authority`](guides/runtime/README.md)
-2. [`Session, Networking, Persistence와 Recovery`](guides/session/README.md)
-3. [`Scene, Streaming, Runtime Object, Spatial Query와 Navigation`](guides/scene/README.md)
-4. [`Exploration, Selection, Interaction과 Perception`](guides/exploration/README.md)
-5. [`Rules, Character Action, Spell, Dice와 Effect`](guides/rules/README.md)
-6. [`Combat와 Encounter`](guides/combat/README.md)
-7. [`Character, Inventory와 Downtime`](guides/character/README.md)
-8. [`UI, Camera와 Presentation`](guides/ui/README.md)
-9. [`Journal과 Ping`](guides/journal/README.md)
-10. [`Scene Editor와 Authoring`](guides/scene-editor/README.md)
-11. [`Diagnostics, Simulation과 Operations`](guides/diagnostics/README.md)
-12. [`Extension, Plugin과 Content Pack`](guides/extension/README.md)
+### Player·DM User Guides
 
-권위 문서의 의미가 변경되면 영향받는 Guide를 `UPDATE_REQUIRED`로 다시 연다.
+- [`Quick Flow`](user-guides/QUICK-FLOW.md)
+- [`Player Guide`](user-guides/player/README.md)
+- [`DM Guide`](user-guides/dm/README.md)
+- [`User Guide Hub`](user-guides/README.md)
 
-## 완료된 Player·DM User Guide 단계
+현재 User Guide 상태는 구현 전 목표 경험인 `TARGET_EXPERIENCE`다. 실제 Build에서는 `CURRENT_FOR_BUILD`, Release에서는 `RELEASE_VERIFIED`로 다시 검증한다.
 
-- 완료된 세부 순서: [`user-guides/CURRENT-USER-GUIDE-WORK-ORDER.md`](user-guides/CURRENT-USER-GUIDE-WORK-ORDER.md)
-- 한눈에 보는 세션 흐름: [`user-guides/QUICK-FLOW.md`](user-guides/QUICK-FLOW.md)
-- User Guide Hub: [`user-guides/README.md`](user-guides/README.md)
-- 최초 완료 감사: [`audits/player-and-dm-user-guide-completion-audit.md`](audits/player-and-dm-user-guide-completion-audit.md)
-- 간소화 완료 감사: [`audits/user-guide-quick-flow-and-flowchart-audit.md`](audits/user-guide-quick-flow-and-flowchart-audit.md)
+### 문서 연결
 
-현재 상태는 구현 전 목표 경험인 `TARGET_EXPERIENCE`다. 실제 Build와 Release에서는 `CURRENT_FOR_BUILD`, `RELEASE_VERIFIED`로 다시 검증한다.
-
-## 완료된 문서 연결 감사
-
-- 완료 감사: [`audits/pre-implementation-document-linkage-audit.md`](audits/pre-implementation-document-linkage-audit.md)
-- 문서 구조 정책: [`DOCUMENT-GUIDE.md`](DOCUMENT-GUIDE.md)
-- 문서 수명주기 정책: [`DOCUMENT-LIFECYCLE-AND-DISCONTINUATION.md`](DOCUMENT-LIFECYCLE-AND-DISCONTINUATION.md)
-- Implementation Spec Template: [`templates/implementation-spec-template.md`](templates/implementation-spec-template.md)
-
-최종 연결:
-
-```text
-Root README
-→ Quick Flow
-→ Player·DM User Guide
-→ Runtime·Domain Main System Guide
-→ Product·Architecture·System·UI·ADR
-→ Implementation Spec Template·Spec
-```
-
-`product/core-session-loop.md`는 최신 이동·Audio 범위와 충돌해 `DISCONTINUED`로 전환했고 현재 권위 경로에서 제외했다.
-
-## Implementation Specs 단계 원칙
-
-1. Spec은 Quick Flow의 사용자 구간과 관련 Player·DM Guide를 Acceptance Scenario로 연결한다.
-2. Spec은 관련 Main System Guide가 연결한 직접 권위 문서를 근거로 작성한다.
-3. Quick Flow, User Guide와 Main System Guide 자체를 Type·Command·Schema의 권위 원본으로 사용하지 않는다.
-4. 새 제품 동작이나 Architecture 결정이 필요하면 Spec을 멈추고 관련 Product·Architecture·ADR을 먼저 수정한다.
-5. Source·Build·State·Projection·Presentation을 하나의 Type이나 Store로 혼합하지 않는다.
-6. Client 입력과 Server Authority 검증을 구분한다.
-7. Version, Migration, Deprecation, Recovery와 Rollback 영향을 포함한다.
-8. Ordering Key, Reservation, Transaction, Outbox와 Projection Barrier를 필요한 범위에서 명시한다.
-9. Trace Span, Stable Error Code, Budget와 Health Probe를 포함한다.
-10. 사용자에게 보이는 성공·대기·거부·재시도·Resync 상태를 정의한다.
-11. Deterministic Scenario와 실제 Roblox Integration Test 경계를 포함한다.
-12. 수치 기본값은 측정 근거 없이 확정하지 않는다.
-13. `SUPERSEDED`, `DISCONTINUED`, `ARCHIVED`와 충돌 Draft를 권위 근거로 사용하지 않는다.
-14. 승인된 Spec 없이 Production Code를 작성하지 않는다.
-
-현재 Spec Hub: [`specs/README.md`](specs/README.md)
-
-현재 Shared Spec 001·002는 [`Shared Spec Index`](specs/shared/README.md)에서 `REVIEW_REQUIRED`로 관리한다.
+- [`최종 문서 연결 감사`](audits/pre-implementation-document-linkage-audit.md)
+- [`문서 구조와 작성 가이드`](DOCUMENT-GUIDE.md)
+- [`문서 수명주기 정책`](DOCUMENT-LIFECYCLE-AND-DISCONTINUATION.md)
+- [`Implementation Spec Template`](templates/implementation-spec-template.md)
 
 ## Production Implementation Gate
 
 Production Implementation은 다음 조건 전에는 시작하지 않는다.
 
-- Player·DM User Guide와 Quick Flow 완료
-- 구현 명세 전 최종 문서 연결 감사 완료
-- 현재 수직 Slice의 Implementation Specs 완료
+- First Session Walking Skeleton의 관련 Spec이 모두 `준비 완료`
 - Type·Command·Network·Persistence·Migration 계약 완료
-- Acceptance Scenario와 Failure·Recovery Test 정의
-- 영향받는 User Guide·Main Guide와 Authority 문서 정합성 확인
+- Acceptance·Failure·Recovery·Security Test 정의
+- 관련 User Guide·Main Guide·Authority 정합성 확인
+- First Slice Spec 통합 감사 완료
 - 문서 검증 성공
-- 사용자의 명시적 구현 요청
+- 사용자의 명시적 Production Implementation 시작 요청
 
 ## 변경 기록
 
 | 날짜 | 변경 |
 |---|---|
-| 2026-08-05 | 최종 문서 연결 감사를 완료했다. User Guide 계층·Template·Hub 역방향 링크를 보강하고 오래된 `core-session-loop.md`를 중단 처리한 뒤 Implementation Specs를 `IN_PROGRESS`로 복귀시켰다. |
-| 2026-08-05 | 사용자 요청에 따라 Implementation Specs를 다시 대기시키고 구현 명세 전 최종 문서 연결 감사를 시작했다. |
-| 2026-08-05 | 코딩 용어 없는 Quick Flow, 7개 Flowchart, Hub 연결과 보완 감사를 완료했다. |
-| 2026-08-05 | Player Guide, DM Guide, User Guide Hub와 최초 Completion Audit을 완료했다. |
-| 2026-08-05 | 12개 Main System Guide와 일관성·문서 Hub 감사를 완료했다. |
-| 2026-08-04 | Runtime Architecture와 Cross-System Integration의 완료 감사를 통과했다. |
+| 2026-08-05 | Implementation Spec 세부 Work Order를 만들고 First Session Walking Skeleton을 첫 수직 Slice로 확정했다. |
+| 2026-08-05 | Shared Spec 001·002를 `UPDATE_REQUIRED`로 판정하고 Rules Slice로 배치했다. |
+| 2026-08-05 | 최종 문서 연결 감사를 완료하고 Implementation Specs 단계로 전환했다. |
+| 2026-08-05 | Player·DM User Guides, Quick Flow와 12개 Main System Guide를 완료했다. |
+| 2026-08-04 | Runtime Architecture와 Cross-System Integration 완료 감사를 통과했다. |
