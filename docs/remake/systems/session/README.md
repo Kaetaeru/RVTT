@@ -9,6 +9,10 @@
   - 사용자 Ready와 기술적 Client Ready 분리
   - Lobby·Hot Join·Disconnect·Reconnect와 Scene Transition
   - Versioned Command·Projection Sync·Snapshot·Journal·Recovery·Rollback의 전체 흐름
+- [`Diagnostics, Simulation과 Operations Guide`](../../guides/diagnostics/README.md)
+  - Session Health·Incident·Support Reference와 Permission-aware 운영 진단
+  - Reconnect·Server Restart·Normal Shutdown·Rollback·Recovery Review의 Production-parity 검증
+  - Diagnostic Read와 실제 Resync·Recovery·Rollback Command의 분리
 - [`Character, Inventory와 Downtime Guide`](../../guides/character/README.md)
   - Character Ownership과 Downtime Participant·Activity Assignment의 연결
   - Exploration·Encounter·Downtime Base Mode, 중간 Encounter Suspend와 복귀 경계
@@ -71,6 +75,8 @@
 - 이전 Connection Epoch의 Command와 Ready 신호를 무효화한다.
 - Recovery와 Rollback 이후 새 AuthorityEpoch를 발급하고 이전 Branch의 Prompt·Subscriber를 무효화한다.
 - Snapshot Chunk 경계와 Gameplay Transaction 경계를 동일시하지 않는다.
+- Diagnostic Health와 Incident가 Session State의 권위 원본이 되지 않는다.
+- Diagnostic Read가 Session Transition·Resync·Recovery·Rollback을 자동 실행하지 않는다.
 
 ## Guide Status
 
