@@ -1,26 +1,27 @@
 # 구현 명세
 
-- 상태: QUEUED
+- 상태: ACTIVE
 - 문서 종류: Implementation Spec Index
-- 현재 단계: `WAITING_FOR_DOCUMENT_LINKAGE_AUDIT`
+- 현재 단계: `IN_PROGRESS`
 - 선행 단계:
+  - Runtime Architecture `COMPLETE`
   - Main System Guides `COMPLETE`
   - Player·DM User Guides와 Quick Flow `COMPLETE`
-  - 구현 명세 전 최종 문서 연결 감사 `IN_PROGRESS`
+  - 구현 명세 전 최종 문서 연결 감사 `COMPLETE`
 
 확정된 기획과 목표 사용자 경험을 실제 Module, Type, Command, Network, Persistence, Migration, Diagnostics와 Test 계약으로 변환한다.
 
-현재 최종 문서 연결 감사가 끝날 때까지 새 Spec Work Order와 새 Implementation Spec을 시작하지 않는다.
+## 현재 작업
 
-## 현재 작업 기준
+```text
+specs/CURRENT-SPEC-WORK-ORDER.md 작성
+→ Shared Spec 001·002 재검토
+→ Quick Flow의 첫 수직 Slice 확정
+```
 
-- 단일 작업 순서: [`../CURRENT-WORK-ORDER.md`](../CURRENT-WORK-ORDER.md)
-- 한눈에 보는 세션 흐름: [`../user-guides/QUICK-FLOW.md`](../user-guides/QUICK-FLOW.md)
-- Player·DM User Guide: [`../user-guides/README.md`](../user-guides/README.md)
-- Main System Guide 허브: [`../guides/README.md`](../guides/README.md)
+- 현재 작업 순서: [`../CURRENT-WORK-ORDER.md`](../CURRENT-WORK-ORDER.md)
+- 최종 문서 연결 감사: [`../audits/pre-implementation-document-linkage-audit.md`](../audits/pre-implementation-document-linkage-audit.md)
 - Implementation Spec Template: [`../templates/implementation-spec-template.md`](../templates/implementation-spec-template.md)
-- 문서 구조와 작성 가이드: [`../DOCUMENT-GUIDE.md`](../DOCUMENT-GUIDE.md)
-- 문서 수명주기: [`../DOCUMENT-LIFECYCLE-AND-DISCONTINUATION.md`](../DOCUMENT-LIFECYCLE-AND-DISCONTINUATION.md)
 
 ## Spec 작성 전 읽기 순서
 
@@ -34,17 +35,28 @@ CURRENT-WORK-ORDER
 → Guide가 연결한 Product·Architecture·System·UI·ADR
 → 기존 관련 Spec
 → Implementation Spec Template
-→ 새 Implementation Spec
+→ 새 수직 Implementation Spec
 ```
 
-역할 구분:
+연결 문서:
+
+- [`한눈에 보는 세션 흐름`](../user-guides/QUICK-FLOW.md)
+- [`Player·DM User Guide Hub`](../user-guides/README.md)
+- [`Main System Guide Hub`](../guides/README.md)
+- [`Product Index`](../product/README.md)
+- [`Architecture Index`](../architecture/README.md)
+- [`Systems Index`](../systems/README.md)
+- [`UI Index`](../ui/README.md)
+- [`ADR Index`](../decisions/README.md)
+
+## 문서 역할
 
 ```text
 Quick Flow·User Guide
 → Acceptance Flow와 사용자가 보는 결과
 
 Main System Guide
-→ 직접 권위 문서를 찾는 탐색 경로
+→ 직접 Authority Documents를 찾는 탐색 경로
 
 Product·Architecture·System·UI·ADR
 → 구현 계약의 직접 근거
@@ -55,11 +67,9 @@ Implementation Spec
 
 User Guide와 Main System Guide를 Type·Schema·Command의 권위 원본으로 사용하지 않는다.
 
-## 사용자 흐름 전달 기준
+## 첫 수직 Slice 후보 흐름
 
-모든 수직 Slice는 Quick Flow의 한 구간을 하나 이상의 Acceptance Scenario로 연결한다.
-
-### 첫 Player 흐름 후보
+### Player
 
 ```text
 세션 참가
@@ -71,7 +81,7 @@ User Guide와 Main System Guide를 Type·Schema·Command의 권위 원본으로 
 → 현재 진행 상황으로 복귀
 ```
 
-### 첫 DM 흐름 후보
+### DM
 
 ```text
 캠페인과 시작 장면 준비
@@ -82,35 +92,38 @@ User Guide와 Main System Guide를 Type·Schema·Command의 권위 원본으로 
 → 현재 상태 확인과 저장
 ```
 
-첫 수직 Slice는 별도 `CURRENT-SPEC-WORK-ORDER.md`에서 권위 의존성 검토 후 확정한다.
+이 흐름은 후보이며, `CURRENT-SPEC-WORK-ORDER.md`에서 Foundation 의존성과 독립 검증 가능성을 대조한 뒤 확정한다.
 
 ## 작성 조건
 
 Spec은 다음 조건을 모두 만족할 때만 작성한다.
 
 - 관련 기획의 준비도가 `READY` 또는 감사에서 허용한 `READY_WITH_DEFAULTS`
-- Quick Flow·User Guide Acceptance Flow가 연결됨
+- Quick Flow와 Player·DM Acceptance Flow가 연결됨
 - Runtime Foundation과 Domain Guide를 통해 직접 Authority Documents가 확인됨
+- 기존 Code·Schema·Test 조사 결과가 기록됨
 - 새 Product·Architecture 결정이 필요하지 않음
-- `SUPERSEDED`, `DISCONTINUED`, `ARCHIVED`와 충돌하는 오래된 Draft가 근거에서 제외됨
+- `SUPERSEDED`, `DISCONTINUED`, `ARCHIVED`와 충돌 Draft가 근거에서 제외됨
 
-새 결정이 필요하면 Spec을 멈추고 관련 Product·Architecture·ADR을 먼저 수정한다.
+새 결정이 필요하면 Spec 작성을 멈추고 관련 Product·Architecture·ADR을 먼저 수정한다.
 
 ## Spec 필수 계약
 
+- 사용자 목표와 Player·DM Acceptance Flow
+- 직접 Authority Requirement 추적성
 - Package·Module·Service 책임
 - Luau Type와 Versioned Schema
 - Registry·Compiler·Provider Interface
 - Command·Read Request·Result·Stable Error Code
 - Network Envelope·Projection Segment·Resync
-- Persistence·Journal·Migration·Rollback
+- Persistence·Journal·Migration·Recovery·Rollback
 - Ordering Key·Reservation·Transaction·Outbox·Projection Barrier
 - Trace Span·Budget·Health Probe
-- Player·DM 화면의 성공·대기·거부·재시도·복구 상태
+- 사용자 화면의 성공·대기·거부·재시도·복구 상태
 - Deterministic Fixture·Scenario·Acceptance Test
 - 실제 Roblox Integration Boundary와 Failure Isolation
 
-세부 절은 [`Implementation Spec Template`](../templates/implementation-spec-template.md)을 따른다.
+세부 구조는 [`Implementation Spec Template`](../templates/implementation-spec-template.md)을 따른다.
 
 ## 파일 규칙
 
@@ -164,12 +177,9 @@ SUPERSEDED
 
 ## 현재 비목표
 
-- 최종 문서 연결 감사 완료 전 새 Spec 착수
 - 승인된 Spec 없이 Production Code 작성
 - 조사하지 않은 최종 Module 경로와 API 확정
 - 측정 없이 Budget·Timeout·Cache 수치 확정
 - Test-only Authorization 우회 계약
 - User Guide·Main Guide를 Authority로 승격
 - Quick Flow에 없는 새 사용자 동작을 Spec에서 몰래 추가
-
-감사 완료 후 첫 작업은 `CURRENT-SPEC-WORK-ORDER.md` 작성, Shared Spec 001·002 재검토와 첫 수직 Slice 확정이다.
