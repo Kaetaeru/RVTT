@@ -8,6 +8,8 @@
 
 Capability 실행, 비용 예약, Recipe 실행, 반응·Trigger, PendingEffect와 CommitGroup의 전체 순서는 [`Rule Runtime Orchestrator와 Pending Execution 계약`](../../architecture/rule-runtime-orchestrator-and-pending-execution-contract.md)을 따른다.
 
+주문 접근, Route, 슬롯·무료 시전·아이템 충전, 구성요소, Targeting, Ritual, Ready Spell과 Reaction Spell의 상위 실행 순서는 [`Spell Casting Route와 2024 Spell Runtime 계약`](../../architecture/spell-casting-route-and-2024-spell-runtime-contract.md)을 따른다.
+
 둘 이상의 Actor·Object·자원·상태를 변경하는 Commit과 Command 충돌 순서는 [`Command Ordering, Logical Time와 Transaction Coordinator 계약`](../../architecture/command-ordering-logical-time-and-transaction-coordinator-contract.md)을 따른다.
 
 상태, 버프·디버프, 집중, 변신, 지속 영역, 소환과 Suppression의 권위 구조는 [`Effect, Condition과 Ongoing Runtime 계약`](../../architecture/effect-condition-and-ongoing-runtime-contract.md)을 따른다.
@@ -40,8 +42,15 @@ Capability 실행, 비용 예약, Recipe 실행, 반응·Trigger, PendingEffect�
 
 ### 주문
 
+- [`../../architecture/spell-casting-route-and-2024-spell-runtime-contract.md`](../../architecture/spell-casting-route-and-2024-spell-runtime-contract.md)
+  - CompiledSpellBuild와 SpellCastRoute
+  - 2024 턴당 슬롯 시전 제한, 업캐스팅과 Ritual
+  - Resource·Material Reservation, Targeting과 Reaction Spell
+  - Ready Spell, 장시간 시전, Concentration과 Effect 연결
 - [`spell-resource-pools-and-cast-payment-model.md`](spell-resource-pools-and-cast-payment-model.md)
+  - Route별 Payment Option과 슬롯·무료 시전·Item Charge
 - [`spell-components-and-material-inventory-contract.md`](spell-components-and-material-inventory-contract.md)
+  - Verbal·Somatic·Material 요구와 실제 Inventory 재료
 - [`spell-targeting-area-and-spatial-query-model.md`](spell-targeting-area-and-spatial-query-model.md)
   - TargetingPlan, 선택 단계, 영역 형상과 Rules 수준 AffectedSet 의미
   - 실제 Snapshot, Provider, Query Result와 실패 계약은 Architecture 문서를 따름
@@ -63,16 +72,23 @@ Capability 실행, 비용 예약, Recipe 실행, 반응·Trigger, PendingEffect�
 4. `../../architecture/command-ordering-logical-time-and-transaction-coordinator-contract.md`
 5. `../../architecture/spatial-query-engine-and-provider-contract.md`
 6. `../../architecture/rules-content-grant-capability-model.md`
-7. `../../architecture/rules-content-execution-and-spell-contract.md`
+7. `../../architecture/character-action-opportunity-and-2024-core-action-runtime-contract.md`
 8. `../../architecture/rule-runtime-orchestrator-and-pending-execution-contract.md`
-9. `../../architecture/effect-recipe-resolution-and-commit-model.md`
-10. `../../architecture/effect-condition-and-ongoing-runtime-contract.md`
-11. `standard-recipe-step-library.md`
-12. 대상 콘텐츠에 해당하는 세부 Rules 문서
+9. `../../architecture/spell-casting-route-and-2024-spell-runtime-contract.md`
+10. `../../architecture/effect-recipe-resolution-and-commit-model.md`
+11. `../../architecture/effect-condition-and-ongoing-runtime-contract.md`
+12. `standard-recipe-step-library.md`
+13. 대상 콘텐츠에 해당하는 세부 Rules 문서
 
 ## 고정 경계
 
 - Capability는 사용 가능성을 설명하고 RuleExecution의 생명주기를 직접 소유하지 않는다.
+- Spell Definition은 캐릭터의 준비·슬롯·ItemInstance State를 저장하지 않는다.
+- SpellCastRoute는 출처와 시전 정책을 설명하며 실제 Resource State를 복사하지 않는다.
+- Reaction Spell은 TimingWindow Offer 없이 임의 실행할 수 없다.
+- Ready Spell은 준비 시 정상 시전하고 Held Effect와 Concentration으로 유지한다.
+- Ritual은 별도 주문 복사본이 아니라 Route의 시전 모드다.
+- 구성요소 검증을 위해 장비를 자동으로 떨어뜨리거나 해제하지 않는다.
 - Recipe와 Step Handler는 TimingWindow Stack, 권위 Store와 Orchestrator 상태를 직접 수정하지 않는다.
 - RuleEvent Handler는 부모 실행을 직접 변경하지 않고 Modifier, Override, Offer 또는 Child Execution을 사용한다.
 - Reaction과 Prompt 대기는 저장 가능한 Pending Execution이며 열린 Remote 호출에 의존하지 않는다.
@@ -80,24 +96,25 @@ Capability 실행, 비용 예약, Recipe 실행, 반응·Trigger, PendingEffect�
 - 반응·DM 입력 대기 중 Ordering Lock을 유지하지 않는다.
 - 영구 상태 변경은 PendingEffect와 CommitGroup을 사용하고 Transaction Coordinator가 원자적으로 확정한다.
 - EffectInstance는 Character·Actor·Encounter에 복사하지 않고 EffectRegistry가 소유한다.
-- Effect는 Character Build와 수치를 직접 덮어쓰지 않고 출처가 있는 Contribution을 제공한다.
 - 집중 교체, Stack 변경과 Effect Graph 정리는 원자적 Transaction을 사용한다.
-- Suppression과 Effect 종료를 구분한다.
 - Commit 이후에만 Authority Revision, RuleEvent와 Client Projection을 공개한다.
 - Client Animation과 주사위 물리가 권위 결과를 결정하지 않는다.
 - Rollback 이후 이전 Authority Epoch의 Offer·Prompt·Reservation·Command·Timer 후보를 재사용하지 않는다.
 
 ## 구현 명세 준비도
 
-`Rule Runtime Orchestrator`, `Command Ordering과 Transaction Coordinator`, `Effect Runtime`, `standard-recipe-step-library.md`, `001-recipe-step-runtime-foundation.md`와 `002-standard-step-handler-contracts.md`는 공통 구현 명세로 내릴 수 있는 수준이다.
+`Rule Runtime Orchestrator`, `Spell Runtime`, `Command Ordering과 Transaction Coordinator`, `Effect Runtime`, `standard-recipe-step-library.md`, `001-recipe-step-runtime-foundation.md`와 `002-standard-step-handler-contracts.md`는 공통 구현 명세로 내릴 수 있는 수준이다.
 
 다만 다음 구현 명세는 순서를 지킨다.
 
 ```text
 Ordering Key Registry와 Transaction Foundation
 → RuleExecution Registry와 상태기계
+→ Action Opportunity와 Usage Gate
 → 비용 예약과 Pending Input
 → RuleEvent·TimingWindow·Capability Offer
+→ Spell Route·Payment·Component Foundation
+→ Spell Targeting·Ready·Ritual·Long Cast
 → Recipe Runtime Adapter
 → PendingEffect·CommitGroup 조정
 → Effect Build·Registry·Contribution Foundation
