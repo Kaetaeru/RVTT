@@ -12,10 +12,13 @@ Audit은 제품 동작을 새로 정의하지 않는다. 새 결정이 필요하
 
 ## 현재 유효한 문서
 
+- [`user-guide-quick-flow-and-flowchart-audit.md`](user-guide-quick-flow-and-flowchart-audit.md)
+  - 코딩 용어 없는 Quick Flow, 전체·Player·DM Flowchart와 반복·예외 경로를 검사한다.
+  - User Guide 간소화 보완을 `COMPLETE`, Implementation Specs를 `READY TO RESUME`으로 판정한다.
 - [`player-and-dm-user-guide-completion-audit.md`](player-and-dm-user-guide-completion-audit.md)
   - Player·DM User Guide가 현재 Product Scope와 Main System Guide를 실제 사용자 흐름으로 정확히 번역했는지 검사한다.
   - 역할·비밀 정보, Q·E·1–5, Exploration·Encounter 이동, Recovery·Rollback과 비목표 일관성을 검증한다.
-  - User Guide 단계를 `COMPLETE`, Implementation Specs 단계를 `READY TO RESUME`으로 판정한다.
+  - 최초 User Guide 단계를 `COMPLETE`로 판정한다.
 - [`main-system-guide-consistency-and-document-hub-completion-audit.md`](main-system-guide-consistency-and-document-hub-completion-audit.md)
   - 계획된 12개 Main System Guide의 상태, Template, Authority 계층과 책임 분리를 검사한다.
   - `SUPERSEDED`, `DISCONTINUED`, `ARCHIVED` 문서 제외와 Root·Remake·Guide·System·Spec Hub 정합성을 검사한다.
@@ -35,6 +38,8 @@ Runtime Architecture Completion Audit
 → Guide Consistency·Document Hub Completion Audit
 → Player·DM User Guide 작성
 → Player·DM User Guide Completion Audit
+→ Quick Flow·Flowchart 보완
+→ Quick Flow·Flowchart Audit
 → Implementation Specs 단계
 ```
 
