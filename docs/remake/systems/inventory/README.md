@@ -4,9 +4,9 @@
 
 ## 관련 Main System Guide
 
-- `Character, Inventory와 Downtime Guide`
-  - 현재 Main System Guide 작업 순서 7번에서 작성 중이다.
-  - ItemDefinition·CompiledItemBuild·ItemInstance·Equipment·Location Binding·World Presence와 Crafting Completion을 통합한다.
+- [`Character, Inventory와 Downtime Guide`](../../guides/character/README.md)
+  - ItemDefinition·CompiledItemBuild·ItemInstance·Equipment·Location Binding·World Presence
+  - Spellbook Repository, Crafting Input·Output와 Character State 연결
 - [`Rules, Character Action, Spell, Dice와 Effect Guide`](../../guides/rules/README.md)
   - Item Capability·Attack Profile·소비 자원이 RuleExecution과 PendingEffect로 이어지는 경계
 - [`Combat와 Encounter Guide`](../../guides/combat/README.md)
@@ -87,7 +87,7 @@ DM이 Actor 제어권을 통해 일반 줍기·사용·드롭을 수행할 때�
 ## Guide Status
 
 ```text
-READY_TO_WRITE
+CURRENT
 ```
 
-최신 Completion Audit에서 Inventory Runtime과 Character·Downtime·Crafting Integration이 Main System Guide 작성 가능 상태로 판정됐다.
+Character·Inventory·Downtime Guide가 ItemInstance·Equipment·World Presence·Crafting과 복구 흐름을 현재 권위 문서에 맞게 통합한다.
