@@ -21,6 +21,7 @@
 - `camera/`
 - `journal/`
 - `diagnostics/`
+- `testing/`
 
 각 영역 README는 권위 문서, 추천 읽기 순서, 관련 ADR, BLOCKED 항목과 구현 명세 위치를 안내한다.
 
