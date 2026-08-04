@@ -25,20 +25,29 @@
   - [`Inventory 전리품·이전 모델`](../systems/inventory/inventory-loot-and-item-transfer-model.md)
   - [`무기·아이템·공격 프로필 모델`](../systems/inventory/item-weapon-attack-profile-and-mastery-model.md)
   - [`무설정 상호작용 Prefab 모델`](../systems/interaction/zero-metadata-interaction-prefab-and-state-transition-model.md)
+- 문서 작성 규칙:
+  - [`역할별 기능 접근 구분 작성 규칙`](../DOCUMENT-ROLE-ACCESS-AUTHORING-RULE.md)
 
 ## 1. 목적
 
 이 문서는 아이템 정의, 실제 ItemInstance, Inventory·Equipment 상태, Container와 Scene 바닥에 존재하는 World Presence를 하나의 권위 흐름으로 연결한다.
 
-사용자는 다음을 자연스럽게 수행할 수 있어야 한다.
+플레이어는 다음을 자연스럽게 수행할 수 있어야 한다.
 
-- 아이템을 인벤토리에서 바닥에 떨어뜨린다.
+- 자신이 제어하는 캐릭터의 아이템을 인벤토리에서 바닥에 떨어뜨린다.
 - 투척되거나 무장 해제된 무기를 Scene에서 직접 확인한다.
-- 바닥 아이템을 선택하고 정보와 가능한 행동을 본다.
+- 공개된 바닥 아이템을 선택하고 정보와 현재 가능한 플레이 행동을 본다.
 - 가까이 이동해 줍거나, 전투 규칙에 맞는 상호작용 비용으로 획득한다.
-- 상자와 시체에서 아이템을 꺼내거나 다시 넣는다.
-- 다른 플레이어에게 넘기고, DM이 생성·회수·이동한다.
-- 재접속·서버 복구·롤백 후에도 같은 아이템과 위치가 복원된다.
+- 허용된 상자와 시체에서 아이템을 꺼내거나 다시 넣는다.
+- 규칙과 권한이 허용하면 다른 플레이어의 캐릭터에게 아이템을 넘긴다.
+
+DM은 별도 DM Surface에서 다음을 수행할 수 있다.
+
+- 아이템을 생성·배치·회수·강제 이전한다.
+- 바닥 아이템을 저널의 Actor·Object·Dungeon Room 링크 대상으로 사용한다.
+- 숨김 정보, 식별 상태, 수량, 충전과 위치를 관리한다.
+
+재접속·서버 복구·롤백 후에도 같은 아이템과 위치가 복원되어야 한다.
 
 ## 2. 핵심 원칙
 
@@ -91,6 +100,12 @@ consumed_or_destroyed
 ```
 
 두 Inventory나 Inventory와 바닥에 동시에 존재할 수 없다.
+
+### 2.4 역할별 기능을 분리한다
+
+플레이어 정상 행동, DM 저작·관리 행동과 System 자동 처리는 같은 행동 목록에 섞지 않는다.
+
+DM이 플레이어 행동을 테스트하거나 대신 실행할 수 있어도, DM Override와 플레이어 정상 Command는 별도 Surface·권한·Audit 의미를 가진다.
 
 ## 3. Definition, Build와 Instance
 
@@ -188,8 +203,11 @@ ItemPresenceComponent
 - Interaction 후보
 - Perception·Fog 공개
 - 작은 Occupancy 또는 Navigation 장애물
-- Journal·Ping·DM Link
+- Player Ping
+- DM Journal·Object Link Target
 - World Presentation
+
+`Player Ping`과 `DM Journal Link`는 같은 기능이 아니다. 플레이어는 공개된 위치를 핑할 수 있지만, 저널의 Actor·Object·Dungeon Room 링크 작성은 DM 전용 저작 기능이다.
 
 작은 동전이나 화살 하나를 실제 Navigation 장애물로 만들 필요는 없다. `WorldPresenceProfile`이 공간 기여 수준을 선언한다.
 
@@ -243,23 +261,28 @@ Attack Execution
 
 무장 해제도 피해나 판정과 Item Transfer를 같은 CommitGraph에서 처리한다.
 
-## 8. 바닥 아이템 상호작용
+## 8. 바닥 아이템 상호작용 역할표
 
-플레이어는 Item Presence를 선택해 공개 가능한 정보를 본다.
+바닥 아이템의 행동은 역할별 Surface에서 분리한다.
 
-가능한 기본 행동:
+| 기능 | Player | DM | System | 분류와 조건 |
+|---|---:|---:|---:|---|
+| 공개 정보 살펴보기 | O | O | - | `SHARED`, 각 역할의 Projection 범위만 표시 |
+| 제어 캐릭터로 줍기 | O | O | - | 플레이어 정상 행동. DM은 Player View 테스트 또는 제어권을 통해 사용 |
+| 자신의 아이템 떨어뜨리기 | O | O | - | 플레이어 정상 행동. 소유·제어·비용 검증 |
+| 위치 핑 | O | O | - | `SHARED`, 공개 가능한 위치만 전송 |
+| 제자리에서 사용 | O | O | - | Capability와 규칙이 허용할 때만 표시 |
+| 컨테이너 열기 | O | O | - | 공개·거리·잠금·권한 조건 적용 |
+| 일반 이동·끌기 | 조건부 | O | - | Player는 규칙 Capability가 있을 때만, DM은 별도 배치 도구 사용 |
+| 저널에 Actor·Object·Room 링크 작성 | - | O | - | `DM_ONLY`, DM Journal 저작 Surface |
+| 숨김 정보와 실제 Definition 확인 | - | O | - | `DM_ONLY` |
+| 강제 이동·회수·삭제·복원 | - | O | - | `DM_ONLY` Override, Audit 필수 |
+| Stream Out Presence 복구 | - | - | O | `SYSTEM_ONLY` |
+| 자동 Stack·Bundle Projection | - | - | O | `SYSTEM_ONLY` |
 
-```text
-inspect
-pick_up
-move_or_drag
-use_in_place
-open_if_container
-ping
-link_to_journal
-```
+플레이어 Context Menu에는 DM 전용 행동을 넣지 않는다. DM 전용 기능은 DM Context Menu, DM Workspace 또는 Journal Editor에 둔다.
 
-실제 행동 노출은 Capability, 권한, 거리, Scene 상태와 Identification 정책을 반영한다.
+UI에서 숨기는 것만으로 권한을 보장하지 않는다. 서버는 Command별 Role Requirement를 검증한다.
 
 ### 줍기
 
@@ -336,6 +359,16 @@ Authority ItemInstance
 
 바닥 Model이나 이름으로 비밀 정보를 누출하지 않도록 공개 Presentation Profile을 별도로 선택한다.
 
+플레이어와 DM Projection은 명시적으로 분리한다.
+
+```text
+Player Item Projection
+→ 공개 이름, 공개 설명, 공개 가능한 행동과 위치
+
+DM Item Projection
+→ 실제 Definition, 숨김 속성, 저주, 내부 상태와 관리 행동
+```
+
 ## 12. Persistence, Recovery와 Rollback
 
 Snapshot은 다음을 저장한다.
@@ -369,20 +402,23 @@ Item Presence의 Materialization은 Client Streaming과 독립된 권위 상태�
 
 필수 상호작용 대상의 Model 로드가 실패하면 보이지 않는 상태에서 줍게 하지 않고 해당 Interaction Scope를 일시 차단한다.
 
-## 14. DM 명령
+## 14. DM 전용 명령
 
-DM도 동일 Transaction 경로를 사용한다.
+다음은 Player Context Menu에 노출하지 않는 DM 전용 관리 기능이다.
 
 - Spawn Item
-- Drop/Place Item
-- Transfer Item
-- Split/Merge Stack
+- Drop/Place Item Override
+- Force Transfer Item
+- Split/Merge Stack Override
 - Set Quantity·Charge·Condition
 - Identify/Conceal Item
+- Link Item Presence to Journal·Actor·Object·Dungeon Room
 - Recall to Campaign Storage
 - Destroy/Restore Item
 
 DM Override는 게임 규칙상의 거리·비용을 우회할 수 있지만 ID, Location 배타성, Revision, Journal과 Atomic Commit은 우회할 수 없다.
+
+DM이 제어권을 가진 Actor로 일반 줍기·사용·드롭을 수행할 때는 Player Command 경로를 그대로 사용한다. 별도 Override를 사용한 경우에는 감사 로그에서 구분한다.
 
 ## 15. 실패 코드 예시
 
@@ -391,6 +427,8 @@ ITEM_NOT_FOUND
 STALE_ITEM_REVISION
 STALE_ITEM_LOCATION
 ITEM_ALREADY_RESERVED
+ROLE_NOT_ALLOWED
+CONTROL_AUTHORITY_REQUIRED
 INVALID_DROP_SURFACE
 NO_VALID_GROUND_PLACEMENT
 PICKUP_OUT_OF_RANGE
@@ -417,3 +455,4 @@ ITEM_LOCATION_CONFLICT
 - 바닥에 놓였다는 이유로 ItemDefinition을 복제하지 않는다.
 - 모든 작은 Item을 Navigation 장애물로 만들지 않는다.
 - Pickup Animation 완료를 권위 Transfer 조건으로 사용하지 않는다.
+- DM 전용 저널·관리 기능을 Player Context Menu에 섞지 않는다.
