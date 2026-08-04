@@ -4,6 +4,9 @@
 
 ## 관련 Main System Guide
 
+- [`UI, Camera와 Presentation Guide`](../../guides/ui/README.md)
+  - CharacterSheetProjection→ViewModel→Panel·Input Context·UI Intent의 공통 Client 흐름
+  - Local Layout·접근성·Command Reconciliation과 Reconnect·Rollback 복구
 - [`Character, Inventory와 Downtime Guide`](../../guides/character/README.md)
   - Character Progression Source·Compiled Build·Persistent State와 Derived Character View
   - Inventory·Equipment·Spell Preparation·Resource·Rest·Level Up Projection 경계
