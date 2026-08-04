@@ -2,6 +2,13 @@
 
 무설정 상호작용 프리팹, 상태 전환, 문·상자·레버, 함정·비밀문과 파괴 오브젝트를 다룬다.
 
+## Main System Guide
+
+- [`Exploration, Selection, Interaction과 Perception Guide`](../../guides/exploration/README.md)
+  - Frozen Selection에서 Capability Query·Contextual Option·Command Proposal로 이어지는 흐름
+  - Exploration·Encounter의 비용·Timing 차이와 DM Adjudication
+  - Secret Object Disclosure, 동시 상호작용과 Encounter 전환 경계
+
 ## 상위 권위 문서
 
 - [`Interaction Capability, Contextual Command와 Adjudication 계약`](../../architecture/interaction-capability-contextual-command-and-adjudication-contract.md)
@@ -64,7 +71,7 @@
 ## Guide Status
 
 ```text
-READY_TO_WRITE
+CURRENT
 ```
 
-최신 Interaction Capability·Selection·Perception·Exploration 계약과 Completion Audit에서 통합 Guide 작성 조건이 충족되었다.
+현재 권위 문서 관계와 Exploration·Selection·Interaction·Perception 흐름은 Main System Guide에 반영되어 있다. 권위 계약이 변경되면 Guide를 `UPDATE_REQUIRED`로 전환한다.
