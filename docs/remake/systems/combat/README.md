@@ -15,6 +15,11 @@
   - Timeline Entry·Occurrence·Cursor와 중도 합류·재정렬
   - Reaction은 RuleExecution Graph, Pause는 Overlay로 분리
   - D&D 2024 기본 1 Round = 6초와 개별 Turn 시간 추가 금지
+- [`Encounter–Game Time Temporal Boundary와 Scheduler 통합 계약`](../../architecture/encounter-game-time-temporal-boundary-and-scheduler-integration-contract.md)
+  - Round Boundary와 Campaign Time Advance의 원자적 Commit
+  - `TemporalBoundaryCandidate`, `RoundTimeLedger`와 멱등 Boundary Sequence
+  - Scheduler Due Occurrence와 Event→Command Encounter Bridge
+  - Blocking Due Boundary Gate와 같은 Chronology의 중복 시간 진행 방지
 - [`Game Time, Calendar, Duration과 Scheduler Runtime 계약`](../../architecture/game-time-calendar-duration-and-scheduler-runtime-contract.md)
   - Round End의 Campaign Time 반영
   - Turn·Round Boundary Duration과 초·분 단위 Duration 분리
@@ -52,6 +57,10 @@
 - Pause 시 Pending RuleExecution과 Reservation을 임의 취소하지 않는다.
 - Reaction과 Interrupt는 Encounter 전용 Stack이 아니라 RuleExecution Graph를 사용한다.
 - D&D 2024에서 1 Round는 6 game seconds이며 개별 Turn마다 6초를 더하지 않는다.
+- Round 종료와 해당 Campaign Time Advance는 하나의 Authority Transaction에서 Commit한다.
+- Encounter가 Game Time Store를 직접 수정하지 않고 Scheduler Subscriber가 Encounter Store를 직접 수정하지 않는다.
+- Blocking Due가 남아 있으면 Boundary Gate가 다음 Round 시작을 막는다.
+- 같은 Campaign Chronology에서 여러 Encounter가 조정 없이 각각 시간을 진행하지 않는다.
 - Ready는 지원하고 Delay는 D&D 2024 기본 Policy에서 제공하지 않는다.
 - Rollback Review는 현재 Branch를 바꾸지 않으며 Commit 후 새 AuthorityEpoch로 Full Resync한다.
 - 패배·의식불명·사망 상태와 Encounter 참가 기록을 동일시하지 않는다.
