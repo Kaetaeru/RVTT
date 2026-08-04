@@ -1,0 +1,28 @@
+# Event 시스템
+
+Commit 이후 Domain Event, Transactional Outbox, Subscriber, 관찰자별 Projection Event와 Presentation Signal 연결을 다룬다.
+
+## 권위 문서
+
+- [`../../architecture/domain-event-outbox-subscription-and-projection-runtime-contract.md`](../../architecture/domain-event-outbox-subscription-and-projection-runtime-contract.md)
+  - Rule Event와 Commit 이후 Domain Event 분리
+  - Authority State와 Event Outbox의 원자적 Commit
+  - Subscriber 멱등성, Retry, Dead Letter와 Cycle Guard
+  - Observer별 Projection Event
+  - Presentation·Journal·Diagnostics 확장 경계
+
+## 관련 문서
+
+- [`../../architecture/command-ordering-logical-time-and-transaction-coordinator-contract.md`](../../architecture/command-ordering-logical-time-and-transaction-coordinator-contract.md)
+- [`../../architecture/networking-command-event-and-client-synchronization-contract.md`](../../architecture/networking-command-event-and-client-synchronization-contract.md)
+- [`../../architecture/rule-runtime-orchestrator-and-pending-execution-contract.md`](../../architecture/rule-runtime-orchestrator-and-pending-execution-contract.md)
+- [`../../architecture/presentation-recipe-playback-priority-and-extension-runtime-contract.md`](../../architecture/presentation-recipe-playback-priority-and-extension-runtime-contract.md)
+- [`../../architecture/persistence-and-session-recovery-model.md`](../../architecture/persistence-and-session-recovery-model.md)
+
+## 고정 경계
+
+- Event Handler는 Domain Store를 직접 수정하지 않는다.
+- 상태 변경이 필요하면 새 Command 또는 RuleExecution을 제출한다.
+- Client에는 Raw Domain Event를 보내지 않는다.
+- Presentation Subscriber 실패는 Gameplay Commit을 되돌리지 않는다.
+- Rollback 이전 Authority Epoch의 Event를 새 Branch에 다시 적용하지 않는다.
