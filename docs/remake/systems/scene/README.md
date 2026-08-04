@@ -12,6 +12,9 @@ Scene Source, Compiled Runtime Build, 세션 Dynamic State, Runtime Object Lifec
   - DM Authoring Overlay, Scene Source Object·Tool Module·Authoring Command와 Edit History
   - Candidate Build·Diagnostic·Test Play·Atomic Publish와 Last Known Good Build
   - Runtime Quick Edit·Source Promotion, 활성 세션 Build 고정과 안전한 Live Patch
+- [`Extension, Plugin과 Content Pack Guide`](../../guides/extension/README.md)
+  - Stable PrefabId, Tool Module·Object Type·Inspector·Snap Provider 등록 경계
+  - SceneCompilerProvider·Semantic Profile·Layer Artifact의 Version·Dependency·Migration·오류 격리
 
 ## 권위 문서
 
@@ -93,4 +96,4 @@ Scene Source, Compiled Runtime Build, 세션 Dynamic State, Runtime Object Lifec
 CURRENT
 ```
 
-Scene Runtime과 Authoring의 권위 관계, 사용자 흐름과 복구 경계는 각각의 Main System Guide에 반영되어 있다. 관련 권위 계약이 변경되면 해당 Guide를 `UPDATE_REQUIRED`로 전환한다.
+Scene Runtime, Authoring과 신뢰 Extension의 권위 관계, 사용자 흐름과 복구 경계는 각 Main System Guide에 반영되어 있다. 관련 권위 계약이 변경되면 해당 Guide를 `UPDATE_REQUIRED`로 전환한다.
