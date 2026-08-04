@@ -32,8 +32,8 @@ DEFERRED
 | 순서 | 상태 | 작업 | 완료 조건 |
 |---:|---|---|---|
 | 1 | `DONE` | Ruleset Policy Registry, Composition과 Frozen Snapshot Runtime | Architecture 계약, ADR-0081, 인덱스 연결, Policy 우선순위·버전·충돌·Snapshot 계약과 문서 검증 완료 |
-| 2 | `IN_PROGRESS` | Encounter–Game Time Boundary 통합 계약 | `TemporalBoundaryOccurrence`, Campaign Time 반영, Scheduler Due 역방향 연결과 직접 상호 호출 금지 확정 |
-| 3 | `QUEUED` | UI Runtime | Projection→ViewModel→Component→Intent 흐름, Panel·Modal·Focus·Q/E·Reconnect·Rollback 복구 계약 완료 |
+| 2 | `DONE` | Encounter–Game Time Boundary 통합 계약 | `TemporalBoundaryOccurrence`, Campaign Time 반영, Scheduler Due 역방향 연결과 직접 상호 호출 금지 확정 |
+| 3 | `IN_PROGRESS` | UI Runtime | Projection→ViewModel→Component→Intent 흐름, Panel·Modal·Focus·Q/E·Reconnect·Rollback 복구 계약 완료 |
 | 4 | `QUEUED` | Diagnostics와 Observability Runtime | Command→RuleExecution→Transaction→Event→Projection Trace, 권한별 진단, 성능·오류 Budget 계약 완료 |
 | 5 | `QUEUED` | Deterministic Simulation과 Test Harness | 고정 Seed·Snapshot Scenario·동시성·Reconnect·Rollback·정보 누출 테스트 계약 완료 |
 | 6 | `QUEUED` | Journal Anchor, Permission과 Projection 계약 | 문서·Section Identity, 월드 Anchor, 권한별 검색 Index, 안전한 Camera·Selection Intent 계약 완료 |
@@ -59,5 +59,6 @@ CURRENT-WORK-ORDER 확인
 
 | 날짜 | 변경 |
 |---|---|
+| 2026-08-04 | Encounter–Game Time Temporal Boundary 통합 계약과 ADR-0082를 완료했다. 2번을 `DONE`으로 변경하고 UI Runtime을 `IN_PROGRESS`로 전환했다. |
 | 2026-08-04 | Policy Registry·Composition·Frozen Snapshot 계약과 ADR-0081을 완료했다. 1번을 `DONE`으로 변경하고 Encounter–Game Time Boundary 통합 계약을 `IN_PROGRESS`로 전환했다. |
 | 2026-08-04 | 통합 감사 결과를 기준으로 최초 작업 순서를 확정했다. Policy Composition Runtime을 현재 작업으로 지정했다. |
