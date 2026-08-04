@@ -20,6 +20,10 @@
 - [`Scene Editor와 Authoring Guide`](../../guides/scene-editor/README.md)
   - Scene Source Authoring Transaction, Candidate Build·Atomic Publish와 Last Known Good 경계
   - Runtime Quick Edit·Source Promotion, Build Migration·Runtime Object Rebind와 Projection Barrier
+- [`Diagnostics, Simulation과 Operations Guide`](../../guides/diagnostics/README.md)
+  - Cross-Domain Outcome·Follow-up·Projection Barrier의 Correlated Trace와 Incident·Health 연결
+  - Transaction Abort·Retry·Restart·Rollback·Projection Gap의 Production-parity Scenario
+  - Diagnostics·Simulation 실패가 권위 Commit을 변경하지 않는 Operations 경계
 
 ## 최상위 권위 문서
 
@@ -95,6 +99,7 @@ Subscriber가 Store를 직접 수정하지 않고 새 Command 또는 RuleExecuti
 - Journal Index·Anchor Resolver 실패가 이미 Commit된 Journal Source Revision을 되돌리지 않는다.
 - Ping Presentation은 Authority Mutation Provider나 Projection Sequence의 일부가 아니다.
 - UI·Presentation·Workspace Instance는 Authority Mutation Provider가 아니다.
+- Diagnostics·Simulation·Incident·Health는 Authority Mutation Provider가 아니다.
 - Derived Index 실패가 이미 Commit된 권위 결과를 되돌리지 않는다.
 - 오래된 Index로 권위 판정을 할 위험이 있으면 관련 Command Scope만 Gate한다.
 - 같은 Transaction의 HP·Vital·Effect·Encounter, Build·State·Item 또는 Scene Build·Rebind Projection은 Barrier Batch로 적용한다.
@@ -120,8 +125,10 @@ Subscriber가 Store를 직접 수정하지 않고 새 Command 또는 RuleExecuti
 - Journal Anchor 비자동 Retarget
 - Journal Permission 축소와 Projection·Index 무효화
 - Ping Presentation Failure Isolation
-- Rollback 이전 Follow-up 차단
-- Projection Barrier
+- Correlated Trace의 Transaction·Event·Projection Causation 연속성
+- Incident·Health·Support Redaction과 Diagnostic Read 비변경성
+- Restart·Rollback 이전 Follow-up 차단
+- Projection Barrier와 Batch Gap Recovery
 - Presentation Failure Isolation
 
 ## 관련 영역
@@ -144,4 +151,4 @@ Subscriber가 Store를 직접 수정하지 않고 새 Command 또는 RuleExecuti
 Guide Status: READY_FOR_MAIN_GUIDE_PHASE
 ```
 
-Combat·Encounter, Rules, Character·Inventory·Downtime, UI·Presentation, Journal·Ping와 Scene Editor·Authoring 관련 Integration 흐름은 현재 각 Main System Guide에 연결됐다. 나머지 Operations·Extension 영역은 후속 Guide 순서에서 계속 통합한다.
+Combat·Encounter, Rules, Character·Inventory·Downtime, UI·Presentation, Journal·Ping, Scene Editor·Authoring와 Diagnostics·Simulation·Operations 관련 Integration 흐름은 현재 각 Main System Guide에 연결됐다. 남은 Extension 영역은 후속 Guide 순서에서 계속 통합한다.
