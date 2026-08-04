@@ -64,7 +64,8 @@ CURRENT-WORK-ORDER 확인
   - [`Scene, Streaming, Runtime Object, Spatial Query와 Navigation`](guides/scene/README.md)
   - [`Exploration, Selection, Interaction과 Perception`](guides/exploration/README.md)
   - [`Rules, Character Action, Spell, Dice와 Effect`](guides/rules/README.md)
-- 현재 세부 작업: `Combat와 Encounter Guide`
+  - [`Combat와 Encounter`](guides/combat/README.md)
+- 현재 세부 작업: `Character, Inventory와 Downtime Guide`
 
 1. Guide는 새로운 Authority 결정을 만들지 않고 확정된 Architecture·ADR을 통합한다.
 2. 각 Guide는 권위 원본, 역할별 사용자 흐름, Command·Transaction·Projection 경로, 실패·복구와 구현 Spec 진입점을 포함한다.
@@ -76,6 +77,7 @@ CURRENT-WORK-ORDER 확인
 
 | 날짜 | 변경 |
 |---|---|
+| 2026-08-05 | Combat·Encounter Guide를 완료하고 Main System Guide 세부 작업을 Character·Inventory·Downtime Guide로 전환했다. |
 | 2026-08-05 | Rules·Character Action·Spell·Dice·Effect Guide를 완료하고 Main System Guide 세부 작업을 Combat·Encounter Guide로 전환했다. |
 | 2026-08-05 | Exploration·Selection·Interaction·Perception Guide를 완료하고 Main System Guide 세부 작업을 Rules·Character Action·Spell·Dice·Effect Guide로 전환했다. |
 | 2026-08-05 | Scene·Streaming·Runtime Object·Spatial Query·Navigation Guide를 완료하고 Main System Guide 세부 작업을 Exploration·Selection·Interaction·Perception Guide로 전환했다. |
