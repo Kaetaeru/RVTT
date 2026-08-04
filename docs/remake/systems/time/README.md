@@ -7,6 +7,9 @@ Campaign Game Time, Calendar, Encounter Round Duration, Duration Handle, Time Co
 - [`Combat와 Encounter Guide`](../../guides/combat/README.md)
   - Encounter Round Boundary, D&D 2024 기본 6초, RoundTimeLedger와 Campaign Time 원자 Commit
   - Scheduler Due Staging, Event→Command Bridge와 Blocking Boundary Gate
+- [`Character, Inventory와 Downtime Guide`](../../guides/character/README.md)
+  - Rest·Crafting·Training·Travel Activity의 병렬 Campaign Time Window
+  - TimeAdvancePlan, Activity·Scheduler·Encounter Checkpoint와 중단 후 재검증
 
 ## 권위 문서
 
@@ -32,6 +35,8 @@ Campaign Game Time, Calendar, Encounter Round Duration, Duration Handle, Time Co
   - Turn·Round Boundary와 Encounter Timeline
 - [`Character`](../character/README.md)
   - 휴식, 죽음, 자원 회복과 장기 상태
+- [`Downtime`](../downtime/README.md)
+  - 참가자 Activity Window, Progress, 중간 사건과 Domain Completion
 - [`Rules`](../rules/README.md)
   - 주문 지속시간, 장시간 시전과 Effect
 - [`Events`](../events/README.md)
@@ -49,8 +54,9 @@ Campaign Game Time, Calendar, Encounter Round Duration, Duration Handle, Time Co
 - Encounter로 연결되는 Due 작업은 Subscriber가 새 Command 또는 RuleExecution을 제출한다.
 - Blocking Due가 해결되기 전에는 다음 Encounter Boundary를 열지 않는다.
 - 동일 Chronology의 다중 Encounter가 각각 독립적으로 시간을 진행하지 않는다.
-- 휴식·여행의 긴 Time Advance는 중간 사건을 건너뛰지 않는다.
-- Client local clock은 Gameplay Duration의 권위가 아니다.
+- Downtime 참가자마다 별도 Campaign Clock을 만들지 않는다.
+- 휴식·여행의 긴 Time Advance는 Activity·Scheduler·사건 Checkpoint를 건너뛰지 않는다.
+- Client local clock과 오프라인 현실 시간은 Gameplay Duration의 권위가 아니다.
 
 ## 다음 구현 명세
 
