@@ -30,3 +30,11 @@ PC 키보드·마우스용 자유 전술 카메라, 추적, Focus, 북마크, DM
 - Follow와 Focus는 독립 상태다.
 - DM Observe는 Actor 제어권을 변경하지 않는다.
 - 카메라 가림 보정은 Visibility·Knowledge Projection을 우회해 비밀 정보를 공개하지 않는다.
+
+## Guide 상태
+
+```text
+Guide Status: READY_TO_WRITE
+```
+
+Camera Runtime과 Presentation 연동, UI Input·Recovery 계약 및 최신 Completion Audit가 완료되어 UI·Camera·Presentation Main System Guide를 작성할 수 있다.
