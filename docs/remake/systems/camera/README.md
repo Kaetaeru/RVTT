@@ -2,6 +2,13 @@
 
 PC 키보드·마우스용 자유 전술 카메라, 추적, Focus, 북마크, DM Observe와 연출 우선순위를 다룬다.
 
+## 관련 Main System Guide
+
+- [`UI, Camera와 Presentation Guide`](../../guides/ui/README.md)
+  - CameraRequest, 안전한 CameraTargetProjection, Focus·Follow와 Restoration Stack
+  - Exploration·Encounter·Selection·Presentation·DM Observe·Scene Transition Camera 흐름
+  - ViewY·Bookmark·Streaming·Reconnect·Rollback과 사용자 Motion Safety 경계
+
 ## 권위 문서
 
 ### 공통 Runtime 권위
@@ -34,7 +41,7 @@ PC 키보드·마우스용 자유 전술 카메라, 추적, Focus, 북마크, DM
 ## Guide 상태
 
 ```text
-Guide Status: READY_TO_WRITE
+Guide Status: CURRENT
 ```
 
-Camera Runtime과 Presentation 연동, UI Input·Recovery 계약 및 최신 Completion Audit가 완료되어 UI·Camera·Presentation Main System Guide를 작성할 수 있다.
+현재 Camera Runtime과 UI·Presentation 연동, 사용자 흐름과 복구 경계는 Main System Guide에 반영되어 있다. 관련 권위 계약이 변경되면 Guide를 `UPDATE_REQUIRED`로 전환한다.
