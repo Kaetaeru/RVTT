@@ -1,8 +1,8 @@
 # Audit 문서
 
-기획 완성도, 문서 충돌, 구현 준비도와 마이그레이션 결과를 검토한다.
+기획 완성도, 문서 충돌, 사용자 경험, 구현 준비도와 마이그레이션 결과를 검토한다.
 
-Audit은 제품 동작을 새로 정의하지 않는다. 새 결정이 필요하면 관련 Architecture와 ADR에 먼저 반영한다.
+Audit은 제품 동작을 새로 정의하지 않는다. 새 결정이 필요하면 관련 Product·Architecture와 ADR에 먼저 반영한다.
 
 ## 현재 작업 기준
 
@@ -12,10 +12,14 @@ Audit은 제품 동작을 새로 정의하지 않는다. 새 결정이 필요하
 
 ## 현재 유효한 문서
 
+- [`player-and-dm-user-guide-completion-audit.md`](player-and-dm-user-guide-completion-audit.md)
+  - Player·DM User Guide가 현재 Product Scope와 Main System Guide를 실제 사용자 흐름으로 정확히 번역했는지 검사한다.
+  - 역할·비밀 정보, Q·E·1–5, Exploration·Encounter 이동, Recovery·Rollback과 비목표 일관성을 검증한다.
+  - User Guide 단계를 `COMPLETE`, Implementation Specs 단계를 `READY TO RESUME`으로 판정한다.
 - [`main-system-guide-consistency-and-document-hub-completion-audit.md`](main-system-guide-consistency-and-document-hub-completion-audit.md)
   - 계획된 12개 Main System Guide의 상태, Template, Authority 계층과 책임 분리를 검사한다.
   - `SUPERSEDED`, `DISCONTINUED`, `ARCHIVED` 문서 제외와 Root·Remake·Guide·System·Spec Hub 정합성을 검사한다.
-  - Main System Guide 단계를 `COMPLETE`, Implementation Specs 단계를 `READY TO START`로 판정한다.
+  - Main System Guide 단계를 `COMPLETE`로 판정한다.
 - [`runtime-architecture-completion-and-main-guide-readiness-audit.md`](runtime-architecture-completion-and-main-guide-readiness-audit.md)
   - 이전 감사의 Policy, UI, Diagnostics, Simulation, Journal과 Integration BLOCKER 해소를 재검증한다.
   - 현재 제품 범위의 Core·Support Runtime과 Cross-System Integration을 완료로 판정한다.
@@ -27,13 +31,22 @@ Audit은 제품 동작을 새로 정의하지 않는다. 새 결정이 필요하
 
 ```text
 Runtime Architecture Completion Audit
-→ Main System Guide 작성 준비 판정
-→ 12개 Main System Guide 작성
+→ Main System Guide 작성
 → Guide Consistency·Document Hub Completion Audit
+→ Player·DM User Guide 작성
+→ Player·DM User Guide Completion Audit
 → Implementation Specs 단계
 ```
 
-새 Guide Completion Audit은 Runtime Architecture Completion Audit의 Architecture 판정을 대체하지 않는다. Guide 작성 결과와 다음 단계 전환만 추가로 판정한다.
+각 Completion Audit은 이전 단계의 판정을 대체하지 않는다. 자신의 단계 결과와 다음 단계 전환만 추가로 판정한다.
+
+## 현재 알려진 수명주기 정리 대상
+
+- [`product/core-session-loop.md`](../product/core-session-loop.md)
+  - `상태: 초안`
+  - 현재 확정 범위와 다른 Encounter Token WASD·Audio 표현이 남아 있다.
+  - 현재 User Guide와 Implementation Spec의 권위 근거로 사용하지 않는다.
+  - 후속 문서 수명주기 정리에서 User Guide로 대체하거나 최신 Product Scope에 맞게 갱신한다.
 
 ## Superseded·Discontinued Audit
 
