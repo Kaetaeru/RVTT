@@ -34,6 +34,16 @@ jobs:
         if: steps.state.outputs.applied != 'true'
         shell: bash
         run: |
+          cat > /tmp/rvtt_chunks.sha256 <<'SUMS'
+          69f41d1bd96d8657592469dca7e1466f64866e2f486ce22c8d776b181ee737df  .github/rvtt-upgrade/part-00.b64
+          8b023edfa8d3eeb00d3274de2a23d20a97f763e99814002e5517894ad86b3d92  .github/rvtt-upgrade/part-01.b64
+          48515e9664e03eb054c17e716dc193e960671057c99f09f0d629cab911d28b5b  .github/rvtt-upgrade/part-02.b64
+          a886fccf612d3035680970f88aeecd1464508e157a060da03456f2790a9cef5c  .github/rvtt-upgrade/part-03.b64
+          1fc2ed26bba76180bee6c7292924efe35fadb5326b8e315aae43f8bd159f0dff  .github/rvtt-upgrade/part-04.b64
+          ff65fec24f9f01ddfd410abf76d80be93fe6ca90aa561629c970e0177b2530e0  .github/rvtt-upgrade/part-05.b64
+          0b90ad4219a412524599eede3a31ef539c086326ae400784e78f2f40836b93d0  .github/rvtt-upgrade/part-06.b64
+          SUMS
+          sha256sum --check /tmp/rvtt_chunks.sha256
           cat .github/rvtt-upgrade/part-*.b64 > /tmp/rvtt_upgrade.b64
           base64 --decode /tmp/rvtt_upgrade.b64 > /tmp/rvtt_upgrade.tar.gz
           echo "7be12657b6932f1eabb46e1a6e8fbe6808d3cce0cab27e63bbfd286e61fe4c45  /tmp/rvtt_upgrade.tar.gz" | sha256sum --check
