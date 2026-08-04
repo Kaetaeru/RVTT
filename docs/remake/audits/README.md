@@ -5,8 +5,9 @@
 - 현재 활성 감사: 없음
 - 현재 단계: `IMPLEMENTATION SPECS`
 - 현재 Spec 작업 순서: [`CURRENT-SPEC-WORK-ORDER.md`](../specs/CURRENT-SPEC-WORK-ORDER.md)
+- 전체 Slice Roadmap: [`SLICE-ROADMAP.md`](../specs/SLICE-ROADMAP.md)
 
-기획 완성도, 문서 충돌, 사용자 경험, 구현 준비도, 연결과 마이그레이션 결과를 검토한다.
+기획 완성도, 문서 충돌, 사용자 경험, 구현 준비도, Slice 범위, 연결과 마이그레이션 결과를 검토한다.
 
 Audit은 제품 동작을 새로 정의하지 않는다. 새 결정이 필요하면 관련 Product·Architecture와 ADR에 먼저 반영한다.
 
@@ -14,51 +15,68 @@ Audit은 제품 동작을 새로 정의하지 않는다. 새 결정이 필요하
 
 - [`현재 상위 작업 순서`](../CURRENT-WORK-ORDER.md)
 - [`Implementation Spec 작업 순서`](../specs/CURRENT-SPEC-WORK-ORDER.md)
+- [`Implementation Slice Roadmap`](../specs/SLICE-ROADMAP.md)
 - [`Implementation Spec Hub`](../specs/README.md)
 - [`문서 구조와 작성 가이드`](../DOCUMENT-GUIDE.md)
 - [`문서 수명주기와 Discontinuation 정책`](../DOCUMENT-LIFECYCLE-AND-DISCONTINUATION.md)
 
 ## 현재 유효한 완료 감사
 
-1. [`Shared Spec 001·002 재검토 감사`](shared-spec-001-002-revalidation-audit.md)
+1. [`Implementation Slice Roadmap 완전성 감사`](implementation-slice-roadmap-completeness-audit.md)
+   - 16개 Slice에 Quick Flow, 12개 Main Guide, 공식 Content와 Release 범위를 배정했다.
+   - Core Rules를 Slice 02로 두고 Interaction·Encounter·Content보다 먼저 배치했다.
+   - Diagnostics·Persistence·Security·Accessibility를 모든 Slice의 공통 레일로 확인했다.
+2. [`Shared Spec 001·002 재검토 감사`](shared-spec-001-002-revalidation-audit.md)
    - 초기 Recipe Step Runtime·Handler Spec을 최신 RuleExecution·Transaction·Outbox·Recovery·Diagnostics·Simulation 계약과 비교했다.
    - 001·002 모두 `UPDATE_REQUIRED`, `SUPERSEDED`는 아님으로 판정했다.
-   - First Session Walking Skeleton의 선행 조건에서 제외하고 Character Action·Rules Slice에 배치했다.
-2. [`구현 명세 전 최종 문서 연결 감사`](pre-implementation-document-linkage-audit.md)
+   - Slice 01의 선행 조건에서 제외하고 Slice 02 Core Rules Kernel에 배치했다.
+3. [`구현 명세 전 최종 문서 연결 감사`](pre-implementation-document-linkage-audit.md)
    - Root → Quick Flow → User Guide → Main Guide → Authority → Spec 경로를 검사했다.
    - User Guide 계층, Template, Shared Spec 진입, Hub 역방향 링크와 수명주기를 정리했다.
-   - Implementation Specs를 `READY TO START`로 판정했다.
-3. [`User Guide Quick Flow와 Flowchart 보완 감사`](user-guide-quick-flow-and-flowchart-audit.md)
-   - 코딩 용어 없는 Quick Flow와 전체·Player·DM·반복·예외 Flowchart 완료 근거
-4. [`Player·DM User Guide 완료 감사`](player-and-dm-user-guide-completion-audit.md)
-   - 역할·비밀 정보·입력·이동·Recovery·Rollback User Guide 완료 근거
-5. [`Main System Guide 일관성과 문서 허브 완료 감사`](main-system-guide-consistency-and-document-hub-completion-audit.md)
-   - 12개 Guide의 상태·Template·Authority 계층과 Hub 완료 근거
-6. [`Runtime Architecture Completion과 Main System Guide 준비도 감사`](runtime-architecture-completion-and-main-guide-readiness-audit.md)
-   - Core·Support Runtime과 Cross-System Integration 완료 근거
-7. [`Document Migration Validation`](document-migration-validation.md)
-   - 문서 이동과 상대 링크 정합성 근거
+4. [`User Guide Quick Flow와 Flowchart 보완 감사`](user-guide-quick-flow-and-flowchart-audit.md)
+   - 코딩 용어 없는 Quick Flow와 전체·Player·DM·반복·예외 Flowchart 완료 근거다.
+5. [`Player·DM User Guide 완료 감사`](player-and-dm-user-guide-completion-audit.md)
+   - 역할·비밀 정보·입력·이동·Recovery·Rollback User Guide 완료 근거다.
+6. [`Main System Guide 일관성과 문서 허브 완료 감사`](main-system-guide-consistency-and-document-hub-completion-audit.md)
+   - 12개 Guide의 상태·Template·Authority 계층과 Hub 완료 근거다.
+7. [`Runtime Architecture Completion과 Main System Guide 준비도 감사`](runtime-architecture-completion-and-main-guide-readiness-audit.md)
+   - Core·Support Runtime과 Cross-System Integration 완료 근거다.
+8. [`Document Migration Validation`](document-migration-validation.md)
+   - 문서 이동과 상대 링크 정합성 근거다.
 
 ## 감사 관계
 
 ```text
 Runtime Architecture Completion Audit
-→ Main System Guide 작성
-→ Guide Consistency·Hub Completion Audit
-→ Player·DM User Guide 작성
-→ User Guide Completion Audit
-→ Quick Flow·Flowchart Audit
+→ Main System Guide Completion Audit
+→ Player·DM User Guide Completion Audit
+→ Quick Flow Audit
 → Pre-Implementation Document Linkage Audit
-→ Shared Spec 001·002 Revalidation Audit
-→ First Session Walking Skeleton Specs
-→ First Slice Spec Integration Audit
+→ Implementation Slice Roadmap Completeness Audit
+→ 현재 Slice Specs
+→ Slice Spec Completion Audit
+→ Slice Production Build Acceptance Audit
 ```
 
 각 Completion Audit은 이전 단계의 권위 판정을 대체하지 않는다. 자신의 단계 결과와 다음 단계 Gate만 추가로 판정한다.
 
+## Slice별 감사 원칙
+
+각 Slice에는 두 종류의 완료 감사가 필요하다.
+
+```text
+Spec Completion Audit
+→ Type·Command·Persistence·Migration·Diagnostics·Test 계약 완료
+
+Production Build Acceptance Audit
+→ 실제 Code·Migration·Roblox Integration·사용자 Acceptance 완료
+```
+
+전체 마지막에는 Slice 16에서 Production Implementation Completion Audit을 수행한다.
+
 ## 현재 Spec 감사 예정
 
-First Session Walking Skeleton의 관련 Spec이 모두 작성되면 다음 감사를 수행한다.
+Slice 01 First Session Walking Skeleton의 관련 Spec이 모두 작성되면 다음 감사를 수행한다.
 
 ```text
 audits/first-session-walking-skeleton-spec-audit.md
