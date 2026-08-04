@@ -1,16 +1,17 @@
 # RVTT Implementation Specs 현재 작업 순서
 
-- 상태: ACTIVE_WITH_BLOCKER
+- 상태: COMPLETE_WITH_IMPLEMENTATION_HANDOFF
 - 문서 종류: Implementation Spec Work Order
 - 최종 갱신일: 2026-08-05
 - 상위 작업 순서: [`../CURRENT-WORK-ORDER.md`](../CURRENT-WORK-ORDER.md)
 - 전체 Slice Roadmap: [`SLICE-ROADMAP.md`](SLICE-ROADMAP.md)
 - Slice Package Index: [`slices/README.md`](slices/README.md)
 - 전체 명세 완료 감사: [`All-slice Specification Checkpoint Completion Audit`](../audits/all-slice-specification-checkpoint-completion-audit.md)
-- Checkpoint Index: [`audits/slice-checkpoints`](../audits/slice-checkpoints/README.md)
-- 작성 Template: [`../templates/implementation-spec-template.md`](../templates/implementation-spec-template.md)
+- UI·UX Policy: [`UI·UX Global Policies`](../ui/policies/README.md)
+- Production Workspace: [`implementation/roblox`](../../../implementation/roblox/README.md)
+- 현재 Production Work Order: [`Roblox Implementation Work Order`](../../../implementation/roblox/CURRENT-WORK-ORDER.md)
 
-이 문서는 Implementation Specs 단계의 현재 실행 순서를 소유한다. 16개 Slice의 통합 명세와 검수는 완료됐으며, 다음 작업은 실제 Repository Source Tree에 계약을 Mapping해 Production Readiness Blocker를 해소하는 것이다.
+이 문서는 16개 Slice의 통합 명세 완료와 Production Workspace 인계를 기록한다. 실제 Script 작성 순서는 `implementation/roblox/CURRENT-WORK-ORDER.md`가 소유한다.
 
 ## 1. 현재 상태
 
@@ -18,112 +19,116 @@
 16개 Slice 정의
 → DONE
 
-16개 Work Order
-→ DONE
-
-16개 Integration Contract
-→ DONE
-
-16개 Slice Checkpoint Audit
+16개 Work Order·Integration Contract·Checkpoint Audit
 → DONE
 
 4개 Cross-Slice Checkpoint·Recovery Branch
 → DONE
 
-Production Source Mapping
-→ IN_PROGRESS·BLOCKED
+UI·UX Global Policy·Checklist
+→ DONE
+
+Greenfield Production Root 결정
+→ DONE
+
+Roblox Service Folder Bootstrap
+→ DONE
+
+현재 구현 작업
+→ Slice 01 Script Manifest
 ```
 
-## 2. 현재 작업 순서
+## 2. Greenfield 구현 결정
 
-| 순서 | 상태 | 작업 | 완료 조건 |
-|---:|---|---|---|
-| 1 | DONE | 전체 Slice Roadmap·완전성 감사 | 16개 Slice와 12개 Guide 범위 배정 |
-| 2 | DONE | Slices 01–04 명세·Checkpoint A | Session·Rules·Exploration·Encounter 계약 검수 |
-| 3 | DONE | Slices 05–08 명세·Checkpoint B | Character·Inventory·Downtime·UI 계약 검수 |
-| 4 | DONE | Slices 09–12 명세·Checkpoint C | Journal·Authoring·DM Operation·Extension 계약 검수 |
-| 5 | DONE | Slices 13–16 명세·Checkpoint D | Content·NPC·Release Gate 계약 검수 |
-| 6 | DONE | All-slice Specification Completion Audit | 16/16·4/4 산출물과 공통 Blocker 확인 |
-| 7 | IN_PROGRESS | Slice 01 Production Source Mapping | 실제 Server·Client·Shared·Persistence·Test 경로와 Legacy Schema 확인 |
-| 8 | BLOCKED | Slice 01 세부 Spec Readiness 전환 | Mapping·Migration·Budget·Roblox Test Host가 연결돼야 함 |
-| 9 | BLOCKED | Production Implementation | Slice 01 준비 완료와 사용자 구현 승인 필요 |
-
-## 3. Slice 01 Mapping 대상
-
-현재 Slice:
+사용자 결정에 따라 기존 Production Source Tree를 계속 탐색해 연결하는 방식 대신 다음 Root에서 새 구현을 시작한다.
 
 ```text
-01 First Session Walking Skeleton
+implementation/roblox/
 ```
 
-연결할 계약:
+구조:
+
+```text
+src/<Roblox Service>/RVTT/
+tests/
+tooling/
+manifests/
+```
+
+의미:
+
+- 기존 문서·명세는 `docs/remake/`에 유지한다.
+- 실제 Production Source와 Test는 `implementation/`에만 둔다.
+- Script는 Slice Manifest 순서대로 하나씩 추가한다.
+- 전체 Framework의 빈 Script를 한 번에 생성하지 않는다.
+- Toolchain·Package·최종 Script 경로는 Manifest에서 실제 필요를 검증하며 확정한다.
+
+## 3. 완료된 작업
+
+| 순서 | 상태 | 작업 |
+|---:|---|---|
+| 1 | DONE | 전체 Slice Roadmap·완전성 감사 |
+| 2 | DONE | Slices 01–04 명세·Checkpoint A |
+| 3 | DONE | Slices 05–08 명세·Checkpoint B |
+| 4 | DONE | Slices 09–12 명세·Checkpoint C |
+| 5 | DONE | Slices 13–16 명세·Checkpoint D |
+| 6 | DONE | All-slice Specification Completion Audit |
+| 7 | DONE | UI·UX Global Policy와 Completion Audit |
+| 8 | DONE | Greenfield `implementation/roblox/` Workspace Bootstrap |
+| 9 | HANDOFF | Slice 01 Script Manifest와 Production 구현 |
+
+## 4. Slice 01 인계 대상
 
 - [`Slice 01 Work Order`](slices/01-first-session-walking-skeleton/CURRENT-WORK-ORDER.md)
 - [`Slice 01 Integration Contract`](slices/01-first-session-walking-skeleton/implementation-contract.md)
 - [`Core Authority 세부 초안`](runtime/001-core-authority-identity-version-and-result.md)
 - [`Slice 01 Checkpoint Audit`](../audits/slices/01-first-session-walking-skeleton-spec-checkpoint-audit.md)
+- [`UI·UX Review Checklist`](../ui/policies/UI-UX-REVIEW-CHECKLIST.md)
+- [`Roblox Implementation Work Order`](../../../implementation/roblox/CURRENT-WORK-ORDER.md)
 
-조사 순서:
+## 5. 다음 구현 순서
 
 ```text
-Repository·Place Source 동기화 방식
-→ Server·Client·Shared Package Root
-→ ID·Result·Error·Remote Registry
-→ Session·Token·Permission·Scene·Movement 구현
-→ Persistence Schema·Journal·Migration
-→ Test Runner·Virtual Client·Roblox Integration
-→ 논리 Package와 실제 경로 Mapping
-→ Readiness 재감사
+Slice 01 Script Manifest
+→ Toolchain·Service Mapping
+→ Shared ID·Version·Result·Stable Error Script
+→ Protocol·Server·Client·Session·Scene·Movement Script
+→ Persistence·Reconnect
+→ Roblox Integration Scenario
+→ Slice 01 Build Acceptance Audit
 ```
 
-## 4. 운영 규칙
+Script별 정확한 경로와 API는 Manifest에서 확정한다. Integration Contract의 의미를 구현 편의로 변경하지 않는다.
 
-1. 가장 위의 `IN_PROGRESS` 항목을 먼저 처리한다.
-2. 통합 계약의 의미를 실제 코드 구조에 맞춘다는 이유로 조용히 변경하지 않는다.
-3. 새 Product 동작이나 Architecture 충돌이 발견되면 해당 Authority·Slice Contract·Audit을 `UPDATE_REQUIRED`로 되돌린다.
-4. 실제 Source Tree를 확인하지 못한 경로는 계속 `신규 제안`으로 표시한다.
-5. Legacy 데이터가 존재하면 Migration·Deprecation·Tombstone과 Last Known Good를 작성한다.
-6. 측정 전에 Timeout·Queue·Cache·Payload·Snapshot 수치를 확정하지 않는다.
-7. Production Code는 현재 Slice의 Mapping·Readiness 감사와 사용자의 명시적 구현 승인 후 시작한다.
-8. 한 Slice의 Production Build Acceptance가 끝나기 전에 여러 Slice 구현을 얕게 병렬 시작하지 않는다.
-9. Checkpoint Branch는 복구 기준이며 일반 작업 Branch로 이동시키지 않는다.
+## 6. 남은 Blocker
 
-## 5. 전체 Production 순서
+명세 의미는 완료됐지만 Production Script 착수 전에 다음을 Manifest에서 해결한다.
 
-Specification과 Production은 같은 Slice 순서를 사용한다.
+- Rojo 사용 여부와 Project Mapping
+- Formatter·Linter·Luau Type Check
+- Test Runner와 Studio Integration 방식
+- Package·Registry 실제 Script 분할
+- 저장 Schema·Migration Version Index
+- UI Design Token의 실제 Roblox 표현
+- 측정형 Timeout·Queue·Payload·Render Budget
 
-```text
-Slice Source Mapping
-→ Package·Schema·Migration 세부 Spec
-→ Spec Readiness Audit
-→ 사용자 구현 승인
-→ Production Code·Migration·Test
-→ Build Acceptance Audit
-→ 다음 Slice
-```
+Slices 13–15는 실제 공식 Data·Source Version·Rights Review가 추가로 필요하다.
 
-Slices 13–15는 추가로 실제 Data·Source Version·Rights Review를 통과해야 한다. Slice 16은 실제 Full-session·Fault·Security·Performance·Soak Evidence 없이는 Release Ready가 될 수 없다.
-
-## 6. 완료 판정
-
-Implementation Specs 단계 전체를 `DONE`으로 닫으려면 다음이 필요하다.
-
-- 16개 Slice 통합 명세와 감사: 완료
-- 실제 Source Tree Mapping과 필요한 Package-level Specs
-- Legacy Schema·Migration 경계
-- Slice별 `READY` 또는 명시적 `DEFERRED`
-- 문서 검증 성공
-- Production Implementation 순서와 사용자 승인 Gate 유지
-
-현재 판정:
+## 7. 인계 판정
 
 ```text
-통합 명세 범위
+통합 명세
 → COMPLETE
 
-실제 구현 준비도
-→ BLOCKED
+UI·UX Policy Foundation
+→ COMPLETE
 
-현재 해소 대상
-→ Slice 01 Production Source Mapping
+Production Workspace
+→ BOOTSTRAPPED
+
+현재 실행 기준
+→ implementation/roblox/CURRENT-WORK-ORDER.md
+
+Production Luau Script
+→ NOT STARTED
 ```
