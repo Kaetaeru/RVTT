@@ -24,6 +24,12 @@
   - Panel·Modal·Prompt, Focus와 Q/E Input Context
   - Command Result와 Projection Reconciliation
   - Reconnect·Resync·Rollback·Role Change 후 Epoch-safe UI 복구
+- [`Diagnostics, Observability, Correlated Trace와 Incident Runtime 계약`](diagnostics-observability-correlated-trace-and-incident-runtime-contract.md)
+  - Command→RuleExecution→Transaction→Event→Projection→UI Correlated Trace
+  - Policy·Rule·Authorization Decision Record와 Stable Error Code
+  - Permission-aware Diagnostic Projection, Redaction과 Support Reference
+  - Sampling, Retention, Performance Budget, Health와 Incident Bundle
+  - Recovery Journal·Mandatory Audit·Observability 분리와 Epoch-safe 복구
 - [`Exploration 실시간 이동, 행동과 Encounter 전환 Runtime 계약`](exploration-real-time-movement-action-and-encounter-transition-runtime-contract.md)
   - 클릭 이동과 WASD 토큰 이동의 공통 권위 경계
   - Actor별 Movement·RuleExecution·Interaction 실행 슬롯
@@ -113,6 +119,7 @@
 - Ruleset·Source Pack·Campaign·Scope Policy Composition과 Frozen Snapshot
 - Session Base Mode, Context, Overlay, Transition과 Command Gate
 - Permission-aware Projection Replica, ViewModel, Panel·Modal·Focus·Input Context와 UI Recovery
+- Correlated Authority Trace, Decision Record, Error·Incident, Health, Budget와 Diagnostic Projection
 - Exploration 실시간 이동, Actor별 실행 충돌, Hazard와 Encounter 전환
 - Encounter Participant, Initiative Timeline, Turn, Opportunity, Objective와 종료
 - Encounter Temporal Boundary, Campaign Time Atomic Commit, Scheduler Due Bridge와 Boundary Gate
@@ -143,6 +150,7 @@
 - 교체 가능한 규칙 방식, Ruleset·Campaign·Scope 설정, Policy 우선순위·충돌·Version과 진행 중 실행의 규칙 고정을 다루면 [`Ruleset Policy Runtime 계약`](ruleset-policy-registry-composition-and-frozen-snapshot-runtime-contract.md)을 따른다.
 - Exploration·Encounter·Downtime, Context, UI·Authoring Overlay, Scene Transition·Join·Recovery를 다루면 [`Session Runtime 계약`](session-play-mode-context-overlay-and-transition-contract.md)을 따른다.
 - Projection Replica, ViewModel, Panel·Modal·Prompt, Focus, Q/E Input Context, Command Reconciliation과 Client UI 복구를 다루면 [`UI Runtime 계약`](ui-projection-view-model-input-context-and-recovery-runtime-contract.md)을 따른다.
+- Trace Context, Decision Record, Error·Incident, 성능 Budget, Diagnostic Query와 역할별 Redaction을 다루면 [`Diagnostics Runtime 계약`](diagnostics-observability-correlated-trace-and-incident-runtime-contract.md)을 따른다.
 - 탐험 WASD·클릭 이동, 실시간 행동 충돌, Hazard와 Encounter 진입을 다루면 [`Exploration Runtime 계약`](exploration-real-time-movement-action-and-encounter-transition-runtime-contract.md)을 따른다.
 - Initiative, Timeline, Turn·Round, Opportunity, Participant, Objective와 Encounter 종료를 다루면 [`Encounter Runtime 계약`](encounter-timeline-turn-opportunity-and-objective-runtime-contract.md)을 따른다.
 - Encounter Round Boundary와 Campaign Time, Scheduler Due와 다음 Round Gate의 통합을 다루면 [`Encounter–Game Time 통합 계약`](encounter-game-time-temporal-boundary-and-scheduler-integration-contract.md)을 따른다.
@@ -156,7 +164,7 @@
 - Campaign Time, Calendar, Turn·Round Duration, 휴식·여행 시간과 미래 예약 실행을 다루면 [`Game Time Runtime 계약`](game-time-calendar-duration-and-scheduler-runtime-contract.md)을 따른다.
 - 기본 행동과 Action Economy는 [`Character Action Runtime`](character-action-opportunity-and-2024-core-action-runtime-contract.md)을 따른다.
 - 주문 시전은 [`Spell Runtime`](spell-casting-route-and-2024-spell-runtime-contract.md)을 따른다.
-- 주사위, 공격 판정, 능력 판정, 내성, 이니셔티브, 죽음 내성, 피해·회복 굴림은 [`Dice와 Resolution Runtime`](dice-roll-check-save-attack-and-resolution-runtime-contract.md)을 따른다.
+- 주사위, 공격 판정, 능력 판정, 내성, 이니셔티브, 죽음 내성과 피해·회복 굴림은 [`Dice와 Resolution Runtime`](dice-roll-check-save-attack-and-resolution-runtime-contract.md)을 따른다.
 - 상태·집중·변신은 [`Effect Runtime`](effect-condition-and-ongoing-runtime-contract.md)을 따른다.
 - ItemInstance와 바닥 Presence는 [`Inventory Runtime`](inventory-item-instance-and-world-presence-runtime-contract.md)을 따른다.
 - Scene Presence Lifecycle은 [`Runtime Object System`](runtime-object-system-and-entity-lifecycle-contract.md)을 따른다.
