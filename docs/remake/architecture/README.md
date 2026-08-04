@@ -12,6 +12,12 @@
   - Selection·DM Authoring·Pause·Presentation·Rollback Review Overlay
   - Scene Transition·Join·Reconnect·Recovery·Build Migration Gate
   - Role·Mode·Overlay·Transition을 결합한 Effective Command Policy
+- [`Exploration 실시간 이동, 행동과 Encounter 전환 Runtime 계약`](exploration-real-time-movement-action-and-encounter-transition-runtime-contract.md)
+  - 클릭 이동과 WASD 토큰 이동의 공통 권위 경계
+  - Actor별 Movement·RuleExecution·Interaction 실행 슬롯
+  - 이동 중 상호작용·공격·주문·장시간 행동 정책
+  - Hazard Trigger, Freeze Scope와 동시 실행 경쟁 해결
+  - 진행 중 실행을 분류하는 원자적 Encounter 전환
 - [`Selection, Targeting, Preview와 Frozen Binding Runtime 계약`](selection-targeting-preview-and-frozen-binding-runtime-contract.md)
   - Input Context와 Intent에서 Selection Session으로 이어지는 공통 입력 경계
   - Exploration과 Encounter의 서로 다른 Selection Policy
@@ -64,6 +70,7 @@
 - 서버·클라이언트 책임
 - Source, Compiler, Immutable Build, Authoritative State, Migration과 Projection
 - Session Base Mode, Context, Overlay, Transition과 Command Gate
+- Exploration 실시간 이동, Actor별 실행 충돌, Hazard와 Encounter 전환
 - Input Context, Intent, Selection Session, Candidate, Preview와 Frozen Binding
 - Interaction Capability, Contextual Option, DM Adjudication과 Override
 - Visibility, Detection, Knowledge, Disclosure와 Hover Information Projection
@@ -86,6 +93,7 @@
 - 모든 Architecture 문서는 [`Runtime Architecture Principles`](runtime-architecture-principles.md)를 따른다.
 - Source·Build·State·Migration을 다루면 [`Compiled Build 패턴`](compiled-build-and-authoritative-state-pattern.md)을 따른다.
 - Exploration·Encounter·Downtime, Context, UI·Authoring Overlay, Scene Transition·Join·Recovery를 다루면 [`Session Runtime 계약`](session-play-mode-context-overlay-and-transition-contract.md)을 따른다.
+- 탐험 WASD·클릭 이동, 실시간 행동 충돌, Hazard와 Encounter 진입을 다루면 [`Exploration Runtime 계약`](exploration-real-time-movement-action-and-encounter-transition-runtime-contract.md)을 따른다.
 - 클릭·Hover·Focus·대상 지정·범위 Preview·DM Hidden Selection·Q/E 승인과 취소를 다루면 [`Selection Runtime 계약`](selection-targeting-preview-and-frozen-binding-runtime-contract.md)을 따른다.
 - 선택된 대상의 Open·Utilize·Pick Up·Inspect·Force Command와 DM 판정을 다루면 [`Interaction Capability 계약`](interaction-capability-contextual-command-and-adjudication-contract.md)을 따른다.
 - 시야·감각·은신·Fog·발견·식별·Hover 공개 정보를 다루면 [`Visibility, Knowledge와 Detection Runtime 계약`](visibility-knowledge-detection-and-hover-information-runtime-contract.md)을 따른다.
