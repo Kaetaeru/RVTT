@@ -9,6 +9,9 @@ Command, RuleExecution, Transaction, Domain Event, Projection, UI와 Presentatio
 - [`Journal과 Ping Guide`](../../guides/journal/README.md)
   - Journal Compile·Permission·Search·Anchor·Navigation Trace와 비밀 정보 Redaction
   - Ping을 비권위 Client Experience Event로 기록하고 Gameplay Trace와 분리하는 경계
+- [`Scene Editor와 Authoring Guide`](../../guides/scene-editor/README.md)
+  - Tool Command·Source Revision·Compiler Provider·Diagnostic·Publish·Live Patch Trace
+  - Source Lineage, Build Queue·Budget·Migration Failure와 Secret Authoring Data Redaction
 
 ## 권위 문서
 
@@ -39,6 +42,10 @@ Command, RuleExecution, Transaction, Domain Event, Projection, UI와 Presentatio
   - Replica Apply, ViewModel, Input Context, Command Reconciliation과 Error Boundary
 - [`Journal Runtime`](../../architecture/journal-document-section-anchor-permission-search-and-projection-runtime-contract.md)
   - Journal Command·Compile·Permission·Search·Anchor·Navigation과 Disclosure Trace
+- [`Scene Compiler`](../../architecture/scene-compiler-and-compiled-runtime-scene-contract.md)
+  - Source Lineage, Provider·Layer·Index Build, Diagnostic·Publish와 Live Patch Context
+- [`Scene Editor Tool Module`](../../architecture/scene-editor-tool-module-architecture.md)
+  - Tool ID·Version, Command·Preview·Migration과 Module Error Isolation
 - [`Persistence와 Recovery`](../../architecture/persistence-and-session-recovery-model.md)
   - Recovery Journal과 Observability Trace의 분리
 - [`Deterministic Simulation과 Test Harness`](../../architecture/deterministic-simulation-scenario-and-test-harness-runtime-contract.md)
@@ -75,6 +82,21 @@ journal.command
 → journal.search_query | journal.anchor_resolve | journal.navigation_resolve
 ```
 
+Scene Authoring 세부 흐름:
+
+```text
+scene_editor.intent
+→ scene_tool.preview
+→ scene_authoring.command
+→ scene_source.transaction
+→ scene_compiler.queue
+→ scene_compiler.provider
+→ scene_compiler.validation
+→ scene_build.ready_or_failed
+→ scene_publish | scene_live_patch
+→ projection·streaming·ui reconciliation
+```
+
 ## 고정 경계
 
 - Diagnostics는 Gameplay State를 직접 변경하지 않는다.
@@ -83,6 +105,9 @@ journal.command
 - Raw Trace를 Player나 DM에게 그대로 제공하지 않고 역할별 Diagnostic Projection을 만든다.
 - 비밀 정보는 화면뿐 아니라 Diagnostic Index와 Export 단계에서도 차단한다.
 - Journal Support Trace에 권한 없는 문서 제목, Section, Anchor Target, Search Token과 숨은 좌표를 넣지 않는다.
+- Scene Authoring Trace에 Player에게 비공개인 Source Object, Secret Blueprint, Provider Lineage와 Diagnostic Payload를 넣지 않는다.
+- Tool Preview·Ghost와 ViewY Trace를 Authoritative Source Commit으로 오인하지 않는다.
+- Compiler 실패 Trace가 현재 Published Build와 활성 Gameplay가 실패했다는 의미가 아니다.
 - Ping Trace는 비권위 Experience Event이며 손실을 Authority Event Gap으로 분류하지 않는다.
 - 상세 Span은 Sampling할 수 있지만 권위 실행의 Terminal Marker는 유지한다.
 - Transaction Abort, Rollback, Projection Gap, Security·Disclosure 위반 후보와 Hard Budget 초과는 일반 Sampling으로 제거하지 않는다.
@@ -97,7 +122,7 @@ journal.command
 ## 역할 경계
 
 - 플레이어는 자신의 공개 가능한 Command 상태, 사용자 안전 오류와 Support Reference를 본다.
-- DM은 현재 Campaign의 Gameplay Trace, Policy·Rule 설명과 복구 필요 Incident를 본다.
+- DM은 현재 Campaign의 Gameplay·Authoring Trace, Policy·Rule·Compiler 설명과 복구 필요 Incident를 본다.
 - 개발자·운영자는 허가된 기술 Span, Budget, Queue와 Sanitized Incident Bundle을 본다.
 - 시스템은 Trace Context 전파, Sampling, Redaction, Incident 집계와 Health 계산을 담당한다.
 
