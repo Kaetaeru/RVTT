@@ -153,3 +153,11 @@ Required Suite 실패를 무제한 Retry로 숨기지 않는다. Flaky 결과는
 - `specs/testing/007-bounded-interleaving-explorer-and-failure-shrinker.md`
 
 실제 구현 순서는 `../../CURRENT-WORK-ORDER.md`와 Implementation Specs 단계에서 확정한다.
+
+## Guide 상태
+
+```text
+Guide Status: READY_TO_WRITE
+```
+
+Deterministic Simulation·Fault Injection·Recovery·Disclosure 검증 경계는 구현 가능한 권위 계약과 Completion Audit를 충족한다. Main System Guide 작성 후 `CURRENT`로 전환한다.
