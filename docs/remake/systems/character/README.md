@@ -1,6 +1,6 @@
 # Character 시스템
 
-캐릭터 성장 원본, Compiled Character Build, 캠페인 영구 현재 상태, 주문 획득과 주문책, HP 0·휴식·회복, NPC 스탯블록과 Scene Actor Binding을 다룬다.
+캐릭터 성장 원본, Compiled Character Build, 캠페인 영구 현재 상태, 주문 획득과 주문책, HP 0·죽음·휴식·회복, NPC 스탯블록과 Scene Actor Binding을 다룬다.
 
 ## 최상위 권위 계약
 
@@ -16,6 +16,13 @@
   - 휴식·레벨업·주문 준비·주문책 작업의 Activity 조정
   - Candidate Build·Migration과 RecoveryPlan의 Atomic Completion
   - 여러 참가자의 Activity와 Campaign Time 병렬 진행
+- [`../../architecture/cross-domain-outcome-cascade-and-integration-boundary-runtime-contract.md`](../../architecture/cross-domain-outcome-cascade-and-integration-boundary-runtime-contract.md)
+  - Damage·Healing·HP·VitalState·DeathSave의 Atomic Closure
+  - Death·Revival·Effect·Encounter Eligibility 통합
+  - Build Activation·State Migration과 Crafting·Inventory 통합
+  - Follow-up Consequence, Integration Gate와 Projection Barrier
+- [`../../audits/runtime-architecture-completion-and-main-guide-readiness-audit.md`](../../audits/runtime-architecture-completion-and-main-guide-readiness-audit.md)
+  - Character·Downtime·Effect·Inventory Integration 완료와 Main Guide 단계 준비 판정
 
 ## 세부 권위 문서
 
@@ -59,13 +66,20 @@ Encounter State
 - 주문 준비 변경은 Persistent spellPreparationState를 수정하며 Progression Source를 직접 바꾸지 않는다.
 - 휴식 완료는 Downtime Runtime이 아니라 Rest Domain의 RecoveryPlan이 결과를 제공한다.
 - Character 관련 Downtime Activity가 완료되어도 Character Store를 직접 수정하지 않고 Domain Completion Plan을 사용한다.
+- Damage Resolution은 HP Store를 직접 수정하지 않고 Cross-Domain Outcome Plan을 사용한다.
+- HP 0·VitalState·DeathSave Lifecycle과 즉시 필요한 Capability Closure는 같은 Transaction에 포함한다.
+- 집중 내성, Objective 평가와 기타 새 굴림은 Commit 이후 별도 RuleExecution으로 처리한다.
+- 사망은 Character, Inventory와 Actor Runtime Object의 삭제를 의미하지 않는다.
+- 부활은 DeathRecord와 현재 상태를 검증하는 별도 RuleExecution·Atomic Commit이다.
+- Build Activation은 Source Revision, Build Ref와 Persistent State Migration을 함께 Commit한다.
+- 같은 Transaction의 HP·Vital·Resource·Capability Projection은 Barrier Batch로 적용한다.
 
-아이템은 [`../inventory/`](../inventory/), 실행 규칙은 [`../rules/`](../rules/), 장기 활동 조정은 [`../downtime/`](../downtime/)을 참고한다.
+아이템은 [`../inventory/`](../inventory/), 실행 규칙은 [`../rules/`](../rules/), 장기 활동 조정은 [`../downtime/`](../downtime/), Cross-Domain 결과는 [`../integration/`](../integration/)을 참고한다.
 
 ## Guide 상태
 
 ```text
-Guide Status: NOT_READY
+Guide Status: READY_FOR_MAIN_GUIDE_PHASE
 ```
 
-Character Main System Guide는 Effect·Inventory·Downtime 관련 권위 문서, 구현 명세와 Completion Audit가 완료된 뒤 작성한다.
+Character Architecture와 Integration BLOCKER는 완료됐다. Main System Guide는 성장·실시간 상태·HP 0·휴식·Downtime·Scene Actor 경계와 구현 Spec 진입점을 통합한다.
