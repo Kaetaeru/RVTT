@@ -136,3 +136,9 @@ Policy Family·Implementation Registry와 Frozen Snapshot Foundation
 → Journal·재접속·Rollback
 → 개별 Roll·Effect·공간 Step Handler
 ```
+
+## Guide Status
+
+`READY_TO_WRITE`
+
+최신 Completion Audit와 Main System Guide 작업 순서에서 Rules·Character Action·Spell·Dice·Effect Guide 작성 조건을 통과했다.
