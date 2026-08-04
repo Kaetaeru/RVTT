@@ -5,15 +5,16 @@
 - 현재 단계: `IN_PROGRESS`
 - 선행 단계:
   - Main System Guides `COMPLETE`
-  - Player·DM User Guides `COMPLETE`
+  - Player·DM User Guides와 Quick Flow `COMPLETE`
 
 확정된 기획과 목표 사용자 경험을 실제 Module, Type, Command, Network, Persistence, Error, Test와 Performance 계약으로 변환한다.
 
 ## 현재 작업 기준
 
 - 단일 작업 순서: [`../CURRENT-WORK-ORDER.md`](../CURRENT-WORK-ORDER.md)
+- 한눈에 보는 세션 흐름: [`../user-guides/QUICK-FLOW.md`](../user-guides/QUICK-FLOW.md)
 - Player·DM User Guide: [`../user-guides/README.md`](../user-guides/README.md)
-- User Guide 완료 감사: [`../audits/player-and-dm-user-guide-completion-audit.md`](../audits/player-and-dm-user-guide-completion-audit.md)
+- Quick Flow 완료 감사: [`../audits/user-guide-quick-flow-and-flowchart-audit.md`](../audits/user-guide-quick-flow-and-flowchart-audit.md)
 - Main System Guide 허브: [`../guides/README.md`](../guides/README.md)
 - Guide 완료 감사: [`../audits/main-system-guide-consistency-and-document-hub-completion-audit.md`](../audits/main-system-guide-consistency-and-document-hub-completion-audit.md)
 
@@ -23,7 +24,8 @@ Implementation Specs 단계가 현재 활성 단계다. 다음 작업에서 세�
 
 ```text
 CURRENT-WORK-ORDER
-→ 관련 Player 또는 DM User Guide
+→ 한눈에 보는 세션 흐름
+→ 관련 Player 또는 DM 상세 Guide
 → Runtime Foundation Guide
 → 현재 Domain Main System Guide
 → 직접 인접 Guide
@@ -32,33 +34,35 @@ CURRENT-WORK-ORDER
 → 새 Implementation Spec
 ```
 
-User Guide와 Main System Guide는 탐색·목표 경험 문서이며 구현 계약의 권위 원본이 아니다. Spec은 이 문서들이 연결한 Product·Architecture·System·UI·ADR을 근거로 작성한다.
+Quick Flow, User Guide와 Main System Guide는 탐색·목표 경험 문서이며 구현 계약의 권위 원본이 아니다. Spec은 이 문서들이 연결한 Product·Architecture·System·UI·ADR을 근거로 작성한다.
 
 ## User Guide 전달 기준
 
-모든 수직 Slice는 최소한 하나의 사용자 흐름을 Acceptance Scenario로 연결한다.
+모든 수직 Slice는 Quick Flow의 한 구간을 사용자 Acceptance Scenario로 연결한다.
 
-### Player 흐름 예시
-
-```text
-Join
-→ Character·Control 확인
-→ Scene Ready
-→ Exploration 이동
-→ Projection 적용
-→ Disconnect·Reconnect
-```
-
-### DM 흐름 예시
+### 첫 Player 흐름
 
 ```text
-Campaign Resume
-→ Player Ready 확인
-→ Scene Start
-→ Actor·Fog Quick Action
-→ Player View Preview
-→ Save·Recovery 상태 확인
+세션 참가
+→ 캐릭터 선택과 준비 완료
+→ 장면 입장
+→ 탐험 이동
+→ 연결이 끊기면 다시 참가
+→ 현재 진행 상황으로 복귀
 ```
+
+### 첫 DM 흐름
+
+```text
+캠페인과 시작 장면 준비
+→ 플레이어 준비 상태 확인
+→ 세션 시작
+→ 탐험 진행
+→ 필요한 대상과 정보 조정
+→ 현재 상태 확인과 저장
+```
+
+Spec에서는 위 사용자 흐름을 내부 계약으로 구체화하되, Acceptance Test 이름과 완료 조건에서는 사용자가 보게 되는 결과를 유지한다.
 
 사용자가 보는 Label·Prompt·오류 안내와 시스템 내부 Error Code를 분리해 정의한다.
 
@@ -108,7 +112,7 @@ networking/001-command-envelope.md
   - StepExecutor
   - Guided·Assisted 대기와 복구
 
-- [`002. Standard Recipe Step Handler Contracts`](shared/002-standard-step-handler-contracts.md)
+- [`002. Standard Recipe Step Handler Contracts`](shared/002-standard-recipe-step-handler-contracts.md)
   - StepHandler와 StepHandlerRegistry
   - 제한된 HandlerServices
   - Config·입력·출력 검증
@@ -121,7 +125,7 @@ networking/001-command-envelope.md
 ## Spec 완료 조건
 
 - 관련 Authority Documents와 충돌하지 않음
-- Player·DM User Guide의 목표 흐름을 Acceptance Scenario로 연결함
+- Quick Flow와 Player·DM User Guide의 목표 흐름을 Acceptance Scenario로 연결함
 - 책임·입출력·권한·실패·복구 경계가 명확함
 - Client 입력과 Server Authority 검증을 구분함
 - Source·Build·State·Projection·Presentation을 혼합하지 않음
@@ -140,6 +144,6 @@ networking/001-command-envelope.md
 - 측정 없이 Budget·Timeout·Cache 값을 확정
 - Test-only Mutation이나 Authorization 우회 계약 작성
 - Guide와 User Guide를 권위 문서로 승격
-- User Guide에 없는 새 사용자 동작을 Spec에서 몰래 추가
+- Quick Flow와 User Guide에 없는 새 사용자 동작을 Spec에서 몰래 추가
 
 다음 세부 작업은 Implementation Specs 작업 순서와 첫 수직 Slice를 확정하는 것이다.
