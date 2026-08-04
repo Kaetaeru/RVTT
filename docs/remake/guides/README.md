@@ -27,6 +27,10 @@ Guide는 새로운 제품 규칙, Architecture 결정, API, 데이터 구조나 
   - Guide Status: `CURRENT`
   - Source·Build·State·Policy·Command·RuleExecution·Transaction·Event·Projection·Recovery의 공통 권위 흐름
   - 모든 후속 Main System Guide가 공유하는 용어와 추천 읽기 순서
+- [`Session, Networking, Persistence와 Recovery`](session/README.md)
+  - Guide Status: `CURRENT`
+  - Campaign Membership·Owner·Controller·Role, Lobby·Join·Reconnect와 Session Mode·Transition
+  - Versioned Command·Projection Sync·Scene Ready·Snapshot·Journal·Restart·Rollback 흐름
 
 ## 1. Guide의 역할
 
