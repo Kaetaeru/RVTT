@@ -4,9 +4,6 @@
 
 ## 관련 Main System Guide
 
-- [`UI, Camera와 Presentation Guide`](../../guides/ui/README.md)
-  - Projection Barrier의 원자적 Client Replica 적용과 Command Reconciliation
-  - Presentation Failure Isolation, Audience·Disclosure와 이전 Epoch ACK 차단
 - [`Combat와 Encounter Guide`](../../guides/combat/README.md)
   - Damage·Temporary HP·Current HP·VitalState·DeathSave Immediate Closure
   - Death 이후 Objective·Turn Advance Follow-up, Encounter End Transaction과 Projection Barrier
@@ -15,6 +12,11 @@
   - Crafting Input·Output·Ground Presence, RecoveryPlan과 Downtime Completion 통합
 - [`Rules, Character Action, Spell, Dice와 Effect Guide`](../../guides/rules/README.md)
   - Roll·PendingEffect·CommitGroup·EffectInstance가 Cross-Domain Outcome으로 진입하는 경계
+- [`UI, Camera와 Presentation Guide`](../../guides/ui/README.md)
+  - Projection Barrier 이후 Replica·ViewModel·Presentation 적용과 Client Failure Isolation
+- [`Journal과 Ping Guide`](../../guides/journal/README.md)
+  - Journal Source Commit 이후 Compile·Index·Projection 갱신과 Safe Navigation Follow-up
+  - Ping을 Authority Transaction과 분리된 비권위 Presentation Signal로 유지하는 경계
 
 ## 최상위 권위 문서
 
@@ -83,6 +85,8 @@ Subscriber가 Store를 직접 수정하지 않고 새 Command 또는 RuleExecuti
 - Encounter Objective와 End는 Encounter Runtime이 소유한다.
 - Downtime Runtime이 Character·Inventory·Rest Store Mutation을 직접 작성하지 않는다.
 - Character Compiler가 Item·Actor·Encounter Live State를 직접 수정하지 않는다.
+- Journal Index·Anchor Resolver 실패가 이미 Commit된 Journal Source Revision을 되돌리지 않는다.
+- Ping Presentation은 Authority Mutation Provider나 Projection Sequence의 일부가 아니다.
 - UI·Presentation·Workspace Instance는 Authority Mutation Provider가 아니다.
 - Derived Index 실패가 이미 Commit된 권위 결과를 되돌리지 않는다.
 - 오래된 Index로 권위 판정을 할 위험이 있으면 관련 Command Scope만 Gate한다.
@@ -103,6 +107,8 @@ Subscriber가 Store를 직접 수정하지 않고 새 Command 또는 RuleExecuti
 - Rest Recovery와 Resource·Effect Settlement
 - Runtime Object 파괴와 Index Failure
 - Journal Anchor 비자동 Retarget
+- Journal Permission 축소와 Projection·Index 무효화
+- Ping Presentation Failure Isolation
 - Rollback 이전 Follow-up 차단
 - Projection Barrier
 - Presentation Failure Isolation
@@ -115,6 +121,7 @@ Subscriber가 Store를 직접 수정하지 않고 새 Command 또는 RuleExecuti
 - Inventory: `../inventory/`
 - Scene: `../scene/`
 - Downtime: `../downtime/`
+- Journal: `../journal/`
 - Events: `../events/`
 - Diagnostics: `../diagnostics/`
 - Testing: `../testing/`
@@ -125,4 +132,4 @@ Subscriber가 Store를 직접 수정하지 않고 새 Command 또는 RuleExecuti
 Guide Status: READY_FOR_MAIN_GUIDE_PHASE
 ```
 
-Combat·Encounter, Rules, Character·Inventory·Downtime와 UI·Camera·Presentation 관련 Integration 흐름은 현재 각 Main System Guide에 연결됐다. 나머지 Journal·Authoring·Operations 영역은 후속 Guide 순서에서 계속 통합한다.
+Combat·Encounter, Rules, Character·Inventory·Downtime, UI·Presentation와 Journal·Ping 관련 Integration 흐름은 현재 각 Main System Guide에 연결됐다. 나머지 Authoring·Operations 영역은 후속 Guide 순서에서 계속 통합한다.
