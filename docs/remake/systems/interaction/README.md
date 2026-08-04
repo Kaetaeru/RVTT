@@ -63,6 +63,8 @@
 
 ## Guide Status
 
-`NOT_READY`
+```text
+READY_TO_WRITE
+```
 
-Exploration·Encounter·Perception 연동과 Interaction Completion Audit가 끝난 뒤 Main System Guide를 작성한다.
+최신 Interaction Capability·Selection·Perception·Exploration 계약과 Completion Audit에서 통합 Guide 작성 조건이 충족되었다.
