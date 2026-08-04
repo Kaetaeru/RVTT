@@ -6,7 +6,7 @@
 - Architecture 완료 근거: [`Runtime Architecture Completion과 Main System Guide 준비도 감사`](audits/runtime-architecture-completion-and-main-guide-readiness-audit.md)
 - Guide 완료 근거: [`Main System Guide 일관성과 문서 허브 완료 감사`](audits/main-system-guide-consistency-and-document-hub-completion-audit.md)
 
-이 문서는 RVTT 리메이크 기획·명세·구현의 **단일 작업 순서 기준**이다.
+이 문서는 RVTT 리메이크 기획·사용자 가이드·명세·구현의 **단일 작업 순서 기준**이다.
 
 ## 운영 규칙
 
@@ -15,7 +15,7 @@
 3. 가장 위의 `IN_PROGRESS` 항목을 먼저 끝내고, 완료 후 `DONE`으로 변경한 뒤 다음 `QUEUED` 항목을 `IN_PROGRESS`로 올린다.
 4. 우선순위를 바꾸거나 중간에 새 항목을 삽입하면 이유와 날짜를 변경 기록에 남긴다.
 5. 현재 항목 내부의 세부 작업 순서는 별도 Work Order로 만들 수 있지만 상위 단계가 달라지면 이 문서도 갱신한다.
-6. 각 항목은 권위 문서·ADR·인덱스 연결·문서 검증까지 끝나야 완료로 처리한다.
+6. 각 항목은 권위 문서·인덱스 연결·완료 검사와 문서 검증까지 끝나야 완료로 처리한다.
 7. `BLOCKED` 항목을 건너뛸 때는 차단 이유와 임시 진행 대상을 기록한다.
 
 상태 값:
@@ -40,37 +40,41 @@ DEFERRED
 | 6 | `DONE` | Journal Anchor, Permission과 Projection 계약 | Document·Section Identity, World Anchor, 권한별 Search Index, 안전한 Camera·Selection Intent 계약 완료 |
 | 7 | `DONE` | Cross-System Integration Contracts와 Completion Audit | Damage·Death·Combat 및 남은 Runtime 연결 계약, 순환·중복·공백 재감사 완료 |
 | 8 | `DONE` | Main System Guides | 12개 Guide, 권위 읽기 순서, 상태·책임 경계, 문서 Hub와 완료 감사 확정 |
-| 9 | `IN_PROGRESS` | Implementation Specs | 수직 단위별 Type·Module·Command·Network·Persistence·Migration·Diagnostics·Test 계약 작성 |
-| 10 | `QUEUED` | Production Implementation | 승인된 Spec 순서대로 구현·테스트·리뷰·마이그레이션 수행 |
+| 9 | `IN_PROGRESS` | Player·DM User Guides | 실제 세션 관점의 Player Guide·DM Guide, 역할별 Quick Start, 문제 대응과 완료 검사 작성 |
+| 10 | `QUEUED` | Implementation Specs | 수직 단위별 Type·Module·Command·Network·Persistence·Migration·Diagnostics·Test 계약 작성 |
+| 11 | `QUEUED` | Production Implementation | 승인된 Spec 순서대로 구현·테스트·리뷰·마이그레이션 수행 |
 
 ## 현재 단계
 
 ```text
-Implementation Specs
+Player·DM User Guides
 ```
+
+활성 세부 작업 순서:
+
+- [`user-guides/CURRENT-USER-GUIDE-WORK-ORDER.md`](user-guides/CURRENT-USER-GUIDE-WORK-ORDER.md)
 
 현재 첫 세부 작업:
 
 ```text
-Implementation Specs 세부 작업 순서 수립
-→ 기존 Shared Spec 001·002 재검토
-→ 첫 수직 Slice 선택
+User Guide 허브와 공통 범위
+→ Player Guide
+→ DM Guide
+→ 역할·비목표·링크 일관성 검사
 ```
-
-둘 이상의 Spec 작성 순서를 확정하기 전에 `specs/` 아래에 세부 Work Order를 만들고 이 문서와 연결한다.
 
 ## 작업 진행 방식
 
 ```text
 CURRENT-WORK-ORDER 확인
-→ 현재 IN_PROGRESS 단계의 세부 Work Order 확인·작성
-→ 관련 Runtime Guide와 Domain Guide 확인
-→ Product·Architecture·System·ADR 수집
-→ Implementation Spec 작성
-→ Deterministic Scenario·Migration·Diagnostics·Budget 계약 포함
+→ 현재 단계의 세부 Work Order 확인
+→ Product Scope와 Main System Guide 확인
+→ 사용자 역할별 한 세션 흐름 작성
+→ 실제 화면 행동·피드백·문제 대응으로 번역
+→ 미확정 UI·수치·키를 임의로 만들지 않았는지 검사
+→ 문서 Hub와 완료 검사 갱신
 → 문서 검증
-→ 현재 Spec DONE
-→ 다음 Spec IN_PROGRESS
+→ 다음 단계 전환
 ```
 
 ## 완료된 Main System Guide 단계
@@ -94,12 +98,27 @@ CURRENT-WORK-ORDER 확인
 11. [`Diagnostics, Simulation과 Operations`](guides/diagnostics/README.md)
 12. [`Extension, Plugin과 Content Pack`](guides/extension/README.md)
 
-권위 문서가 변경되면 영향받는 Guide를 `UPDATE_REQUIRED`로 다시 연다. Guide 단계가 완료됐다는 이유로 Architecture 변경을 막지 않는다.
+권위 문서가 변경되면 영향받는 Guide를 `UPDATE_REQUIRED`로 다시 연다.
+
+## Player·DM User Guide 단계 원칙
+
+1. User Guide는 시스템 구조가 아니라 사용자가 실제로 하는 행동과 보게 되는 결과를 설명한다.
+2. 현재 구현된 기능 설명이 아니라 구현 전 **목표 사용자 경험**임을 명시한다.
+3. Player Guide와 DM Guide를 분리하고 Player에게 DM 비밀·내부 진단 자료를 노출하지 않는다.
+4. 확정된 Q·E 의미와 현재 화면에 표시되는 1–5 슬롯만 설명하며 미정 단축키를 발명하지 않는다.
+5. Exploration의 클릭·WASD 이동과 Encounter의 클릭 경로 이동 제한을 명확히 설명한다.
+6. Live DM Mode, Quick Edit와 Full Scene Edit의 차이를 DM 관점에서 설명한다.
+7. Reconnect, Resync, Rollback과 오류 상태에서 사용자가 해야 할 일을 설명한다.
+8. NPC 대화 시스템, 음악, 환경음과 모든 규칙 효과음이 현재 비목표임을 숨기지 않는다.
+9. User Guide가 새로운 제품 동작을 만들면 안 되며 먼저 Product·Architecture·ADR을 수정해야 한다.
+10. User Guide 완료 전 Implementation Specs 세부 순서를 확정하지 않는다.
 
 ## Implementation Specs 단계 원칙
 
+User Guide 단계가 완료된 뒤 적용한다.
+
 1. Spec은 관련 Main System Guide가 연결한 권위 문서를 근거로 작성한다.
-2. Guide 자체를 Type·Command·Schema의 권위 원본으로 사용하지 않는다.
+2. Guide와 User Guide 자체를 Type·Command·Schema의 권위 원본으로 사용하지 않는다.
 3. 새 제품 동작이나 Architecture 결정이 필요하면 Spec을 멈추고 관련 Architecture·ADR을 먼저 수정한다.
 4. Source·Build·State·Projection·Presentation을 하나의 Type이나 Store로 혼합하지 않는다.
 5. Client 입력과 Server Authority 검증을 구분한다.
@@ -117,6 +136,7 @@ CURRENT-WORK-ORDER 확인
 
 Production Implementation은 다음 조건 전에는 시작하지 않는다.
 
+- Player·DM User Guide 완료
 - 현재 수직 Slice의 Implementation Specs 완료
 - Type·Command·Network·Persistence·Migration 계약 완료
 - Acceptance Scenario와 Failure·Recovery Test 정의
@@ -128,7 +148,8 @@ Production Implementation은 다음 조건 전에는 시작하지 않는다.
 
 | 날짜 | 변경 |
 |---|---|
-| 2026-08-05 | 12개 Main System Guide와 일관성·문서 Hub 감사를 완료했다. 8번을 `DONE`, Implementation Specs를 `IN_PROGRESS`로 전환했다. |
+| 2026-08-05 | 사용자의 요청에 따라 Implementation Specs 전에 Player·DM User Guide 단계를 삽입했다. User Guides를 `IN_PROGRESS`, Implementation Specs를 `QUEUED`로 전환했다. |
+| 2026-08-05 | 12개 Main System Guide와 일관성·문서 Hub 감사를 완료했다. Main System Guides를 `DONE`으로 전환했다. |
 | 2026-08-05 | Extension·Plugin·Content Pack Guide를 완료하고 최종 Guide 감사로 전환했다. |
 | 2026-08-05 | Diagnostics·Simulation·Operations, Scene Editor·Authoring, Journal·Ping, UI·Camera·Presentation, Character·Inventory·Downtime, Combat·Encounter, Rules, Exploration과 Scene Guide를 순서대로 완료했다. |
 | 2026-08-04 | Runtime Foundation·Session Guide를 시작으로 Main System Guide 단계의 세부 순서를 확정했다. |
