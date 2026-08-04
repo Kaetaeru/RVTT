@@ -9,6 +9,9 @@
   - 사용자 Ready와 기술적 Client Ready 분리
   - Lobby·Hot Join·Disconnect·Reconnect와 Scene Transition
   - Versioned Command·Projection Sync·Snapshot·Journal·Recovery·Rollback의 전체 흐름
+- [`Character, Inventory와 Downtime Guide`](../../guides/character/README.md)
+  - Character Ownership과 Downtime Participant·Activity Assignment의 연결
+  - Exploration·Encounter·Downtime Base Mode, 중간 Encounter Suspend와 복귀 경계
 
 ## 권위 문서
 
@@ -58,6 +61,8 @@
 
 - Character Owner, 현재 Controller와 Session Role을 하나의 필드로 합치지 않는다.
 - Lobby Ready는 사용자의 시작 의사이고 Client Ready는 기술 동기화 상태다.
+- Exploration, Encounter와 Downtime을 하나의 UI Overlay 값으로 합치지 않는다.
+- Downtime 중 Encounter가 시작되면 Activity Domain 상태와 Session Mode Transition을 분리해 기록한다.
 - 중도 참여자는 Raw Server State가 아니라 권한별 Projection Snapshot을 받는다.
 - Authority Ready 전에는 권위 Gameplay Command를 허용하지 않는다.
 - Presentation Ready는 모든 장식이 아니라 현재 Scene Essential Activation Set 준비를 뜻한다.
