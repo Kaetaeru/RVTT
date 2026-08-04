@@ -4,6 +4,9 @@
 
 ## 관련 Main System Guide
 
+- [`Combat와 Encounter Guide`](../../guides/combat/README.md)
+  - Damage·Healing·Temporary HP·VitalState·DeathSave·Death가 Encounter Turn과 Objective에 연결되는 경계
+  - 사망 후 Opportunity·Concentration·Participant Eligibility 정리와 Deferred Turn Advance
 - [`Rules, Character Action, Spell, Dice와 Effect Guide`](../../guides/rules/README.md)
   - Character Build가 제공하는 Capability·Spell Route가 Action·Roll·Effect 실행으로 이어지는 경계
   - Character 성장·Inventory·Downtime 전체 Guide는 별도 작업 순서를 따른다.
@@ -88,4 +91,4 @@ Encounter State
 Guide Status: READY_FOR_MAIN_GUIDE_PHASE
 ```
 
-Character Architecture와 Integration BLOCKER는 완료됐다. Main System Guide는 성장·실시간 상태·HP 0·휴식·Downtime·Scene Actor 경계와 구현 Spec 진입점을 통합한다.
+HP 0·Death·Encounter 연결은 현재 Combat Guide에 통합됐다. Character 성장·Inventory·Downtime 전체 흐름은 후속 Main System Guide에서 완료한다.
