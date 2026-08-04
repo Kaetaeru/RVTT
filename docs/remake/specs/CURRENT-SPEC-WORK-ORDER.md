@@ -4,23 +4,24 @@
 - 문서 종류: Implementation Spec Work Order
 - 최종 갱신일: 2026-08-05
 - 상위 작업 순서: [`../CURRENT-WORK-ORDER.md`](../CURRENT-WORK-ORDER.md)
+- 전체 Slice Roadmap: [`SLICE-ROADMAP.md`](SLICE-ROADMAP.md)
+- Roadmap 완전성 감사: [`Implementation Slice Roadmap 완전성 감사`](../audits/implementation-slice-roadmap-completeness-audit.md)
 - Spec Hub: [`README.md`](README.md)
 - 작성 Template: [`../templates/implementation-spec-template.md`](../templates/implementation-spec-template.md)
-- 선행 완료 감사: [`구현 명세 전 최종 문서 연결 감사`](../audits/pre-implementation-document-linkage-audit.md)
 
-이 문서는 Implementation Specs 단계의 **단일 세부 작업 순서 기준**이다.
+이 문서는 현재 Implementation Slice 내부의 **단일 세부 작업 순서 기준**이다. 전체 Slice의 범위와 장기 순서는 `SLICE-ROADMAP.md`가 소유한다.
 
 ## 1. 운영 규칙
 
 1. 가장 위의 `IN_PROGRESS` 항목을 먼저 완료한다.
-2. 하나의 Spec은 구현·검증·복구 가능한 사용자 결과 또는 그 결과에 꼭 필요한 최소 Foundation만 다룬다.
-3. Foundation Spec은 현재 수직 Slice에 필요한 계약까지만 정의하며 미래 전체 Runtime을 미리 구현하도록 요구하지 않는다.
-4. Quick Flow와 User Guide는 Acceptance Flow를 제공하고, Product·Architecture·System·UI·ADR은 구현 계약의 직접 근거가 된다.
-5. 실제 코드·Schema·Test 구조를 조사하지 못한 Spec은 `준비 완료`로 올리지 않는다.
-6. 새 Product 동작이나 Architecture 결정이 필요하면 Spec 작성을 중단하고 권위 문서를 먼저 갱신한다.
-7. `SUPERSEDED`, `DISCONTINUED`, `ARCHIVED`와 충돌 Draft를 근거로 사용하지 않는다.
-8. 각 Spec은 문서 검증 성공과 변경 영향 확인 후에만 `DONE` 처리한다.
-9. Production Code는 현재 수직 Slice의 관련 Spec이 모두 준비 완료된 뒤 별도 사용자 요청으로 시작한다.
+2. 현재 Slice 밖의 Production Code나 전면 Foundation을 미리 시작하지 않는다.
+3. 하나의 Spec은 사용자 결과 또는 그 결과에 필요한 최소 Foundation만 다룬다.
+4. Quick Flow와 User Guide는 Acceptance Flow, Product·Architecture·System·UI·ADR은 직접 구현 근거다.
+5. 실제 Code·Schema·Test 구조를 조사하지 못한 Spec은 `준비 완료`로 올리지 않는다.
+6. 새 제품 동작이나 Architecture 결정이 필요하면 Spec을 중단하고 권위 문서를 먼저 갱신한다.
+7. 각 Spec은 Migration·Recovery·Diagnostics·Security·Deterministic Test를 포함한다.
+8. 문서 검증과 Slice Completion Audit 전에는 다음 Slice로 전환하지 않는다.
+9. Production Code는 현재 Slice Spec이 모두 준비 완료되고 사용자가 명시적으로 요청한 뒤 시작한다.
 
 상태 값:
 
@@ -32,13 +33,26 @@ DONE
 DEFERRED
 ```
 
-## 2. 첫 수직 Slice
-
-### 이름
+## 2. 전체 Slice 정의 상태
 
 ```text
-First Session Walking Skeleton
+16개 Implementation Slice 정의
+→ DONE
+
+12개 Main Guide·Quick Flow 범위 배정
+→ COMPLETE
+
+현재 Slice
+→ 01 First Session Walking Skeleton
+
+다음 Slice
+→ 02 Core Rules Kernel
 ```
+
+- 전체 정의: [`SLICE-ROADMAP.md`](SLICE-ROADMAP.md)
+- 완전성 근거: [`implementation-slice-roadmap-completeness-audit.md`](../audits/implementation-slice-roadmap-completeness-audit.md)
+
+## 3. 현재 Slice — First Session Walking Skeleton
 
 ### Player Acceptance Flow
 
@@ -60,51 +74,49 @@ First Session Walking Skeleton
 
 ```text
 Campaign과 시작 Scene 확인
-→ Player Membership·Role·Owner·Control 확인
-→ Player Ready와 Client Ready 구분 확인
+→ Membership·Role·Owner·Control 확인
+→ User Ready와 Client Ready 구분
 → 세션 시작
-→ Player의 Scene 입장과 Token 이동 확인
-→ 연결 종료 상태 확인
-→ 재접속 후 같은 권위 상태로 복귀한 것을 확인
+→ Player Scene 입장·Token 이동 확인
+→ Disconnect 확인
+→ Reconnect 후 같은 권위 상태 복귀 확인
 ```
 
 ### 완료 결과
 
-- Player와 DM이 Quick Flow의 세션 시작·첫 탐험·재접속 구간을 실제로 검증할 수 있다.
 - Character Owner, Runtime Controller, Session Role과 공개 범위가 분리된다.
 - Scene Entry Essential과 Controlled Actor Essential 준비 전 Gameplay Command가 거부된다.
-- Client가 목적지 Intent를 제출하고 Server가 경로·점유·Revision을 검증해 위치를 Commit한다.
-- Commit된 위치는 Projection, 저장, 재접속과 Full Resync에서 동일하게 복원된다.
-- Hidden Authority와 DM-only 정보가 Player Projection·오류·진단에 포함되지 않는다.
+- Client는 목적지 Intent만 제출하고 Server가 Path·Occupancy·Revision을 검증한다.
+- 위치 Commit은 Projection·Snapshot·Journal·Reconnect에서 같은 의미를 가진다.
+- DM-only·Hidden Authority가 Player Projection·Error·Diagnostic에 포함되지 않는다.
 
-### 명시적 비범위
+### 비범위
 
 - WASD Token 이동
-- Interaction·Fog·Search·Spell·Attack
-- Encounter·Initiative·Turn
-- Full Scene Editor와 일반 DM Authoring UI
-- Rules Recipe Runtime과 Standard Step 구현
-- 최종 성능 수치 확정
+- Interaction·Fog·Search
+- Rules Recipe·Attack·Spell
+- Encounter·Turn·Reaction
+- Character 생성·성장
+- 일반 Scene Editor
 
-## 3. 현재 작업 순서
+## 4. 현재 작업 순서
 
 | 순서 | 상태 | 작업 | 산출물 | 완료 조건 |
 |---:|---|---|---|---|
-| 1 | `DONE` | Spec 단계 Work Order 수립 | 이 문서 | 첫 Slice, 의존 순서, Gate와 후속 Slice가 연결됨 |
-| 2 | `DONE` | 기존 Shared Spec 001·002 재검토 | [`Shared Spec 001·002 재검토 감사`](../audits/shared-spec-001-002-revalidation-audit.md) | `CURRENT·UPDATE_REQUIRED·SUPERSEDED` 판정과 후속 위치 확정 |
-| 3 | `DONE` | First Slice 구현 기준선·공통 계약 조사 | `runtime/001` §4 | GitHub Branch에서 Production Source Tree를 확인할 수 없다는 한계, 재사용 미확정과 신규 제안 경로 정책 기록 |
-| 4 | `IN_PROGRESS` | Core Authority Identity·Version·Result Spec | [`runtime/001`](runtime/001-core-authority-identity-version-and-result.md) | ID·Epoch·Revision·Result·Error 계약 작성, 실제 Source Tree 조사 전 `초안·BLOCKED` 유지 |
-| 5 | `QUEUED` | Command·Projection Protocol Spec | `networking/001-command-projection-and-resync-protocol.md` | Command Receipt·Result, Projection Snapshot·Event·Gap·Resync 계약 준비 완료 |
-| 6 | `QUEUED` | Campaign Join·Character Selection·Ready Spec | `session/001-campaign-join-character-selection-and-ready.md` | Membership·Role·Owner·Control·User Ready·Client Ready 흐름 준비 완료 |
-| 7 | `QUEUED` | Scene Entry Essential·Controlled Actor Bootstrap Spec | `scene/001-scene-entry-essential-and-controlled-actor-bootstrap.md` | Published Build Ref, Runtime Presence, Essential Activation과 Gameplay Gate 준비 완료 |
-| 8 | `QUEUED` | Click Movement·Position Projection Spec | `exploration/001-click-movement-plan-execution-and-reconciliation.md` | 목적지 Intent부터 Plan·Execution·Commit·Projection까지 준비 완료 |
-| 9 | `QUEUED` | Snapshot·Journal·Reconnect Resume Spec | `persistence/001-first-slice-snapshot-journal-and-reconnect.md` | 위치·Control·Scene·Projection Cursor의 저장·복구·Full Resync 준비 완료 |
-| 10 | `QUEUED` | Walking Skeleton Deterministic·Roblox Integration Spec | `testing/001-join-move-disconnect-reconnect.md` | 정상·권한·Gap·중복·Disconnect·Restart·Disclosure Scenario 준비 완료 |
-| 11 | `QUEUED` | First Slice Spec 통합 감사 | `audits/first-session-walking-skeleton-spec-audit.md` | 모든 Spec 추적성·상태·Migration·Diagnostics·Test·문서 검증 통과 |
+| 1 | `DONE` | 전체 Slice Roadmap 정의 | [`SLICE-ROADMAP.md`](SLICE-ROADMAP.md) | 16개 Slice와 공통 레일 확정 |
+| 2 | `DONE` | Slice Roadmap 완전성 감사 | [`완전성 감사`](../audits/implementation-slice-roadmap-completeness-audit.md) | Quick Flow·12개 Guide·최종 Content 범위 배정 |
+| 3 | `DONE` | Shared Spec 001·002 재검토 | [`재검토 감사`](../audits/shared-spec-001-002-revalidation-audit.md) | 둘 다 `UPDATE_REQUIRED`, Slice 02로 배치 |
+| 4 | `DONE` | First Slice 구현 기준선 조사 | `runtime/001` §4 | GitHub Branch에서 Production Source Tree 미확인과 제안 경로 정책 기록 |
+| 5 | `IN_PROGRESS` | Core Authority Identity·Version·Result Spec | [`runtime/001`](runtime/001-core-authority-identity-version-and-result.md) | ID·Epoch·Revision·Result·Error 계약 완성; Source Tree 확인 전 `초안·BLOCKED` 유지 |
+| 6 | `QUEUED` | Command·Projection Protocol Spec | `networking/001-command-projection-and-resync-protocol.md` | Receipt·Result·Snapshot·Event·Gap·Resync 계약 |
+| 7 | `QUEUED` | Campaign Join·Character Selection·Ready Spec | `session/001-campaign-join-character-selection-and-ready.md` | Membership·Role·Owner·Control·Ready 계약 |
+| 8 | `QUEUED` | Scene Entry Essential·Controlled Actor Bootstrap Spec | `scene/001-scene-entry-essential-and-controlled-actor-bootstrap.md` | Published Build·Runtime Presence·Essential Activation 계약 |
+| 9 | `QUEUED` | Click Movement·Position Projection Spec | `exploration/001-click-movement-plan-execution-and-reconciliation.md` | Intent→Plan→Execution→Commit→Projection 계약 |
+| 10 | `QUEUED` | Snapshot·Journal·Reconnect Resume Spec | `persistence/001-first-slice-snapshot-journal-and-reconnect.md` | 위치·Control·Scene·Cursor 저장·복구 계약 |
+| 11 | `QUEUED` | Deterministic·Roblox Integration Spec | `testing/001-join-move-disconnect-reconnect.md` | 정상·권한·Gap·중복·Restart·Disclosure Scenario |
+| 12 | `QUEUED` | Slice 01 Spec 통합 감사 | `audits/first-session-walking-skeleton-spec-audit.md` | 추적성·Migration·Diagnostics·Test·문서 검증 통과 |
 
-현재 `runtime/001`은 구현 계약 초안이 작성됐으나 Production Source Tree 미확인 때문에 `준비 완료`로 전환하지 않는다. 계약 작성은 계속할 수 있지만 실제 Module 경로·재사용·대체 범위는 Source가 확인될 때 갱신한다.
-
-## 4. First Slice 의존 관계
+## 5. Slice 01 의존 관계
 
 ```text
 Core Identity·Version·Result
@@ -113,194 +125,106 @@ Core Identity·Version·Result
 → Scene Entry Essential·Controlled Actor Bootstrap
 → Click Movement·Position Commit·Projection
 → Snapshot·Journal·Reconnect
-→ Deterministic·Roblox Integration Scenario
-→ First Slice Spec Audit
+→ Deterministic·Roblox Integration
+→ Slice Completion Audit
 ```
 
-수직 흐름을 오래 지연시키는 전면 Foundation 구현을 피한다.
+각 Foundation의 범위는 First Session Walking Skeleton이 실제로 요구하는 계약까지다. 후속 요구는 Versioned Contract와 Migration으로 확장한다.
 
-```text
-각 Foundation의 첫 구현 범위
-= First Session Walking Skeleton이 실제로 요구하는 필드·상태·오류·검증
-```
+## 6. 직접 Guide·Authority 묶음
 
-후속 Slice가 새 요구를 추가하면 Versioned Contract와 Migration으로 확장한다.
-
-## 5. Spec별 직접 Guide·Authority 묶음
-
-### Runtime·Protocol Foundation
+### Runtime·Protocol
 
 - [`Runtime Foundation Guide`](../guides/runtime/README.md)
 - [`Session Guide`](../guides/session/README.md)
 - [`Runtime Architecture Principles`](../architecture/runtime-architecture-principles.md)
 - [`Networking Command, Event와 Client Synchronization`](../architecture/networking-command-event-and-client-synchronization-contract.md)
-- [`Command Ordering, Logical Time와 Transaction Coordinator`](../architecture/command-ordering-logical-time-and-transaction-coordinator-contract.md)
-- [`Domain Event, Outbox, Subscription과 Projection`](../architecture/domain-event-outbox-subscription-and-projection-runtime-contract.md)
-- [`UI Projection, ViewModel, Input Context와 Recovery`](../architecture/ui-projection-view-model-input-context-and-recovery-runtime-contract.md)
+- [`Command Ordering과 Transaction Coordinator`](../architecture/command-ordering-logical-time-and-transaction-coordinator-contract.md)
+- [`Domain Event와 Projection Runtime`](../architecture/domain-event-outbox-subscription-and-projection-runtime-contract.md)
 
-### Session Join·Ready·Reconnect
+### Session·Reconnect
 
-- [`Player Guide`](../user-guides/player/README.md) — 빠른 시작, Character·Control, 재접속
-- [`DM Guide`](../user-guides/dm/README.md) — 세션 준비, Lobby와 시작
-- [`Session Guide`](../guides/session/README.md)
+- [`Player Guide`](../user-guides/player/README.md)
+- [`DM Guide`](../user-guides/dm/README.md)
 - [`캠페인 로비·중도 참여·소유권·제어권`](../systems/session/campaign-lobby-hot-join-ownership-and-control.md)
-- [`Session Play Mode, Context, Overlay와 Transition`](../architecture/session-play-mode-context-overlay-and-transition-contract.md)
+- [`Session Play Mode·Context·Transition`](../architecture/session-play-mode-context-overlay-and-transition-contract.md)
 - [`Persistence와 Session Recovery`](../architecture/persistence-and-session-recovery-model.md)
-- ADR-0042, ADR-0049, ADR-0059, ADR-0063, ADR-0070, ADR-0083
 
-### Scene Entry·Movement
+### Scene·Movement
 
 - [`Scene Guide`](../guides/scene/README.md)
 - [`Exploration Guide`](../guides/exploration/README.md)
 - [`플랫폼·이동·입력 범위`](../product/platform-movement-and-input-scope.md)
-- [`Scene Streaming, Client Interest와 Ready Activation`](../architecture/scene-streaming-client-interest-and-ready-activation-contract.md)
-- [`Runtime Object System과 Entity Lifecycle`](../architecture/runtime-object-system-and-entity-lifecycle-contract.md)
-- [`Spatial Query Engine과 Provider`](../architecture/spatial-query-engine-and-provider-contract.md)
-- [`Runtime Navigation, Path Planning과 Movement Execution`](../architecture/runtime-navigation-path-planning-and-movement-execution-contract.md)
-- [`Exploration 실시간 이동, 행동과 Encounter 전환`](../architecture/exploration-real-time-movement-action-and-encounter-transition-runtime-contract.md)
-- ADR-0048, ADR-0055, ADR-0056, ADR-0058, ADR-0060, ADR-0076
+- [`Scene Streaming·Ready Activation`](../architecture/scene-streaming-client-interest-and-ready-activation-contract.md)
+- [`Runtime Object Lifecycle`](../architecture/runtime-object-system-and-entity-lifecycle-contract.md)
+- [`Spatial Query`](../architecture/spatial-query-engine-and-provider-contract.md)
+- [`Navigation·Movement Execution`](../architecture/runtime-navigation-path-planning-and-movement-execution-contract.md)
 
 ### Diagnostics·Test
 
 - [`Diagnostics Guide`](../guides/diagnostics/README.md)
-- [`Diagnostics, Observability, Correlated Trace와 Incident`](../architecture/diagnostics-observability-correlated-trace-and-incident-runtime-contract.md)
-- [`Deterministic Simulation, Scenario와 Test Harness`](../architecture/deterministic-simulation-scenario-and-test-harness-runtime-contract.md)
-- ADR-0084, ADR-0085
+- [`Diagnostics·Observability Runtime`](../architecture/diagnostics-observability-correlated-trace-and-incident-runtime-contract.md)
+- [`Deterministic Simulation·Test Harness`](../architecture/deterministic-simulation-scenario-and-test-harness-runtime-contract.md)
 
-## 6. First Slice 공통 Gate
+## 7. 공통 Spec Gate
 
-모든 Spec은 다음을 포함한다.
+모든 Slice 01 Spec은 다음을 포함한다.
 
-- Quick Flow와 Player·DM Acceptance Flow
-- 직접 Authority Requirement 표
-- 실제 기존 코드·Schema·Test 조사 결과
+- Player·DM Acceptance Flow
+- 직접 Authority Requirement 추적표
+- 기존 Code·Schema·Test 조사 결과
 - Source·Build·State·Projection·Presentation 분리
-- Client Intent와 Server Authority 검증
-- AuthorityEpoch·ConnectionEpoch·Revision·Incarnation 처리
-- Command Receipt와 Terminal Result의 분리
-- Ordering Key·Reservation·Transaction·Outbox·Projection Barrier
-- Version·Migration·Deprecation·Last Known Good
-- Snapshot·Journal·Reconnect·Recovery·Rollback 영향
-- Correlated Trace·Stable Error·Support Reference·Health
-- 사용자 Loading·Waiting·Denied·Retrying·Resync 상태
-- Deterministic Scenario·Fault Injection·Negative Disclosure
-- 실제 Roblox Client·Server 통합 경계
+- Client Intent와 Server 재검증
+- AuthorityEpoch·ConnectionEpoch·Revision·Incarnation
+- Receipt와 Terminal Result 분리
+- Ordering·Reservation·Transaction·Outbox·Projection Barrier
+- Version·Migration·Last Known Good·Rollback
+- Snapshot·Journal·Reconnect·Restart
+- Trace·Stable Error·Health·Support Reference
+- Loading·Waiting·Denied·Retrying·Resync 상태
+- Deterministic·Fault·Negative Disclosure·Roblox Integration
 - 측정 전 수치 기본값을 확정하지 않는 원칙
 
-## 7. Shared Spec 001·002 배치
+## 8. Shared Spec 001·002
 
-재검토 결과 두 문서는 모두 `UPDATE_REQUIRED`다.
-
-```text
-Shared 001·002
-→ First Session Walking Skeleton의 선행 조건 아님
-→ First Slice 직후 Core Rules Kernel에서 최신 계약에 맞춰 갱신
-```
-
-갱신 순서:
+재검토 결과:
 
 ```text
-Core Authority·Protocol·Persistence 기반 완료
-→ Ruleset Policy·Character Math·RuleExecution Adapter Spec
-→ Shared 001 Recipe Definition·Registry·Compiler 갱신
-→ Shared 002 Step Handler Provider·Invoker 갱신
-→ D20 Test·Roll·PendingEffect·Guided Input Spec
-→ 대표 Ability Check·Attack·Save·Damage 수직 검증
-→ Core Rules Kernel 통합 감사
+001 Recipe Step Runtime Foundation
+→ UPDATE_REQUIRED
+
+002 Standard Step Handler Contracts
+→ UPDATE_REQUIRED
 ```
 
-기존 파일명은 우선 유지하고, 실제 책임 분할 결과가 명확해질 때만 대체 Spec과 Migration 관계를 만든다.
-
-## 8. 후속 Slice 순서
-
-First Session Walking Skeleton 완료 뒤 다음 순서로 진행한다.
-
-### Slice 2 — Core Rules Kernel
-
-이 Slice부터 D&D 핵심 규칙 엔진을 넣는다. 전체 직업·주문 콘텐츠를 한 번에 넣는 단계가 아니라, 이후 모든 행동과 전투가 공유할 규칙 계산·실행 기반을 완성하는 단계다.
+두 문서는 Slice 01의 선행 조건이 아니다. Roadmap의 Slice 02 `Core Rules Kernel`에서 다음 순서로 갱신한다.
 
 ```text
-Ruleset Policy와 dnd5e-2024 Core Profile
-→ Character Ability·Proficiency·Skill·Save·AC·HP 파생값
-→ RuleExecution Orchestrator Adapter
-→ Shared Recipe Runtime 001·002 갱신
-→ D20 Test·Advantage·Disadvantage·DC·AC
-→ Attack Roll·Saving Throw·Damage·Healing
-→ Resource Cost·Condition 최소 기반
-→ 대표 Ability Check·Basic Attack·Save 수직 검증
-→ 저장·재접속·진단·결정적 테스트
+Core Authority·Protocol·Persistence 기반
+→ Ruleset Policy·RuleExecution Adapter
+→ Shared 001 Recipe Definition·Registry·Compiler
+→ Shared 002 Step Handler Provider·Invoker
+→ D20 Test·Roll·PendingEffect·Guided Input
+→ 대표 Check·Attack·Save·Damage 수직 검증
 ```
 
-이 Slice의 명시적 비범위:
+## 9. Slice 전환 Gate
 
-- Initiative·Turn·Reaction 전체 Encounter Runtime
-- 모든 직업·하위직업·Feat·Spell·Item 콘텐츠
-- 전체 상태 이상 목록
-- 고급 Timing Window와 복잡한 예외 규칙 전체
+Slice 02로 넘어가기 전에:
 
-### Slice 3 — Exploration Interaction
+- Slice 01 관련 Spec이 모두 `준비 완료` 또는 명시적으로 `DEFERRED`
+- Slice 01 Spec Completion Audit 완료
+- 문서 검증 성공
+- 관련 Guide와 User Guide 영향 확인
+- Production 구현 여부와 관계없이 Slice 01 계약이 닫힘
 
-Core Rules Kernel의 Ability Check·Save·Effect를 재사용한다.
-
-```text
-Selection·Focus·Input Context
-→ Door·Container·Item Interaction
-→ Search·Study·Lock·Trap 판정
-→ DM Adjudication
-→ Fog·Knowledge·Disclosure
-→ Reconnect·Concurrency·Security
-```
-
-### Slice 4 — Encounter
-
-Core Rules Kernel 위에 전투 순서와 행동 경제를 추가한다.
-
-```text
-Encounter Proposal
-→ Initiative·Timeline·Turn·Opportunity
-→ Movement·Action·Bonus Action·Reaction
-→ Attack·Save·Damage·Condition 통합
-→ Death·Concentration·Objective·Game Time
-→ Rollback
-```
-
-### Slice 5 — Character·Inventory·Downtime와 Rules Content 확장
-
-```text
-Character Build·Persistent State
-→ Class·Subclass·Feat·Spell·Item Content
-→ Inventory·Equipment·World Presence
-→ Rest·Level Up·Spell Preparation·Downtime
-→ dnd5e-2024 Player Content 확대
-```
-
-### Slice 6 — DM Authoring·Journal·Extension
-
-```text
-Scene Authoring·Compile·Publish
-→ Quick Edit·Live Patch
-→ Journal·Anchor·Search
-→ Content Pack·Trusted Extension·Presentation
-```
-
-각 Slice는 별도 세부 Work Order 또는 이 문서의 갱신으로 확정한다.
-
-## 9. 완료 판정
-
-Implementation Specs 단계 전체 완료 조건:
-
-- 계획된 수직 Slice의 Spec 상태가 모두 `준비 완료` 또는 명시적으로 `DEFERRED`
-- 기존 Shared Spec 001·002의 `UPDATE_REQUIRED` 해소
-- 각 Slice별 통합 감사와 문서 검증 성공
-- Production Implementation 순서와 Migration 경계 확정
-- User Guide·Main System Guide 변경 영향 재검토
-- 사용자의 명시적 Production Implementation 시작 요청
+전체 다음 순서는 [`SLICE-ROADMAP.md`](SLICE-ROADMAP.md)를 따른다.
 
 ## 10. 변경 기록
 
 | 날짜 | 변경 |
 |---|---|
-| 2026-08-05 | Core Rules Kernel을 Exploration Interaction보다 앞선 Slice 2로 이동했다. Ability Check·Attack·Save·Damage 등 공통 규칙을 먼저 완성해 탐험 상호작용과 Encounter가 같은 엔진을 사용하도록 했다. |
-| 2026-08-05 | GitHub Branch에서 Production Source Tree를 확인할 수 없다는 기준선 조사 결과를 기록하고 `runtime/001` 초안을 `IN_PROGRESS·BLOCKED` 상태로 연결했다. |
-| 2026-08-05 | First Session Walking Skeleton을 첫 수직 Slice로 확정하고 Runtime·Protocol·Session·Scene·Movement·Persistence·Testing Spec 순서를 수립했다. |
+| 2026-08-05 | 16개 전체 Slice Roadmap과 완전성 감사를 완료하고 현재 Work Order를 Slice 01 전용으로 정리했다. |
+| 2026-08-05 | Core Rules Kernel을 Slice 02로 앞당겼다. |
+| 2026-08-05 | First Session Walking Skeleton을 Slice 01로 확정했다. |
 | 2026-08-05 | Shared Spec 001·002를 `UPDATE_REQUIRED`로 판정했다. |
