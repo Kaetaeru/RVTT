@@ -88,7 +88,7 @@ Guide 자신과 User Guide를 Parent Authority로 기록하지 않는다.
 
 ## 7. 추천 읽기 순서
 
-1. [`CURRENT-WORK-ORDER`](../../CURRENT-WORK-ORDER.md)
+1. [`CURRENT-WORK-ORDER`](../CURRENT-WORK-ORDER.md)
 2. 관련 Quick Flow·Player·DM Guide
 3. Runtime Architecture Principles
 4. 핵심 ADR
