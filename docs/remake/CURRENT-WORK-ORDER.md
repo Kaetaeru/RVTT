@@ -57,16 +57,21 @@ CURRENT-WORK-ORDER 확인
 
 ## Main System Guide 단계 원칙
 
+- 활성 세부 작업 순서: [`guides/CURRENT-GUIDE-WORK-ORDER.md`](guides/CURRENT-GUIDE-WORK-ORDER.md)
+- 현재 완료 Guide: [`Runtime Foundation과 Authority`](guides/runtime/README.md)
+- 현재 세부 작업: `Session, Networking, Persistence와 Recovery Guide`
+
 1. Guide는 새로운 Authority 결정을 만들지 않고 확정된 Architecture·ADR을 통합한다.
 2. 각 Guide는 권위 원본, 역할별 사용자 흐름, Command·Transaction·Projection 경로, 실패·복구와 구현 Spec 진입점을 포함한다.
 3. `SUPERSEDED`, `DISCONTINUED`, `ARCHIVED` 문서는 권위 읽기 순서에서 제외한다.
-4. 여러 Guide의 작성 순서를 정하거나 변경할 때는 이 문서 또는 하위 Guide 작업 순서를 먼저 갱신한다.
+4. 여러 Guide의 작성 순서를 정하거나 변경할 때는 [`guides/CURRENT-GUIDE-WORK-ORDER.md`](guides/CURRENT-GUIDE-WORK-ORDER.md)를 먼저 갱신한다.
 5. Guide가 새로운 Architecture 공백을 발견하면 해당 Guide를 완료 처리하지 않고 Architecture·ADR 작업을 삽입한다.
 
 ## 변경 기록
 
 | 날짜 | 변경 |
 |---|---|
+| 2026-08-04 | Main System Guide 세부 순서를 `guides/CURRENT-GUIDE-WORK-ORDER.md`에 확정했다. Runtime Foundation과 Authority Guide를 완료하고 Session·Networking·Persistence·Recovery Guide를 현재 세부 작업으로 전환했다. |
 | 2026-08-04 | Cross-Domain Outcome Cascade·Integration Boundary Runtime 계약과 ADR-0087을 확정하고 Completion Audit에서 현재 제품 범위의 Architecture·Integration을 완료로 판정했다. 7번을 `DONE`, Main System Guides를 `IN_PROGRESS`로 전환했다. |
 | 2026-08-04 | Journal Document·Section·Anchor·Permission·Search·Projection Runtime 계약과 ADR-0086을 완료했다. 기존 Journal·Ping 결합 문서를 분리하고 6번을 `DONE`, Cross-System Integration Contracts와 Completion Audit을 `IN_PROGRESS`로 전환했다. |
 | 2026-08-04 | Deterministic Simulation·Scenario·Test Harness Runtime 계약과 ADR-0085를 완료했다. 5번을 `DONE`으로 변경하고 Journal Anchor·Permission·Projection 계약을 `IN_PROGRESS`로 전환했다. |
