@@ -2,6 +2,14 @@
 
 캠페인 로비, 중도 참여, 영구 Owner, 런타임 Controller, Observer, Client 동기화와 Scene Streaming Ready를 다룬다.
 
+## Main System Guide
+
+- [`Session, Networking, Persistence와 Recovery Guide`](../../guides/session/README.md)
+  - Campaign Membership·Character Owner·Control Assignment·Session Role의 관계
+  - 사용자 Ready와 기술적 Client Ready 분리
+  - Lobby·Hot Join·Disconnect·Reconnect와 Scene Transition
+  - Versioned Command·Projection Sync·Snapshot·Journal·Recovery·Rollback의 전체 흐름
+
 ## 권위 문서
 
 ### 사용자 흐름
@@ -11,6 +19,14 @@
   - Observer와 중도 참여
   - 연결 종료, 재접속과 제어권 복구
   - 사용자 Ready와 기술적 Client Ready 분리
+
+### Session 상태와 Command Gate
+
+- [`../../architecture/session-play-mode-context-overlay-and-transition-contract.md`](../../architecture/session-play-mode-context-overlay-and-transition-contract.md)
+  - Exploration·Encounter·Downtime Base Play Mode
+  - Context, Overlay와 Transitional State
+  - Pause, Join, Reconnect, Recovery와 Rollback Commit Gate
+  - Role·Control·Mode·Ready를 결합한 Effective Command Policy
 
 ### Network와 동기화
 
@@ -34,9 +50,9 @@
 ### 저장과 서버 복구
 
 - [`../../architecture/persistence-and-session-recovery-model.md`](../../architecture/persistence-and-session-recovery-model.md)
-  - Authority Snapshot과 Command Journal
-  - Pending Resolution과 안전 경계
-  - 서버 종료·새 서버 복구
+  - Manifest·Chunk Authority Snapshot과 Commit Journal
+  - Pending RuleExecution·Resource Reservation 복구
+  - Server Restart, Branch, AuthorityEpoch와 DM Rollback
 
 ## 고정 경계
 
@@ -48,3 +64,13 @@
 - Scene Transition은 공개 가능한 정적 Chunk를 먼저 Stage한 뒤 안전 경계에서 Presence를 옮긴다.
 - 재접속 Client가 보낸 로컬 상태와 Cache를 권위 상태로 사용하지 않고 Hash·Grant·Cursor를 다시 검증한다.
 - 이전 Connection Epoch의 Command와 Ready 신호를 무효화한다.
+- Recovery와 Rollback 이후 새 AuthorityEpoch를 발급하고 이전 Branch의 Prompt·Subscriber를 무효화한다.
+- Snapshot Chunk 경계와 Gameplay Transaction 경계를 동일시하지 않는다.
+
+## Guide Status
+
+```text
+CURRENT
+```
+
+현재 권위 문서 관계와 사용자·복구 흐름은 Main System Guide에 반영되어 있다. 권위 계약이 변경되면 Guide를 `UPDATE_REQUIRED`로 전환한다.
