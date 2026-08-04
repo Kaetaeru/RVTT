@@ -36,6 +36,12 @@
   - Deterministic RNG·Clock·ID·Task·Network·Storage Adapter
   - Fault Injection, Restart·Reconnect·Rollback과 Bounded Interleaving Exploration
   - State·Event·Projection·UI·Trace·Budget와 Negative Disclosure Assertion
+- [`Journal Document, Section, Anchor, Permission, Search와 Projection Runtime 계약`](journal-document-section-anchor-permission-search-and-projection-runtime-contract.md)
+  - 제목·경로와 분리된 안정적 Document·Section Identity와 Revision
+  - Markdown Source→Compiled Document→Permission-aware Projection
+  - World Anchor 수명주기, Source Object·Runtime Incarnation과 명시적 Retarget
+  - Permission-partitioned Search·Backlink·Outline과 비밀 정보 차단
+  - 안전한 Journal Navigation Capability와 Camera·Selection·Scene Transition 연결
 - [`Exploration 실시간 이동, 행동과 Encounter 전환 Runtime 계약`](exploration-real-time-movement-action-and-encounter-transition-runtime-contract.md)
   - 클릭 이동과 WASD 토큰 이동의 공통 권위 경계
   - Actor별 Movement·RuleExecution·Interaction 실행 슬롯
@@ -127,6 +133,7 @@
 - Permission-aware Projection Replica, ViewModel, Panel·Modal·Focus·Input Context와 UI Recovery
 - Correlated Authority Trace, Decision Record, Error·Incident, Health, Budget와 Diagnostic Projection
 - Versioned Scenario·Fixture, Deterministic Adapter, Fault Injection, Concurrency·Recovery·Disclosure Test Harness
+- Journal Document·Section Identity, Permission, Anchor Lifecycle, Search·Backlink와 Navigation Projection
 - Exploration 실시간 이동, Actor별 실행 충돌, Hazard와 Encounter 전환
 - Encounter Participant, Initiative Timeline, Turn, Opportunity, Objective와 종료
 - Encounter Temporal Boundary, Campaign Time Atomic Commit, Scheduler Due Bridge와 Boundary Gate
@@ -159,6 +166,7 @@
 - Projection Replica, ViewModel, Panel·Modal·Prompt, Focus, Q/E Input Context, Command Reconciliation과 Client UI 복구를 다루면 [`UI Runtime 계약`](ui-projection-view-model-input-context-and-recovery-runtime-contract.md)을 따른다.
 - Trace Context, Decision Record, Error·Incident, 성능 Budget, Diagnostic Query와 역할별 Redaction을 다루면 [`Diagnostics Runtime 계약`](diagnostics-observability-correlated-trace-and-incident-runtime-contract.md)을 따른다.
 - Scenario, Fixture, Seed, Virtual Clock·Network·Storage, Fault Injection, Interleaving, Golden·Digest와 Disclosure Regression을 다루면 [`Deterministic Simulation과 Test Harness 계약`](deterministic-simulation-scenario-and-test-harness-runtime-contract.md)을 따른다.
+- Journal Document·Section Identity, Markdown Compile, Permission, Search·Backlink, World Anchor와 Camera·Selection Navigation을 다루면 [`Journal Runtime 계약`](journal-document-section-anchor-permission-search-and-projection-runtime-contract.md)을 따른다.
 - 탐험 WASD·클릭 이동, 실시간 행동 충돌, Hazard와 Encounter 진입을 다루면 [`Exploration Runtime 계약`](exploration-real-time-movement-action-and-encounter-transition-runtime-contract.md)을 따른다.
 - Initiative, Timeline, Turn·Round, Opportunity, Participant, Objective와 Encounter 종료를 다루면 [`Encounter Runtime 계약`](encounter-timeline-turn-opportunity-and-objective-runtime-contract.md)을 따른다.
 - Encounter Round Boundary와 Campaign Time, Scheduler Due와 다음 Round Gate의 통합을 다루면 [`Encounter–Game Time 통합 계약`](encounter-game-time-temporal-boundary-and-scheduler-integration-contract.md)을 따른다.
@@ -178,6 +186,6 @@
 - Scene Presence Lifecycle은 [`Runtime Object System`](runtime-object-system-and-entity-lifecycle-contract.md)을 따른다.
 - 원자적 상태 변경은 [`Transaction Coordinator`](command-ordering-logical-time-and-transaction-coordinator-contract.md)를 따른다.
 - 공간 판정은 [`Spatial Query`](spatial-query-engine-and-provider-contract.md), 이동은 [`Runtime Navigation`](runtime-navigation-path-planning-and-movement-execution-contract.md)을 따른다.
-- Capability·Recipe·TimingWindow·PendingEffect는 [`Rule Runtime Orchestrator`](rule-runtime-orchestrator-and-pending-execution-contract.md)를 따른다.
+- Capability·Recipe·TimingWindow·PendingEffect는 [`Rule Runtime Orchestrator`](rule-runtime-orchestrator-and-pending-execution-contract.md)을 따른다.
 
 동일한 결정을 여러 문서에 반복하지 않는다. 각 하위 문서는 자신의 데이터·상태·실패·성능 계약만 추가한다.
