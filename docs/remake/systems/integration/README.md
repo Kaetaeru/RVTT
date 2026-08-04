@@ -24,6 +24,9 @@
   - Cross-Domain Outcome·Follow-up·Projection Barrier의 Correlated Trace와 Incident·Health 연결
   - Transaction Abort·Retry·Restart·Rollback·Projection Gap의 Production-parity Scenario
   - Diagnostics·Simulation 실패가 권위 Commit을 변경하지 않는 Operations 경계
+- [`Extension, Plugin과 Content Pack Guide`](../../guides/extension/README.md)
+  - Pack·Handler·Provider·Tool·Presentation Module이 기존 Domain Plan과 Runtime 경계에 기여하는 방식
+  - Candidate 활성화·Migration·Last Known Good와 Extension 실패·Disclosure 격리
 
 ## 최상위 권위 문서
 
@@ -70,6 +73,8 @@ Commit 직후 권위 상태가 유효하기 위해 필요한 변화다.
 
 Provider 하나라도 실패하면 전체 Transaction을 Abort한다.
 
+Extension Provider와 Handler도 새로운 통합 Coordinator를 만들지 않고 자신이 소유한 Domain Contribution·Command·RuleExecution을 통해 이 흐름에 참여한다.
+
 ## Deferred Consequence
 
 새 굴림, Reaction, 선택, DM 판정, 미래 시간 또는 Commit된 최신 상태가 필요한 후속 실행이다.
@@ -82,6 +87,7 @@ Provider 하나라도 실패하면 전체 Transaction을 Abort한다.
 - Runtime Object 변경 후 Derived Index Rebuild
 - Journal Anchor Reindex
 - Scene Build 활성화 후 선택적 Presentation·Diagnostic 갱신
+- Extension Subscriber의 후속 Command·RuleExecution
 - Presentation Playback
 
 Subscriber가 Store를 직접 수정하지 않고 새 Command 또는 RuleExecution을 제출한다.
@@ -90,6 +96,7 @@ Subscriber가 Store를 직접 수정하지 않고 새 Command 또는 RuleExecuti
 
 - Integration Coordinator는 새 Domain Store를 소유하지 않는다.
 - Domain Provider는 자신의 Store에 대한 Mutation Proposal만 만든다.
+- Extension Registry Entry는 기존 Domain 권위를 확장하지만 독립 Authority Store나 Transaction 체계를 자동 생성하지 않는다.
 - Damage Provider가 Encounter Timeline Cursor를 직접 이동하지 않는다.
 - Encounter Objective와 End는 Encounter Runtime이 소유한다.
 - Downtime Runtime이 Character·Inventory·Rest Store Mutation을 직접 작성하지 않는다.
@@ -100,11 +107,13 @@ Subscriber가 Store를 직접 수정하지 않고 새 Command 또는 RuleExecuti
 - Ping Presentation은 Authority Mutation Provider나 Projection Sequence의 일부가 아니다.
 - UI·Presentation·Workspace Instance는 Authority Mutation Provider가 아니다.
 - Diagnostics·Simulation·Incident·Health는 Authority Mutation Provider가 아니다.
+- Policy Evaluator, Recipe Step, AdvancedOperation, Compiler Provider, Tool Module과 Presentation Module이 다른 Domain Store를 직접 수정하지 않는다.
+- Source Pack 활성화는 영향을 받는 각 Domain의 기존 Candidate·Migration·Atomic Activation 계약을 사용하며 새로운 전역 Pack Store를 만들지 않는다.
 - Derived Index 실패가 이미 Commit된 권위 결과를 되돌리지 않는다.
 - 오래된 Index로 권위 판정을 할 위험이 있으면 관련 Command Scope만 Gate한다.
 - 같은 Transaction의 HP·Vital·Effect·Encounter, Build·State·Item 또는 Scene Build·Rebind Projection은 Barrier Batch로 적용한다.
 - Root Outcome과 Follow-up Consequence는 각각 멱등성을 가진다.
-- 이전 AuthorityEpoch의 Follow-up과 ACK는 새 Branch에 적용하지 않는다.
+- 이전 AuthorityEpoch의 Follow-up, Extension Callback와 ACK는 새 Branch에 적용하지 않는다.
 
 ## 필수 통합 Scenario
 
@@ -127,6 +136,10 @@ Subscriber가 Store를 직접 수정하지 않고 새 Command 또는 RuleExecuti
 - Ping Presentation Failure Isolation
 - Correlated Trace의 Transaction·Event·Projection Causation 연속성
 - Incident·Health·Support Redaction과 Diagnostic Read 비변경성
+- Source Pack Policy·Character·Scene·Presentation Candidate의 Version 고정과 Migration
+- Extension Handler·Provider 실패와 Last Known Good·다른 Domain 격리
+- Campaign Authored Content가 개발자 Handler·권위 Store를 우회하지 못함
+- Extension Subscriber Retry의 멱등성과 이전 Epoch 차단
 - Restart·Rollback 이전 Follow-up 차단
 - Projection Barrier와 Batch Gap Recovery
 - Presentation Failure Isolation
@@ -136,6 +149,8 @@ Subscriber가 Store를 직접 수정하지 않고 새 Command 또는 RuleExecuti
 - Combat: `../combat/`
 - Character: `../character/`
 - Rules: `../rules/`
+- Ruleset: `../ruleset/`
+- Extension: `../extension/`
 - Inventory: `../inventory/`
 - Scene: `../scene/`
 - Navigation: `../navigation/`
@@ -151,4 +166,4 @@ Subscriber가 Store를 직접 수정하지 않고 새 Command 또는 RuleExecuti
 Guide Status: READY_FOR_MAIN_GUIDE_PHASE
 ```
 
-Combat·Encounter, Rules, Character·Inventory·Downtime, UI·Presentation, Journal·Ping, Scene Editor·Authoring와 Diagnostics·Simulation·Operations 관련 Integration 흐름은 현재 각 Main System Guide에 연결됐다. 남은 Extension 영역은 후속 Guide 순서에서 계속 통합한다.
+현재 Main System Guide 영역의 Runtime·Gameplay·UI·Knowledge·Authoring·Operations·Extension 통합 흐름은 모두 연결됐다. 다음 단계는 전체 Guide 일관성 감사와 문서 허브 갱신이다.
