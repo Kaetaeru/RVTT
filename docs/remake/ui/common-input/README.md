@@ -2,6 +2,13 @@
 
 Q 취소, E 승인, 문맥별 1–5와 입력 문맥 스택의 표시·우선순위를 다룬다.
 
+## Main System Guide
+
+- [`Exploration, Selection, Interaction과 Perception Guide`](../../guides/exploration/README.md)
+  - Physical Input에서 Semantic Action·Input Context·Selection Session으로 이어지는 흐름
+  - Q·E 단일 소비, Candidate Navigation 분리와 Frozen Binding
+  - Interaction·DM Adjudication·Hover Projection과 재접속 복구 경계
+
 ## 상위 권위 계약
 
 - [`UI Projection, ViewModel, Input Context와 Recovery Runtime 계약`](../../architecture/ui-projection-view-model-input-context-and-recovery-runtime-contract.md)
