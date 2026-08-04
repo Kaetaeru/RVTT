@@ -14,6 +14,20 @@ Guide는 새로운 제품 규칙, Architecture 결정, API, 데이터 구조나 
 → Main System Guide 작성
 ```
 
+## 현재 작업 기준
+
+- [`CURRENT-GUIDE-WORK-ORDER.md`](CURRENT-GUIDE-WORK-ORDER.md)
+  - Main System Guide 단계에서 둘 이상의 Guide 순서를 정하거나 변경할 때 먼저 갱신한다.
+  - 가장 위의 `IN_PROGRESS` Guide를 현재 작업으로 사용한다.
+- 상위 단계는 [`../CURRENT-WORK-ORDER.md`](../CURRENT-WORK-ORDER.md)를 따른다.
+
+## 현재 Guide
+
+- [`Runtime Foundation과 Authority`](runtime/README.md)
+  - Guide Status: `CURRENT`
+  - Source·Build·State·Policy·Command·RuleExecution·Transaction·Event·Projection·Recovery의 공통 권위 흐름
+  - 모든 후속 Main System Guide가 공유하는 용어와 추천 읽기 순서
+
 ## 1. Guide의 역할
 
 Guide는 다음 질문에 빠르게 답한다.
@@ -142,23 +156,25 @@ Architecture를 기반으로 구현 명세가 시작되면 해당 Architecture�
 
 권위 문서가 변경되면 관련 Guide는 즉시 `UPDATE_REQUIRED`로 표시한다. Guide가 오래되었다는 이유로 권위 문서 변경을 막지는 않는다.
 
-## 8. 초기 Guide 영역
+## 8. Guide 영역과 작성 순서
 
-다음은 예상 영역이며, 작성 조건을 통과하기 전에는 폴더나 빈 Guide를 미리 만들 필요가 없다.
+현재 Guide 영역과 작성 순서는 [`CURRENT-GUIDE-WORK-ORDER.md`](CURRENT-GUIDE-WORK-ORDER.md)가 소유한다.
+
+예상 영역:
 
 ```text
 runtime
-persistence
-scene
-scene-editor
-networking
-combat
-character
-inventory
-rules
-perception
-interaction
-plugin
+session·networking·persistence
+scene·streaming·navigation
+exploration·selection·interaction·perception
+rules·actions·spells·dice·effects
+combat·encounter
+character·inventory·downtime
+ui·camera·presentation
+journal·ping
+scene-editor·authoring
+diagnostics·simulation·operations
+extension·plugin·content-pack
 ```
 
 현재 Guide가 없다는 것은 오류가 아니다. 미완성 시스템 Guide를 미리 작성하는 것이 더 큰 오류다.
