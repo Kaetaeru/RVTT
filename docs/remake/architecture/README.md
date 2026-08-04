@@ -67,6 +67,12 @@
   - Turn·Round Boundary Duration과 고정 시간 Duration 분리
   - Time Consumption, 병렬 활동과 대규모 Advance Checkpoint
   - DurationHandle, Scheduler, Calendar와 Rollback 복구
+- [`Downtime Activity, Time Coordination과 Atomic Completion Runtime 계약`](downtime-activity-time-coordination-and-atomic-completion-runtime-contract.md)
+  - Rest·Level Up·Spell Preparation·Spellbook·Crafting·Training·Travel의 공통 조정
+  - 참가자별 Activity와 하나의 Campaign Time Window
+  - Domain Reservation, Progress, Interruption과 Checkpoint
+  - Domain-owned Completion Plan과 원자적 결과 Commit
+  - 재접속·복구·Rollback과 Registry 기반 확장
 - [`Scene Compiler와 Compiled Runtime Scene 계약`](scene-compiler-and-compiled-runtime-scene-contract.md)
 - [`Character Runtime과 Compiled Character Build 계약`](character-runtime-and-compiled-character-build-contract.md)
 - [`Character Action Opportunity와 2024 Core Action Runtime 계약`](character-action-opportunity-and-2024-core-action-runtime-contract.md)
@@ -90,6 +96,7 @@
 - Session Base Mode, Context, Overlay, Transition과 Command Gate
 - Exploration 실시간 이동, Actor별 실행 충돌, Hazard와 Encounter 전환
 - Encounter Participant, Initiative Timeline, Turn, Opportunity, Objective와 종료
+- Downtime Participant Activity, Campaign Time Window, Progress, Reservation과 Completion
 - Input Context, Intent, Selection Session, Candidate, Preview와 Frozen Binding
 - Interaction Capability, Contextual Option, DM Adjudication과 Override
 - Visibility, Detection, Knowledge, Disclosure와 Hover Information Projection
@@ -116,6 +123,7 @@
 - Exploration·Encounter·Downtime, Context, UI·Authoring Overlay, Scene Transition·Join·Recovery를 다루면 [`Session Runtime 계약`](session-play-mode-context-overlay-and-transition-contract.md)을 따른다.
 - 탐험 WASD·클릭 이동, 실시간 행동 충돌, Hazard와 Encounter 진입을 다루면 [`Exploration Runtime 계약`](exploration-real-time-movement-action-and-encounter-transition-runtime-contract.md)을 따른다.
 - Initiative, Timeline, Turn·Round, Opportunity, Participant, Objective와 Encounter 종료를 다루면 [`Encounter Runtime 계약`](encounter-timeline-turn-opportunity-and-objective-runtime-contract.md)을 따른다.
+- 휴식·레벨업·주문 준비·주문책·제작·훈련·여행의 장기 활동과 결과 Commit을 다루면 [`Downtime Runtime 계약`](downtime-activity-time-coordination-and-atomic-completion-runtime-contract.md)을 따른다.
 - 클릭·Hover·Focus·대상 지정·범위 Preview·DM Hidden Selection·Q/E 승인과 취소를 다루면 [`Selection Runtime 계약`](selection-targeting-preview-and-frozen-binding-runtime-contract.md)을 따른다.
 - 선택된 대상의 Open·Utilize·Pick Up·Inspect·Force Command와 DM 판정을 다루면 [`Interaction Capability 계약`](interaction-capability-contextual-command-and-adjudication-contract.md)을 따른다.
 - 시야·감각·은신·Fog·발견·식별·Hover 공개 정보를 다루면 [`Visibility, Knowledge와 Detection Runtime 계약`](visibility-knowledge-detection-and-hover-information-runtime-contract.md)을 따른다.
