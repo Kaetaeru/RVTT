@@ -2,6 +2,12 @@
 
 Campaign Game Time, Calendar, Encounter Round Duration, Duration Handle, Time Consumption과 Scheduler를 다룬다.
 
+## 관련 Main System Guide
+
+- [`Combat와 Encounter Guide`](../../guides/combat/README.md)
+  - Encounter Round Boundary, D&D 2024 기본 6초, RoundTimeLedger와 Campaign Time 원자 Commit
+  - Scheduler Due Staging, Event→Command Bridge와 Blocking Boundary Gate
+
 ## 권위 문서
 
 - [`Game Time, Calendar, Duration과 Scheduler Runtime 계약`](../../architecture/game-time-calendar-duration-and-scheduler-runtime-contract.md)
