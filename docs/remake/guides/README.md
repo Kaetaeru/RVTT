@@ -51,6 +51,10 @@ Guide는 새로운 제품 규칙, Architecture 결정, API, 데이터 구조나 
   - Guide Status: `CURRENT`
   - Character Progression Source·Compiled Build·Persistent State와 Scene Actor·Encounter State 경계
   - ItemInstance·Equipment·World Presence, Rest·Level Up·Spellbook·Crafting·Training·Travel과 Atomic Completion 흐름
+- [`UI, Camera와 Presentation`](ui/README.md)
+  - Guide Status: `CURRENT`
+  - Permission-aware Projection Replica·ViewModel·Panel·Semantic Input·UI Intent와 Epoch-safe Recovery
+  - CameraRequest·Focus·Follow·Bookmark, Presentation Recipe·Queue·Marker·Audience·Fallback 흐름
 
 ## 1. Guide의 역할
 
