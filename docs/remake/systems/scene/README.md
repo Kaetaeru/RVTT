@@ -8,6 +8,10 @@ Scene Source, Compiled Runtime Build, 세션 Dynamic State, Runtime Object Lifec
   - Scene Source부터 Compiled Build, Runtime Object Presence와 Runtime Scene Snapshot까지의 권위 계층
   - Client-safe Streaming·Ready Activation과 Scene Transition
   - Spatial Query·Path Planning·Checkpoint Movement를 포함한 월드 Runtime 전체 흐름
+- [`Scene Editor와 Authoring Guide`](../../guides/scene-editor/README.md)
+  - DM Authoring Overlay, Scene Source Object·Tool Module·Authoring Command와 Edit History
+  - Candidate Build·Diagnostic·Test Play·Atomic Publish와 Last Known Good Build
+  - Runtime Quick Edit·Source Promotion, 활성 세션 Build 고정과 안전한 Live Patch
 
 ## 권위 문서
 
@@ -62,6 +66,9 @@ Scene Source, Compiled Runtime Build, 세션 Dynamic State, Runtime Object Lifec
   - 인게임 벽·바닥·방·문·계단·프리팹 제작 도구
   - 공통 배치 커서, 스냅, ViewY와 파라메트릭 편집
   - Scene Source를 변경하는 Authoring Tool 흐름
+- [`../../architecture/scene-editor-tool-module-architecture.md`](../../architecture/scene-editor-tool-module-architecture.md)
+  - Registry 기반 Tool Module, Capability·Context·Command와 Object Type
+  - Source Schema Version·Migration, Undo·Redo와 오류 격리
 
 이동 의미 생성은 [`../navigation/`](../navigation/), 편집 UI는 [`../../ui/scene-editor/`](../../ui/scene-editor/)를 따른다.
 
@@ -86,4 +93,4 @@ Scene Source, Compiled Runtime Build, 세션 Dynamic State, Runtime Object Lifec
 CURRENT
 ```
 
-현재 Scene Source·Build·Runtime Object·Streaming·Spatial Query·Navigation의 권위 관계와 사용자 흐름은 Main System Guide에 반영되어 있다. 관련 권위 계약이 변경되면 Guide를 `UPDATE_REQUIRED`로 전환한다.
+Scene Runtime과 Authoring의 권위 관계, 사용자 흐름과 복구 경계는 각각의 Main System Guide에 반영되어 있다. 관련 권위 계약이 변경되면 해당 Guide를 `UPDATE_REQUIRED`로 전환한다.
