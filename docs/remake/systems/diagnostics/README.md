@@ -2,6 +2,12 @@
 
 Command, RuleExecution, Transaction, Domain Event, Projection, UI와 Presentation을 하나의 인과 Trace로 연결하고 오류·성능·복구 상태를 설명한다.
 
+## 관련 Main System Guide
+
+- [`UI, Camera와 Presentation Guide`](../../guides/ui/README.md)
+  - Projection Apply·ViewModel·Input Context·Command Reconciliation과 Presentation Playback의 Client Trace 경계
+  - Panel·Module Failure Isolation, Permission-aware Error Surface와 Reconnect·Rollback 진단 흐름
+
 ## 권위 문서
 
 - [`Diagnostics, Observability, Correlated Trace와 Incident Runtime 계약`](../../architecture/diagnostics-observability-correlated-trace-and-incident-runtime-contract.md)
