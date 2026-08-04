@@ -25,6 +25,12 @@
   - E 기본 상호작용, Q 취소·거절과 DM 승인 문맥
   - Player Command와 DM Override의 분리
   - 문·상자·아이템·함정·환경 행동의 RuleExecution·Transaction 경계
+- [`Visibility, Knowledge, Detection과 Hover Information Runtime 계약`](visibility-knowledge-detection-and-hover-information-runtime-contract.md)
+  - Visible·Detected·Known·Disclosed의 독립 권위 상태
+  - Observer별 Sense·Stealth·Search·Knowledge Relation
+  - Fog 지형 공개와 Actor·Secret Detection의 분리
+  - Player·DM·Observer 정보 Projection과 Knowledge Scope
+  - Hover Information Projection과 비밀 HP·AC·Identity 차단
 - [`Scene Compiler와 Compiled Runtime Scene 계약`](scene-compiler-and-compiled-runtime-scene-contract.md)
 - [`Character Runtime과 Compiled Character Build 계약`](character-runtime-and-compiled-character-build-contract.md)
 - [`Character Action Opportunity와 2024 Core Action Runtime 계약`](character-action-opportunity-and-2024-core-action-runtime-contract.md)
@@ -48,6 +54,7 @@
 - Session Base Mode, Context, Overlay, Transition과 Command Gate
 - Input Context, Intent, Selection Session, Candidate, Preview와 Frozen Binding
 - Interaction Capability, Contextual Option, DM Adjudication과 Override
+- Visibility, Detection, Knowledge, Disclosure와 Hover Information Projection
 - Command, revision, transaction, Ordering, Reservation과 Journal
 - Scene Source, Runtime Scene, Spatial Query, Navigation과 Streaming
 - Character, Character Action, Spell, Roll Resolution, Effect, ItemInstance와 Runtime Object의 권위 경계
@@ -67,6 +74,7 @@
 - Exploration·Encounter·Downtime, Context, UI·Authoring Overlay, Scene Transition·Join·Recovery를 다루면 [`Session Runtime 계약`](session-play-mode-context-overlay-and-transition-contract.md)을 따른다.
 - 클릭·Hover·Focus·대상 지정·범위 Preview·DM Hidden Selection·Q/E 승인과 취소를 다루면 [`Selection Runtime 계약`](selection-targeting-preview-and-frozen-binding-runtime-contract.md)을 따른다.
 - 선택된 대상의 Open·Utilize·Pick Up·Inspect·Force Command와 DM 판정을 다루면 [`Interaction Capability 계약`](interaction-capability-contextual-command-and-adjudication-contract.md)을 따른다.
+- 시야·감각·은신·Fog·발견·식별·Hover 공개 정보를 다루면 [`Visibility, Knowledge와 Detection Runtime 계약`](visibility-knowledge-detection-and-hover-information-runtime-contract.md)을 따른다.
 - 기본 행동과 Action Economy는 [`Character Action Runtime`](character-action-opportunity-and-2024-core-action-runtime-contract.md)을 따른다.
 - 주문 시전은 [`Spell Runtime`](spell-casting-route-and-2024-spell-runtime-contract.md)을 따른다.
 - 주사위, 공격 판정, 능력 판정, 내성, 이니셔티브, 죽음 내성, 피해·회복 굴림은 [`Dice와 Resolution Runtime`](dice-roll-check-save-attack-and-resolution-runtime-contract.md)을 따른다.
