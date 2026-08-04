@@ -11,6 +11,9 @@
 - [`Journal과 Ping Guide`](../guides/journal/README.md)
   - Journal Document·Outline·Search·Backlink·Edit Projection과 Recoverable Draft
   - Safe Navigation CameraRequest·Selection Intent와 위치·경로 Ping Input·Presentation 경계
+- [`Extension, Plugin과 Content Pack Guide`](../guides/extension/README.md)
+  - Presentation Recipe·Module·Step Handler·Augment의 Version·Fallback·오류 격리
+  - Content Localization·Icon·Panel Schema와 Audience·Accessibility·Budget 경계
 
 ## 최상위 권위 계약
 
@@ -41,12 +44,14 @@
 
 ## 추천 읽기 순서
 
-1. `../architecture/ui-projection-view-model-input-context-and-recovery-runtime-contract.md`
-2. `../architecture/networking-command-event-and-client-synchronization-contract.md`
-3. `../architecture/session-play-mode-context-overlay-and-transition-contract.md`
-4. `common-input/common-input-grammar.md`
-5. 대상 화면의 UI 문서
-6. 해당 Gameplay Domain의 Architecture와 System 문서
+1. `../guides/ui/README.md`
+2. `../guides/extension/README.md`
+3. `../architecture/ui-projection-view-model-input-context-and-recovery-runtime-contract.md`
+4. `../architecture/networking-command-event-and-client-synchronization-contract.md`
+5. `../architecture/session-play-mode-context-overlay-and-transition-contract.md`
+6. `common-input/common-input-grammar.md`
+7. 대상 화면의 UI 문서
+8. 해당 Gameplay Domain의 Architecture와 System 문서
 
 ## 고정 경계
 
@@ -67,4 +72,4 @@
 Guide Status: CURRENT
 ```
 
-현재 UI, Camera와 Presentation의 권위 문서 관계, 사용자 흐름과 복구 경계는 Main System Guide에 반영되어 있다. 관련 권위 계약이 변경되면 Guide를 `UPDATE_REQUIRED`로 전환한다.
+현재 UI, Camera, Presentation과 신뢰 Extension의 권위 문서 관계, 사용자 흐름과 복구 경계는 Main System Guide에 반영되어 있다. 관련 권위 계약이 변경되면 Guide를 `UPDATE_REQUIRED`로 전환한다.
