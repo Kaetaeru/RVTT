@@ -4,6 +4,10 @@ Command, RuleExecution, Transaction, Domain Event, Projection, UI와 Presentatio
 
 ## 관련 Main System Guide
 
+- [`Diagnostics, Simulation과 Operations Guide`](../../guides/diagnostics/README.md)
+  - Server Correlated Trace·Decision·Budget·Incident·Health·Support의 전체 운영 흐름
+  - Production-parity Scenario·Fault Injection·Disclosure·Restart·Rollback 검증과 Incident Replay
+  - Diagnostic Read와 실제 Resync·Recovery·Rollback Command의 권위 분리
 - [`UI, Camera와 Presentation Guide`](../../guides/ui/README.md)
   - Projection Apply·ViewModel·Input·CameraRequest·Playback Trace와 Client Failure Isolation
 - [`Journal과 Ping Guide`](../../guides/journal/README.md)
@@ -139,7 +143,7 @@ scene_editor.intent
 ## Guide 상태
 
 ```text
-Guide Status: READY_TO_WRITE
+Guide Status: CURRENT
 ```
 
-Diagnostics·Observability와 Operations 경계는 구현 가능한 권위 계약과 Completion Audit를 충족한다. Main System Guide 작성 후 `CURRENT`로 전환한다.
+Diagnostics·Observability·Operations의 권위 문서 관계, 사용자·지원 흐름과 Simulation·Recovery 검증 경계는 Main System Guide에 반영되어 있다. 관련 권위 계약이 변경되면 Guide를 `UPDATE_REQUIRED`로 전환한다.
