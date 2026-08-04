@@ -4,6 +4,8 @@
 
 공통 Capability·RuleExecution·Recipe 계약은 `../../architecture/`를 따른다.
 
+규칙 세트, Source Pack Patch, Campaign·Scope 설정, Policy 우선순위·충돌과 진행 중 실행의 규칙 고정은 [`Ruleset Policy Registry, Composition과 Frozen Snapshot Runtime 계약`](../../architecture/ruleset-policy-registry-composition-and-frozen-snapshot-runtime-contract.md)을 따른다.
+
 거리, 영역 포함, 시야 증거, 효과선, 엄폐, 점유와 배치 판정은 [`Spatial Query Engine과 Provider 계약`](../../architecture/spatial-query-engine-and-provider-contract.md)을 따른다. Rules 문서는 공간 결과를 사용하는 규칙 의미와 사용자 흐름을 정의하며, 자체 공간 계산기를 만들지 않는다.
 
 Capability 실행, 비용 예약, Recipe 실행, 반응·Trigger, PendingEffect와 CommitGroup의 전체 순서는 [`Rule Runtime Orchestrator와 Pending Execution 계약`](../../architecture/rule-runtime-orchestrator-and-pending-execution-contract.md)을 따른다.
@@ -16,8 +18,14 @@ Capability 실행, 비용 예약, Recipe 실행, 반응·Trigger, PendingEffect�
 
 ## 권위 문서
 
-### 공통 실행
+### Policy와 공통 실행
 
+- [`../../architecture/ruleset-policy-registry-composition-and-frozen-snapshot-runtime-contract.md`](../../architecture/ruleset-policy-registry-composition-and-frozen-snapshot-runtime-contract.md)
+  - Policy Family·Implementation·Merger Registry
+  - Ruleset·Source Pack·Campaign·Scope Binding과 결정적 Composition
+  - Campaign·Scope Frozen Snapshot과 Execution Effective Policy View
+  - Character·Item·Effect Rule Contribution과 전역 Policy의 분리
+  - Conflict, Hard Invariant, DM Override, Hot Swap와 Migration
 - [`../../architecture/rule-runtime-orchestrator-and-pending-execution-contract.md`](../../architecture/rule-runtime-orchestrator-and-pending-execution-contract.md)
   - 모든 공격·주문·Feature·Item·Trigger의 공통 RuleExecution 상태기계
   - 비용 예약, Recipe Runtime, RuleEvent와 중첩 TimingWindow
@@ -68,20 +76,25 @@ Capability 실행, 비용 예약, Recipe 실행, 반응·Trigger, PendingEffect�
 
 1. `../../architecture/runtime-architecture-principles.md`
 2. `../../architecture/compiled-build-and-authoritative-state-pattern.md`
-3. `../../architecture/networking-command-event-and-client-synchronization-contract.md`
-4. `../../architecture/command-ordering-logical-time-and-transaction-coordinator-contract.md`
-5. `../../architecture/spatial-query-engine-and-provider-contract.md`
-6. `../../architecture/rules-content-grant-capability-model.md`
-7. `../../architecture/character-action-opportunity-and-2024-core-action-runtime-contract.md`
-8. `../../architecture/rule-runtime-orchestrator-and-pending-execution-contract.md`
-9. `../../architecture/spell-casting-route-and-2024-spell-runtime-contract.md`
-10. `../../architecture/effect-recipe-resolution-and-commit-model.md`
-11. `../../architecture/effect-condition-and-ongoing-runtime-contract.md`
-12. `standard-recipe-step-library.md`
-13. 대상 콘텐츠에 해당하는 세부 Rules 문서
+3. `../../architecture/ruleset-policy-registry-composition-and-frozen-snapshot-runtime-contract.md`
+4. `../../architecture/networking-command-event-and-client-synchronization-contract.md`
+5. `../../architecture/command-ordering-logical-time-and-transaction-coordinator-contract.md`
+6. `../../architecture/spatial-query-engine-and-provider-contract.md`
+7. `../../architecture/rules-content-grant-capability-model.md`
+8. `../../architecture/character-action-opportunity-and-2024-core-action-runtime-contract.md`
+9. `../../architecture/rule-runtime-orchestrator-and-pending-execution-contract.md`
+10. `../../architecture/spell-casting-route-and-2024-spell-runtime-contract.md`
+11. `../../architecture/effect-recipe-resolution-and-commit-model.md`
+12. `../../architecture/effect-condition-and-ongoing-runtime-contract.md`
+13. `standard-recipe-step-library.md`
+14. 대상 콘텐츠에 해당하는 세부 Rules 문서
 
 ## 고정 경계
 
+- Runtime은 Policy Registry Table을 직접 읽지 않고 Frozen Snapshot 또는 Effective Policy View를 사용한다.
+- 진행 중 RuleExecution은 생성 당시의 Effective Policy View를 유지하며 매 Step 최신 Policy를 다시 읽지 않는다.
+- Character·Item·Effect Rule Contribution은 허용된 Family의 Execution View에만 기여하고 Campaign Snapshot을 수정하지 않는다.
+- DM Policy Override는 타입, Scope, 이유와 만료를 가지며 Disclosure·Authorization·Transaction·Hard Budget을 우회하지 않는다.
 - Capability는 사용 가능성을 설명하고 RuleExecution의 생명주기를 직접 소유하지 않는다.
 - Spell Definition은 캐릭터의 준비·슬롯·ItemInstance State를 저장하지 않는다.
 - SpellCastRoute는 출처와 시전 정책을 설명하며 실제 Resource State를 복사하지 않는다.
@@ -103,12 +116,13 @@ Capability 실행, 비용 예약, Recipe 실행, 반응·Trigger, PendingEffect�
 
 ## 구현 명세 준비도
 
-`Rule Runtime Orchestrator`, `Spell Runtime`, `Command Ordering과 Transaction Coordinator`, `Effect Runtime`, `standard-recipe-step-library.md`, `001-recipe-step-runtime-foundation.md`와 `002-standard-step-handler-contracts.md`는 공통 구현 명세로 내릴 수 있는 수준이다.
+`Ruleset Policy Runtime`, `Rule Runtime Orchestrator`, `Spell Runtime`, `Command Ordering과 Transaction Coordinator`, `Effect Runtime`, `standard-recipe-step-library.md`, `001-recipe-step-runtime-foundation.md`와 `002-standard-step-handler-contracts.md`는 공통 구현 명세로 내릴 수 있는 수준이다.
 
-다만 다음 구현 명세는 순서를 지킨다.
+다만 전체 저장소 작업 순서는 [`CURRENT-WORK-ORDER.md`](../../CURRENT-WORK-ORDER.md)를 따른다. Rules 구현 명세 내부에서는 다음 순서를 사용한다.
 
 ```text
-Ordering Key Registry와 Transaction Foundation
+Policy Family·Implementation Registry와 Frozen Snapshot Foundation
+→ Ordering Key Registry와 Transaction Foundation
 → RuleExecution Registry와 상태기계
 → Action Opportunity와 Usage Gate
 → 비용 예약과 Pending Input
