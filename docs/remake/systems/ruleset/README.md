@@ -6,6 +6,9 @@
 
 - [`Rules, Character Action, Spell, Dice와 Effect Guide`](../../guides/rules/README.md)
   - Policy Composition과 Frozen Snapshot이 Character Capability·RuleExecution·Spell·Roll·Effect 실행에 적용되는 전체 흐름
+- [`Extension, Plugin과 Content Pack Guide`](../../guides/extension/README.md)
+  - Ruleset·Source Pack Manifest, Stable Content ID·Version·Dependency와 Localization
+  - Source Pack Policy Patch, 신뢰 Implementation·Merger·Migration과 Pack 활성화·제거 경계
 
 ## 상위 권위 문서
 
@@ -83,12 +86,13 @@ presentation_accessibility
 ## 추천 읽기 순서
 
 1. `../../guides/rules/README.md`
-2. `../../architecture/runtime-architecture-principles.md`
-3. `../../architecture/compiled-build-and-authoritative-state-pattern.md`
-4. `../../decisions/ADR-0003-ruleset-source-packs-localization.md`
-5. `../../architecture/ruleset-policy-registry-composition-and-frozen-snapshot-runtime-contract.md`
-6. `../../decisions/ADR-0081-versioned-policy-composition-and-frozen-ruleset-snapshots.md`
-7. Policy를 사용하는 관련 Runtime Architecture
+2. `../../guides/extension/README.md`
+3. `../../architecture/runtime-architecture-principles.md`
+4. `../../architecture/compiled-build-and-authoritative-state-pattern.md`
+5. `../../decisions/ADR-0003-ruleset-source-packs-localization.md`
+6. `../../architecture/ruleset-policy-registry-composition-and-frozen-snapshot-runtime-contract.md`
+7. `../../decisions/ADR-0081-versioned-policy-composition-and-frozen-ruleset-snapshots.md`
+8. Policy를 사용하는 관련 Runtime Architecture
 
 ## Guide 상태
 
@@ -96,4 +100,7 @@ presentation_accessibility
 Guide Status: CURRENT
 ```
 
-현재 Guide: [`Rules, Character Action, Spell, Dice와 Effect`](../../guides/rules/README.md)
+현재 Guide:
+
+- [`Rules, Character Action, Spell, Dice와 Effect`](../../guides/rules/README.md)
+- [`Extension, Plugin과 Content Pack`](../../guides/extension/README.md)
