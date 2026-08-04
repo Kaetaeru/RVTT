@@ -97,7 +97,7 @@
 ## Guide Status
 
 ```text
-READY_FOR_MAIN_GUIDE_PHASE
+READY_TO_WRITE
 ```
 
 Combat Architecture와 Integration BLOCKER는 완료됐다. Main System Guide는 권위 문서 읽기 순서, Player·DM 흐름, Cross-Domain Outcome, 복구와 구현 Spec 진입점을 통합한다.
