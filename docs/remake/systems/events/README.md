@@ -7,6 +7,10 @@ Commit 이후 Domain Event, Transactional Outbox, Subscriber, 관찰자별 Proje
 - [`Combat와 Encounter Guide`](../../guides/combat/README.md)
   - Encounter·Round·Turn·Objective·End Domain Event와 Rule Event의 분리
   - Temporal Boundary Commit 이후 `schedule.became_due` Event→Command Bridge와 Deferred Consequence
+- [`Diagnostics, Simulation과 Operations Guide`](../../guides/diagnostics/README.md)
+  - Event Fan-out·Subscriber·Retry·Dead Letter의 Causation Trace와 Health·Incident 연결
+  - Duplicate·Drop·Reorder·Retry Fault Scenario와 이전 AuthorityEpoch Follow-up 차단
+  - Event Gap·Projection Gap·Quiescence·Resource Leak의 구조화된 검증
 
 ## 권위 문서
 
@@ -39,3 +43,5 @@ Commit 이후 Domain Event, Transactional Outbox, Subscriber, 관찰자별 Proje
 - Client에는 Raw Domain Event를 보내지 않는다.
 - Presentation Subscriber 실패는 Gameplay Commit을 되돌리지 않는다.
 - Rollback 이전 Authority Epoch의 Event를 새 Branch에 다시 적용하지 않는다.
+- Diagnostics Trace와 Incident가 Domain Event Outbox의 권위 원본이 되지 않는다.
+- Test Harness는 실제 Outbox·Subscriber 경로를 사용하고 Event Store를 직접 수정하지 않는다.
