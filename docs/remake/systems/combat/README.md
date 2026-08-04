@@ -1,6 +1,6 @@
 # Combat 시스템
 
-주사위 결과 확정, Encounter·Initiative Timeline·Turn·제어권과 전투 Rollback Timeline을 다룬다.
+주사위 결과 확정, Encounter·Initiative Timeline·Turn·제어권, Damage·Death Integration과 전투 Rollback Timeline을 다룬다.
 
 ## 상위 권위 문서
 
@@ -20,6 +20,11 @@
   - `TemporalBoundaryCandidate`, `RoundTimeLedger`와 멱등 Boundary Sequence
   - Scheduler Due Occurrence와 Event→Command Encounter Bridge
   - Blocking Due Boundary Gate와 같은 Chronology의 중복 시간 진행 방지
+- [`Cross-Domain Outcome Cascade와 Integration Boundary Runtime 계약`](../../architecture/cross-domain-outcome-cascade-and-integration-boundary-runtime-contract.md)
+  - Damage·Temporary HP·Current HP·VitalState·DeathSave의 Atomic Closure
+  - Death·Effect·Opportunity·Reservation과 Encounter Eligibility 통합
+  - Concentration·Objective·Turn Advance의 Deferred Consequence
+  - Encounter End Transaction, Projection Barrier와 Epoch-safe Follow-up
 - [`Game Time, Calendar, Duration과 Scheduler Runtime 계약`](../../architecture/game-time-calendar-duration-and-scheduler-runtime-contract.md)
   - Round End의 Campaign Time 반영
   - Turn·Round Boundary Duration과 초·분 단위 Duration 분리
@@ -35,6 +40,8 @@
   - Roll 전후 TimingWindow, Reaction, Parent·Child RuleExecution Graph와 CommitGroup
 - [`Transaction Coordinator`](../../architecture/command-ordering-logical-time-and-transaction-coordinator-contract.md)
   - 피해·상태·자원·Encounter 결과의 원자적 Commit
+- [`Runtime Architecture Completion과 Main System Guide 준비도 감사`](../../audits/runtime-architecture-completion-and-main-guide-readiness-audit.md)
+  - Combat Integration BLOCKER 해소와 Main Guide 단계 준비 완료 판정
 
 ## 시스템 문서
 
@@ -64,20 +71,27 @@
 - Ready는 지원하고 Delay는 D&D 2024 기본 Policy에서 제공하지 않는다.
 - Rollback Review는 현재 Branch를 바꾸지 않으며 Commit 후 새 AuthorityEpoch로 Full Resync한다.
 - 패배·의식불명·사망 상태와 Encounter 참가 기록을 동일시하지 않는다.
+- Damage Provider가 Encounter Cursor를 직접 이동하거나 Encounter를 종료하지 않는다.
+- HP 0·VitalState·DeathSave와 확정적 Opportunity Closure는 하나의 Cross-Domain Transaction에서 처리한다.
+- 집중 내성, Objective 평가와 Turn Advance는 Commit 이후 타입 있는 Follow-up 실행을 사용한다.
 - Objective 달성 후보가 생겨도 기본적으로 DM 또는 End Policy 확인 전 자동 종료하지 않는다.
+- Encounter 종료가 Actor 위치·HP·시체·바닥 Item·지속 Knowledge를 초기화하지 않는다.
+- 같은 Transaction의 HP·Vital·Effect·Encounter Projection은 Barrier Batch로 적용한다.
 
 ## 역할 경계
 
 - 플레이어는 자신이 제어하는 Actor의 Action, Movement, Ready, Reaction과 Turn End 요청을 제출한다.
 - DM은 Encounter 시작·종료·참가자·진영·Timeline·Objective, 위임, Override와 오류 복구를 담당한다.
 - Observer는 공개 정책에 맞는 Encounter Projection만 확인한다.
-- 시스템은 Initiative Roll, Timeline Commit, Boundary 진행, Opportunity Ledger, Objective Evaluation과 Recovery를 담당한다.
+- 시스템은 Initiative Roll, Timeline Commit, Boundary 진행, Opportunity Ledger, Objective Evaluation, Cross-Domain Gate와 Recovery를 담당한다.
 - Client Physics와 주사위 Animation은 권위 결과를 결정하지 않는다.
 
 화면 배치는 `../../ui/combat-hud/`를 참고한다.
 
 ## Guide Status
 
-`NOT_READY`
+```text
+READY_FOR_MAIN_GUIDE_PHASE
+```
 
-Encounter 상위 계약은 완료됐다. Damage·Death·Combat Integration 계약과 Completion Audit가 끝난 뒤 Main System Guide를 작성한다.
+Combat Architecture와 Integration BLOCKER는 완료됐다. Main System Guide는 권위 문서 읽기 순서, Player·DM 흐름, Cross-Domain Outcome, 복구와 구현 Spec 진입점을 통합한다.
