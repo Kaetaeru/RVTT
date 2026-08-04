@@ -8,6 +8,8 @@
 
 Capability 실행, 비용 예약, Recipe 실행, 반응·Trigger, PendingEffect와 CommitGroup의 전체 순서는 [`Rule Runtime Orchestrator와 Pending Execution 계약`](../../architecture/rule-runtime-orchestrator-and-pending-execution-contract.md)을 따른다.
 
+둘 이상의 Actor·Object·자원·상태를 변경하는 Commit과 Command 충돌 순서는 [`Command Ordering, Logical Time와 Transaction Coordinator 계약`](../../architecture/command-ordering-logical-time-and-transaction-coordinator-contract.md)을 따른다.
+
 ## 권위 문서
 
 ### 공통 실행
@@ -17,6 +19,11 @@ Capability 실행, 비용 예약, Recipe 실행, 반응·Trigger, PendingEffect�
   - 비용 예약, Recipe Runtime, RuleEvent와 중첩 TimingWindow
   - Capability Offer, Child Execution, CommitGroup과 사후 Event
   - Pending Execution 저장·재접속·Rollback과 실행 Budget
+- [`../../architecture/command-ordering-logical-time-and-transaction-coordinator-contract.md`](../../architecture/command-ordering-logical-time-and-transaction-coordinator-contract.md)
+  - Ordering Key, 다중 Key Reservation과 Deadlock 방지
+  - Resource Reservation과 짧은 Ordering Reservation 분리
+  - Read Set·Write Set·Precondition과 Commit Graph
+  - 원자적 Commit, Authority Revision, Journal과 Recovery
 - [`standard-recipe-step-library.md`](standard-recipe-step-library.md)
   - 모든 주문·Feature·아이템·몬스터 능력이 사용하는 공통 Step 언어
   - Step 단위 `Executable / Guided / Assisted`
@@ -43,13 +50,14 @@ Capability 실행, 비용 예약, Recipe 실행, 반응·Trigger, PendingEffect�
 
 1. `../../architecture/runtime-architecture-principles.md`
 2. `../../architecture/networking-command-event-and-client-synchronization-contract.md`
-3. `../../architecture/spatial-query-engine-and-provider-contract.md`
-4. `../../architecture/rules-content-grant-capability-model.md`
-5. `../../architecture/rules-content-execution-and-spell-contract.md`
-6. `../../architecture/rule-runtime-orchestrator-and-pending-execution-contract.md`
-7. `../../architecture/effect-recipe-resolution-and-commit-model.md`
-8. `standard-recipe-step-library.md`
-9. 대상 콘텐츠에 해당하는 세부 Rules 문서
+3. `../../architecture/command-ordering-logical-time-and-transaction-coordinator-contract.md`
+4. `../../architecture/spatial-query-engine-and-provider-contract.md`
+5. `../../architecture/rules-content-grant-capability-model.md`
+6. `../../architecture/rules-content-execution-and-spell-contract.md`
+7. `../../architecture/rule-runtime-orchestrator-and-pending-execution-contract.md`
+8. `../../architecture/effect-recipe-resolution-and-commit-model.md`
+9. `standard-recipe-step-library.md`
+10. 대상 콘텐츠에 해당하는 세부 Rules 문서
 
 ## 고정 경계
 
@@ -58,22 +66,25 @@ Capability 실행, 비용 예약, Recipe 실행, 반응·Trigger, PendingEffect�
 - RuleEvent Handler는 부모 실행을 직접 변경하지 않고 Modifier, Override, Offer 또는 Child Execution을 사용한다.
 - Reaction과 Prompt 대기는 저장 가능한 Pending Execution이며 열린 Remote 호출에 의존하지 않는다.
 - 비용 예약과 실제 소비 Commit을 분리한다.
-- 영구 상태 변경은 PendingEffect와 CommitGroup을 사용한다.
+- 반응·DM 입력 대기 중 Ordering Lock을 유지하지 않는다.
+- 영구 상태 변경은 PendingEffect와 CommitGroup을 사용하고 Transaction Coordinator가 원자적으로 확정한다.
+- Commit 이후에만 Authority Revision, RuleEvent와 Client Projection을 공개한다.
 - Client Animation과 주사위 물리가 권위 결과를 결정하지 않는다.
-- Rollback 이후 이전 Authority Epoch의 Offer·Prompt 응답을 재사용하지 않는다.
+- Rollback 이후 이전 Authority Epoch의 Offer·Prompt·Reservation·Command를 재사용하지 않는다.
 
 ## 구현 명세 준비도
 
-`Rule Runtime Orchestrator`, `standard-recipe-step-library.md`, `001-recipe-step-runtime-foundation.md`와 `002-standard-step-handler-contracts.md`는 공통 구현 명세로 내릴 수 있는 수준이다.
+`Rule Runtime Orchestrator`, `Command Ordering과 Transaction Coordinator`, `standard-recipe-step-library.md`, `001-recipe-step-runtime-foundation.md`와 `002-standard-step-handler-contracts.md`는 공통 구현 명세로 내릴 수 있는 수준이다.
 
 다만 다음 구현 명세는 순서를 지킨다.
 
 ```text
-RuleExecution Registry와 상태기계
+Ordering Key Registry와 Transaction Foundation
+→ RuleExecution Registry와 상태기계
 → 비용 예약과 Pending Input
 → RuleEvent·TimingWindow·Capability Offer
 → Recipe Runtime Adapter
 → PendingEffect·CommitGroup 조정
-→ 저장·재접속·Rollback
+→ Journal·재접속·Rollback
 → 개별 Roll·Effect·공간 Step Handler
 ```
