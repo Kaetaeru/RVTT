@@ -2,6 +2,14 @@
 
 여러 Domain Runtime이 하나의 결과에 함께 참여할 때의 Transaction, Follow-up, Gate와 Projection 경계를 다룬다.
 
+## 관련 Main System Guide
+
+- [`Combat와 Encounter Guide`](../../guides/combat/README.md)
+  - Damage·Temporary HP·Current HP·VitalState·DeathSave Immediate Closure
+  - Death 이후 Objective·Turn Advance Follow-up, Encounter End Transaction과 Projection Barrier
+- [`Rules, Character Action, Spell, Dice와 Effect Guide`](../../guides/rules/README.md)
+  - Roll·PendingEffect·CommitGroup·EffectInstance가 Cross-Domain Outcome으로 진입하는 경계
+
 ## 최상위 권위 문서
 
 - [`Cross-Domain Outcome Cascade와 Integration Boundary Runtime 계약`](../../architecture/cross-domain-outcome-cascade-and-integration-boundary-runtime-contract.md)
@@ -106,4 +114,4 @@ Subscriber가 Store를 직접 수정하지 않고 새 Command 또는 RuleExecuti
 Guide Status: READY_FOR_MAIN_GUIDE_PHASE
 ```
 
-실제 Module·Type·Command·Persistence Schema는 Main System Guides 이후 Implementation Specs에서 확정한다.
+Combat·Encounter 관련 통합 흐름은 현재 Guide에 연결됐다. Build·Inventory·Crafting·Downtime을 포함한 전체 Cross-System Integration은 후속 Main System Guides에서 계속 통합한다.
