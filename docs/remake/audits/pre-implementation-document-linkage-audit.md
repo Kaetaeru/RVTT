@@ -1,6 +1,6 @@
 # 구현 명세 전 최종 문서 연결 감사
 
-- 상태: IN_PROGRESS
+- 상태: COMPLETE
 - 문서 종류: Completion Audit
 - 감사일: 2026-08-05
 - 현재 작업 순서: [`CURRENT-WORK-ORDER.md`](../CURRENT-WORK-ORDER.md)
@@ -12,7 +12,7 @@
 
 ## 1. 감사 목적
 
-Implementation Specs를 시작하기 전에 RVTT Remake 문서가 다음 경로로 끊김 없이 연결되는지 마지막으로 확인한다.
+Implementation Specs를 시작하기 전에 RVTT Remake 문서가 다음 경로로 끊김 없이 연결되는지 검사했다.
 
 ```text
 Root README
@@ -25,155 +25,114 @@ Root README
 → Production Implementation Gate
 ```
 
-감사 범위:
+검사 범위:
 
 - 사용자와 개발자의 시작점
 - 문서 역할과 권위 방향
 - Hub의 현재 단계 표시
-- Quick Flow·User Guide·Main Guide·Spec의 추적성
+- Quick Flow·User Guide·Main Guide·Spec 추적성
 - 12개 Main Guide의 상태와 Completion Audit 연결
 - Product·Architecture·System·UI·ADR Index 연결
-- Implementation Spec Template과 기존 Shared Spec 진입 경로
+- Implementation Spec Template과 Shared Spec 진입 경로
 - `SUPERSEDED`, `DISCONTINUED`, `ARCHIVED`, 충돌 Draft 제외
 - 상대 링크와 GitHub Actions 문서 검증
 
-이 Audit은 제품 동작이나 Architecture 결정을 새로 만들지 않는다.
+이 Audit은 제품 동작이나 Architecture 결정을 새로 만들지 않았다.
 
-## 2. 감사 전 발견 사항
+## 2. 발견하고 수정한 문제
 
-### 2.1 단계 표시 Drift
+### 2.1 User Guide 계층 누락
 
-다음 문서는 Work Order가 감사 단계로 바뀌기 전 상태인 `Implementation Specs IN_PROGRESS`를 계속 표시했다.
+`DOCUMENT-GUIDE.md`에 `user-guides/` 계층, 상태 체계와 역할이 없었다.
 
-- Root `README.md`
-- `docs/remake/README.md`
-- `guides/README.md`
-- `specs/README.md`
+수정:
 
-판정: `FIX_REQUIRED`
+- Quick Flow와 Player·DM Guide의 역할 추가
+- `TARGET_EXPERIENCE → UPDATE_REQUIRED → CURRENT_FOR_BUILD → RELEASE_VERIFIED` 상태 추가
+- User Guide와 Main Guide가 비권위 Reference라는 방향 확정
+- 사용자·기획·Spec·구현의 표준 탐색 경로 추가
 
-### 2.2 User Guide 계층 누락
+### 2.2 오래된 Product Draft의 활성 권위 잔류
 
-`DOCUMENT-GUIDE.md`의 문서 계층과 문서 종류 선택에 `user-guides/`가 없었다.
+`product/core-session-loop.md`는 다음 최신 확정 범위와 충돌했다.
 
-추가 문제:
-
-- User Guide 상태 체계가 없음
-- 실제 Guide 경로가 아닌 오래된 파일명 예시 사용
-- 현재 절차와 반대로 `IMPLEMENTED → GUIDE_CURRENT` 순서를 표시
-- Quick Flow·User Guide·Authority·Spec 추적성 규칙이 없음
-
-판정: `FIX_REQUIRED`
-
-### 2.3 오래된 Product Draft가 활성 Index에 남음
-
-`product/README.md`가 `core-session-loop.md`를 예정 권위 문서 1번으로 안내했다.
-
-해당 Draft는 다음 최신 범위와 충돌했다.
-
-- Encounter Token WASD 금지
+- Encounter에서 Token WASD 금지
 - 음악·환경음·효과음 비목표
 
-문서 수명주기 정책은 구현 명세 직전에 이러한 충돌 문서를 활성 권위 경로에서 정리하도록 요구한다.
+수정:
 
-판정: `DISCONTINUATION_REQUIRED`
+- 활성 파일을 `DISCONTINUED` 안내문으로 교체
+- 보관 기록 생성: [`archive/discontinued/product/core-session-loop.md`](../archive/discontinued/product/core-session-loop.md)
+- 현재 사용자 흐름을 [`Quick Flow`](../user-guides/QUICK-FLOW.md)와 상세 User Guide로 이전
+- 현재 Product Authority를 이동·입력 범위와 콘텐츠·제외 범위로 한정
 
-### 2.4 Template 연결 누락
+### 2.3 Implementation Spec Template 부재
 
-`templates/README.md`는 존재하지 않는 `implementation-spec-template.md`를 예정 문서로만 나열했고, 실제 존재하는 Main System Guide Template을 안내하지 않았다.
+필수 명세 구조가 `AGENTS.md`에만 있었고 실제 Template 파일이 없었다.
 
-Implementation Spec의 필수 구조는 `AGENTS.md`에 있었지만 실제 작성 Template과 연결되지 않았다.
-
-판정: `FIX_REQUIRED`
-
-### 2.5 Shared Spec Index 불완전
-
-`specs/shared/README.md`는 읽기 순서에서 001만 안내했고 002를 연결하지 않았다.
-
-또한 두 초기 Shared Spec이 최신 Guide·User Guide 이전에 작성됐다는 `REVIEW_REQUIRED` 상태가 Index에 반영되지 않았다.
-
-판정: `FIX_REQUIRED`
-
-### 2.6 일부 Index의 역방향 탐색 부족
-
-- User Guide Hub에서 Product·Guide·Spec·Lifecycle로 돌아가는 직접 링크가 부족함
-- ADR Index에서 Work Order·Guide·Spec으로 이동하는 경로가 없음
-- Guide Hub에서 Quick Flow 사용자 구간과 Domain Guide 대응을 한눈에 확인하기 어려움
-
-판정: `FIX_REQUIRED`
-
-## 3. 적용한 수정
-
-### 3.1 수명주기 정리
-
-`core-session-loop.md`를 `DISCONTINUED` 안내문으로 교체했다.
-
-- 활성 안내: [`product/core-session-loop.md`](../product/core-session-loop.md)
-- 보관 기록: [`archive/discontinued/product/core-session-loop.md`](../archive/discontinued/product/core-session-loop.md)
-- 현재 사용자 흐름: [`Quick Flow`](../user-guides/QUICK-FLOW.md)
-- 현재 이동 범위: [`플랫폼·이동·입력 범위`](../product/platform-movement-and-input-scope.md)
-- 현재 제외 범위: [`콘텐츠 범위·자동화·Rollback·저장·제외 기능`](../product/content-automation-rollback-storage-and-exclusions.md)
-
-원문 전체는 Git 기록으로 보존한다.
-
-### 3.2 문서 구조 정책 갱신
-
-[`DOCUMENT-GUIDE.md`](../DOCUMENT-GUIDE.md)에 다음을 반영했다.
-
-- `user-guides/` 계층과 역할
-- User Guide 메타데이터·상태
-- 실제 Guide·User Guide 경로
-- 현재 단계 순서
-- 표준 사용자·개발자·구현 탐색 경로
-- Quick Flow·User Guide·Guide·Authority·Spec 추적성
-- 구현 명세 직전 수명주기 검사
-
-### 3.3 Template 정리
+수정:
 
 - [`Implementation Spec Template`](../templates/implementation-spec-template.md) 생성
-- [`Template Index`](../templates/README.md)에서 실제 제공 Template만 안내
-- [`Main System Guide Template`](../templates/main-system-guide-template.md)에 User Flow Reference와 Spec 전달 규칙 추가
+- Quick Flow·Player·DM Acceptance Flow와 직접 Authority 추적성 추가
+- Type·Command·Persistence·Migration·Transaction·Projection·Diagnostics·Test Gate 통합
+- Template Index에서 실제 제공 Template만 안내
 
-### 3.4 Hub·Index 연결 보강
+### 2.4 Shared Spec Index 불완전
+
+Shared Index가 Spec 001만 안내했고 002와 재검토 Gate를 누락했다.
+
+수정:
+
+- 001·002 모두 연결
+- Index 상태를 `REVIEW_REQUIRED`로 변경
+- RuleExecution·Transaction·Recovery·Diagnostics·Simulation·Extension과 사용자 Prompt 흐름의 재검토 항목 추가
+- 재검토 전 Production Code 근거로 사용하지 않도록 차단
+
+### 2.5 Hub와 Index의 역방향 탐색 부족
+
+수정한 문서:
 
 - [`Product Index`](../product/README.md)
-  - Quick Flow부터 현재 Product Authority까지 연결
-  - Discontinued Draft 제외
 - [`User Guide Hub`](../user-guides/README.md)
-  - Product·Guide·Spec·Lifecycle 역방향 링크 추가
 - [`Main System Guide Hub`](../guides/README.md)
-  - Quick Flow·User Guide·Domain Guide 대응표 추가
 - [`ADR Index`](../decisions/README.md)
-  - Work Order·Guide·Authority·Spec 탐색 경로 추가
 - [`Shared Spec Index`](../specs/shared/README.md)
-  - 001·002 모두 연결
-  - `REVIEW_REQUIRED`와 재검토 Gate 명시
 - [`Implementation Spec Hub`](../specs/README.md)
-  - 최종 감사 완료 전 `QUEUED`
-  - Template·Acceptance·Authority 경로 명시
+- [`Template Index`](../templates/README.md)
+- [`Audit Index`](README.md)
 
-## 4. 12개 Main System Guide 재확인
+Root·Work Order·Quick Flow·Guide·Authority·Spec·Lifecycle로 왕복할 수 있도록 연결했다.
 
-다음 12개 Guide의 상단 상태와 Completion Audit 링크를 재확인했다.
+### 2.6 Guide Template과 실제 경로 불일치
 
-| Guide | Guide Status | 시스템 상태 | Audit Link |
+수정:
+
+- 실제 Guide 경로인 `guides/<domain>/README.md` 사용
+- Quick Flow·User Guide Reference 필드 추가
+- User Guide를 Parent Authority로 기록하지 않는 규칙 추가
+- 폐기 문서 제외와 Spec 전달 체크리스트 추가
+- Work Order 상대 링크 교정
+
+## 3. 12개 Main System Guide 재확인
+
+| Guide | Guide Status | 시스템 상태 | Completion Audit |
 |---|---|---|---|
-| Runtime | `CURRENT` | `GUIDE_CURRENT` | 존재 |
-| Session | `CURRENT` | `GUIDE_CURRENT` | 존재 |
-| Scene | `CURRENT` | `GUIDE_CURRENT` | 존재 |
-| Exploration | `CURRENT` | `GUIDE_CURRENT` | 존재 |
-| Rules | `CURRENT` | `GUIDE_CURRENT` | 존재 |
-| Combat | `CURRENT` | `GUIDE_CURRENT` | 존재 |
-| Character | `CURRENT` | `GUIDE_CURRENT` | 존재 |
-| UI | `CURRENT` | `GUIDE_CURRENT` | 존재 |
-| Journal | `CURRENT` | `GUIDE_CURRENT` | 존재 |
-| Scene Editor | `CURRENT` | `GUIDE_CURRENT` | 존재 |
-| Diagnostics | `CURRENT` | `GUIDE_CURRENT` | 존재 |
-| Extension | `CURRENT` | `GUIDE_CURRENT` | 존재 |
+| Runtime | `CURRENT` | `GUIDE_CURRENT` | 연결됨 |
+| Session | `CURRENT` | `GUIDE_CURRENT` | 연결됨 |
+| Scene | `CURRENT` | `GUIDE_CURRENT` | 연결됨 |
+| Exploration | `CURRENT` | `GUIDE_CURRENT` | 연결됨 |
+| Rules | `CURRENT` | `GUIDE_CURRENT` | 연결됨 |
+| Combat | `CURRENT` | `GUIDE_CURRENT` | 연결됨 |
+| Character | `CURRENT` | `GUIDE_CURRENT` | 연결됨 |
+| UI | `CURRENT` | `GUIDE_CURRENT` | 연결됨 |
+| Journal | `CURRENT` | `GUIDE_CURRENT` | 연결됨 |
+| Scene Editor | `CURRENT` | `GUIDE_CURRENT` | 연결됨 |
+| Diagnostics | `CURRENT` | `GUIDE_CURRENT` | 연결됨 |
+| Extension | `CURRENT` | `GUIDE_CURRENT` | 연결됨 |
 
-Guide 내부의 Parent·Children·References와 Authority Documents 구조는 선행 Guide Completion Audit에서 전체 검사됐다. 이번 감사에서는 파일이 유지되고 상태·Audit 연결이 변하지 않았음을 확인했다.
+선행 Guide Completion Audit에서 검사한 Parent·Children·References와 Authority Documents 구조도 그대로 유지됐다.
 
-## 5. 최종 연결 모델
+## 4. 최종 연결 모델
 
 ### 사용자 경로
 
@@ -181,7 +140,7 @@ Guide 내부의 Parent·Children·References와 Authority Documents 구조는 �
 Root README
 → Quick Flow
 → Player 또는 DM Guide
-→ 필요할 때 User Guide Hub
+→ 필요한 상세 Hub
 ```
 
 ### 기획·Architecture 경로
@@ -192,7 +151,7 @@ CURRENT-WORK-ORDER
 → 관련 User Guide
 → Runtime Foundation Guide
 → Domain Main System Guide
-→ 직접 Authority Documents·ADR
+→ 직접 Product·Architecture·System·UI·ADR
 ```
 
 ### Spec 경로
@@ -216,7 +175,7 @@ CURRENT-WORK-ORDER
 → User Guide CURRENT_FOR_BUILD·RELEASE_VERIFIED 재검토
 ```
 
-## 6. 권위 방향 검사
+## 5. 권위 방향 검사
 
 ```text
 사용자의 최신 명시적 결정
@@ -234,7 +193,7 @@ Main System Guide
 → Authority 탐색 Reference
 ```
 
-판정:
+검사 결과:
 
 - User Guide가 Product Authority로 승격되지 않음
 - Main System Guide가 Authority Parent로 사용되지 않음
@@ -242,29 +201,34 @@ Main System Guide
 - Discontinued Draft가 현재 Authority 목록에서 제거됨
 - Archive가 현재 구현 근거로 연결되지 않음
 
-결과: `PASS`
+판정: `PASS`
 
-## 7. 자동 검증
+## 6. 자동 검증
 
-확인 대상:
-
-- 상대 링크 존재
-- Markdown 내부 경로
-- Archive·Discontinued 안내 경로
-- 새 Template 링크
-- Root·Hub·Work Order 링크
-
-최종 GitHub Actions 결과:
+GitHub Actions:
 
 ```text
-PENDING
+Workflow: Validate remake documentation
+Run: #805
+Job: validate
+Conclusion: success
 ```
 
-## 8. 최종 판정
+확인된 항목:
+
+- 상대 링크 대상 존재
+- Archive·Discontinued 안내 경로
+- 새 Implementation Spec Template 링크
+- Root·Hub·Work Order 경로
+- Markdown 내부 링크 정합성
+
+판정: `PASS`
+
+## 7. 최종 판정
 
 ```text
 Root-to-User Flow Navigation
-→ PENDING FINAL HUB UPDATE
+→ PASS
 
 User Flow-to-Guide Mapping
 → PASS
@@ -285,13 +249,16 @@ Shared Spec Review Gate
 → PASS
 
 Automated Link Validation
-→ PENDING
+→ PASS
 
 Pre-Implementation Document Linkage Audit
-→ IN_PROGRESS
+→ COMPLETE
 
 Implementation Specs
-→ BLOCKED UNTIL FINAL VALIDATION
+→ READY TO START
+
+Production Implementation
+→ NOT STARTED
 ```
 
-Root·Remake·Audit Hub와 Work Order를 최종 상태로 갱신하고 GitHub Actions가 성공하면 이 감사를 `COMPLETE`로 종료한다.
+구현 명세 전 문서 연결 감사는 완료됐다. 다음 단계는 `specs/CURRENT-SPEC-WORK-ORDER.md`를 만들고 Shared Spec 001·002를 재검토한 뒤 Quick Flow의 첫 수직 Slice를 확정하는 것이다.
