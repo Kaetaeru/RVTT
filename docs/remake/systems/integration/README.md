@@ -17,6 +17,9 @@
 - [`Journal과 Ping Guide`](../../guides/journal/README.md)
   - Journal Source Commit 이후 Compile·Index·Projection 갱신과 Safe Navigation Follow-up
   - Ping을 Authority Transaction과 분리된 비권위 Presentation Signal로 유지하는 경계
+- [`Scene Editor와 Authoring Guide`](../../guides/scene-editor/README.md)
+  - Scene Source Authoring Transaction, Candidate Build·Atomic Publish와 Last Known Good 경계
+  - Runtime Quick Edit·Source Promotion, Build Migration·Runtime Object Rebind와 Projection Barrier
 
 ## 최상위 권위 문서
 
@@ -59,6 +62,7 @@ Commit 직후 권위 상태가 유효하기 위해 필요한 변화다.
 - Character Build Activation + State Migration
 - Crafting Input Consumption + Output Item + Ground Presence
 - Rest Recovery + Resource·Effect·Condition Settlement
+- Live Scene Build Activation + Runtime Object Rebind + Dynamic State Rebase
 
 Provider 하나라도 실패하면 전체 Transaction을 Abort한다.
 
@@ -73,6 +77,7 @@ Provider 하나라도 실패하면 전체 Transaction을 Abort한다.
 - Scheduler Due 사건
 - Runtime Object 변경 후 Derived Index Rebuild
 - Journal Anchor Reindex
+- Scene Build 활성화 후 선택적 Presentation·Diagnostic 갱신
 - Presentation Playback
 
 Subscriber가 Store를 직접 수정하지 않고 새 Command 또는 RuleExecution을 제출한다.
@@ -85,12 +90,14 @@ Subscriber가 Store를 직접 수정하지 않고 새 Command 또는 RuleExecuti
 - Encounter Objective와 End는 Encounter Runtime이 소유한다.
 - Downtime Runtime이 Character·Inventory·Rest Store Mutation을 직접 작성하지 않는다.
 - Character Compiler가 Item·Actor·Encounter Live State를 직접 수정하지 않는다.
+- Scene Compiler가 Authoritative Dynamic State와 활성 Session Build를 직접 교체하지 않는다.
+- Scene Authoring Command와 Runtime Quick Edit를 같은 Transaction에 섞지 않는다.
 - Journal Index·Anchor Resolver 실패가 이미 Commit된 Journal Source Revision을 되돌리지 않는다.
 - Ping Presentation은 Authority Mutation Provider나 Projection Sequence의 일부가 아니다.
 - UI·Presentation·Workspace Instance는 Authority Mutation Provider가 아니다.
 - Derived Index 실패가 이미 Commit된 권위 결과를 되돌리지 않는다.
 - 오래된 Index로 권위 판정을 할 위험이 있으면 관련 Command Scope만 Gate한다.
-- 같은 Transaction의 HP·Vital·Effect·Encounter 또는 Build·State·Item Projection은 Barrier Batch로 적용한다.
+- 같은 Transaction의 HP·Vital·Effect·Encounter, Build·State·Item 또는 Scene Build·Rebind Projection은 Barrier Batch로 적용한다.
 - Root Outcome과 Follow-up Consequence는 각각 멱등성을 가진다.
 - 이전 AuthorityEpoch의 Follow-up과 ACK는 새 Branch에 적용하지 않는다.
 
@@ -106,6 +113,10 @@ Subscriber가 Store를 직접 수정하지 않고 새 Command 또는 RuleExecuti
 - Crafting Input·Output·Ground Presence 원자성
 - Rest Recovery와 Resource·Effect Settlement
 - Runtime Object 파괴와 Index Failure
+- Scene Candidate Build 실패와 Published Build 보존
+- Scene Live Patch의 Build·Rebind·Dynamic State Rebase 원자성
+- Scene Live Patch 실패와 이전 Build 복구
+- Runtime Quick Edit와 Source Promotion 분리
 - Journal Anchor 비자동 Retarget
 - Journal Permission 축소와 Projection·Index 무효화
 - Ping Presentation Failure Isolation
@@ -120,6 +131,7 @@ Subscriber가 Store를 직접 수정하지 않고 새 Command 또는 RuleExecuti
 - Rules: `../rules/`
 - Inventory: `../inventory/`
 - Scene: `../scene/`
+- Navigation: `../navigation/`
 - Downtime: `../downtime/`
 - Journal: `../journal/`
 - Events: `../events/`
@@ -132,4 +144,4 @@ Subscriber가 Store를 직접 수정하지 않고 새 Command 또는 RuleExecuti
 Guide Status: READY_FOR_MAIN_GUIDE_PHASE
 ```
 
-Combat·Encounter, Rules, Character·Inventory·Downtime, UI·Presentation와 Journal·Ping 관련 Integration 흐름은 현재 각 Main System Guide에 연결됐다. 나머지 Authoring·Operations 영역은 후속 Guide 순서에서 계속 통합한다.
+Combat·Encounter, Rules, Character·Inventory·Downtime, UI·Presentation, Journal·Ping와 Scene Editor·Authoring 관련 Integration 흐름은 현재 각 Main System Guide에 연결됐다. 나머지 Operations·Extension 영역은 후속 Guide 순서에서 계속 통합한다.
