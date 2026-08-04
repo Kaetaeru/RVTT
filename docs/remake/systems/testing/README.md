@@ -5,8 +5,10 @@
 ## 관련 Main System Guide
 
 - [`UI, Camera와 Presentation Guide`](../../guides/ui/README.md)
-  - Projection Replica·Prompt·Input Context·Command Reconciliation과 Epoch-safe Client Recovery 검증 범위
-  - CameraRequest·Presentation ACK·Module Failure·Audience Disclosure와 접근성 Scenario
+  - Projection Batch, Prompt·Input·Camera·Presentation Failure와 Epoch-safe Recovery Scenario
+- [`Journal과 Ping Guide`](../../guides/journal/README.md)
+  - Document·Section Identity, Permission Search·Backlink, Anchor Lifecycle와 Safe Navigation Scenario
+  - Ping Audience·Rate·Signal Loss·VFX Failure와 비권위 수명주기 검증
 
 ## 권위 문서
 
@@ -36,6 +38,8 @@
   - Audience별 Projection과 Secret Canary 검사
 - [`UI Runtime`](../../architecture/ui-projection-view-model-input-context-and-recovery-runtime-contract.md)
   - Replica·ViewModel·Prompt·Input Context 복구 검사
+- [`Journal Runtime`](../../architecture/journal-document-section-anchor-permission-search-and-projection-runtime-contract.md)
+  - Stable Identity, Permission Search, Anchor Resolution, Conflict와 Rollback 검사
 - [`Dice와 Resolution`](../../architecture/dice-roll-check-save-attack-and-resolution-runtime-contract.md)
   - Named RNG Stream과 RollRecord 기반 재현
 
@@ -81,6 +85,8 @@ Headless Harness와 실제 Roblox Integration Suite를 서로 대체하지 않�
 - Production Root RNG Seed를 Artifact로 Export하지 않는다.
 - 전체 Snapshot 문자열보다 Domain Invariant와 Semantic Assertion을 우선한다.
 - Player Projection Test는 UI 숨김뿐 아니라 직렬화 Byte·ID·Index·Diagnostics까지 검사한다.
+- Journal Disclosure Test는 제목·Section·Count·Backlink·Anchor·Search Token과 Navigation Target까지 검사한다.
+- Ping Test는 Signal 손실을 Authority Gap으로 오인하지 않고 만료·비복구를 검증한다.
 - Restart와 Rollback은 Production Snapshot·Journal·AuthorityEpoch 절차를 사용한다.
 - Test Harness Credential과 Production Campaign 접근 권한을 분리한다.
 
@@ -98,6 +104,11 @@ Headless Harness와 실제 Roblox Integration Suite를 서로 대체하지 않�
 10. Encounter Round Boundary 재시도와 정확히 6초 진행
 11. Rollback 후 UI Prompt·Layout 복구
 12. Projection Batch Drop과 Catch-up
+13. Journal Rename·Section Move 후 Stable Link 유지
+14. 비공개 Journal Search·Backlink·Anchor Negative Disclosure
+15. Scene Republish·Rollback 후 Anchor Incarnation 재검증
+16. 동시 Journal 편집 Conflict와 Last-write-wins 금지
+17. Ping Audience·Rate Limit·Signal Loss·만료 후 비복구
 
 ## 실행 등급
 
