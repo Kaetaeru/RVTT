@@ -5,7 +5,7 @@
 - 최종 갱신일: 2026-08-05
 - Architecture 완료 근거: [`Runtime Architecture Completion과 Main System Guide 준비도 감사`](audits/runtime-architecture-completion-and-main-guide-readiness-audit.md)
 - Guide 완료 근거: [`Main System Guide 일관성과 문서 허브 완료 감사`](audits/main-system-guide-consistency-and-document-hub-completion-audit.md)
-- User Guide 완료 근거: [`Player·DM User Guide 완료 감사`](audits/player-and-dm-user-guide-completion-audit.md)
+- User Guide 최초 완료 근거: [`Player·DM User Guide 완료 감사`](audits/player-and-dm-user-guide-completion-audit.md)
 
 이 문서는 RVTT 리메이크 기획·사용자 가이드·명세·구현의 **단일 작업 순서 기준**이다.
 
@@ -41,39 +41,40 @@ DEFERRED
 | 6 | `DONE` | Journal Anchor, Permission과 Projection 계약 | Document·Section Identity, World Anchor, 권한별 Search Index, 안전한 Camera·Selection Intent 계약 완료 |
 | 7 | `DONE` | Cross-System Integration Contracts와 Completion Audit | Damage·Death·Combat 및 남은 Runtime 연결 계약, 순환·중복·공백 재감사 완료 |
 | 8 | `DONE` | Main System Guides | 12개 Guide, 권위 읽기 순서, 상태·책임 경계, 문서 Hub와 완료 감사 확정 |
-| 9 | `DONE` | Player·DM User Guides | 실제 세션 관점의 Player Guide·DM Guide, 역할별 Quick Start, 문제 대응과 완료 감사 작성 |
-| 10 | `IN_PROGRESS` | Implementation Specs | 수직 단위별 Type·Module·Command·Network·Persistence·Migration·Diagnostics·Test 계약 작성 |
+| 9 | `IN_PROGRESS` | Player·DM User Guide 간소화 | 코딩 용어 없는 Quick Flow, 전체·Player·DM Flowchart와 상세 Guide 연결 완료 |
+| 10 | `QUEUED` | Implementation Specs | 수직 단위별 Type·Module·Command·Network·Persistence·Migration·Diagnostics·Test 계약 작성 |
 | 11 | `QUEUED` | Production Implementation | 승인된 Spec 순서대로 구현·테스트·리뷰·마이그레이션 수행 |
 
 ## 현재 단계
 
 ```text
-Implementation Specs
+Player·DM User Guide 간소화와 Flowchart
 ```
 
-현재 첫 세부 작업:
+현재 세부 작업:
 
 ```text
-Implementation Specs 세부 Work Order 작성
-→ 기존 Shared Spec 001·002 재검토
-→ Player·DM Acceptance Flow를 포함한 첫 수직 Slice 선택
+간단한 전체 Session Flow 작성
+→ Player·DM 역할별 Flowchart 작성
+→ Exploration·Encounter·Scene 전환·Reconnect 분기 작성
+→ User Guide Hub와 상세 Guide 연결
+→ 간소화 보완 감사와 문서 검증
 ```
 
-둘 이상의 Spec 작성 순서를 확정하기 전에 `specs/` 아래에 세부 Work Order를 만들고 이 문서와 연결한다.
+세부 순서는 [`user-guides/CURRENT-USER-GUIDE-WORK-ORDER.md`](user-guides/CURRENT-USER-GUIDE-WORK-ORDER.md)를 따른다.
 
-## 작업 진행 방식
+## 현재 작업 진행 방식
 
 ```text
-CURRENT-WORK-ORDER 확인
-→ 관련 Player 또는 DM User Guide 확인
-→ 관련 Runtime·Domain Main System Guide 확인
-→ Product·Architecture·System·UI·ADR 수집
-→ Implementation Spec 작성
-→ Player·DM Acceptance Flow 포함
-→ Deterministic Scenario·Migration·Diagnostics·Budget 계약 포함
+현재 확정 사용자 경험 확인
+→ 사용자 행동과 보이는 상태만 추출
+→ 전체 Session Flowchart 작성
+→ Player와 DM Flowchart 분리
+→ 예외 흐름 연결
+→ 상세 Guide로 후속 링크
 → 문서 검증
-→ 현재 Spec DONE
-→ 다음 Spec IN_PROGRESS
+→ User Guide 간소화 DONE
+→ Implementation Specs IN_PROGRESS 복귀
 ```
 
 ## 완료된 Main System Guide 단계
@@ -99,22 +100,24 @@ CURRENT-WORK-ORDER 확인
 
 권위 문서가 변경되면 영향받는 Guide를 `UPDATE_REQUIRED`로 다시 연다.
 
-## 완료된 Player·DM User Guide 단계
+## Player·DM User Guide 단계
 
-- 완료된 세부 순서: [`user-guides/CURRENT-USER-GUIDE-WORK-ORDER.md`](user-guides/CURRENT-USER-GUIDE-WORK-ORDER.md)
+- 세부 순서: [`user-guides/CURRENT-USER-GUIDE-WORK-ORDER.md`](user-guides/CURRENT-USER-GUIDE-WORK-ORDER.md)
 - User Guide Hub: [`user-guides/README.md`](user-guides/README.md)
-- 완료 감사: [`audits/player-and-dm-user-guide-completion-audit.md`](audits/player-and-dm-user-guide-completion-audit.md)
+- 최초 완료 감사: [`audits/player-and-dm-user-guide-completion-audit.md`](audits/player-and-dm-user-guide-completion-audit.md)
 
-완료 문서:
+기존 상세 문서:
 
 1. [`Player Guide`](user-guides/player/README.md)
 2. [`DM Guide`](user-guides/dm/README.md)
 
-현재 상태는 구현 전 목표 경험인 `TARGET_EXPERIENCE`다. 실제 Build와 Release에서는 `CURRENT_FOR_BUILD`, `RELEASE_VERIFIED`로 다시 검증한다.
+현재 보완 작업은 두 상세 Guide를 대체하지 않는다. 처음 읽는 사용자가 내부 구조를 전혀 몰라도 세션 전체를 이해하도록 짧은 Quick Flow와 명확한 Mermaid Flowchart를 앞에 추가한다.
 
 User Guide가 확정한 새 Product 동작은 없다. 모든 흐름은 현재 Product Scope, UI, Main System Guide와 ADR을 사용자 언어로 통합한다.
 
 ## Implementation Specs 단계 원칙
+
+User Guide 보완 완료 후 다음 원칙으로 복귀한다.
 
 1. Spec은 관련 Player·DM User Guide의 목표 흐름을 Acceptance Scenario로 연결한다.
 2. Spec은 관련 Main System Guide가 연결한 권위 문서를 근거로 작성한다.
@@ -150,7 +153,7 @@ User Guide가 확정한 새 Product 동작은 없다. 모든 흐름은 현재 Pr
 
 Production Implementation은 다음 조건 전에는 시작하지 않는다.
 
-- Player·DM User Guide 완료
+- Player·DM User Guide와 Quick Flow 완료
 - 현재 수직 Slice의 Implementation Specs 완료
 - Type·Command·Network·Persistence·Migration 계약 완료
 - Acceptance Scenario와 Failure·Recovery Test 정의
@@ -162,7 +165,8 @@ Production Implementation은 다음 조건 전에는 시작하지 않는다.
 
 | 날짜 | 변경 |
 |---|---|
-| 2026-08-05 | Player Guide, DM Guide, User Guide Hub와 Completion Audit을 완료했다. User Guides를 `DONE`, Implementation Specs를 `IN_PROGRESS`로 전환했다. |
+| 2026-08-05 | 사용자 요청에 따라 Implementation Specs를 잠시 대기시키고, 코딩 용어 없는 간단한 Session Flow와 확실한 Player·DM Flowchart 보완을 `IN_PROGRESS`로 전환했다. |
+| 2026-08-05 | Player Guide, DM Guide, User Guide Hub와 최초 Completion Audit을 완료했다. |
 | 2026-08-05 | 사용자의 요청에 따라 Implementation Specs 전에 Player·DM User Guide 단계를 삽입했다. |
 | 2026-08-05 | 12개 Main System Guide와 일관성·문서 Hub 감사를 완료했다. Main System Guides를 `DONE`으로 전환했다. |
 | 2026-08-05 | Extension·Plugin·Content Pack Guide를 완료하고 최종 Guide 감사로 전환했다. |
