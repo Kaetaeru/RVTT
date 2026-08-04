@@ -4,6 +4,10 @@
 
 ## 관련 Main System Guide
 
+- [`Scene Editor와 Authoring Guide`](../../guides/scene-editor/README.md)
+  - Live DM Mode와 Full Scene Edit, DM Authoring Overlay·Pause Gate와 Source Command 경계
+  - Scene·Asset·Inspector·Lighting Panel, Candidate Build·Diagnostic·Publish와 Live Patch
+  - Runtime Quick Edit와 영구 Source Promotion의 분리
 - [`UI, Camera와 Presentation Guide`](../../guides/ui/README.md)
   - Dockable Panel·ViewModel·Input Context·Focus·UI Intent와 Permission-aware Projection
   - DM Observe·Camera Focus·Presentation 요청, Local Layout과 Role Change 복구
