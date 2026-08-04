@@ -30,6 +30,11 @@
   - 안정적 Timeline Entry·Occurrence·Cursor와 중도 삽입
   - Reaction은 RuleExecution Graph, Pause는 Overlay로 분리
   - D&D 2024 기본 1 Round = 6초와 개별 Turn 시간 추가 금지
+- [`Encounter–Game Time Temporal Boundary와 Scheduler 통합 계약`](encounter-game-time-temporal-boundary-and-scheduler-integration-contract.md)
+  - Round Boundary와 Campaign Time Advance의 원자적 Transaction
+  - `TemporalBoundaryCandidate`, `EncounterTimeAdvanceContribution`과 RoundTimeLedger
+  - Scheduler Due Occurrence와 멱등 Event→Command Encounter Bridge
+  - Blocking Boundary Gate, Rollback과 다중 Encounter Chronology Guard
 - [`Selection, Targeting, Preview와 Frozen Binding Runtime 계약`](selection-targeting-preview-and-frozen-binding-runtime-contract.md)
   - Input Context와 Intent에서 Selection Session으로 이어지는 공통 입력 경계
   - Exploration과 Encounter의 서로 다른 Selection Policy
@@ -103,6 +108,7 @@
 - Session Base Mode, Context, Overlay, Transition과 Command Gate
 - Exploration 실시간 이동, Actor별 실행 충돌, Hazard와 Encounter 전환
 - Encounter Participant, Initiative Timeline, Turn, Opportunity, Objective와 종료
+- Encounter Temporal Boundary, Campaign Time Atomic Commit, Scheduler Due Bridge와 Boundary Gate
 - Downtime Participant Activity, Campaign Time Window, Progress, Reservation과 Completion
 - Input Context, Intent, Selection Session, Candidate, Preview와 Frozen Binding
 - Interaction Capability, Contextual Option, DM Adjudication과 Override
@@ -131,6 +137,7 @@
 - Exploration·Encounter·Downtime, Context, UI·Authoring Overlay, Scene Transition·Join·Recovery를 다루면 [`Session Runtime 계약`](session-play-mode-context-overlay-and-transition-contract.md)을 따른다.
 - 탐험 WASD·클릭 이동, 실시간 행동 충돌, Hazard와 Encounter 진입을 다루면 [`Exploration Runtime 계약`](exploration-real-time-movement-action-and-encounter-transition-runtime-contract.md)을 따른다.
 - Initiative, Timeline, Turn·Round, Opportunity, Participant, Objective와 Encounter 종료를 다루면 [`Encounter Runtime 계약`](encounter-timeline-turn-opportunity-and-objective-runtime-contract.md)을 따른다.
+- Encounter Round Boundary와 Campaign Time, Scheduler Due와 다음 Round Gate의 통합을 다루면 [`Encounter–Game Time 통합 계약`](encounter-game-time-temporal-boundary-and-scheduler-integration-contract.md)을 따른다.
 - 휴식·레벨업·주문 준비·주문책·제작·훈련·여행의 장기 활동과 결과 Commit을 다루면 [`Downtime Runtime 계약`](downtime-activity-time-coordination-and-atomic-completion-runtime-contract.md)을 따른다.
 - 클릭·Hover·Focus·대상 지정·범위 Preview·DM Hidden Selection·Q/E 승인과 취소를 다루면 [`Selection Runtime 계약`](selection-targeting-preview-and-frozen-binding-runtime-contract.md)을 따른다.
 - 선택된 대상의 Open·Utilize·Pick Up·Inspect·Force Command와 DM 판정을 다루면 [`Interaction Capability 계약`](interaction-capability-contextual-command-and-adjudication-contract.md)을 따른다.
