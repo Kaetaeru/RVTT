@@ -6,6 +6,10 @@ Audit은 제품 동작을 새로 정의하지 않는다. 새 결정이 필요하
 
 ## 현재 유효한 문서
 
+- [`runtime-architecture-integration-and-engine-completeness-audit.md`](runtime-architecture-integration-and-engine-completeness-audit.md)
+  - 전체 Runtime의 의존 방향, 권위, Policy, 역할, 수명주기와 Engine 누락을 검토한다.
+  - Gameplay Engine은 조건부 완성으로 판정하고 Policy Composition, UI, Diagnostics, Simulation을 구현 전 BLOCKER로 분류한다.
+  - Journal 공유 계약과 Encounter↔Game Time 통합 경계를 후속 과제로 기록한다.
 - [`document-migration-validation.md`](document-migration-validation.md)
   - 문서 이동 결과, 누락·중복·링크 상태를 검증한다.
 
