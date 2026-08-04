@@ -31,6 +31,13 @@
   - 사용자별 Authority Projection Stream과 Disclosure
   - Projection Snapshot, Event Catch-up, 재접속과 Client Ready
   - 권위 Event와 병합 가능한 Presentation Signal 분리
+- [`Command Ordering, Logical Time와 Transaction Coordinator 계약`](command-ordering-logical-time-and-transaction-coordinator-contract.md)
+  - 타입 있는 Ordering Key와 충돌 Command 직렬화
+  - 다중 Key의 안정적 Reservation 순서와 Deadlock 방지
+  - Ordering Reservation과 장기 Resource Reservation 분리
+  - Read Set, Write Set, Precondition과 Commit Graph
+  - 원자적 Authority Commit, Revision, Journal과 Recovery
+  - DM Override, 충돌 재검증과 Rollback Epoch 경계
 - [`Scene Streaming, Client Interest와 Ready Activation 계약`](scene-streaming-client-interest-and-ready-activation-contract.md)
   - Server Authority Runtime과 Client Streaming 분리
   - Client-safe Chunk, Projection Segment와 Presentation Bundle
@@ -63,6 +70,7 @@
 - 서버·클라이언트 책임
 - Command, Read Request, revision, transaction과 Result
 - Versioned Protocol, Projection Stream, Snapshot Sync와 Client Ready
+- Ordering Key, Reservation, Logical Time, Atomic Commit과 Journal
 - Registry와 고정 ID
 - Scene Source, Compiler Build, Runtime Scene Snapshot과 Spatial Query
 - Runtime Layer, State Binding, Chunk와 Dependency Graph
@@ -84,6 +92,8 @@ Scene Source, Semantic Profile, Runtime Layer, Index, Chunk, Build와 게시를 
 Actor, 문, 함정, 소환체, 지속 영역과 기타 Scene Presence의 생성·참조·비활성·복원·파괴를 다루는 문서는 [`Runtime Object System 계약`](runtime-object-system-and-entity-lifecycle-contract.md)을 따른다.
 
 Remote, Client Command, Read Request, Event 복제, 중도 참여, 재접속, Snapshot Sync와 Client Ready를 다루는 문서는 [`Networking 계약`](networking-command-event-and-client-synchronization-contract.md)을 따른다.
+
+둘 이상의 권위 Store, Actor, Object, Inventory, Encounter, Scene 또는 Campaign 상태를 변경하거나 Command 충돌 순서를 다루는 문서는 [`Command Ordering과 Transaction Coordinator 계약`](command-ordering-logical-time-and-transaction-coordinator-contract.md)을 따른다.
 
 Scene Chunk, Client Interest, Presentation Materialization, Camera·이동 Prefetch, Chunk Eviction과 Scene Transition 준비를 다루는 문서는 [`Scene Streaming 계약`](scene-streaming-client-interest-and-ready-activation-contract.md)을 따른다.
 
