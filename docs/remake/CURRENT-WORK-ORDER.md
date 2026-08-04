@@ -70,7 +70,8 @@ CURRENT-WORK-ORDER 확인
   - [`Journal과 Ping`](guides/journal/README.md)
   - [`Scene Editor와 Authoring`](guides/scene-editor/README.md)
   - [`Diagnostics, Simulation과 Operations`](guides/diagnostics/README.md)
-- 현재 세부 작업: `Extension, Plugin과 Content Pack Guide`
+  - [`Extension, Plugin과 Content Pack`](guides/extension/README.md)
+- 현재 세부 작업: `Guide 일관성 감사와 문서 허브 갱신`
 
 1. Guide는 새로운 Authority 결정을 만들지 않고 확정된 Architecture·ADR을 통합한다.
 2. 각 Guide는 권위 원본, 역할별 사용자 흐름, Command·Transaction·Projection 경로, 실패·복구와 구현 Spec 진입점을 포함한다.
@@ -82,6 +83,7 @@ CURRENT-WORK-ORDER 확인
 
 | 날짜 | 변경 |
 |---|---|
+| 2026-08-05 | Extension·Plugin·Content Pack Guide를 완료하고 Main System Guide 세부 작업을 Guide 일관성 감사와 문서 허브 갱신으로 전환했다. |
 | 2026-08-05 | Diagnostics·Simulation·Operations Guide를 완료하고 Main System Guide 세부 작업을 Extension·Plugin·Content Pack Guide로 전환했다. |
 | 2026-08-05 | Scene Editor·Authoring Guide를 완료하고 Main System Guide 세부 작업을 Diagnostics·Simulation·Operations Guide로 전환했다. |
 | 2026-08-05 | Journal·Ping Guide를 완료하고 Main System Guide 세부 작업을 Scene Editor·Authoring Guide로 전환했다. |
