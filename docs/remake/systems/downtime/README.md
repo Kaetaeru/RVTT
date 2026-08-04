@@ -2,6 +2,16 @@
 
 휴식, 레벨업, 주문 준비·주문책 작업, 제작, 훈련과 여행 정산을 하나의 Campaign Time Window에서 조정한다.
 
+## 관련 Main System Guide
+
+- `Character, Inventory와 Downtime Guide`
+  - 현재 Main System Guide 작업 순서 7번에서 작성 중이다.
+  - Character Source·Build·State, Item·Equipment와 Rest·Level Up·Crafting·Travel Completion을 통합한다.
+- [`Combat와 Encounter Guide`](../../guides/combat/README.md)
+  - Downtime 중 사건으로 Encounter가 시작될 때 Suspend·Mode Transition·복귀 경계
+- [`Rules, Character Action, Spell, Dice와 Effect Guide`](../../guides/rules/README.md)
+  - Downtime Activity가 주문·Effect·Resource RuleExecution과 연결되는 경계
+
 ## 상위 권위 문서
 
 - [`Session Play Mode, Context, Overlay와 Transition 계약`](../../architecture/session-play-mode-context-overlay-and-transition-contract.md)
@@ -22,8 +32,12 @@
   - 레벨업의 Progression Source 변경
   - Candidate Character Build와 State Migration
   - Source·Build Ref·Persistent State의 원자 교체
+- [`Inventory, ItemInstance와 World Presence Runtime 계약`](../../architecture/inventory-item-instance-and-world-presence-runtime-contract.md)
+  - 제작 재료 Reservation, Output ItemInstance와 Container·Ground Presence
 - [`Transaction Coordinator`](../../architecture/command-ordering-logical-time-and-transaction-coordinator-contract.md)
   - 재료 소비·완성품 생성, Build 교체와 Recovery의 원자적 Commit
+- [`Runtime Architecture Completion과 Main System Guide 준비도 감사`](../../audits/runtime-architecture-completion-and-main-guide-readiness-audit.md)
+  - Downtime·Character·Inventory Integration 완료와 Main Guide 단계 준비 판정
 
 ## 세부 시스템 문서
 
@@ -78,11 +92,12 @@
 - [`ADR-0070`](../../decisions/ADR-0070-orthogonal-session-modes-contexts-overlays-and-transitions.md)
 - [`ADR-0078`](../../decisions/ADR-0078-authoritative-game-time-boundary-durations-and-scheduled-execution.md)
 - [`ADR-0080`](../../decisions/ADR-0080-downtime-as-time-coordinated-activity-sessions-with-domain-owned-completion.md)
+- [`ADR-0087`](../../decisions/ADR-0087-atomic-immediate-closure-and-event-driven-deferred-consequences.md)
 
 ## Guide 상태
 
 ```text
-Guide Status: NOT_READY
+Guide Status: READY_TO_WRITE
 ```
 
-Rest·Crafting·Training·Travel의 세부 Completion Provider와 구현 Specs 및 Completion Audit가 끝난 뒤 Main System Guide를 작성한다.
+최신 Completion Audit에서 Downtime Activity·Game Time·Domain Completion과 Character·Inventory 연결이 Main System Guide 작성 가능 상태로 판정됐다.
