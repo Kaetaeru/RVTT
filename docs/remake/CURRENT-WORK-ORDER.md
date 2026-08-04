@@ -68,7 +68,8 @@ CURRENT-WORK-ORDER 확인
   - [`Character, Inventory와 Downtime`](guides/character/README.md)
   - [`UI, Camera와 Presentation`](guides/ui/README.md)
   - [`Journal과 Ping`](guides/journal/README.md)
-- 현재 세부 작업: `Scene Editor와 Authoring Guide`
+  - [`Scene Editor와 Authoring`](guides/scene-editor/README.md)
+- 현재 세부 작업: `Diagnostics, Simulation과 Operations Guide`
 
 1. Guide는 새로운 Authority 결정을 만들지 않고 확정된 Architecture·ADR을 통합한다.
 2. 각 Guide는 권위 원본, 역할별 사용자 흐름, Command·Transaction·Projection 경로, 실패·복구와 구현 Spec 진입점을 포함한다.
@@ -80,6 +81,7 @@ CURRENT-WORK-ORDER 확인
 
 | 날짜 | 변경 |
 |---|---|
+| 2026-08-05 | Scene Editor·Authoring Guide를 완료하고 Main System Guide 세부 작업을 Diagnostics·Simulation·Operations Guide로 전환했다. |
 | 2026-08-05 | Journal·Ping Guide를 완료하고 Main System Guide 세부 작업을 Scene Editor·Authoring Guide로 전환했다. |
 | 2026-08-05 | UI·Camera·Presentation Guide를 완료하고 Main System Guide 세부 작업을 Journal·Ping Guide로 전환했다. |
 | 2026-08-05 | Character·Inventory·Downtime Guide를 완료하고 Main System Guide 세부 작업을 UI·Camera·Presentation Guide로 전환했다. |
