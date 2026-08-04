@@ -2,6 +2,13 @@
 
 연속 무격자 이동의 Scene 제작, Compiled Traversal Domain, 경로 계획, 이동 실행과 동적 점유를 다룬다.
 
+## Main System Guide
+
+- [`Scene, Streaming, Runtime Object, Spatial Query와 Navigation Guide`](../../guides/scene/README.md)
+  - Semantic Scene Source에서 Compiled Navigation Layer가 생성되는 흐름
+  - Snapshot-bound Spatial Query, SpatialBodyProfile과 Navigation Plan의 권위 경계
+  - 탐험·전투·강제 이동의 Checkpoint Execution과 Streaming Prefetch 연결
+
 ## 권위 문서
 
 ### Scene Compiler 공통 계약
@@ -48,3 +55,11 @@
 - Navigation Layer는 Scene Compiler Build의 일부이며 다른 Layer와 혼합 Revision으로 게시하지 않는다.
 
 월드 비율과 입력 범위는 [`../../product/platform-movement-and-input-scope.md`](../../product/platform-movement-and-input-scope.md)를 따른다.
+
+## Guide Status
+
+```text
+CURRENT
+```
+
+현재 Navigation Authoring·Spatial Query·Path Planning·Movement Execution과 Scene Streaming의 연결은 Main System Guide에 반영되어 있다. 관련 권위 계약이 변경되면 Guide를 `UPDATE_REQUIRED`로 전환한다.
