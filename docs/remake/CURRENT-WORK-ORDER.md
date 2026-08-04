@@ -1,41 +1,45 @@
 # RVTT Remake 현재 작업 순서
 
-- 상태: ACTIVE_WITH_BLOCKER
-- 문서 종류: Planning Work Order
+- 상태: ACTIVE
+- 문서 종류: Planning·Implementation Work Order
 - 최종 갱신일: 2026-08-05
 - Architecture 완료 근거: [`Runtime Architecture Completion 감사`](audits/runtime-architecture-completion-and-main-guide-readiness-audit.md)
-- Guide 완료 근거: [`Main System Guide 완료 감사`](audits/main-system-guide-consistency-and-document-hub-completion-audit.md)
-- User Guide 완료 근거: [`Player·DM User Guide 완료 감사`](audits/player-and-dm-user-guide-completion-audit.md)
-- 문서 연결 완료 근거: [`구현 명세 전 최종 문서 연결 감사`](audits/pre-implementation-document-linkage-audit.md)
 - 전체 Slice Roadmap: [`specs/SLICE-ROADMAP.md`](specs/SLICE-ROADMAP.md)
-- 현재 Spec 작업 순서: [`specs/CURRENT-SPEC-WORK-ORDER.md`](specs/CURRENT-SPEC-WORK-ORDER.md)
 - 전체 명세 완료 근거: [`All-slice Specification Checkpoint Completion Audit`](audits/all-slice-specification-checkpoint-completion-audit.md)
+- Spec 인계 상태: [`specs/CURRENT-SPEC-WORK-ORDER.md`](specs/CURRENT-SPEC-WORK-ORDER.md)
+- UI·UX Policy: [`ui/policies/README.md`](ui/policies/README.md)
+- UI·UX 완료 감사: [`UI·UX Policy Completion Audit`](audits/ui-ux-policy-completion-audit.md)
+- Production Workspace: [`implementation/roblox`](../../implementation/roblox/README.md)
+- 현재 Production Work Order: [`Roblox Implementation Work Order`](../../implementation/roblox/CURRENT-WORK-ORDER.md)
 
-이 문서는 RVTT 리메이크의 기획·Guide·명세·구현 순서를 관리하는 단일 상위 기준이다.
+이 문서는 RVTT 리메이크의 기획·명세·Policy·구현 순서를 관리하는 상위 기준이다.
 
 ## 1. 현재 단계 요약
 
 ```text
-Architecture
+Product·Architecture·ADR
 → DONE
 
-12 Main System Guides
-→ DONE
-
-Player·DM User Guides·Quick Flow
+Main System Guide·Player·DM User Guide
 → DONE
 
 16 Slice Specification Checkpoints
 → DONE
 
-4 Cross-Slice Checkpoints
+UI·UX Global Policies·Checklist
 → DONE
 
-Production Source Mapping
-→ IN_PROGRESS·BLOCKED
+Greenfield Production Root
+→ CREATED
 
-Production Implementation
-→ BLOCKED
+Roblox Service Folder Structure
+→ CREATED
+
+현재 작업
+→ Slice 01 Script Manifest
+
+Production Luau Script
+→ NOT STARTED
 ```
 
 ## 2. 상위 작업 순서
@@ -43,123 +47,110 @@ Production Implementation
 | 순서 | 상태 | 작업 | 완료 조건 |
 |---:|---|---|---|
 | 1 | DONE | Product·Architecture·ADR | Runtime·Domain·Integration 권위 계약 완료 |
-| 2 | DONE | Main System Guides | 12개 Guide·Hub·완료 감사 |
-| 3 | DONE | Player·DM User Guides·Quick Flow | 정상·역할·예외·Recovery 흐름 완료 |
-| 4 | DONE | Pre-Implementation Linkage Audit | Root→Flow→Guide→Authority→Spec 연결 |
-| 5 | DONE | Implementation Slice Roadmap | 16개 Slice 정의·완전성 감사 |
-| 6 | DONE | All-slice Specification Checkpoints | 16개 Package·16개 Audit·4개 Checkpoint·Recovery Branch |
-| 7 | IN_PROGRESS | Production Source Mapping | 실제 Repository·Place Source·Schema·Test와 Slice 계약 연결 |
-| 8 | BLOCKED | Slice 01 Spec Readiness | Mapping·Migration·Budget·Test Host 연결 |
-| 9 | BLOCKED | Production Implementation | 준비 완료 Slice와 사용자 명시적 구현 승인 필요 |
-| 10 | BLOCKED | Slice Build Acceptance·Next Slice | Code·Migration·Roblox Test·User Acceptance 완료 |
-| 11 | BLOCKED | Release Hardening | 16개 Build·Rights·Migration·Fault·Soak Evidence 필요 |
+| 2 | DONE | Main System Guides·User Guides | 12개 Guide와 Player·DM Flow 완료 |
+| 3 | DONE | Implementation Slice Roadmap | 16개 Slice 정의·완전성 감사 |
+| 4 | DONE | All-slice Specification Checkpoints | 16개 Package·Audit와 4개 Recovery Checkpoint |
+| 5 | DONE | UI·UX Global Policy Foundation | 5개 Policy·Checklist·Completion Audit |
+| 6 | DONE | Greenfield Implementation Workspace | `implementation/roblox/` Service Folder·책임·금지 경계 |
+| 7 | IN_PROGRESS | Slice 01 Script Manifest | Script 순서·경로·책임·API·Test·Migration 연결 |
+| 8 | QUEUED | Toolchain·Package Mapping | Rojo·Type Check·Test Runner·Studio Sync 검증 |
+| 9 | QUEUED | Slice 01 Script-by-Script Implementation | Manifest 순서대로 Script와 Test 완료 |
+| 10 | QUEUED | Slice 01 Roblox Integration·Build Acceptance | Join→Move→Reconnect와 UI·UX Checklist 통과 |
+| 11 | BLOCKED | Slice 02 Implementation | Slice 01 Build Acceptance 필요 |
+| 12 | BLOCKED | Release Hardening | 16개 Build·Rights·Migration·Fault·Soak Evidence 필요 |
 
-## 3. 현재 작업
+## 3. 구현 방식
+
+사용자의 최신 결정:
+
+```text
+기획·명세
+→ docs/remake/
+
+실제 구현
+→ implementation/roblox/
+
+구현 단위
+→ Script Manifest의 가장 위 IN_PROGRESS Script 하나
+```
+
+Folder 구조:
+
+```text
+implementation/roblox/
+├─ src/<Roblox Service>/RVTT/
+├─ tests/
+├─ tooling/
+└─ manifests/
+```
+
+실제 Script는 한 파일씩 작성·Test·검수·Commit한다. 빈 Framework 수십 개를 한 번에 만들지 않는다.
+
+## 4. UI·UX 구현 선행 Gate
+
+모든 UI·Client Flow는 다음 Policy를 먼저 따른다.
+
+- [`Visual Design Policy`](ui/policies/visual-design-policy.md)
+- [`Interaction and Input Policy`](ui/policies/interaction-and-input-policy.md)
+- [`Information Architecture and Density Policy`](ui/policies/information-architecture-and-density-policy.md)
+- [`Feedback, Error and Recovery Policy`](ui/policies/feedback-error-and-recovery-policy.md)
+- [`Accessibility and Motion Policy`](ui/policies/accessibility-and-motion-policy.md)
+- [`UI·UX Review Checklist`](ui/policies/UI-UX-REVIEW-CHECKLIST.md)
+
+Policy 핵심:
+
+- Dark Tactical Fantasy + Professional Tool 시각 언어
+- Semantic Design Token 강제
+- Q/E·1–5·Pointer·Focus·Selection 공통 문법
+- 전장 우선 정보 위계와 Progressive Disclosure
+- Pending·Receipt·Projection·Error·Resync·Recovery 상태
+- UI Scale·Keyboard·Reduced Motion·Flash·Camera Comfort
+- Player·DM·Observer 정보의 Projection 단계 분리
+
+## 5. 현재 작업
 
 ```text
 Slice 01 First Session Walking Skeleton
-→ Production Source Mapping
+→ manifests/slice-01-script-manifest.md
 ```
 
-상세 작업:
+Manifest에 포함할 항목:
 
 ```text
-Roblox Place·Rojo Source 확인
-→ Server·Client·Shared Package Root
-→ ID·Result·Error·Remote·Projection Registry
-→ Session·Token·Permission·Scene·Movement 구현
-→ Persistence Schema·Journal·Legacy Data
-→ Test Runner·Virtual Client·Roblox Integration
-→ 논리 계약과 실제 경로 Mapping
-→ Slice 01 Readiness 재감사
+Script 순서·경로·종류
+단일 책임·Public API
+의존성·Authority Boundary
+연결 Spec
+Unit·Integration·Roblox Test
+Migration 영향
+UI·UX Policy 영향
+상태
 ```
 
-현재 참조:
+세부 실행 기준은 [`implementation/roblox/CURRENT-WORK-ORDER.md`](../../implementation/roblox/CURRENT-WORK-ORDER.md)가 소유한다.
 
-- [`Slice 01 Work Order`](specs/slices/01-first-session-walking-skeleton/CURRENT-WORK-ORDER.md)
-- [`Slice 01 Integration Contract`](specs/slices/01-first-session-walking-skeleton/implementation-contract.md)
-- [`Core Authority 세부 초안`](specs/runtime/001-core-authority-identity-version-and-result.md)
-- [`Slice 01 Checkpoint Audit`](audits/slices/01-first-session-walking-skeleton-spec-checkpoint-audit.md)
-
-## 4. 16개 Slice 상태
-
-모든 Slice의 Specification Checkpoint는 완료됐고 Production Readiness는 차단됐다.
-
-```text
-01 Session
-02 Core Rules
-03 Exploration
-04 Encounter
-05 Character
-06 Inventory
-07 Downtime
-08 UI·Camera·Presentation
-09 Journal
-10 Scene Authoring
-11 Live DM Operation
-12 Content Platform
-13 Official Character Content
-14 Official Spell·Equipment Content
-15 NPC·Monster Content
-16 Release Hardening
-```
-
-상세 패키지와 상태는 [`specs/slices/README.md`](specs/slices/README.md)를 따른다.
-
-## 5. Recovery Checkpoint
-
-- `checkpoint/specs-slices-01-04-2026-08-05`
-- `checkpoint/specs-slices-05-08-2026-08-05`
-- `checkpoint/specs-slices-09-12-2026-08-05`
-- `checkpoint/specs-slices-13-16-2026-08-05`
-
-Commit·CI 정보는 [`audits/slice-checkpoints/README.md`](audits/slice-checkpoints/README.md)에 기록됐다.
-
-## 6. Production Blocker
-
-공통:
-
-- 실제 Production Source Tree와 Package 경로
-- Legacy Schema·Data·Migration 대상
-- Roblox Integration·Profiling 환경
-- 측정형 Timeout·Queue·Payload·Snapshot·Capacity
-
-Content:
-
-- 공식 Data·Source Version
-- Rights Review·배포 범위
-- Localization·Asset·Packaging·Signing·CI
-
-Release:
-
-- Production Code·Migration Evidence
-- Full-session·Fault·Disclosure·Security·Performance·Soak 결과
-- Deployment·Rollback·Incident Runbook Drill
-
-## 7. 운영 규칙
+## 6. 운영 규칙
 
 1. 가장 위의 `IN_PROGRESS` 작업을 먼저 처리한다.
-2. 세부 단계에서는 해당 Work Order가 이 문서보다 우선한다.
-3. 새 Product 동작이나 Architecture 충돌이 발견되면 권위 문서를 먼저 수정한다.
-4. 통합 계약과 실제 코드 구조를 구분하며 조사하지 않은 Module 경로를 확정하지 않는다.
-5. Legacy 데이터 변경에는 Migration·Deprecation·Tombstone·Last Known Good가 필요하다.
-6. 테스트·측정 없이 구현·성능·안정성 완료를 주장하지 않는다.
-7. Production Code는 준비 완료 Slice와 사용자의 명시적 구현 승인 후 시작한다.
-8. 각 Slice는 Production Build Acceptance 후 다음 Slice로 이동한다.
-9. Checkpoint Branch는 검증된 복구 기준으로 유지한다.
+2. 기획·명세와 Production Source를 분리한다.
+3. Script Manifest 없이 Script를 추가하지 않는다.
+4. 가장 위의 `IN_PROGRESS` Script 하나만 작성한다.
+5. Client·Server·Shared·UI 책임을 혼합하지 않는다.
+6. UI Component는 Remote·Domain Store를 직접 호출하지 않는다.
+7. Legacy 또는 저장 Schema 변경에는 Migration·Version·Last Known Good가 필요하다.
+8. Test·Studio 검증 없이 완료를 주장하지 않는다.
+9. 한 Slice의 Build Acceptance 전 다음 Slice 구현을 시작하지 않는다.
 10. `SUPERSEDED`, `DISCONTINUED`, `ARCHIVED` 문서를 Authority로 사용하지 않는다.
 
-## 8. 다음 단계 Gate
-
-Slice 01 Source Mapping이 끝난 뒤:
+## 7. 다음 단계 Gate
 
 ```text
-Package·Schema·Migration 세부 Spec
-→ Slice 01 Spec Readiness Audit
-→ 사용자 Production Implementation 승인
-→ Code·Migration·Test
-→ Slice 01 Build Acceptance Audit
-→ Slice 02 Source Mapping
+Slice 01 Script Manifest 완료
+→ Toolchain·Project Mapping 확정
+→ 첫 Shared Contract Script 선정
+→ Script + Unit Test
+→ Script 단위 Review
+→ 다음 Script
 ```
 
-현재는 명세 전체를 작성한 상태이지 Production 구현이나 Release 준비가 완료된 상태가 아니다.
+현재는 UI·UX Policy와 구현 Folder 구조를 확정한 상태이며 Production Luau Script는 아직 작성하지 않았다.
