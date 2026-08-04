@@ -31,6 +31,8 @@ Command, RuleExecution, Transaction, Domain Event, Projection, UI와 Presentatio
   - Replica Apply, ViewModel, Input Context, Command Reconciliation과 Error Boundary
 - [`Persistence와 Recovery`](../../architecture/persistence-and-session-recovery-model.md)
   - Recovery Journal과 Observability Trace의 분리
+- [`Deterministic Simulation과 Test Harness`](../../architecture/deterministic-simulation-scenario-and-test-harness-runtime-contract.md)
+  - Scenario Trace Assertion, Incident Replay, 최소 재현 Schedule과 Disclosure Canary 검사
 
 ## 표준 Trace 흐름
 
@@ -66,6 +68,8 @@ client.intent
 - Latency는 Authority Monotonic Time으로 측정하며 Campaign Game Time과 혼합하지 않는다.
 - 이전 AuthorityEpoch의 Trace와 Client Report가 현재 Branch Incident를 변경하지 못한다.
 - Incident Bundle은 Sanitized Data만 포함하고 실행 가능한 임의 코드를 포함하지 않는다.
+- Test Harness는 구조화된 Trace Hook을 검증에 사용할 수 있지만 Trace를 권위 상태나 기대 결과의 유일한 원본으로 사용하지 않는다.
+- Simulation 실패 Artifact에는 최소 재현 Seed·Schedule·State Diff와 안전한 Trace Reference를 연결한다.
 
 ## 역할 경계
 
