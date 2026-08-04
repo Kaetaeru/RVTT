@@ -12,6 +12,10 @@
   - Derived Statistics, Modifier, Resource와 Capability Binding
   - 레벨업·재구성 시 Build 교체와 State Migration
   - Persistence, Rollback과 Character Projection
+- [`../../architecture/downtime-activity-time-coordination-and-atomic-completion-runtime-contract.md`](../../architecture/downtime-activity-time-coordination-and-atomic-completion-runtime-contract.md)
+  - 휴식·레벨업·주문 준비·주문책 작업의 Activity 조정
+  - Candidate Build·Migration과 RecoveryPlan의 Atomic Completion
+  - 여러 참가자의 Activity와 Campaign Time 병렬 진행
 
 ## 세부 권위 문서
 
@@ -51,7 +55,12 @@ Encounter State
 
 한 계층의 값을 다른 계층에 복사해 독립 원본으로 만들지 않는다.
 
-아이템은 [`../inventory/`](../inventory/), 실행 규칙은 [`../rules/`](../rules/)를 참고한다.
+- 레벨업은 Progression Source Proposal, Candidate Build와 State Migration을 거쳐 원자적으로 적용한다.
+- 주문 준비 변경은 Persistent spellPreparationState를 수정하며 Progression Source를 직접 바꾸지 않는다.
+- 휴식 완료는 Downtime Runtime이 아니라 Rest Domain의 RecoveryPlan이 결과를 제공한다.
+- Character 관련 Downtime Activity가 완료되어도 Character Store를 직접 수정하지 않고 Domain Completion Plan을 사용한다.
+
+아이템은 [`../inventory/`](../inventory/), 실행 규칙은 [`../rules/`](../rules/), 장기 활동 조정은 [`../downtime/`](../downtime/)을 참고한다.
 
 ## Guide 상태
 
@@ -59,4 +68,4 @@ Encounter State
 Guide Status: NOT_READY
 ```
 
-Character Main System Guide는 Effect·Inventory 관련 권위 문서, 구현 명세와 Completion Audit가 완료된 뒤 작성한다.
+Character Main System Guide는 Effect·Inventory·Downtime 관련 권위 문서, 구현 명세와 Completion Audit가 완료된 뒤 작성한다.
