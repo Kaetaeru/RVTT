@@ -2,6 +2,13 @@
 
 Scene Source, Compiled Runtime Build, 세션 Dynamic State, Runtime Object Lifecycle, Client Streaming, 라이브 패치와 인게임 제작 도구를 다룬다.
 
+## Main System Guide
+
+- [`Scene, Streaming, Runtime Object, Spatial Query와 Navigation Guide`](../../guides/scene/README.md)
+  - Scene Source부터 Compiled Build, Runtime Object Presence와 Runtime Scene Snapshot까지의 권위 계층
+  - Client-safe Streaming·Ready Activation과 Scene Transition
+  - Spatial Query·Path Planning·Checkpoint Movement를 포함한 월드 Runtime 전체 흐름
+
 ## 권위 문서
 
 ### Session Mode와 Overlay
@@ -72,3 +79,11 @@ Scene Source, Compiled Runtime Build, 세션 Dynamic State, Runtime Object Lifec
 - Scene Transition은 Target Preload 후 안전 경계의 원자적 Presence Transfer를 사용한다.
 - Quick Edit는 명시적 승격 전까지 Scene Source를 변경하지 않는다.
 - Workspace Instance와 Compiler Cache는 저장 원본이 아니다.
+
+## Guide Status
+
+```text
+CURRENT
+```
+
+현재 Scene Source·Build·Runtime Object·Streaming·Spatial Query·Navigation의 권위 관계와 사용자 흐름은 Main System Guide에 반영되어 있다. 관련 권위 계약이 변경되면 Guide를 `UPDATE_REQUIRED`로 전환한다.
