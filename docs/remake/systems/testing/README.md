@@ -2,6 +2,12 @@
 
 생산 Runtime 경로를 그대로 실행하는 Deterministic Scenario, Fault Injection, Concurrency, Recovery와 Disclosure Test Harness를 다룬다.
 
+## 관련 Main System Guide
+
+- [`UI, Camera와 Presentation Guide`](../../guides/ui/README.md)
+  - Projection Replica·Prompt·Input Context·Command Reconciliation과 Epoch-safe Client Recovery 검증 범위
+  - CameraRequest·Presentation ACK·Module Failure·Audience Disclosure와 접근성 Scenario
+
 ## 권위 문서
 
 - [`Deterministic Simulation, Scenario와 Test Harness Runtime 계약`](../../architecture/deterministic-simulation-scenario-and-test-harness-runtime-contract.md)
