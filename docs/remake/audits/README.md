@@ -4,6 +4,12 @@
 
 Audit은 제품 동작을 새로 정의하지 않는다. 새 결정이 필요하면 관련 기획 문서와 ADR에 반영한다.
 
+## 현재 작업 기준
+
+- [`../CURRENT-WORK-ORDER.md`](../CURRENT-WORK-ORDER.md)
+  - 여러 단계의 다음 작업 순서는 이 문서를 먼저 갱신한 뒤 진행한다.
+  - 가장 위의 `IN_PROGRESS` 항목을 현재 작업으로 사용한다.
+
 ## 현재 유효한 문서
 
 - [`runtime-architecture-integration-and-engine-completeness-audit.md`](runtime-architecture-integration-and-engine-completeness-audit.md)
