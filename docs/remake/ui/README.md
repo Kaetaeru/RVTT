@@ -54,7 +54,7 @@
 ## Guide 상태
 
 ```text
-Guide Status: NOT_READY
+Guide Status: READY_TO_WRITE
 ```
 
-Diagnostics, Simulation, Journal 공유 계약과 Cross-System Completion Audit가 끝난 뒤 UI Main System Guide를 작성한다.
+UI Runtime, Camera, Presentation, Diagnostics, Simulation, Journal 공유 계약과 Cross-System Completion Audit가 완료되어 Main System Guide를 작성할 수 있다.
