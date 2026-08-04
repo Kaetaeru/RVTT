@@ -8,6 +8,9 @@ Command, RuleExecution, Transaction, Domain Event, Projection, UI와 Presentatio
   - Server Correlated Trace·Decision·Budget·Incident·Health·Support의 전체 운영 흐름
   - Production-parity Scenario·Fault Injection·Disclosure·Restart·Rollback 검증과 Incident Replay
   - Diagnostic Read와 실제 Resync·Recovery·Rollback Command의 권위 분리
+- [`Extension, Plugin과 Content Pack Guide`](../../guides/extension/README.md)
+  - Pack·Registry·Handler·Provider·Module의 Compile·Migration·Activation·Failure Trace
+  - Extension Trust·Version·Budget·Redaction·Last Known Good와 Disclosure Incident 경계
 - [`UI, Camera와 Presentation Guide`](../../guides/ui/README.md)
   - Projection Apply·ViewModel·Input·CameraRequest·Playback Trace와 Client Failure Isolation
 - [`Journal과 Ping Guide`](../../guides/journal/README.md)
@@ -101,6 +104,19 @@ scene_editor.intent
 → projection·streaming·ui reconciliation
 ```
 
+Extension 세부 흐름:
+
+```text
+extension.discovery
+→ extension.registry_validation
+→ extension.dependency_resolution
+→ extension.candidate_compile
+→ extension.compatibility_migration
+→ extension.activation_or_rejection
+→ extension.runtime_use
+→ extension.failure_fallback
+```
+
 ## 고정 경계
 
 - Diagnostics는 Gameplay State를 직접 변경하지 않는다.
@@ -110,8 +126,9 @@ scene_editor.intent
 - 비밀 정보는 화면뿐 아니라 Diagnostic Index와 Export 단계에서도 차단한다.
 - Journal Support Trace에 권한 없는 문서 제목, Section, Anchor Target, Search Token과 숨은 좌표를 넣지 않는다.
 - Scene Authoring Trace에 Player에게 비공개인 Source Object, Secret Blueprint, Provider Lineage와 Diagnostic Payload를 넣지 않는다.
+- Extension Trace에 비공개 Pack, Source Lineage, Handler Path, Secret Content ID와 Credential을 권한 밖으로 넣지 않는다.
 - Tool Preview·Ghost와 ViewY Trace를 Authoritative Source Commit으로 오인하지 않는다.
-- Compiler 실패 Trace가 현재 Published Build와 활성 Gameplay가 실패했다는 의미가 아니다.
+- Compiler·Pack Candidate 실패 Trace가 현재 Last Known Good Runtime 실패를 의미하지 않는다.
 - Ping Trace는 비권위 Experience Event이며 손실을 Authority Event Gap으로 분류하지 않는다.
 - 상세 Span은 Sampling할 수 있지만 권위 실행의 Terminal Marker는 유지한다.
 - Transaction Abort, Rollback, Projection Gap, Security·Disclosure 위반 후보와 Hard Budget 초과는 일반 Sampling으로 제거하지 않는다.
@@ -126,8 +143,8 @@ scene_editor.intent
 ## 역할 경계
 
 - 플레이어는 자신의 공개 가능한 Command 상태, 사용자 안전 오류와 Support Reference를 본다.
-- DM은 현재 Campaign의 Gameplay·Authoring Trace, Policy·Rule·Compiler 설명과 복구 필요 Incident를 본다.
-- 개발자·운영자는 허가된 기술 Span, Budget, Queue와 Sanitized Incident Bundle을 본다.
+- DM은 현재 Campaign의 Gameplay·Authoring·Content Pack Trace, Policy·Rule·Compiler 설명과 복구 필요 Incident를 본다.
+- 개발자·운영자는 허가된 기술 Span, Extension ID·Version, Budget, Queue와 Sanitized Incident Bundle을 본다.
 - 시스템은 Trace Context 전파, Sampling, Redaction, Incident 집계와 Health 계산을 담당한다.
 
 ## 후속 구현 명세
@@ -146,4 +163,4 @@ scene_editor.intent
 Guide Status: CURRENT
 ```
 
-Diagnostics·Observability·Operations의 권위 문서 관계, 사용자·지원 흐름과 Simulation·Recovery 검증 경계는 Main System Guide에 반영되어 있다. 관련 권위 계약이 변경되면 Guide를 `UPDATE_REQUIRED`로 전환한다.
+Diagnostics·Observability·Operations와 Extension의 권위 문서 관계, 사용자·지원 흐름과 Simulation·Recovery 검증 경계는 Main System Guide에 반영되어 있다. 관련 권위 계약이 변경되면 Guide를 `UPDATE_REQUIRED`로 전환한다.
