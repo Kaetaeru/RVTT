@@ -4,9 +4,12 @@
 
 ## 관련 Main System Guide
 
+- [`Combat와 Encounter Guide`](../../guides/combat/README.md)
+  - Guide Status: `CURRENT`
+  - Encounter Proposal·Initiative Reveal·Timeline·Turn·Opportunity·Objective의 전체 Runtime 흐름
+  - Damage·HP 0·Death Closure, Round·Campaign Time Boundary, Encounter End와 Branch Rollback
 - [`Rules, Character Action, Spell, Dice와 Effect Guide`](../../guides/rules/README.md)
   - Encounter가 제공한 Opportunity에서 Action·Spell·Roll·PendingEffect·Effect 실행이 완료되는 경계
-  - Initiative Timeline·Turn·Objective·Encounter 종료의 전체 Guide는 다음 작업 순서를 따른다.
 
 ## 상위 권위 문서
 
@@ -97,7 +100,7 @@
 ## Guide Status
 
 ```text
-READY_TO_WRITE
+CURRENT
 ```
 
-Combat Architecture와 Integration BLOCKER는 완료됐다. Main System Guide는 권위 문서 읽기 순서, Player·DM 흐름, Cross-Domain Outcome, 복구와 구현 Spec 진입점을 통합한다.
+현재 Guide는 [`Combat와 Encounter Guide`](../../guides/combat/README.md)다. 권위 Architecture가 변경되면 이 상태를 `UPDATE_REQUIRED`로 전환한다.
