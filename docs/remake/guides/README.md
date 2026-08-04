@@ -59,6 +59,10 @@ Guide는 새로운 제품 규칙, Architecture 결정, API, 데이터 구조나 
   - Guide Status: `CURRENT`
   - 안정적 Document·Section Identity, Markdown Compile, Permission-aware Search·Backlink와 World Anchor Lifecycle
   - Safe Navigation Capability와 위치·경로 Ping의 비권위 Audience·Presentation·Lifetime 흐름
+- [`Scene Editor와 Authoring`](scene-editor/README.md)
+  - Guide Status: `CURRENT`
+  - DM Authoring Overlay, Scene Source·Stable Object·Tool Module·Authoring Command와 Edit History
+  - Candidate Build·Diagnostic·Test Play·Atomic Publish, Runtime Quick Edit·Source Promotion과 안전한 Live Patch 흐름
 
 ## 1. Guide의 역할
 
