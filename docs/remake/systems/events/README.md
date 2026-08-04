@@ -2,6 +2,12 @@
 
 Commit 이후 Domain Event, Transactional Outbox, Subscriber, 관찰자별 Projection Event와 Presentation Signal 연결을 다룬다.
 
+## 관련 Main System Guide
+
+- [`Combat와 Encounter Guide`](../../guides/combat/README.md)
+  - Encounter·Round·Turn·Objective·End Domain Event와 Rule Event의 분리
+  - Temporal Boundary Commit 이후 `schedule.became_due` Event→Command Bridge와 Deferred Consequence
+
 ## 권위 문서
 
 - [`../../architecture/domain-event-outbox-subscription-and-projection-runtime-contract.md`](../../architecture/domain-event-outbox-subscription-and-projection-runtime-contract.md)
