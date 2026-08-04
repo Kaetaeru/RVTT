@@ -78,3 +78,11 @@ Journal Link 클릭
 - `specs/journal/007-journal-simulation-and-disclosure-regression.md`
 
 실제 구현 순서는 `../../CURRENT-WORK-ORDER.md`를 따른다.
+
+## Guide 상태
+
+```text
+Guide Status: READY_TO_WRITE
+```
+
+최신 Completion Audit에서 Journal Architecture와 Ping Feature Model의 구조적 차단 항목이 없으며, 남은 값은 구현·성능 측정형 기본값이다.
