@@ -1,14 +1,14 @@
 # RVTT Player·DM User Guides
 
-- 상태: ACTIVE
+- 상태: COMPLETE
 - 문서 종류: User Guide Index
 - 사용자 가이드 상태: `TARGET_EXPERIENCE`
 - 최종 갱신일: 2026-08-05
 - 세부 작업 순서: [`CURRENT-USER-GUIDE-WORK-ORDER.md`](CURRENT-USER-GUIDE-WORK-ORDER.md)
 
-이 폴더는 내부 시스템 구조가 아니라 **플레이어와 DM이 실제 세션에서 무엇을 하는지**를 설명한다.
+이 폴더는 내부 시스템 구조가 아니라 **Player와 DM이 실제 세션에서 무엇을 하는지**를 설명한다.
 
-현재 문서는 구현 전 목표 사용자 경험이다. 실제 Release가 나온 뒤 화면과 조작을 다시 검증한다.
+현재 문서는 구현 전 목표 사용자 경험이다. 실제 Build와 Release가 나온 뒤 화면과 조작을 다시 검증한다.
 
 ## 처음 읽을 문서
 
@@ -24,8 +24,6 @@
 - 재접속
 - DM 복구
 
-RVTT를 처음 이해하려면 이 문서 하나를 먼저 읽는다.
-
 ```text
 한눈에 보는 세션 흐름
 → 필요한 역할의 상세 Guide
@@ -34,8 +32,6 @@ RVTT를 처음 이해하려면 이 문서 하나를 먼저 읽는다.
 ## 상세 가이드
 
 ### [`Player Guide`](player/README.md)
-
-다음 상황의 자세한 설명이 필요할 때 읽는다.
 
 - 세션 접속과 Character 선택
 - Camera와 입력
@@ -47,8 +43,6 @@ RVTT를 처음 이해하려면 이 문서 하나를 먼저 읽는다.
 - 재접속·동기화·Rollback 대응
 
 ### [`DM Guide`](dm/README.md)
-
-다음 상황의 자세한 설명이 필요할 때 읽는다.
 
 - Campaign과 Session 준비
 - Lobby·Role·Character·Control 관리
@@ -90,7 +84,7 @@ RVTT를 처음 이해하려면 이 문서 하나를 먼저 읽는다.
 
 - 초기 지원 환경은 PC 키보드·마우스다.
 - 기본 Ruleset은 `dnd5e-2024`, 기본 표시 언어는 `ko-KR`이다.
-- 플레이어와 DM은 3D 미니어처 Token을 다룬다.
+- Player와 DM은 3D 미니어처 Token을 다룬다.
 - Exploration에서는 목적지 클릭과 Token WASD 이동을 지원한다.
 - Encounter에서는 경로를 확인한 뒤 클릭으로 이동한다.
 - Encounter 중 WASD는 Camera 이동에 사용한다.
@@ -113,22 +107,32 @@ RVTT를 처음 이해하려면 이 문서 하나를 먼저 읽는다.
 - Animation·VFX의 정확한 시간
 - 성능 수치와 최대 표시 개수
 
-가이드에 없는 조작을 임의로 추가하지 않는다. 새로운 사용자 행동이 필요하면 제품·UI 결정을 먼저 갱신한다.
+가이드에 없는 조작을 임의로 추가하지 않는다. 새로운 사용자 행동이 필요하면 Product·UI·ADR을 먼저 갱신한다.
 
-## 문서 역할
+## 문서 연결
 
 ```text
 Quick Flow
-→ 처음 보는 사용자가 전체 세션을 이해한다
+→ 처음 보는 사용자가 전체 세션을 이해
 
 Player·DM Guide
-→ 역할별 상황과 조작을 자세히 확인한다
+→ 역할별 상황과 조작을 자세히 확인
 
 Main System Guide
-→ 시스템 문서 사이의 책임과 연결을 확인한다
+→ 관련 Authority Documents와 시스템 경계를 탐색
 
 Implementation Spec
-→ 실제 구현 계약을 정의한다
+→ Acceptance Flow를 실제 구현 계약과 Test로 변환
 ```
+
+- 현재 작업 순서: [`../CURRENT-WORK-ORDER.md`](../CURRENT-WORK-ORDER.md)
+- Remake 문서 허브: [`../README.md`](../README.md)
+- Product Authority: [`../product/README.md`](../product/README.md)
+- Main System Guides: [`../guides/README.md`](../guides/README.md)
+- Implementation Specs: [`../specs/README.md`](../specs/README.md)
+- Implementation Spec Template: [`../templates/implementation-spec-template.md`](../templates/implementation-spec-template.md)
+- 문서 수명주기: [`../DOCUMENT-LIFECYCLE-AND-DISCONTINUATION.md`](../DOCUMENT-LIFECYCLE-AND-DISCONTINUATION.md)
+
+Quick Flow와 상세 User Guide는 Product·Architecture·System·UI·ADR을 쉬운 언어로 설명하는 비권위 Reference다. 충돌하면 직접 권위 문서가 우선한다.
 
 현재 Quick Flow, Player Guide와 DM Guide의 상태는 모두 `TARGET_EXPERIENCE`다.
