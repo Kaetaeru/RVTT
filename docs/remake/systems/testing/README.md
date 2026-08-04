@@ -8,6 +8,9 @@
   - Versioned Scenario·Fixture·Deterministic Adapter·Action Schedule·Fault Point의 전체 검증 흐름
   - Trace·Incident·Support에서 최소 재현 Artifact와 Regression Catalog로 이어지는 Operations 연결
   - Restart·Reconnect·Rollback·Disclosure·Budget의 Production-parity 검증
+- [`Extension, Plugin과 Content Pack Guide`](../../guides/extension/README.md)
+  - Pack·Registry·Handler·Provider·Tool·Presentation Module의 Version·Dependency·Migration Scenario
+  - Campaign Authored Content, AdvancedOperation Budget와 Extension Disclosure·Failure Isolation 검증
 - [`UI, Camera와 Presentation Guide`](../../guides/ui/README.md)
   - Projection Batch, Prompt·Input·Camera·Presentation Failure와 Epoch-safe Recovery Scenario
 - [`Journal과 Ping Guide`](../../guides/journal/README.md)
@@ -51,6 +54,12 @@
   - Source·Provider·Layer·Build 결정성, Diagnostic·Publish와 Live Patch 검사
 - [`Scene Editor Tool Module`](../../architecture/scene-editor-tool-module-architecture.md)
   - Registry·Capability·Command·Object Schema·Migration과 Error Isolation 검사
+- [`Ruleset Policy Runtime`](../../architecture/ruleset-policy-registry-composition-and-frozen-snapshot-runtime-contract.md)
+  - Pack Patch·Registry·Snapshot Version·Migration·Guardrail 검사
+- [`표준 Recipe Step Library`](../rules/standard-recipe-step-library.md)
+  - Step·SubRecipe·AdvancedOperation Schema·Budget·Commit 경계 검사
+- [`Presentation Runtime`](../../architecture/presentation-recipe-playback-priority-and-extension-runtime-contract.md)
+  - Module·Recipe Version·Audience·Fallback와 Gameplay Failure Isolation 검사
 - [`Dice와 Resolution`](../../architecture/dice-roll-check-save-attack-and-resolution-runtime-contract.md)
   - Named RNG Stream과 RollRecord 기반 재현
 
@@ -96,11 +105,15 @@ Headless Harness와 실제 Roblox Integration Suite를 서로 대체하지 않�
 - Scene Build Test는 실제 Source Compiler·Provider·Manifest·Publish 경로를 사용한다.
 - Partial Compile Fixture가 Full Compile과 다른 의미를 허용하지 않는다.
 - Tool Preview·Ghost를 Source Commit으로 간주하지 않고 실제 Authoring Command를 실행한다.
+- Pack·Registry Test는 실제 Loader·Compiler·Migration·Activation 경로를 사용한다.
+- Missing Version Test에서 최신 Pack·Handler·Recipe를 자동 대체하지 않는다.
+- AdvancedOperation Test는 실제 PendingEffect·CommitGroup과 Budget Guard를 사용한다.
 - Production Root RNG Seed를 Artifact로 Export하지 않는다.
 - 전체 Snapshot 문자열보다 Domain Invariant와 Semantic Assertion을 우선한다.
 - Player Projection Test는 UI 숨김뿐 아니라 직렬화 Byte·ID·Index·Diagnostics까지 검사한다.
 - Journal Disclosure Test는 제목·Section·Count·Backlink·Anchor·Search Token과 Navigation Target까지 검사한다.
 - Scene Authoring Disclosure Test는 Secret Source Object·Compiler Lineage·Diagnostic·Chunk Segment까지 검사한다.
+- Extension Disclosure Test는 Secret Pack·Content ID·Handler·Source Lineage·Migration Detail과 Presentation Parameter까지 검사한다.
 - Ping Test는 Signal 손실을 Authority Gap으로 오인하지 않고 만료·비복구를 검증한다.
 - Restart와 Rollback은 Production Snapshot·Journal·AuthorityEpoch 절차를 사용한다.
 - Test Harness Credential과 Production Campaign 접근 권한을 분리한다.
@@ -133,6 +146,14 @@ Headless Harness와 실제 Roblox Integration Suite를 서로 대체하지 않�
 24. 새 Build 게시 후 활성 Session 비자동 적용
 25. Live Patch Rebase 실패와 이전 Build 복구
 26. Runtime Quick Edit 비영구화와 명시적 Source Promotion
+27. Source Pack Dependency·Patch Conflict와 Last Known Good 유지
+28. Pack 제거 시 사용 중 Reference 차단과 명시적 Migration
+29. Missing Pack·Handler·Recipe Version의 최신값 자동 대체 금지
+30. AdvancedOperation Budget·Permission·Commit 경계
+31. Campaign Authored JSON의 Code·Remote·URL·무한 Graph 거부
+32. Presentation Module 실패 격리와 진행 중 Recipe Version 고정
+33. Extension Subscriber Retry 멱등성과 이전 Epoch 차단
+34. Secret Pack·Content·Handler·Lineage Negative Disclosure
 
 ## 실행 등급
 
@@ -164,4 +185,4 @@ Required Suite 실패를 무제한 Retry로 숨기지 않는다. Flaky 결과는
 Guide Status: CURRENT
 ```
 
-Deterministic Simulation·Fault Injection·Operations·Recovery·Disclosure 검증의 권위 문서 관계와 실행 흐름은 Main System Guide에 반영되어 있다. 관련 권위 계약이 변경되면 Guide를 `UPDATE_REQUIRED`로 전환한다.
+Deterministic Simulation·Fault Injection·Operations·Recovery·Disclosure와 Extension 검증의 권위 문서 관계와 실행 흐름은 Main System Guide에 반영되어 있다. 관련 권위 계약이 변경되면 Guide를 `UPDATE_REQUIRED`로 전환한다.
