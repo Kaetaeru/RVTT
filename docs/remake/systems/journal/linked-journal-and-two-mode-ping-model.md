@@ -1,132 +1,24 @@
-# 38. 링크형 문서와 두 모드 핑 시스템
+# 링크형 문서와 두 모드 핑 시스템
 
-- 상태: 초안
-- 작성일: 2026-08-03
-- 관련 결정: [`ADR-0044`](../../decisions/ADR-0044-linked-journal-and-two-mode-ping-system.md)
+- 상태: `SUPERSEDED`
+- 대체 판정일: 2026-08-04
+- 대체 문서:
+  - [`Journal Document, Section, Anchor, Permission, Search와 Projection Runtime 계약`](../../architecture/journal-document-section-anchor-permission-search-and-projection-runtime-contract.md)
+  - [`위치 핑과 경로 핑 모델`](two-mode-ping-model.md)
+- 관련 결정:
+  - [`ADR-0044`](../../decisions/ADR-0044-linked-journal-and-two-mode-ping-system.md)
+  - [`ADR-0086`](../../decisions/ADR-0086-stable-journal-identities-permission-partitioned-search-and-safe-world-navigation.md)
 
-## 1. 문서 화면
+이 문서는 Journal 권위 구조와 Ping 제품 동작을 한 파일에 함께 정의한 초기 모델이다.
 
-```text
-왼쪽 탐색 패널 | 중앙 Markdown 문서 | 오른쪽 링크·속성 인스펙터
-```
-
-왼쪽 패널은 다음을 함께 표시한다.
-
-- 폴더와 문서
-- 현재 문서의 `##` 이상 제목
-- 즐겨찾기
-- 최근 문서
-- 검색 결과
-
-제목을 클릭하면 중앙 문서의 해당 위치로 즉시 이동한다. 문서를 열면 현재 Scene에 연결된 문서를 우선 표시할 수 있다.
-
-## 2. Markdown과 링크
-
-기본 문법은 Markdown과 Obsidian형 위키 링크를 지원한다.
+현재 판단에서는 다음처럼 분리한다.
 
 ```text
-[[문서 이름]]
-[[문서 이름#제목]]
+Journal Document·Section·Permission·Anchor·Search·Projection
+→ 최신 Journal Architecture 계약
+
+클릭 위치 핑·드래그 경로 핑
+→ 위치 핑과 경로 핑 System Feature Model
 ```
 
-월드 링크는 타입 있는 참조로 저장한다.
-
-```text
-[[actor:actorId|표시 이름]]
-[[object:sceneObjectId|고대 레버]]
-[[scene:sceneId|서쪽 지하실]]
-[[room:sceneId/12|12번 방]]
-[[camera:bookmarkId|제단 시점]]
-```
-
-사용자는 표시 이름을 바꿀 수 있지만 내부 ID는 유지한다. 대상이 삭제되면 링크를 없애지 않고 `broken_reference`로 표시한다.
-
-## 3. 제목 자체의 월드 링크
-
-문서 제목 또는 섹션 제목에 링크 대상을 지정할 수 있다.
-
-```text
-## 12번 방 — 봉인된 제단
-linkedEntity: room:sceneId/12
-visibility: private_dm
-```
-
-해당 제목을 클릭하면 문서 이동과 함께 카메라 이동, Actor 선택 또는 오브젝트 강조를 실행할 수 있다. 플레이어에게 공개되지 않은 방 번호는 DM 전용 탐색에만 표시한다.
-
-## 4. 오브젝트에서 문서 열기
-
-Actor나 오브젝트의 컨텍스트 메뉴에서 다음을 제공한다.
-
-```text
-연결된 문서 열기
-새 문서 만들기
-현재 문서에 링크 삽입
-연결된 제목으로 이동
-```
-
-하나의 오브젝트는 여러 문서와 연결될 수 있고, 문서 하나도 여러 엔티티를 참조할 수 있다.
-
-## 5. 권한
-
-```text
-private_dm
-owner_and_dm
-party
-campaign
-```
-
-문단 또는 문서 단위 권한을 지원하되, 초기 구현은 문서 단위를 기본으로 한다. 권한 없는 사용자는 본문뿐 아니라 문서 제목, 링크 대상과 검색 결과도 받지 않는다.
-
-## 6. 검색
-
-검색 범위:
-
-- 제목
-- 본문
-- 태그
-- 연결된 Actor·오브젝트 이름
-- Scene과 방 번호
-
-검색 결과를 클릭하면 문서 위치와 월드 대상을 함께 열 수 있다.
-
-## 7. 위치 핑
-
-한 번 클릭하면 월드 표면에 위치 핑을 생성한다.
-
-```text
-PingIntent
-├─ senderUserId
-├─ worldPosition
-├─ surfaceNormal
-├─ audience
-├─ createdAt
-└─ lifetime
-```
-
-핑은 규칙 상태를 변경하지 않으며 저장하지 않는다. DM은 전체, 특정 플레이어 또는 DM 전용 대상으로 보낼 수 있다.
-
-## 8. 경로 핑
-
-핑 입력을 누른 채 드래그하면 경로가 생성된다.
-
-```text
-시작점
-→ 드래그 샘플
-→ 표면 투영·간소화
-→ 끝점
-```
-
-경로 핑은 전술 설명용이며 실제 이동 비용, 기회 공격과 충돌 검증을 확정하지 않는다. 경로가 허용되지 않는 표면을 지나면 단절 또는 경고 표시만 한다.
-
-## 9. 입력 충돌
-
-- 짧은 클릭: 위치 핑
-- 일정 거리 이상 드래그: 경로 핑
-- Q: 작성 중 핑 취소
-- 마우스 버튼 해제: 경로 핑 확정
-
-대상 지정·씬 편집·안개 편집 중에는 입력 문맥 우선순위에 따라 핑을 비활성화하거나 전용 단축키를 요구한다.
-
-## 10. 성능
-
-핑은 클라이언트 VFX로 렌더링하고 서버는 권한과 좌표만 검증한다. 경로 점은 일정 간격으로 샘플링한 뒤 단순화하며, 수명 종료 시 완전히 제거한다.
+문서 제목, Heading 문자열과 이름 기반 World Link를 현재 Identity 계약으로 사용하지 않는다. 최신 Journal 문서는 안정적 `documentId`, `sectionId`, 타입 있는 Anchor와 Permission-aware Projection을 사용한다.
