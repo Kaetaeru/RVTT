@@ -49,6 +49,12 @@
   - Slot·Module·Augment·Registry 기반 확장
   - 플레이테스트 Hot Swap, 이전 버전 복원과 프리셋
   - Queue·Budget·Marker·Fallback·오류 격리와 접근성
+- [`Domain Event, Outbox, Subscription과 Projection Runtime 계약`](domain-event-outbox-subscription-and-projection-runtime-contract.md)
+  - Rule Event·Domain Event·Projection Event·Presentation Signal·Journal Record 분리
+  - Authority State와 Event Outbox의 원자적 Commit
+  - 멱등 Subscriber, Retry·Dead Letter와 Correlation Chain
+  - 관찰자별 Projection Event와 공개 가능한 PresentationIntent
+  - Subscriber 실패 격리와 Event→Command 순환 방지
 - [`Scene Compiler와 Compiled Runtime Scene 계약`](scene-compiler-and-compiled-runtime-scene-contract.md)
 - [`Character Runtime과 Compiled Character Build 계약`](character-runtime-and-compiled-character-build-contract.md)
 - [`Character Action Opportunity와 2024 Core Action Runtime 계약`](character-action-opportunity-and-2024-core-action-runtime-contract.md)
@@ -76,6 +82,7 @@
 - Visibility, Detection, Knowledge, Disclosure와 Hover Information Projection
 - CameraRequest, Focus, Follow, Bookmark, DM Observe와 Presentation Priority
 - PresentationIntent, Compiled Recipe, Module Registry, Playback Queue와 품질·접근성 Profile
+- Rule Event, Domain Event Outbox, Subscriber, Projection Event와 Presentation Signal
 - Command, revision, transaction, Ordering, Reservation과 Journal
 - Scene Source, Runtime Scene, Spatial Query, Navigation과 Streaming
 - Character, Character Action, Spell, Roll Resolution, Effect, ItemInstance와 Runtime Object의 권위 경계
@@ -99,6 +106,7 @@
 - 시야·감각·은신·Fog·발견·식별·Hover 공개 정보를 다루면 [`Visibility, Knowledge와 Detection Runtime 계약`](visibility-knowledge-detection-and-hover-information-runtime-contract.md)을 따른다.
 - 자유 카메라·Follow·Focus·DM Observe·Bookmark·Replay·연출 프레이밍을 다루면 [`Camera Runtime 계약`](camera-policy-focus-follow-and-presentation-runtime-contract.md)을 따른다.
 - VFX·Animation·Floating Text·Screen Effect·Presentation Camera·Recipe Hot Swap을 다루면 [`Presentation Runtime 계약`](presentation-recipe-playback-priority-and-extension-runtime-contract.md)을 따른다.
+- Commit 이후 변경 전달, Subscriber, Projection Event, Presentation Signal과 Journal 연계를 다루면 [`Domain Event Runtime 계약`](domain-event-outbox-subscription-and-projection-runtime-contract.md)을 따른다.
 - 기본 행동과 Action Economy는 [`Character Action Runtime`](character-action-opportunity-and-2024-core-action-runtime-contract.md)을 따른다.
 - 주문 시전은 [`Spell Runtime`](spell-casting-route-and-2024-spell-runtime-contract.md)을 따른다.
 - 주사위, 공격 판정, 능력 판정, 내성, 이니셔티브, 죽음 내성, 피해·회복 굴림은 [`Dice와 Resolution Runtime`](dice-roll-check-save-attack-and-resolution-runtime-contract.md)을 따른다.
