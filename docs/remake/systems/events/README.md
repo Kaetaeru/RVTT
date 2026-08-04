@@ -10,6 +10,11 @@ Commit 이후 Domain Event, Transactional Outbox, Subscriber, 관찰자별 Proje
   - Subscriber 멱등성, Retry, Dead Letter와 Cycle Guard
   - Observer별 Projection Event
   - Presentation·Journal·Diagnostics 확장 경계
+- [`../../architecture/encounter-game-time-temporal-boundary-and-scheduler-integration-contract.md`](../../architecture/encounter-game-time-temporal-boundary-and-scheduler-integration-contract.md)
+  - Encounter Boundary·Campaign Time·Due Occurrence의 원자적 Commit
+  - `encounter.temporal_boundary_committed`, `game_time.advanced`, `schedule.became_due`
+  - Scheduler Due의 멱등 Event→Command Encounter Bridge
+  - Subscriber 실패와 Blocking Boundary Gate의 분리
 
 ## 관련 문서
 
@@ -23,6 +28,8 @@ Commit 이후 Domain Event, Transactional Outbox, Subscriber, 관찰자별 Proje
 
 - Event Handler는 Domain Store를 직접 수정하지 않는다.
 - 상태 변경이 필요하면 새 Command 또는 RuleExecution을 제출한다.
+- `schedule.became_due` Subscriber가 Encounter Timeline을 직접 수정하지 않는다.
+- 동일 Due Occurrence의 중복 전달은 Subscriber 멱등 기록으로 차단한다.
 - Client에는 Raw Domain Event를 보내지 않는다.
 - Presentation Subscriber 실패는 Gameplay Commit을 되돌리지 않는다.
 - Rollback 이전 Authority Epoch의 Event를 새 Branch에 다시 적용하지 않는다.
