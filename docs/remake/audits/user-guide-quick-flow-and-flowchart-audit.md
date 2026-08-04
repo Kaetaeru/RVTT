@@ -55,6 +55,9 @@ Detailed Guide Handoff
 New Product Decision
 → NONE
 
+Documentation Validation
+→ PASS
+
 User Guide Simplification
 → COMPLETE
 
@@ -235,8 +238,10 @@ Quick Flow는 상세 Guide를 대체하지 않는다. User Guide Hub에서는 Qu
 - 전체·Player·DM Flowchart: `DONE`
 - 반복·Scene 전환·재접속·복구 Flowchart: `DONE`
 - User Guide Hub 첫 진입점 변경: `DONE`
-- Root·Remake Hub 연결: 완료 갱신 대상
-- User Guide Work Order 종료: 완료 갱신 대상
-- GitHub Actions 문서 검증: 최종 Commit에서 확인
+- Root·Remake Hub 연결: `DONE`
+- Spec Hub Acceptance Flow 연결: `DONE`
+- User Guide Work Order 종료: `DONE`
+- 상위 Work Order의 Implementation Specs 복귀: `DONE`
+- GitHub Actions 문서 검증 run #769: `SUCCESS`
 
-허브와 Work Order 갱신 및 문서 검증이 성공하면 User Guide 간소화 보완을 `COMPLETE`로 종료하고 Implementation Specs로 복귀한다.
+User Guide 간소화 보완은 `COMPLETE`다. 현재 활성 단계는 Implementation Specs다.
