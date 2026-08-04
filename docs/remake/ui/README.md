@@ -2,6 +2,13 @@
 
 화면 배치, 입력 문맥, 패널 상태와 사용자 피드백을 정의한다.
 
+## Main System Guide
+
+- [`UI, Camera와 Presentation Guide`](../guides/ui/README.md)
+  - Projection Replica·ViewModel·Panel·Semantic Input·UI Intent의 공통 Client 흐름
+  - CameraRequest·Focus·Follow·Bookmark와 Presentation Recipe·Queue·Marker·Fallback
+  - Reconnect·Rollback·Role Change 후 Epoch-safe UI·Camera·Presentation 복구
+
 ## 최상위 권위 계약
 
 - [`UI Projection, ViewModel, Input Context와 Recovery Runtime 계약`](../architecture/ui-projection-view-model-input-context-and-recovery-runtime-contract.md)
@@ -54,7 +61,7 @@
 ## Guide 상태
 
 ```text
-Guide Status: READY_TO_WRITE
+Guide Status: CURRENT
 ```
 
-UI Runtime, Camera, Presentation, Diagnostics, Simulation, Journal 공유 계약과 Cross-System Completion Audit가 완료되어 Main System Guide를 작성할 수 있다.
+현재 UI, Camera와 Presentation의 권위 문서 관계, 사용자 흐름과 복구 경계는 Main System Guide에 반영되어 있다. 관련 권위 계약이 변경되면 Guide를 `UPDATE_REQUIRED`로 전환한다.
