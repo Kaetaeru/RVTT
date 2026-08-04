@@ -112,7 +112,7 @@ networking/001-command-envelope.md
   - StepExecutor
   - Guided·Assisted 대기와 복구
 
-- [`002. Standard Recipe Step Handler Contracts`](shared/002-standard-recipe-step-handler-contracts.md)
+- [`002. Standard Recipe Step Handler Contracts`](shared/002-standard-step-handler-contracts.md)
   - StepHandler와 StepHandlerRegistry
   - 제한된 HandlerServices
   - Config·입력·출력 검증
