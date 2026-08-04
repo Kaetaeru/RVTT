@@ -8,6 +8,10 @@
   - Semantic Scene Source에서 Compiled Navigation Layer가 생성되는 흐름
   - Snapshot-bound Spatial Query, SpatialBodyProfile과 Navigation Plan의 권위 경계
   - 탐험·전투·강제 이동의 Checkpoint Execution과 Streaming Prefetch 연결
+- [`Scene Editor와 Authoring Guide`](../../guides/scene-editor/README.md)
+  - Asset Semantic Profile, Scene Override·Region·Transition과 Critical Route Authoring
+  - Editor Source 변경에서 Partial Compile·Diagnostic·Publish Gate로 이어지는 제작 흐름
+  - DM이 Polygon·Portal·Clearance를 직접 편집하지 않는 의미 기반 Authoring 경계
 
 ## 권위 문서
 
@@ -62,4 +66,4 @@
 CURRENT
 ```
 
-현재 Navigation Authoring·Spatial Query·Path Planning·Movement Execution과 Scene Streaming의 연결은 Main System Guide에 반영되어 있다. 관련 권위 계약이 변경되면 Guide를 `UPDATE_REQUIRED`로 전환한다.
+Navigation Authoring은 Scene Editor Guide에, Spatial Query·Path Planning·Movement Execution과 Scene Streaming은 Scene Runtime Guide에 반영되어 있다. 관련 권위 계약이 변경되면 해당 Guide를 `UPDATE_REQUIRED`로 전환한다.
