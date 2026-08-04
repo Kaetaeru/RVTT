@@ -1,37 +1,14 @@
-# 48. 구현 전 기획 감사 해결 상태
+# Discontinued: 구현 전 기획 감사 해결 상태
 
-- 상태: 검토용
-- 즉시 구현 명세 가능성: `READY_WITH_DEFAULTS`
-- 남은 기본값: 카메라 감도·줌 범위, 청크 목표 크기, 연결 종료 대기 시간
-- 관련 문서: 42-pre-implementation-planning-readiness-audit.md
+- 상태: `DISCONTINUED`
+- 폐기 판정일: 2026-08-04
 
-## 이번에 해결된 P0
+이 문서는 초기 구현 전 기획 감사의 일회성 해결 상태표였다. 이후 공통 Runtime Architecture와 Character Runtime 계약이 추가되어 현재 준비도를 나타내지 않는다.
 
-| 항목 | 결과 | 근거 |
-|---|---|---|
-| 5피트 논리 격자 충돌 | 폐기. 연속 무격자 이동 | ADR-0048, 문서 43 |
-| 전투 WASD 이동 | 금지. 클릭 이동만 사용 | ADR-0048, 문서 43 |
-| 지원 기기 | PC 키보드·마우스 전용 | ADR-0048 |
-| 로비·중도 참여 | 현재 상태 동기화 후 안전 경계 합류 | ADR-0049, 문서 44 |
-| 캐릭터 소유권 | 영구 Owner 생성, DM 변경·박탈 가능 | ADR-0049 |
-| Controller | Owner와 분리, DM 배정·회수 | ADR-0049 |
-| 카메라 | 자유 전술 카메라와 우선순위 스택 | ADR-0050, 문서 45 |
-| 인벤토리·전리품 | 서버 권위 이전 트랜잭션 | ADR-0051, 문서 46 |
-| 2024 기본 콘텐츠 | 플레이어 캐릭터 콘텐츠 전체 지원 | ADR-0052, 문서 47 |
-| 자동화 등급 | Executable·Guided·Assisted 의미 확정 | ADR-0052, 문서 47 |
-| 턴 롤백 | 게임 상태 전체 복구, 로그는 보존·무효화 표시 | ADR-0052 |
-| 저장 한도 | manifest+chunk 저장 | ADR-0052 |
-| NPC 대화 | 비목표 | ADR-0050, ADR-0052 |
-| 음악·SFX | 비목표 | ADR-0052 |
-| 에이전트 작성 절차 | 준비도 표기와 연속 작업 체크리스트 | AGENTS-PLANNING-ADDENDUM.md |
+현재 기획·구현 우선순위 판단에 이 문서를 사용하지 않는다.
 
-## 아직 정리해야 하는 문서 부채
+- [보관 기록](../archive/discontinued/audits/planning-audit-resolution-status.md)
+- [문서 수명주기와 Discontinuation 정책](../DOCUMENT-LIFECYCLE-AND-DISCONTINUATION.md)
+- [최신 Architecture 문서 지도](../architecture/README.md)
 
-새 ADR이 우선하므로 제품 결정은 더 이상 막히지 않지만, 기존 문서에는 오래된 문구가 남아 있다.
-
-- 루트 AGENTS.md의 5피트 논리 격자와 SFX 문구
-- 02-core-session-loop.md의 전투 WASD, 음악, 날씨와 대화 문구
-- 기존 Presentation 문서의 SFX 슬롯
-- 초기 README의 예정 문서 구조와 비목표 목록
-
-구현명세를 시작하기 전에 `documentation consistency cleanup` 작업으로 이 문구들을 일괄 정리한다. 이 작업은 새 제품 결정을 요구하지 않는 문서 정합성 수정이다.
+원문 전체는 이 경로의 Git 기록에서 확인한다.
