@@ -2,6 +2,12 @@
 
 캐릭터 성장 원본, Compiled Character Build, 캠페인 영구 현재 상태, 주문 획득과 주문책, HP 0·죽음·휴식·회복, NPC 스탯블록과 Scene Actor Binding을 다룬다.
 
+## 관련 Main System Guide
+
+- [`Rules, Character Action, Spell, Dice와 Effect Guide`](../../guides/rules/README.md)
+  - Character Build가 제공하는 Capability·Spell Route가 Action·Roll·Effect 실행으로 이어지는 경계
+  - Character 성장·Inventory·Downtime 전체 Guide는 별도 작업 순서를 따른다.
+
 ## 최상위 권위 계약
 
 - [`../../architecture/compiled-build-and-authoritative-state-pattern.md`](../../architecture/compiled-build-and-authoritative-state-pattern.md)
