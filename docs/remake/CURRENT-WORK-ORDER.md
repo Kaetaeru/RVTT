@@ -43,39 +43,44 @@ DEFERRED
 | 7 | `DONE` | Cross-System Integration Contracts와 Completion Audit | Damage·Death·Combat 및 남은 Runtime 연결 계약, 순환·중복·공백 재감사 완료 |
 | 8 | `DONE` | Main System Guides | 12개 Guide, 권위 읽기 순서, 상태·책임 경계, 문서 Hub와 완료 감사 확정 |
 | 9 | `DONE` | Player·DM User Guides와 Quick Flow | 상세 Guide, 코딩 용어 없는 Quick Flow, 전체·Player·DM·반복·예외 Flowchart 완료 |
-| 10 | `IN_PROGRESS` | Implementation Specs | 수직 단위별 Type·Module·Command·Network·Persistence·Migration·Diagnostics·Test 계약 작성 |
-| 11 | `QUEUED` | Production Implementation | 승인된 Spec 순서대로 구현·테스트·리뷰·마이그레이션 수행 |
+| 10 | `IN_PROGRESS` | 구현 명세 전 최종 문서 연결 감사 | Root부터 Quick Flow·User Guide·Main Guide·Authority·Spec까지 탐색 경로, 상태, 수명주기와 역방향 링크 검사 완료 |
+| 11 | `QUEUED` | Implementation Specs | 수직 단위별 Type·Module·Command·Network·Persistence·Migration·Diagnostics·Test 계약 작성 |
+| 12 | `QUEUED` | Production Implementation | 승인된 Spec 순서대로 구현·테스트·리뷰·마이그레이션 수행 |
 
 ## 현재 단계
 
 ```text
-Implementation Specs
+구현 명세 전 최종 문서 연결 감사
 ```
 
-현재 첫 세부 작업:
+현재 작업:
 
 ```text
-Implementation Specs 세부 Work Order 작성
-→ 기존 Shared Spec 001·002 재검토
-→ Quick Flow와 Player·DM Acceptance Flow를 포함한 첫 수직 Slice 선택
+Root·Remake·User Guide·Guide·System·Spec·Audit Hub 탐색 경로 확인
+→ Quick Flow와 상세 Player·DM Guide의 양방향 연결 확인
+→ 12개 Main Guide에서 직접 Authority Documents로 이어지는지 확인
+→ Authority·Guide·User Guide와 Spec의 책임 방향 확인
+→ 오래된 Draft·SUPERSEDED·DISCONTINUED·ARCHIVED 문서가 활성 경로에 남아 있지 않은지 확인
+→ 누락 링크와 상태 불일치 수정
+→ 완료 감사와 문서 검증
 ```
 
-둘 이상의 Spec 작성 순서를 확정하기 전에 `specs/` 아래에 세부 Work Order를 만들고 이 문서와 연결한다.
+이 감사가 끝날 때까지 Implementation Specs 세부 Work Order는 작성하지 않는다.
 
 ## 작업 진행 방식
 
 ```text
 CURRENT-WORK-ORDER 확인
-→ 한눈에 보는 세션 흐름 확인
-→ 관련 Player 또는 DM 상세 Guide 확인
-→ 관련 Runtime·Domain Main System Guide 확인
-→ Product·Architecture·System·UI·ADR 수집
-→ Implementation Spec 작성
-→ 사용자 Acceptance Flow 포함
-→ Deterministic Scenario·Migration·Diagnostics·Budget 계약 포함
+→ Root README에서 처음 읽는 경로 추적
+→ Quick Flow와 역할별 상세 Guide 추적
+→ Main System Guide의 Parent·Children·References 확인
+→ 직접 Authority Documents와 ADR 확인
+→ Spec Hub의 입력·완료 조건 확인
+→ Audit·Lifecycle·Archive 경로 확인
+→ 누락·오래된 링크 수정
 → 문서 검증
-→ 현재 Spec DONE
-→ 다음 Spec IN_PROGRESS
+→ 감사 DONE
+→ Implementation Specs IN_PROGRESS 복귀
 ```
 
 ## 완료된 Main System Guide 단계
@@ -158,6 +163,7 @@ User Guide가 확정한 새 Product 동작은 없다. 모든 흐름은 현재 Pr
 Production Implementation은 다음 조건 전에는 시작하지 않는다.
 
 - Player·DM User Guide와 Quick Flow 완료
+- 구현 명세 전 최종 문서 연결 감사 완료
 - 현재 수직 Slice의 Implementation Specs 완료
 - Type·Command·Network·Persistence·Migration 계약 완료
 - Acceptance Scenario와 Failure·Recovery Test 정의
@@ -169,6 +175,7 @@ Production Implementation은 다음 조건 전에는 시작하지 않는다.
 
 | 날짜 | 변경 |
 |---|---|
+| 2026-08-05 | 사용자 요청에 따라 Implementation Specs를 다시 대기시키고 구현 명세 전 최종 문서 연결 감사를 시작했다. |
 | 2026-08-05 | 코딩 용어 없는 Quick Flow, 7개 Flowchart, Hub 연결과 보완 감사를 완료했다. User Guides를 `DONE`, Implementation Specs를 `IN_PROGRESS`로 복귀시켰다. |
 | 2026-08-05 | 사용자 요청에 따라 Implementation Specs를 잠시 대기시키고 간단한 Session Flow와 Flowchart 보완을 시작했다. |
 | 2026-08-05 | Player Guide, DM Guide, User Guide Hub와 최초 Completion Audit을 완료했다. |
