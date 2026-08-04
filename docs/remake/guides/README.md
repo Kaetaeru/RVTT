@@ -43,6 +43,10 @@ Guide는 새로운 제품 규칙, Architecture 결정, API, 데이터 구조나 
   - Guide Status: `CURRENT`
   - Frozen Policy·Capability·ActionOpportunity·RuleExecution·Recipe·TimingWindow의 규칙 실행 수명주기
   - Spell Route·Payment·Component·Targeting, 서버 Roll·Reveal·Outcome, PendingEffect·EffectInstance·Duration 흐름
+- [`Combat와 Encounter`](combat/README.md)
+  - Guide Status: `CURRENT`
+  - Encounter Proposal·Initiative Reveal·Timeline·Turn·Opportunity·Reaction과 Objective 진행
+  - Damage·HP 0·Death 통합, Round·Campaign Time Boundary, Encounter End와 Branch Rollback 흐름
 
 ## 1. Guide의 역할
 
