@@ -2,6 +2,13 @@
 
 실시간 자유 이동, 탐색 행동, 상호작용, 위험 사건과 Encounter 전환을 다룬다.
 
+## Main System Guide
+
+- [`Exploration, Selection, Interaction과 Perception Guide`](../../guides/exploration/README.md)
+  - Exploration Input부터 Candidate·Selection·Interaction·Perception까지의 전체 사용자 흐름
+  - Actor별 실시간 실행, Hazard와 Encounter 원자 전환
+  - 권위 문서 관계, 구현·검증 순서와 변경 영향 지도
+
 ## 권위 문서
 
 ### Exploration Runtime
@@ -50,7 +57,7 @@
 ## Guide Status
 
 ```text
-READY_TO_WRITE
+CURRENT
 ```
 
-최신 Completion Audit와 Main System Guide 작업 순서에서 Exploration·Selection·Interaction·Perception 통합 Guide의 작성 가능성이 확인되었다.
+현재 권위 문서 관계와 Exploration·Selection·Interaction·Perception 흐름은 Main System Guide에 반영되어 있다. 권위 계약이 변경되면 Guide를 `UPDATE_REQUIRED`로 전환한다.
