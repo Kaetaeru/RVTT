@@ -30,6 +30,12 @@
   - Permission-aware Diagnostic Projection, Redaction과 Support Reference
   - Sampling, Retention, Performance Budget, Health와 Incident Bundle
   - Recovery Journal·Mandatory Audit·Observability 분리와 Epoch-safe 복구
+- [`Deterministic Simulation, Scenario와 Test Harness Runtime 계약`](deterministic-simulation-scenario-and-test-harness-runtime-contract.md)
+  - 생산 Command·RuleExecution·Transaction·Projection을 그대로 실행하는 Headless Harness
+  - Versioned Scenario·Fixture와 Frozen Ruleset·Policy·Build Reference
+  - Deterministic RNG·Clock·ID·Task·Network·Storage Adapter
+  - Fault Injection, Restart·Reconnect·Rollback과 Bounded Interleaving Exploration
+  - State·Event·Projection·UI·Trace·Budget와 Negative Disclosure Assertion
 - [`Exploration 실시간 이동, 행동과 Encounter 전환 Runtime 계약`](exploration-real-time-movement-action-and-encounter-transition-runtime-contract.md)
   - 클릭 이동과 WASD 토큰 이동의 공통 권위 경계
   - Actor별 Movement·RuleExecution·Interaction 실행 슬롯
@@ -120,6 +126,7 @@
 - Session Base Mode, Context, Overlay, Transition과 Command Gate
 - Permission-aware Projection Replica, ViewModel, Panel·Modal·Focus·Input Context와 UI Recovery
 - Correlated Authority Trace, Decision Record, Error·Incident, Health, Budget와 Diagnostic Projection
+- Versioned Scenario·Fixture, Deterministic Adapter, Fault Injection, Concurrency·Recovery·Disclosure Test Harness
 - Exploration 실시간 이동, Actor별 실행 충돌, Hazard와 Encounter 전환
 - Encounter Participant, Initiative Timeline, Turn, Opportunity, Objective와 종료
 - Encounter Temporal Boundary, Campaign Time Atomic Commit, Scheduler Due Bridge와 Boundary Gate
@@ -151,6 +158,7 @@
 - Exploration·Encounter·Downtime, Context, UI·Authoring Overlay, Scene Transition·Join·Recovery를 다루면 [`Session Runtime 계약`](session-play-mode-context-overlay-and-transition-contract.md)을 따른다.
 - Projection Replica, ViewModel, Panel·Modal·Prompt, Focus, Q/E Input Context, Command Reconciliation과 Client UI 복구를 다루면 [`UI Runtime 계약`](ui-projection-view-model-input-context-and-recovery-runtime-contract.md)을 따른다.
 - Trace Context, Decision Record, Error·Incident, 성능 Budget, Diagnostic Query와 역할별 Redaction을 다루면 [`Diagnostics Runtime 계약`](diagnostics-observability-correlated-trace-and-incident-runtime-contract.md)을 따른다.
+- Scenario, Fixture, Seed, Virtual Clock·Network·Storage, Fault Injection, Interleaving, Golden·Digest와 Disclosure Regression을 다루면 [`Deterministic Simulation과 Test Harness 계약`](deterministic-simulation-scenario-and-test-harness-runtime-contract.md)을 따른다.
 - 탐험 WASD·클릭 이동, 실시간 행동 충돌, Hazard와 Encounter 진입을 다루면 [`Exploration Runtime 계약`](exploration-real-time-movement-action-and-encounter-transition-runtime-contract.md)을 따른다.
 - Initiative, Timeline, Turn·Round, Opportunity, Participant, Objective와 Encounter 종료를 다루면 [`Encounter Runtime 계약`](encounter-timeline-turn-opportunity-and-objective-runtime-contract.md)을 따른다.
 - Encounter Round Boundary와 Campaign Time, Scheduler Due와 다음 Round Gate의 통합을 다루면 [`Encounter–Game Time 통합 계약`](encounter-game-time-temporal-boundary-and-scheduler-integration-contract.md)을 따른다.
