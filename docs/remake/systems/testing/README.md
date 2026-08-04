@@ -9,6 +9,9 @@
 - [`Journal과 Ping Guide`](../../guides/journal/README.md)
   - Document·Section Identity, Permission Search·Backlink, Anchor Lifecycle와 Safe Navigation Scenario
   - Ping Audience·Rate·Signal Loss·VFX Failure와 비권위 수명주기 검증
+- [`Scene Editor와 Authoring Guide`](../../guides/scene-editor/README.md)
+  - Stable Source ID·Tool Lifecycle·Migration·Undo·Build Determinism과 Publish Gate Scenario
+  - Partial·Full Compile 동일성, Live Patch Rebase·Failure Recovery와 Secret Authoring Disclosure 검증
 
 ## 권위 문서
 
@@ -40,6 +43,10 @@
   - Replica·ViewModel·Prompt·Input Context 복구 검사
 - [`Journal Runtime`](../../architecture/journal-document-section-anchor-permission-search-and-projection-runtime-contract.md)
   - Stable Identity, Permission Search, Anchor Resolution, Conflict와 Rollback 검사
+- [`Scene Compiler`](../../architecture/scene-compiler-and-compiled-runtime-scene-contract.md)
+  - Source·Provider·Layer·Build 결정성, Diagnostic·Publish와 Live Patch 검사
+- [`Scene Editor Tool Module`](../../architecture/scene-editor-tool-module-architecture.md)
+  - Registry·Capability·Command·Object Schema·Migration과 Error Isolation 검사
 - [`Dice와 Resolution`](../../architecture/dice-roll-check-save-attack-and-resolution-runtime-contract.md)
   - Named RNG Stream과 RollRecord 기반 재현
 
@@ -76,16 +83,20 @@ Headless Harness와 실제 Roblox Integration Suite를 서로 대체하지 않�
 
 - Test Harness는 별도 Gameplay 규칙 엔진을 만들지 않는다.
 - 생산 Command, RuleExecution, Transaction, Event, Projection과 UI Selector를 그대로 사용한다.
-- Fixture가 Domain Store를 직접 수정하지 않는다.
+- Fixture가 Domain Store와 Scene Source Store를 직접 수정하지 않는다.
 - Test-only Authorization 우회와 Test-only Mutation Command를 만들지 않는다.
 - RNG, Clock, ID, Network, Storage와 Presentation Adapter만 결정적으로 교체한다.
 - 현실 Sleep과 Thread 운에 동시성 결과를 의존하지 않는다.
 - Fault는 등록된 Boundary에서만 주입한다.
 - Campaign Game Time은 Store 직접 수정이 아니라 실제 TimeAdvance·Encounter Boundary를 사용한다.
+- Scene Build Test는 실제 Source Compiler·Provider·Manifest·Publish 경로를 사용한다.
+- Partial Compile Fixture가 Full Compile과 다른 의미를 허용하지 않는다.
+- Tool Preview·Ghost를 Source Commit으로 간주하지 않고 실제 Authoring Command를 실행한다.
 - Production Root RNG Seed를 Artifact로 Export하지 않는다.
 - 전체 Snapshot 문자열보다 Domain Invariant와 Semantic Assertion을 우선한다.
 - Player Projection Test는 UI 숨김뿐 아니라 직렬화 Byte·ID·Index·Diagnostics까지 검사한다.
 - Journal Disclosure Test는 제목·Section·Count·Backlink·Anchor·Search Token과 Navigation Target까지 검사한다.
+- Scene Authoring Disclosure Test는 Secret Source Object·Compiler Lineage·Diagnostic·Chunk Segment까지 검사한다.
 - Ping Test는 Signal 손실을 Authority Gap으로 오인하지 않고 만료·비복구를 검증한다.
 - Restart와 Rollback은 Production Snapshot·Journal·AuthorityEpoch 절차를 사용한다.
 - Test Harness Credential과 Production Campaign 접근 권한을 분리한다.
@@ -106,9 +117,18 @@ Headless Harness와 실제 Roblox Integration Suite를 서로 대체하지 않�
 12. Projection Batch Drop과 Catch-up
 13. Journal Rename·Section Move 후 Stable Link 유지
 14. 비공개 Journal Search·Backlink·Anchor Negative Disclosure
-15. Scene Republish·Rollback 후 Anchor Incarnation 재검증
+15. Scene Republish·Rollback 후 Journal Anchor Incarnation 재검증
 16. 동시 Journal 편집 Conflict와 Last-write-wins 금지
 17. Ping Audience·Rate Limit·Signal Loss·만료 후 비복구
+18. Stable Scene Object Move·Rename 유지와 Duplicate 새 ID
+19. Tool Module 등록·Migration·Deactivate Resource Cleanup
+20. Partial Compile과 Full Compile Build Hash·Semantic 동일성
+21. Candidate Build 실패 후 Published Build·활성 Session 유지
+22. Cross-layer 혼합 Revision·Secret Disclosure Publish 차단
+23. Candidate Test Play의 Campaign Dynamic State 격리
+24. 새 Build 게시 후 활성 Session 비자동 적용
+25. Live Patch Rebase 실패와 이전 Build 복구
+26. Runtime Quick Edit 비영구화와 명시적 Source Promotion
 
 ## 실행 등급
 
