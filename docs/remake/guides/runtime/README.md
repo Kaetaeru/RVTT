@@ -3,7 +3,7 @@
 - Guide Status: CURRENT
 - 적용 시스템 상태: GUIDE_CURRENT
 - 작성일: 2026-08-04
-- 마지막 권위 문서 검토일: 2026-08-04
+- 마지막 권위 문서 검토일: 2026-08-05
 - Completion Audit: [`Runtime Architecture Completion과 Main System Guide 준비도 감사`](../../audits/runtime-architecture-completion-and-main-guide-readiness-audit.md)
 - 대체하는 Guide: 없음
 - 대체된 Guide: 없음
@@ -30,7 +30,7 @@ Runtime Foundation은 공격, 이동, Scene 편집, Character 성장처럼 특�
 - D&D 개별 주문·특성·몬스터 규칙
 - 화면별 배치와 시각 디자인
 - 구체적인 Roblox Module·Type·Remote 이름
-- 아직 작성되지 않은 Implementation Spec의 파일 구조
+- 아직 확정되지 않은 Implementation Spec의 최종 파일 구조
 
 ## 2. 전체 구조
 
@@ -287,10 +287,12 @@ Input Intent
 
 ### References
 
+- [`한눈에 보는 세션 흐름`](../../user-guides/QUICK-FLOW.md) — 첫 Session Slice의 사용자 목표
 - [`Architecture 문서 인덱스`](../../architecture/README.md) — 현재 최상위 권위 문서 목록과 작성 원칙
 - [`Integration 시스템`](../../systems/integration/README.md) — Cross-System 경계의 기능별 진입점
 - [`현재 전체 작업 순서`](../../CURRENT-WORK-ORDER.md) — Guide·Spec·구현 단계 순서
-- [`현재 Guide 작업 순서`](../CURRENT-GUIDE-WORK-ORDER.md) — Main System Guide 내부 순서
+- [`현재 Spec 작업 순서`](../../specs/CURRENT-SPEC-WORK-ORDER.md) — Implementation Specs의 수직 Slice 순서
+- [`현재 Guide 작업 순서`](../CURRENT-GUIDE-WORK-ORDER.md) — Main System Guide 단계 기록
 
 ## 6. 다른 시스템과의 경계
 
@@ -331,7 +333,8 @@ Input Intent
 12. [`UI Runtime`](../../architecture/ui-projection-view-model-input-context-and-recovery-runtime-contract.md) — Projection에서 사용자 입력까지
 13. [`Diagnostics Runtime`](../../architecture/diagnostics-observability-correlated-trace-and-incident-runtime-contract.md) — 원인·성능·Incident 추적
 14. [`Simulation Harness`](../../architecture/deterministic-simulation-scenario-and-test-harness-runtime-contract.md) — 결정적 회귀 검증
-15. [`Completion Audit`](../../audits/runtime-architecture-completion-and-main-guide-readiness-audit.md) — 현재 범위의 완료 판정
+15. [`Core Authority Identity·Version·Result Spec`](../../specs/runtime/001-core-authority-identity-version-and-result.md) — First Slice의 공통 구현 계약 초안
+16. [`Completion Audit`](../../audits/runtime-architecture-completion-and-main-guide-readiness-audit.md) — 현재 범위의 Architecture 완료 판정
 
 ## 8. 구현·검증 순서
 
@@ -364,7 +367,7 @@ Intent
 → 동일 Scenario 재실행
 ```
 
-구체적 Module·Type·Remote·Persistence Key는 `Implementation Specs` 단계에서 작성한다.
+구체적 Module·Type·Remote·Persistence Key는 `Implementation Specs` 단계가 소유한다.
 
 ## 9. 변경 영향 지도
 
@@ -384,8 +387,9 @@ Intent
 
 ### Product
 
-- [`Core Session Loop`](../../product/core-session-loop.md)
 - [`Platform, Movement와 Input Scope`](../../product/platform-movement-and-input-scope.md)
+
+`DISCONTINUED`인 `product/core-session-loop.md`는 현재 Authority와 추천 읽기 순서에서 제외한다. 세션 사용자 흐름은 Quick Flow와 Player·DM User Guide를 Reference로 사용한다.
 
 ### Architecture
 
@@ -413,11 +417,13 @@ Intent
 
 ### Specs
 
-- 아직 작성되지 않았다. [`현재 전체 작업 순서`](../../CURRENT-WORK-ORDER.md)의 `Implementation Specs` 단계에서 수직 단위별로 작성한다.
+- [`현재 Spec 작업 순서`](../../specs/CURRENT-SPEC-WORK-ORDER.md)
+- [`Core Authority Identity·Version·Result Spec`](../../specs/runtime/001-core-authority-identity-version-and-result.md) — `초안`, 실제 Production Source Tree 조사 전 `BLOCKED`
 
 ### Audits
 
 - [`Runtime Architecture Completion과 Main System Guide 준비도 감사`](../../audits/runtime-architecture-completion-and-main-guide-readiness-audit.md)
+- [`구현 명세 전 최종 문서 연결 감사`](../../audits/pre-implementation-document-linkage-audit.md)
 
 ## 11. ADR References
 
@@ -432,7 +438,7 @@ Intent
 - [`ADR-0070`](../../decisions/ADR-0070-orthogonal-session-modes-contexts-overlays-and-transitions.md) — Session Mode·Context·Overlay·Transition 분리
 - [`ADR-0077`](../../decisions/ADR-0077-transactional-domain-events-with-outbox-and-projection-boundaries.md) — Transactional Event Outbox
 - [`ADR-0081`](../../decisions/ADR-0081-versioned-policy-composition-and-frozen-ruleset-snapshots.md) — Policy Composition과 Frozen Snapshot
-- [`ADR-0083`](../../decisions/ADR-0083-projection-driven-ui-runtime-and-epoch-safe-client-recovery.md) — Projection-driven UI와 Epoch-safe Recovery
+- [`ADR-0083`](../../decisions/ADR-0083-projection-driven-ui-runtime-and-epoch-safe-recovery.md) — Projection-driven UI와 Epoch-safe Recovery
 - [`ADR-0084`](../../decisions/ADR-0084-correlated-authority-traces-and-permission-aware-observability.md) — Correlated Trace와 Diagnostic Projection
 - [`ADR-0085`](../../decisions/ADR-0085-production-parity-deterministic-scenarios-and-controlled-nondeterminism.md) — Production-parity Simulation
 - [`ADR-0087`](../../decisions/ADR-0087-atomic-immediate-closure-and-event-driven-deferred-consequences.md) — Immediate Closure와 Deferred Consequence
@@ -466,6 +472,6 @@ Intent
 - [x] Parent·Children·References를 구분했다.
 - [x] 최신 ADR-0087과 Completion Audit을 반영했다.
 - [x] `SUPERSEDED`, `DISCONTINUED`, `ARCHIVED` 문서를 Authority 목록에서 제외했다.
-- [x] Specs가 아직 없는 상태를 명시했다.
+- [x] 현재 Spec Work Order와 첫 Runtime Spec 초안을 반영했다.
 - [x] 변경 영향 지도가 현재 권위 구조와 일치한다.
 - [x] Guide Status가 실제 상태와 일치한다.
