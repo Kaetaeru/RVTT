@@ -37,6 +37,12 @@
   - Follow Target과 Focus Target의 독립 관리
   - Exploration Free Camera와 Encounter Follow + Free Override
   - DM Observe, Bookmark, Replay, Rollback과 Scene Transition
+- [`Presentation Recipe, Playback Priority와 Extension Runtime 계약`](presentation-recipe-playback-priority-and-extension-runtime-contract.md)
+  - 데이터 기반 Compiled Presentation Recipe와 버전 고정 Playback
+  - 공격·주문·주사위·UI·VFX의 공통 PresentationIntent
+  - Slot·Module·Augment·Registry 기반 확장
+  - 플레이테스트 Hot Swap, 이전 버전 복원과 프리셋
+  - Queue·Budget·Marker·Fallback·오류 격리와 접근성
 - [`Scene Compiler와 Compiled Runtime Scene 계약`](scene-compiler-and-compiled-runtime-scene-contract.md)
 - [`Character Runtime과 Compiled Character Build 계약`](character-runtime-and-compiled-character-build-contract.md)
 - [`Character Action Opportunity와 2024 Core Action Runtime 계약`](character-action-opportunity-and-2024-core-action-runtime-contract.md)
@@ -62,6 +68,7 @@
 - Interaction Capability, Contextual Option, DM Adjudication과 Override
 - Visibility, Detection, Knowledge, Disclosure와 Hover Information Projection
 - CameraRequest, Focus, Follow, Bookmark, DM Observe와 Presentation Priority
+- PresentationIntent, Compiled Recipe, Module Registry, Playback Queue와 품질·접근성 Profile
 - Command, revision, transaction, Ordering, Reservation과 Journal
 - Scene Source, Runtime Scene, Spatial Query, Navigation과 Streaming
 - Character, Character Action, Spell, Roll Resolution, Effect, ItemInstance와 Runtime Object의 권위 경계
@@ -83,6 +90,7 @@
 - 선택된 대상의 Open·Utilize·Pick Up·Inspect·Force Command와 DM 판정을 다루면 [`Interaction Capability 계약`](interaction-capability-contextual-command-and-adjudication-contract.md)을 따른다.
 - 시야·감각·은신·Fog·발견·식별·Hover 공개 정보를 다루면 [`Visibility, Knowledge와 Detection Runtime 계약`](visibility-knowledge-detection-and-hover-information-runtime-contract.md)을 따른다.
 - 자유 카메라·Follow·Focus·DM Observe·Bookmark·Replay·연출 프레이밍을 다루면 [`Camera Runtime 계약`](camera-policy-focus-follow-and-presentation-runtime-contract.md)을 따른다.
+- VFX·Animation·Floating Text·Screen Effect·Presentation Camera·Recipe Hot Swap을 다루면 [`Presentation Runtime 계약`](presentation-recipe-playback-priority-and-extension-runtime-contract.md)을 따른다.
 - 기본 행동과 Action Economy는 [`Character Action Runtime`](character-action-opportunity-and-2024-core-action-runtime-contract.md)을 따른다.
 - 주문 시전은 [`Spell Runtime`](spell-casting-route-and-2024-spell-runtime-contract.md)을 따른다.
 - 주사위, 공격 판정, 능력 판정, 내성, 이니셔티브, 죽음 내성, 피해·회복 굴림은 [`Dice와 Resolution Runtime`](dice-roll-check-save-attack-and-resolution-runtime-contract.md)을 따른다.
