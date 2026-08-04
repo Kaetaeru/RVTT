@@ -438,7 +438,7 @@ Intent
 - [`ADR-0070`](../../decisions/ADR-0070-orthogonal-session-modes-contexts-overlays-and-transitions.md) — Session Mode·Context·Overlay·Transition 분리
 - [`ADR-0077`](../../decisions/ADR-0077-transactional-domain-events-with-outbox-and-projection-boundaries.md) — Transactional Event Outbox
 - [`ADR-0081`](../../decisions/ADR-0081-versioned-policy-composition-and-frozen-ruleset-snapshots.md) — Policy Composition과 Frozen Snapshot
-- [`ADR-0083`](../../decisions/ADR-0083-projection-driven-ui-runtime-and-epoch-safe-recovery.md) — Projection-driven UI와 Epoch-safe Recovery
+- [`ADR-0083`](../../decisions/ADR-0083-projection-driven-ui-runtime-and-epoch-safe-client-recovery.md) — Projection-driven UI와 Epoch-safe Recovery
 - [`ADR-0084`](../../decisions/ADR-0084-correlated-authority-traces-and-permission-aware-observability.md) — Correlated Trace와 Diagnostic Projection
 - [`ADR-0085`](../../decisions/ADR-0085-production-parity-deterministic-scenarios-and-controlled-nondeterminism.md) — Production-parity Simulation
 - [`ADR-0087`](../../decisions/ADR-0087-atomic-immediate-closure-and-event-driven-deferred-consequences.md) — Immediate Closure와 Deferred Consequence
