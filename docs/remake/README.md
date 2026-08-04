@@ -2,144 +2,132 @@
 
 - 상태: 활성 문서 허브
 - 문서 종류: Documentation Index
-- 즉시 구현 명세 가능성: 해당 없음
+- 현재 단계: `IMPLEMENTATION SPECS`
+- Main System Guide 단계: `COMPLETE`
 
-RVTT 리메이크의 제품 결정, 시스템 기획, UI, 구현 명세와 감사를 역할·영역별로 관리한다.
+RVTT 리메이크의 제품 결정, Architecture, 시스템 기획, UI, Main System Guide, 구현 명세와 감사를 역할·영역별로 관리한다.
 
-문서를 작성하거나 수정하기 전에 다음 순서로 읽는다.
+## 현재 작업
+
+- 단일 작업 순서: [`CURRENT-WORK-ORDER.md`](CURRENT-WORK-ORDER.md)
+- Main System Guide 허브: [`guides/README.md`](guides/README.md)
+- Guide 완료 감사: [`audits/main-system-guide-consistency-and-document-hub-completion-audit.md`](audits/main-system-guide-consistency-and-document-hub-completion-audit.md)
+- Implementation Specs 허브: [`specs/README.md`](specs/README.md)
+
+현재 제품 범위의 Runtime Architecture와 12개 Main System Guide 통합은 완료됐다. 다음 활성 단계는 Implementation Specs다. Production Implementation은 아직 시작하지 않는다.
+
+## 문서를 수정하기 전 읽기 순서
 
 1. 저장소 루트 [`AGENTS.md`](../../AGENTS.md)
 2. [`AGENTS.md`](AGENTS.md)
 3. [`AGENTS-PLANNING-ADDENDUM.md`](AGENTS-PLANNING-ADDENDUM.md)
-4. [`Runtime Architecture Principles`](architecture/runtime-architecture-principles.md)
-5. Scene Source·Layer·Build를 다루는 경우 [`Scene Compiler 계약`](architecture/scene-compiler-and-compiled-runtime-scene-contract.md)
-6. Actor·문·함정·소환체와 Scene Presence를 다루는 경우 [`Runtime Object System 계약`](architecture/runtime-object-system-and-entity-lifecycle-contract.md)
-7. Remote·Command·Event·재접속·Client Ready를 다루는 경우 [`Networking 계약`](architecture/networking-command-event-and-client-synchronization-contract.md)
-8. Scene Chunk·Client Interest·Presentation Ready·Scene 전환을 다루는 경우 [`Scene Streaming 계약`](architecture/scene-streaming-client-interest-and-ready-activation-contract.md)
-9. [`Spatial Query Engine과 Provider 계약`](architecture/spatial-query-engine-and-provider-contract.md)
-10. 공간 이동을 다루는 경우 [`Runtime Navigation 계약`](architecture/runtime-navigation-path-planning-and-movement-execution-contract.md)
-11. [`DOCUMENT-GUIDE.md`](DOCUMENT-GUIDE.md)
-12. 관련 ADR과 영역 README
+4. [`CURRENT-WORK-ORDER.md`](CURRENT-WORK-ORDER.md)
+5. 현재 작업의 [`Main System Guide`](guides/README.md)
+6. Guide가 연결한 Product·Architecture·System·UI·ADR
+7. [`DOCUMENT-GUIDE.md`](DOCUMENT-GUIDE.md)
+8. 해당 Implementation Spec
+
+모든 작업에서 Architecture 문서 전체를 처음부터 읽지 않는다.
+
+```text
+Runtime Foundation Guide
++ 현재 Domain Guide
++ 직접 인접 Guide
++ 연결된 Authority Documents
+→ Implementation Spec
+```
+
+을 기본 탐색 경로로 사용한다.
 
 ## 제품 고정 전제
 
 - Roblox에서 DM이 실시간으로 진행하는 Baldur's Gate형 D&D VTT
-- 기본 규칙 세트 `dnd5e-2024`, 기본 표시 언어 `ko-KR`
+- 기본 Ruleset `dnd5e-2024`, 기본 표시 언어 `ko-KR`
 - 초기 지원 플랫폼은 PC 키보드·마우스
-- Roblox 아바타가 아닌 리그 없는 OBJ·MeshPart 3D 토큰
+- Roblox 아바타가 아닌 리그 없는 OBJ·MeshPart 3D Token
 - 권위 이동은 연속 무격자 좌표, 월드 비율은 `5 ft = 4 studs`
-- 탐험에서는 클릭 이동과 WASD 이동, 전투에서는 클릭 경로 이동만 지원
-- 서버가 중요 규칙과 영구 상태의 최종 권한을 소유
-- Scene Editor는 Semantic Object와 명시적 예외를 Scene Source에 기록
-- Scene Compiler가 Navigation, Visibility, Interaction, Rule, Metadata Layer와 Index를 불변 Build로 생성
-- Runtime Layer 일부만 서로 다른 Build Revision으로 혼합해 게시하지 않음
-- Candidate Build 실패 시 Last Known Good Build와 활성 세션을 유지
-- Scene Compiler는 Runtime Object Blueprint를 만들고 Live RuntimeObjectId는 Runtime Registry가 바인딩
-- Actor, 문, 함정, 소환체와 지속 영역은 Stable RuntimeObjectId와 Command 기반 Lifecycle을 사용
-- Character, ItemInstance와 순수 EffectInstance 원본은 Scene Runtime Object와 분리
+- Exploration에서는 클릭 이동과 WASD 이동, Encounter에서는 클릭 경로 이동만 지원
+- 서버가 중요 규칙과 영구 상태의 최종 권위를 소유
+- Client는 Intent를 제출하고 Permission-aware Projection을 받음
+- Scene Source, Compiled Build, Authoritative Dynamic State와 Presentation을 분리
+- Character, Actor, ItemInstance, EffectInstance와 Runtime Object Identity를 분리
 - RuntimeObjectId를 재사용하지 않고 Incarnation과 AuthorityEpoch로 오래된 참조를 차단
-- Client Chunk의 Ready·Evicted·Failed와 Runtime Object의 Active·Suspended·Archived·Destroyed를 분리
-- Projection Interest와 Camera·이동 기반 Presentation Interest를 분리
-- 활성 Scene의 권위 Layer와 Trigger는 Client Camera와 Chunk Eviction에 영향받지 않음
-- Scene Entry Essential과 Controlled Actor Activation Set 준비 전에는 관련 Gameplay Command를 허용하지 않음
-- Player Client에 전체 Raw Scene Build와 비밀 Geometry를 미리 보내지 않고 Disclosure Chunk Grant를 사용
-- Scene Transition은 공개 가능한 정적 자료를 Prepare한 뒤 안전 경계에서 Target Spawn과 Source Archive를 원자 Commit
-- Roblox StreamingEnabled와 Workspace Presentation은 권위 Object Lifecycle과 Client Ready의 원본이 아님
-- Client는 Intent만 보내며 권위 Mutation은 Versioned Command와 서버 Transaction을 사용
-- Command는 Idempotency Key, Connection Epoch, 타입 있는 Precondition과 Ordering Policy를 사용
-- Player Client는 Raw Server Event가 아니라 권한별 Projection Snapshot과 Event Stream을 받음
-- Event Gap과 Projection Epoch 변경 시 Catch-up 또는 Full Resync 전까지 권위 입력을 중지
 - 사용자 Lobby Ready와 기술적 Client Ready를 분리
-- Authority Event와 병합 가능한 Presentation Signal을 분리
-- 가져온 원본 Model은 기술용 Attribute와 Value가 없어도 등록 가능
-- Workspace와 Roblox Physics는 권위 규칙 상태의 원본이 아님
-- 권위 공간 질문은 Snapshot 고정형 Spatial Query를 사용하고, 전체 경로 탐색은 Navigation Planner가 담당
-- Navigation은 Hybrid Traversal Domain, SpatialBodyProfile과 Checkpoint 기반 Movement Execution을 사용
-- 크기별 고정 NavMesh, Legacy `Walkable` Attribute와 Humanoid 이동을 권위 모델로 사용하지 않음
+- Scene Entry Essential 준비 전 관련 Gameplay Command를 허용하지 않음
+- 권위 공간 질문은 Snapshot-bound Spatial Query를 사용하고 전체 경로 탐색은 Navigation Planner가 담당
+- 진행 중 Encounter·Downtime·RuleExecution·Build·Playback은 시작 당시 Version을 유지
+- Candidate Compile·Migration 실패 시 Last Known Good를 유지
+- Rollback은 역연산이 아니라 새 Branch·AuthorityEpoch 복원
+- Player Client에 Raw 비밀 Authority를 전달한 뒤 UI에서만 숨기지 않음
+- 일반 사용자가 임의 Luau를 설치하는 Plugin Sandbox는 제공하지 않음
 - 2024 기본 규칙의 플레이어 캐릭터 콘텐츠 전체를 최종 지원 범위로 삼음
 - NPC 대화 시스템, 음악과 모든 사운드 이펙트는 비목표
-- 최적화, 안정성, 오류 격리와 클린코드를 모든 기능의 완료 조건으로 적용
+- 최적화, 안정성, 오류 격리와 클린코드는 모든 기능의 완료 조건
+
+제품 범위와 비목표의 상세 권위는 [`product/`](product)와 관련 ADR을 따른다.
 
 ## 문서 구조
 
 | 경로 | 역할 |
 |---|---|
 | [`product/`](product) | 제품 범위, 비목표, 전체 사용자 흐름과 지원 정책 |
-| [`architecture/`](architecture) | Runtime 원칙, Scene Compiler, Runtime Object, Networking, Streaming, 권위·Query·Navigation·Recipe·Capability·저장·확장 계약 |
+| [`architecture/`](architecture) | 여러 시스템이 공유하는 권위, Source·Build·State, Runtime과 Integration 계약 |
 | [`systems/`](systems) | 기능 영역별 사용자 흐름과 시스템 동작 |
-| [`ui/`](ui) | 화면 배치, 입력 문맥, 패널 상태와 사용자 피드백 |
+| [`ui/`](ui) | 화면 배치, 입력 문맥, Panel 상태와 사용자 피드백 |
 | [`decisions/`](decisions) | 전역 번호를 가진 Architecture Decision Record |
-| [`audits/`](audits) | 기획 완성도, 충돌, 준비도와 마이그레이션 감사 |
-| [`specs/`](specs) | 구현 직전 모듈·타입·명령·네트워크·테스트 계약 |
-| [`templates/`](templates) | 기획·ADR·구현 명세·감사 템플릿 |
+| [`guides/`](guides) | 완료된 권위 문서의 관계, 전체 흐름과 구현 진입 순서 |
+| [`specs/`](specs) | 구현 직전 Module·Type·Command·Network·Persistence·Test 계약 |
+| [`audits/`](audits) | 기획 완성도, 충돌, 준비도, 단계 전환과 마이그레이션 감사 |
+| [`templates/`](templates) | 기획·ADR·Guide·구현 명세·감사 Template |
 | [`archive/`](archive) | 현재 권위가 아닌 역사적 문서 |
 
-## 추천 읽기 순서
+## Main System Guide 읽기 순서
 
-### 전체 아키텍처
+1. [`Runtime Foundation과 Authority`](guides/runtime/README.md)
+2. [`Session, Networking, Persistence와 Recovery`](guides/session/README.md)
+3. [`Scene, Streaming, Runtime Object, Spatial Query와 Navigation`](guides/scene/README.md)
+4. [`Exploration, Selection, Interaction과 Perception`](guides/exploration/README.md)
+5. [`Rules, Character Action, Spell, Dice와 Effect`](guides/rules/README.md)
+6. [`Combat와 Encounter`](guides/combat/README.md)
+7. [`Character, Inventory와 Downtime`](guides/character/README.md)
+8. [`UI, Camera와 Presentation`](guides/ui/README.md)
+9. [`Journal과 Ping`](guides/journal/README.md)
+10. [`Scene Editor와 Authoring`](guides/scene-editor/README.md)
+11. [`Diagnostics, Simulation과 Operations`](guides/diagnostics/README.md)
+12. [`Extension, Plugin과 Content Pack`](guides/extension/README.md)
 
-1. [`architecture/runtime-architecture-principles.md`](architecture/runtime-architecture-principles.md)
-2. [`decisions/ADR-0054-compiled-semantic-runtime-and-query-authority-principles.md`](decisions/ADR-0054-compiled-semantic-runtime-and-query-authority-principles.md)
-3. [`architecture/scene-compiler-and-compiled-runtime-scene-contract.md`](architecture/scene-compiler-and-compiled-runtime-scene-contract.md)
-4. [`decisions/ADR-0057-canonical-scene-source-and-atomic-compiled-build-activation.md`](decisions/ADR-0057-canonical-scene-source-and-atomic-compiled-build-activation.md)
-5. [`architecture/runtime-object-system-and-entity-lifecycle-contract.md`](architecture/runtime-object-system-and-entity-lifecycle-contract.md)
-6. [`decisions/ADR-0058-stable-runtime-object-identity-and-command-driven-lifecycle.md`](decisions/ADR-0058-stable-runtime-object-identity-and-command-driven-lifecycle.md)
-7. [`architecture/networking-command-event-and-client-synchronization-contract.md`](architecture/networking-command-event-and-client-synchronization-contract.md)
-8. [`decisions/ADR-0059-versioned-command-protocol-and-projection-stream-synchronization.md`](decisions/ADR-0059-versioned-command-protocol-and-projection-stream-synchronization.md)
-9. [`architecture/scene-streaming-client-interest-and-ready-activation-contract.md`](architecture/scene-streaming-client-interest-and-ready-activation-contract.md)
-10. [`decisions/ADR-0060-authority-independent-interest-managed-scene-streaming.md`](decisions/ADR-0060-authority-independent-interest-managed-scene-streaming.md)
-11. [`architecture/spatial-query-engine-and-provider-contract.md`](architecture/spatial-query-engine-and-provider-contract.md)
-12. [`decisions/ADR-0055-snapshot-bound-typed-spatial-query-and-navigation-boundary.md`](decisions/ADR-0055-snapshot-bound-typed-spatial-query-and-navigation-boundary.md)
-13. [`architecture/runtime-navigation-path-planning-and-movement-execution-contract.md`](architecture/runtime-navigation-path-planning-and-movement-execution-contract.md)
-14. [`decisions/ADR-0056-hybrid-traversal-domain-and-checkpointed-movement-execution.md`](decisions/ADR-0056-hybrid-traversal-domain-and-checkpointed-movement-execution.md)
-15. [`audits/cross-system-foundation-contract-gap-audit.md`](audits/cross-system-foundation-contract-gap-audit.md)
+정식 설명과 작업별 예시는 [`guides/README.md`](guides/README.md)를 따른다.
 
-### 제품과 세션
+## 권위 문서 사용 규칙
 
-1. [`product/platform-movement-and-input-scope.md`](product/platform-movement-and-input-scope.md)
-2. [`product/core-session-loop.md`](product/core-session-loop.md)
-3. [`architecture/networking-command-event-and-client-synchronization-contract.md`](architecture/networking-command-event-and-client-synchronization-contract.md)
-4. [`architecture/scene-streaming-client-interest-and-ready-activation-contract.md`](architecture/scene-streaming-client-interest-and-ready-activation-contract.md)
-5. [`systems/session/campaign-lobby-hot-join-ownership-and-control.md`](systems/session/campaign-lobby-hot-join-ownership-and-control.md)
-6. [`architecture/persistence-and-session-recovery-model.md`](architecture/persistence-and-session-recovery-model.md)
-7. [`systems/camera/free-tactical-camera-model.md`](systems/camera/free-tactical-camera-model.md)
+```text
+Product·Runtime Principles
+→ Architecture
+→ System·UI
+→ Spec
 
-### 장면 제작과 이동
+Guide
+→ 위 문서를 설명하는 비권위 Leaf
+```
 
-1. [`systems/scene/scenes-and-world.md`](systems/scene/scenes-and-world.md)
-2. [`architecture/scene-compiler-and-compiled-runtime-scene-contract.md`](architecture/scene-compiler-and-compiled-runtime-scene-contract.md)
-3. [`architecture/runtime-object-system-and-entity-lifecycle-contract.md`](architecture/runtime-object-system-and-entity-lifecycle-contract.md)
-4. [`architecture/networking-command-event-and-client-synchronization-contract.md`](architecture/networking-command-event-and-client-synchronization-contract.md)
-5. [`architecture/scene-streaming-client-interest-and-ready-activation-contract.md`](architecture/scene-streaming-client-interest-and-ready-activation-contract.md)
-6. [`systems/navigation/navigation-authoring-pipeline.md`](systems/navigation/navigation-authoring-pipeline.md)
-7. [`architecture/runtime-navigation-path-planning-and-movement-execution-contract.md`](architecture/runtime-navigation-path-planning-and-movement-execution-contract.md)
-8. [`systems/scene/ingame-scene-editor-tools.md`](systems/scene/ingame-scene-editor-tools.md)
-9. [`ui/scene-editor/scene-editor-interaction-and-layout.md`](ui/scene-editor/scene-editor-interaction-and-layout.md)
-10. [`architecture/scene-editor-tool-module-architecture.md`](architecture/scene-editor-tool-module-architecture.md)
+- Guide가 권위 문서와 충돌하면 권위 문서가 우선한다.
+- Guide를 Product·Architecture·System·Spec의 Parent로 기록하지 않는다.
+- `SUPERSEDED`, `DISCONTINUED`, `ARCHIVED` 문서는 현재 권위와 추천 읽기 순서에서 제외한다.
+- 새 결정이 필요하면 Guide나 Spec에 숨겨 넣지 않고 관련 Architecture와 ADR을 먼저 수정한다.
+- Source·Build·State·Migration 변경은 영향받는 Guide와 Spec을 함께 검사한다.
 
-### 규칙과 전투
+## 현재 유효한 Completion Audit
 
-1. [`architecture/rules-content-grant-capability-model.md`](architecture/rules-content-grant-capability-model.md)
-2. [`architecture/rules-content-execution-and-spell-contract.md`](architecture/rules-content-execution-and-spell-contract.md)
-3. [`architecture/effect-recipe-resolution-and-commit-model.md`](architecture/effect-recipe-resolution-and-commit-model.md)
-4. [`architecture/runtime-object-system-and-entity-lifecycle-contract.md`](architecture/runtime-object-system-and-entity-lifecycle-contract.md)
-5. [`architecture/networking-command-event-and-client-synchronization-contract.md`](architecture/networking-command-event-and-client-synchronization-contract.md)
-6. [`architecture/scene-streaming-client-interest-and-ready-activation-contract.md`](architecture/scene-streaming-client-interest-and-ready-activation-contract.md)
-7. [`architecture/spatial-query-engine-and-provider-contract.md`](architecture/spatial-query-engine-and-provider-contract.md)
-8. [`architecture/runtime-navigation-path-planning-and-movement-execution-contract.md`](architecture/runtime-navigation-path-planning-and-movement-execution-contract.md)
-9. [`systems/combat/encounter-initiative-turn-and-control-authority-model.md`](systems/combat/encounter-initiative-turn-and-control-authority-model.md)
-10. [`systems/combat/dice-roll-presentation-and-resolution-gating-model.md`](systems/combat/dice-roll-presentation-and-resolution-gating-model.md)
-11. [`systems/combat/encounter-turn-snapshot-and-dm-rollback-model.md`](systems/combat/encounter-turn-snapshot-and-dm-rollback-model.md)
+1. [`Runtime Architecture Completion과 Main System Guide 준비도 감사`](audits/runtime-architecture-completion-and-main-guide-readiness-audit.md)
+   - 현재 제품 범위의 Core·Support Runtime과 Cross-System Integration 완료 근거
+2. [`Main System Guide 일관성과 문서 허브 완료 감사`](audits/main-system-guide-consistency-and-document-hub-completion-audit.md)
+   - 12개 Guide, Authority 계층, 문서 수명주기와 Hub 완료 근거
+3. [`Document Migration Validation`](audits/document-migration-validation.md)
+   - 문서 이동과 링크 정합성 근거
 
-### 플레이어와 DM UI
+이전 Planning·Gap Audit은 역사 기록이며 현재 작업의 판단 근거로 사용하지 않는다.
 
-1. [`ui/common-input/common-input-grammar.md`](ui/common-input/common-input-grammar.md)
-2. [`ui/combat-hud/baldurs-gate-style-combat-hud.md`](ui/combat-hud/baldurs-gate-style-combat-hud.md)
-3. [`ui/character-sheet/official-2024-character-sheet-and-live-player-ui.md`](ui/character-sheet/official-2024-character-sheet-and-live-player-ui.md)
-4. [`ui/dm-workspace/dm-workspace-and-scene-lighting.md`](ui/dm-workspace/dm-workspace-and-scene-lighting.md)
-5. [`ui/dm-workspace/dm-quick-action-and-context-command.md`](ui/dm-workspace/dm-quick-action-and-context-command.md)
-
-## 문서 상태와 구현 준비도
+## 구현 명세 준비도
 
 기획 문서는 다음 구현 명세 준비도 중 하나를 표시한다.
 
@@ -147,10 +135,26 @@ RVTT 리메이크의 제품 결정, 시스템 기획, UI, 구현 명세와 감�
 - `READY_WITH_DEFAULTS`: 구조는 확정됐고 수치·표시 기본값만 남음
 - `BLOCKED`: 구현자가 추측해야 하는 제품 결정이나 문서 충돌이 남음
 
-`BLOCKED` 문서를 근거로 프로덕션 구현을 시작하지 않는다.
+`BLOCKED` 문서를 근거로 구현 명세나 프로덕션 구현을 시작하지 않는다.
 
-## 문서 이동 상태
+Implementation Spec은 다음을 명확히 해야 한다.
 
-기존 번호형 상세 기획 46개는 [`DOCUMENT-MIGRATION-MAP.md`](DOCUMENT-MIGRATION-MAP.md)에 따라 역할·영역별 폴더로 이동되었다. 내부 상대 링크, ADR 참조와 문서 메타데이터 정합성 검사는 마이그레이션 감사 절차를 따른다.
+- Module·Service·Package 경계
+- Luau Type와 Versioned Schema
+- Registry와 Compiler Interface
+- Command·Result·Error Code
+- Network와 Projection 계약
+- Persistence·Migration
+- Transaction·Ordering·Reservation
+- Diagnostics·Budget
+- Deterministic Scenario와 Acceptance Test
 
-이 브랜치는 리메이크 기획 브랜치다. 사용자가 명시적으로 구현을 요청하기 전에는 프로덕션 코드를 작성하지 않는다.
+세부 상태와 현재 명세는 [`specs/README.md`](specs/README.md)를 따른다.
+
+## 문서 이동과 수명주기
+
+기존 번호형 상세 기획은 [`DOCUMENT-MIGRATION-MAP.md`](DOCUMENT-MIGRATION-MAP.md)에 따라 역할·영역별 폴더로 이동됐다.
+
+문서 중단·대체·보관은 [`DOCUMENT-LIFECYCLE-AND-DISCONTINUATION.md`](DOCUMENT-LIFECYCLE-AND-DISCONTINUATION.md)를 따른다.
+
+이 브랜치는 리메이크 기획·명세 브랜치다. 사용자가 명시적으로 구현을 요청하고 승인된 Implementation Spec이 준비되기 전에는 Production Code를 작성하지 않는다.
