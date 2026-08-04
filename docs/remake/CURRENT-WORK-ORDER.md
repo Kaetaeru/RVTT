@@ -35,8 +35,8 @@ DEFERRED
 | 2 | `DONE` | Encounter–Game Time Boundary 통합 계약 | `TemporalBoundaryOccurrence`, Campaign Time 반영, Scheduler Due 역방향 연결과 직접 상호 호출 금지 확정 |
 | 3 | `DONE` | UI Runtime | Projection→ViewModel→Component→Intent 흐름, Panel·Modal·Focus·Q/E·Reconnect·Rollback 복구 계약 완료 |
 | 4 | `DONE` | Diagnostics와 Observability Runtime | Command→RuleExecution→Transaction→Event→Projection Trace, 권한별 진단, 성능·오류 Budget 계약 완료 |
-| 5 | `IN_PROGRESS` | Deterministic Simulation과 Test Harness | 고정 Seed·Snapshot Scenario·동시성·Reconnect·Rollback·정보 누출 테스트 계약 완료 |
-| 6 | `QUEUED` | Journal Anchor, Permission과 Projection 계약 | 문서·Section Identity, 월드 Anchor, 권한별 검색 Index, 안전한 Camera·Selection Intent 계약 완료 |
+| 5 | `DONE` | Deterministic Simulation과 Test Harness | 고정 Seed·Snapshot Scenario·동시성·Reconnect·Rollback·정보 누출 테스트 계약 완료 |
+| 6 | `IN_PROGRESS` | Journal Anchor, Permission과 Projection 계약 | 문서·Section Identity, 월드 Anchor, 권한별 검색 Index, 안전한 Camera·Selection Intent 계약 완료 |
 | 7 | `QUEUED` | Cross-System Integration Contracts와 Completion Audit | Damage·Death·Combat 및 남은 Runtime 연결 계약, 순환·중복·공백 재감사 완료 |
 | 8 | `QUEUED` | Main System Guides | 권위 문서와 사용자 흐름을 영역별 Guide로 통합하고 폐기 문서를 제외한 읽기 순서 확정 |
 | 9 | `QUEUED` | Implementation Specs | 수직 단위별 타입·모듈·Command·Network·Persistence·Test 계약 작성 |
@@ -59,6 +59,7 @@ CURRENT-WORK-ORDER 확인
 
 | 날짜 | 변경 |
 |---|---|
+| 2026-08-04 | Deterministic Simulation·Scenario·Test Harness Runtime 계약과 ADR-0085를 완료했다. 5번을 `DONE`으로 변경하고 Journal Anchor·Permission·Projection 계약을 `IN_PROGRESS`로 전환했다. |
 | 2026-08-04 | Diagnostics·Observability·Correlated Trace·Incident Runtime 계약과 ADR-0084를 완료했다. 4번을 `DONE`으로 변경하고 Deterministic Simulation과 Test Harness를 `IN_PROGRESS`로 전환했다. |
 | 2026-08-04 | UI Projection·ViewModel·Input Context·Recovery Runtime 계약과 ADR-0083을 완료했다. 3번을 `DONE`으로 변경하고 Diagnostics와 Observability Runtime을 `IN_PROGRESS`로 전환했다. |
 | 2026-08-04 | Encounter–Game Time Temporal Boundary 통합 계약과 ADR-0082를 완료했다. 2번을 `DONE`으로 변경하고 UI Runtime을 `IN_PROGRESS`로 전환했다. |
