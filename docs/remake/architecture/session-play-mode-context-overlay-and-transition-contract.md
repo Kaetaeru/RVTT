@@ -12,10 +12,10 @@
 - 작성일: 2026-08-04
 - 관련 ADR:
   - [`ADR-0034`](../decisions/ADR-0034-encounter-initiative-turn-order-and-control-authority.md)
-  - [`ADR-0048`](../decisions/ADR-0048-continuous-gridless-movement-and-combat-input-policy.md)
-  - [`ADR-0052`](../decisions/ADR-0052-mid-session-join-observer-and-control-assignment.md)
-  - [`ADR-0059`](../decisions/ADR-0059-versioned-command-event-and-projection-streams.md)
-  - [`ADR-0061`](../decisions/ADR-0061-scene-streaming-interest-and-ready-activation.md)
+  - [`ADR-0048`](../decisions/ADR-0048-continuous-gridless-movement-pc-only-and-no-combat-wasd.md)
+  - [`ADR-0052`](../decisions/ADR-0052-2024-core-content-rollback-state-chunked-storage-and-no-audio.md)
+  - [`ADR-0059`](../decisions/ADR-0059-versioned-command-protocol-and-projection-stream-synchronization.md)
+  - [`ADR-0061`](../decisions/ADR-0061-persistent-rule-execution-orchestrator-and-nested-timing-windows.md)
   - [`ADR-0062`](../decisions/ADR-0062-ordered-reservations-and-atomic-authority-transactions.md)
   - [`ADR-0063`](../decisions/ADR-0063-manifest-chunk-snapshots-commit-journal-and-branch-recovery.md)
   - [`ADR-0070`](../decisions/ADR-0070-orthogonal-session-modes-contexts-overlays-and-transitions.md)
