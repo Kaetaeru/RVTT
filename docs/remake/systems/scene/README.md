@@ -4,6 +4,14 @@ Scene Source, Compiled Runtime Build, 세션 Dynamic State, Runtime Object Lifec
 
 ## 권위 문서
 
+### Session Mode와 Overlay
+
+- [`../../architecture/session-play-mode-context-overlay-and-transition-contract.md`](../../architecture/session-play-mode-context-overlay-and-transition-contract.md)
+  - Exploration·Encounter·Downtime Base Play Mode
+  - DM Authoring은 전역 Gameplay Mode가 아니라 DM 전용 Overlay
+  - Scene Transition·Join·Reconnect·Recovery는 일반 Command를 차단하는 Transitional State
+  - Pause·Selection·Presentation Focus와 Rollback Review의 Overlay 경계
+
 ### Scene과 World
 
 - [`scenes-and-world.md`](scenes-and-world.md)
@@ -52,6 +60,8 @@ Scene Source, Compiled Runtime Build, 세션 Dynamic State, Runtime Object Lifec
 
 ## 고정 경계
 
+- Scene Editor는 `DM_ONLY` Authoring Overlay이며 다른 참가자의 Exploration·Encounter Mode를 바꾸지 않는다.
+- Scene Source Authoring과 Runtime Quick Edit를 동일한 Commit으로 섞지 않는다.
 - Scene Editor는 Scene Source를 편집하고 Runtime Layer를 직접 편집하지 않는다.
 - Compiler Build는 불변이며 Layer 일부만 혼합해 게시하지 않는다.
 - Compiler는 Runtime Object Blueprint를 만들고 Live RuntimeObjectId는 Runtime Registry가 바인딩한다.
