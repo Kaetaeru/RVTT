@@ -4,6 +4,9 @@ BG3형 이니셔티브, 파티 패널, Hotbar, 대상·범위 미리보기와 �
 
 ## 관련 Main System Guide
 
+- [`UI, Camera와 Presentation Guide`](../../guides/ui/README.md)
+  - CombatHudProjection→ViewModel→Panel·Input Context→UI Intent의 공통 Client 흐름
+  - Roll Reveal·UI Pulse·CameraRequest·Presentation Queue와 Reconnect·Rollback 복구
 - [`Combat와 Encounter Guide`](../../guides/combat/README.md)
   - Initiative Ribbon이 투영하는 Timeline Entry·Occurrence·Cursor와 Participant Disclosure
   - Turn·Opportunity·Movement Budget, Reaction·Objective·Timeout과 Rollback Projection
@@ -14,4 +17,4 @@ BG3형 이니셔티브, 파티 패널, Hotbar, 대상·범위 미리보기와 �
 
 - [`baldurs-gate-style-combat-hud.md`](baldurs-gate-style-combat-hud.md)
 
-공통 화면 규격은 `../shared/`를 참고한다.
+공통 화면 규격은 [`../shared/`](../shared/)를 참고한다.
