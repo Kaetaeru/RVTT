@@ -22,6 +22,12 @@
   - Action·Bonus Action·Reaction·Movement Opportunity
   - Ready, 즉흥 행동과 DM Adjudication Pending
   - 전투·탐험의 공통 Capability·RuleExecution 경계
+- [`Spell Casting Route와 2024 Spell Runtime 계약`](spell-casting-route-and-2024-spell-runtime-contract.md)
+  - CompiledSpellBuild와 출처별 SpellCastRoute
+  - 2024 턴당 슬롯 시전 제한, 업캐스팅과 Ritual
+  - 구성요소, Resource Reservation, Targeting과 Reaction Spell
+  - Ready Spell, 장시간 시전, Concentration과 Effect Runtime 연결
+  - 저장·복구·롤백과 역할별 권한 경계
 - [`Effect, Condition과 Ongoing Runtime 계약`](effect-condition-and-ongoing-runtime-contract.md)
   - CompiledEffectBuild, EffectInstance, Duration, Concentration, Stacking과 Suppression
 - [`Inventory, ItemInstance와 World Presence Runtime 계약`](inventory-item-instance-and-world-presence-runtime-contract.md)
@@ -53,8 +59,9 @@
 - Source, Compiler, Immutable Build, Authoritative State, Migration과 Projection
 - Command, revision, transaction, Ordering, Reservation과 Journal
 - Scene Source, Runtime Scene, Spatial Query, Navigation과 Streaming
-- Character, Character Action, Effect, ItemInstance와 Runtime Object의 권위 경계
+- Character, Character Action, Spell, Effect, ItemInstance와 Runtime Object의 권위 경계
 - Action·Bonus Action·Reaction·Movement Opportunity와 2024 기본 행동
+- Spell Route, Payment, Components, Targeting, Ritual, Ready와 Concentration
 - Inventory·Equipment·Container와 Scene Ground Item Presence
 - Capability, RuleExecution, Recipe, TimingWindow와 PendingEffect
 - 저장·복구·재접속·롤백과 Presentation 확장 계약
@@ -72,6 +79,8 @@ Scene Source, Semantic Profile, Runtime Layer, Index, Chunk와 게시를 다루�
 캐릭터 성장 원본, 파생 능력치, Capability, Resource와 Character·Actor·Encounter State를 다루는 문서는 [`Character Runtime 계약`](character-runtime-and-compiled-character-build-contract.md)을 따른다.
 
 기본 행동, Action Economy, Bonus Action, Reaction, Ready와 즉흥 행동을 다루는 문서는 [`Character Action Runtime 계약`](character-action-opportunity-and-2024-core-action-runtime-contract.md)을 따른다.
+
+주문 정의, Cast Route, 준비·접근, 슬롯·무료 시전·아이템 충전, 구성요소, Ritual, Ready Spell과 Reaction Spell을 다루는 문서는 [`Spell Runtime 계약`](spell-casting-route-and-2024-spell-runtime-contract.md)을 따른다.
 
 상태, 집중, 변신, 지속 영역, 소환, Duration, Stacking과 Suppression을 다루는 문서는 [`Effect Runtime 계약`](effect-condition-and-ongoing-runtime-contract.md)을 따른다.
 
