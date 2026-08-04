@@ -21,6 +21,9 @@ Capability 실행, 비용 예약, Recipe 실행, 반응·Trigger, PendingEffect�
 - [`Rules, Character Action, Spell, Dice와 Effect Guide`](../../guides/rules/README.md)
   - Frozen Policy와 Capability View부터 Action·Spell·RuleExecution·Roll·PendingEffect·EffectInstance까지의 전체 실행 흐름
   - 권위 문서 읽기 순서, 시스템 경계, Recovery·Rollback과 Implementation Spec 진입점
+- [`Extension, Plugin과 Content Pack Guide`](../../guides/extension/README.md)
+  - RulesContentCatalog, Source Pack Version, Grant·Capability와 신뢰 Handler 경계
+  - Step·SubRecipe·AdvancedOperation Registry, Pack Migration과 Campaign Authored Content 검증
 
 ## 권위 문서
 
@@ -81,20 +84,21 @@ Capability 실행, 비용 예약, Recipe 실행, 반응·Trigger, PendingEffect�
 ## 추천 읽기 순서
 
 1. `../../guides/rules/README.md`
-2. `../../architecture/runtime-architecture-principles.md`
-3. `../../architecture/compiled-build-and-authoritative-state-pattern.md`
-4. `../../architecture/ruleset-policy-registry-composition-and-frozen-snapshot-runtime-contract.md`
-5. `../../architecture/networking-command-event-and-client-synchronization-contract.md`
-6. `../../architecture/command-ordering-logical-time-and-transaction-coordinator-contract.md`
-7. `../../architecture/spatial-query-engine-and-provider-contract.md`
-8. `../../architecture/rules-content-grant-capability-model.md`
-9. `../../architecture/character-action-opportunity-and-2024-core-action-runtime-contract.md`
-10. `../../architecture/rule-runtime-orchestrator-and-pending-execution-contract.md`
-11. `../../architecture/spell-casting-route-and-2024-spell-runtime-contract.md`
-12. `../../architecture/effect-recipe-resolution-and-commit-model.md`
-13. `../../architecture/effect-condition-and-ongoing-runtime-contract.md`
-14. `standard-recipe-step-library.md`
-15. 대상 콘텐츠에 해당하는 세부 Rules 문서
+2. `../../guides/extension/README.md`
+3. `../../architecture/runtime-architecture-principles.md`
+4. `../../architecture/compiled-build-and-authoritative-state-pattern.md`
+5. `../../architecture/ruleset-policy-registry-composition-and-frozen-snapshot-runtime-contract.md`
+6. `../../architecture/networking-command-event-and-client-synchronization-contract.md`
+7. `../../architecture/command-ordering-logical-time-and-transaction-coordinator-contract.md`
+8. `../../architecture/spatial-query-engine-and-provider-contract.md`
+9. `../../architecture/rules-content-grant-capability-model.md`
+10. `../../architecture/character-action-opportunity-and-2024-core-action-runtime-contract.md`
+11. `../../architecture/rule-runtime-orchestrator-and-pending-execution-contract.md`
+12. `../../architecture/spell-casting-route-and-2024-spell-runtime-contract.md`
+13. `../../architecture/effect-recipe-resolution-and-commit-model.md`
+14. `../../architecture/effect-condition-and-ongoing-runtime-contract.md`
+15. `standard-recipe-step-library.md`
+16. 대상 콘텐츠에 해당하는 세부 Rules 문서
 
 ## 고정 경계
 
@@ -148,4 +152,7 @@ Policy Family·Implementation Registry와 Frozen Snapshot Foundation
 
 `CURRENT`
 
-현재 Guide: [`Rules, Character Action, Spell, Dice와 Effect`](../../guides/rules/README.md)
+현재 Guide:
+
+- [`Rules, Character Action, Spell, Dice와 Effect`](../../guides/rules/README.md)
+- [`Extension, Plugin과 Content Pack`](../../guides/extension/README.md)
