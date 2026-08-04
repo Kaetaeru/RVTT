@@ -6,6 +6,12 @@
 
 - [`Runtime Architecture Principles`](runtime-architecture-principles.md)
 - [`Compiled Build와 Authoritative State 분리 패턴`](compiled-build-and-authoritative-state-pattern.md)
+- [`Session Play Mode, Context, Overlay와 Transition 계약`](session-play-mode-context-overlay-and-transition-contract.md)
+  - Exploration·Encounter·Downtime Base Play Mode
+  - Stealth·Travel·Hazard 등의 겹칠 수 있는 Context
+  - Selection·DM Authoring·Pause·Presentation·Rollback Review Overlay
+  - Scene Transition·Join·Reconnect·Recovery·Build Migration Gate
+  - Role·Mode·Overlay·Transition을 결합한 Effective Command Policy
 - [`Scene Compiler와 Compiled Runtime Scene 계약`](scene-compiler-and-compiled-runtime-scene-contract.md)
 - [`Character Runtime과 Compiled Character Build 계약`](character-runtime-and-compiled-character-build-contract.md)
 - [`Character Action Opportunity와 2024 Core Action Runtime 계약`](character-action-opportunity-and-2024-core-action-runtime-contract.md)
@@ -31,6 +37,7 @@
 
 - 서버·클라이언트 책임
 - Source, Compiler, Immutable Build, Authoritative State, Migration과 Projection
+- Session Base Mode, Context, Overlay, Transition과 Command Gate
 - Command, revision, transaction, Ordering, Reservation과 Journal
 - Scene Source, Runtime Scene, Spatial Query, Navigation과 Streaming
 - Character, Character Action, Spell, Roll Resolution, Effect, ItemInstance와 Runtime Object의 권위 경계
@@ -47,6 +54,7 @@
 
 - 모든 Architecture 문서는 [`Runtime Architecture Principles`](runtime-architecture-principles.md)를 따른다.
 - Source·Build·State·Migration을 다루면 [`Compiled Build 패턴`](compiled-build-and-authoritative-state-pattern.md)을 따른다.
+- Exploration·Encounter·Downtime, Context, UI·Authoring Overlay, Scene Transition·Join·Recovery를 다루면 [`Session Runtime 계약`](session-play-mode-context-overlay-and-transition-contract.md)을 따른다.
 - 기본 행동과 Action Economy는 [`Character Action Runtime`](character-action-opportunity-and-2024-core-action-runtime-contract.md)을 따른다.
 - 주문 시전은 [`Spell Runtime`](spell-casting-route-and-2024-spell-runtime-contract.md)을 따른다.
 - 주사위, 공격 판정, 능력 판정, 내성, 이니셔티브, 죽음 내성, 피해·회복 굴림은 [`Dice와 Resolution Runtime`](dice-roll-check-save-attack-and-resolution-runtime-contract.md)을 따른다.
