@@ -35,8 +35,8 @@ DEFERRED
 |---:|---|---|---|
 | 1 | `DONE` | Runtime Foundation과 Authority | Source·Build·State·Policy·Command·RuleExecution·Transaction·Event·Projection·Recovery 전체 기반 흐름과 권위 읽기 순서 통합 |
 | 2 | `DONE` | Session, Networking, Persistence와 Recovery | Lobby·Join·Control·Mode·Transition·Reconnect·Snapshot·Rollback 사용자·권위 흐름 통합 |
-| 3 | `IN_PROGRESS` | Scene, Streaming, Runtime Object, Spatial Query와 Navigation | Scene Source부터 Live Presence·Chunk·Query·Path·Movement까지 월드 Runtime 흐름 통합 |
-| 4 | `QUEUED` | Exploration, Selection, Interaction과 Perception | 실시간 이동·행동·대상 지정·상호작용·시야·탐지·Encounter 전환 통합 |
+| 3 | `DONE` | Scene, Streaming, Runtime Object, Spatial Query와 Navigation | Scene Source부터 Live Presence·Chunk·Query·Path·Movement까지 월드 Runtime 흐름 통합 |
+| 4 | `IN_PROGRESS` | Exploration, Selection, Interaction과 Perception | 실시간 이동·행동·대상 지정·상호작용·시야·탐지·Encounter 전환 통합 |
 | 5 | `QUEUED` | Rules, Character Action, Spell, Dice와 Effect | Capability·Opportunity·Spell Route·Roll·Resolution·Effect 수명주기 통합 |
 | 6 | `QUEUED` | Combat와 Encounter | Initiative Timeline·Turn·Reaction·Damage·Death·Objective·Time·Rollback 통합 |
 | 7 | `QUEUED` | Character, Inventory와 Downtime | 성장 Source·Build·State·Item·Equipment·Rest·Level Up·Crafting·Travel 통합 |
@@ -83,6 +83,7 @@ Runtime Authority Foundation
 
 | 날짜 | 변경 |
 |---|---|
+| 2026-08-05 | Scene·Streaming·Runtime Object·Spatial Query·Navigation Guide를 완료하고 3번을 `DONE`, Exploration·Selection·Interaction·Perception Guide를 `IN_PROGRESS`로 전환했다. |
 | 2026-08-05 | Session·Networking·Persistence·Recovery Guide를 완료하고 2번을 `DONE`, Scene·Streaming·Runtime Object·Spatial Query·Navigation Guide를 `IN_PROGRESS`로 전환했다. |
 | 2026-08-04 | Runtime Foundation과 Authority Guide를 완료하고 1번을 `DONE`, Session·Networking·Persistence·Recovery Guide를 `IN_PROGRESS`로 전환했다. |
 | 2026-08-04 | Main System Guide 단계의 최초 세부 순서를 확정하고 Runtime Foundation과 Authority Guide를 `IN_PROGRESS`로 지정했다. |
