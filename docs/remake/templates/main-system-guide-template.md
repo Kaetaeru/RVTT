@@ -58,15 +58,15 @@ Intent
 
 ### Parent Authority
 
-- [문서](경로): 직접 상위 권위와 이유
+- 문서명 — 상대 경로 — 직접 상위 권위와 이유
 
 ### Child Authority
 
-- [문서](경로): 이 시스템을 구체화하는 하위 문서와 역할
+- 문서명 — 상대 경로 — 이 시스템을 구체화하는 역할
 
 ### References
 
-- [문서](경로): 인접 시스템 또는 보조 계약
+- 문서명 — 상대 경로 — 인접 시스템 또는 보조 계약
 
 Guide 자신을 Parent Authority로 기록하지 않는다.
 
@@ -136,7 +136,7 @@ Foundation Spec
 
 ## 11. ADR References
 
-- [`ADR-XXXX`](../decisions/ADR-XXXX-example.md): 결정 요약
+- ADR 번호 — 실제 상대 경로 — 결정 요약
 
 ## 12. 알려진 비목표와 측정형 기본값
 
