@@ -63,8 +63,8 @@ First Session Walking Skeleton
 현재 세부 작업:
 
 ```text
-First Slice 구현 기준선·공통 계약 조사
-→ runtime/001-core-authority-identity-version-and-result.md 작성
+runtime/001-core-authority-identity-version-and-result.md 정제
+→ Command·Projection Protocol Spec
 ```
 
 상세 순서와 완료 조건은 [`specs/CURRENT-SPEC-WORK-ORDER.md`](specs/CURRENT-SPEC-WORK-ORDER.md)를 따른다.
@@ -110,6 +110,30 @@ Core Authority Identity·Version·Result
 
 첫 Slice는 WASD 이동, Interaction, Fog, Rules Recipe, Encounter와 Scene Editor 전체를 포함하지 않는다.
 
+## 첫 Slice 다음 단계
+
+First Session Walking Skeleton이 완료되면 바로 **Core Rules Kernel**로 진행한다.
+
+```text
+First Session Walking Skeleton
+→ Core Rules Kernel
+→ Exploration Interaction
+→ Encounter
+```
+
+Core Rules Kernel에서 처음 넣는 핵심 규칙:
+
+- `dnd5e-2024` Ruleset Core Profile
+- 능력치·숙련 보너스·Skill·Save·AC·HP 파생 계산
+- D20 Test, Advantage·Disadvantage, DC·AC 비교
+- Attack Roll·Saving Throw·Damage·Healing
+- 최소 Resource Cost와 Condition 기반
+- RuleExecution Adapter
+- Shared Recipe Runtime 001·002 갱신
+- 대표 Ability Check·Basic Attack·Save 수직 검증
+
+전체 직업·하위직업·Feat·Spell·Item 콘텐츠와 Initiative·Turn·Reaction은 이 단계에서 한꺼번에 넣지 않는다. Core Rules Kernel을 먼저 완성한 뒤 Exploration Interaction과 Encounter가 같은 판정 엔진을 재사용한다.
+
 ## Shared Spec 001·002 재검토 결과
 
 - 완료 감사: [`Shared Spec 001·002 재검토 감사`](audits/shared-spec-001-002-revalidation-audit.md)
@@ -125,7 +149,7 @@ Core Authority Identity·Version·Result
 → UPDATE_REQUIRED
 ```
 
-두 문서는 폐기하지 않지만 현재 `준비 완료`로 사용할 수 없다. First Session Walking Skeleton의 선행 조건에서 제외하고 Character Action·Rules Slice에서 최신 RuleExecution·Transaction·Outbox·Projection·Recovery·Diagnostics·Simulation 계약에 맞춰 갱신한다.
+두 문서는 폐기하지 않지만 현재 `준비 완료`로 사용할 수 없다. First Session Walking Skeleton의 선행 조건에서는 제외하고, 바로 다음 Core Rules Kernel에서 최신 RuleExecution·Transaction·Outbox·Projection·Recovery·Diagnostics·Simulation 계약에 맞춰 갱신한다.
 
 ## Implementation Specs 단계 원칙
 
@@ -201,8 +225,9 @@ Production Implementation은 다음 조건 전에는 시작하지 않는다.
 
 | 날짜 | 변경 |
 |---|---|
+| 2026-08-05 | Core Rules Kernel을 First Session Walking Skeleton 바로 다음 단계로 앞당겼다. Exploration Interaction과 Encounter는 같은 핵심 판정 엔진을 재사용한다. |
 | 2026-08-05 | Implementation Spec 세부 Work Order를 만들고 First Session Walking Skeleton을 첫 수직 Slice로 확정했다. |
-| 2026-08-05 | Shared Spec 001·002를 `UPDATE_REQUIRED`로 판정하고 Rules Slice로 배치했다. |
+| 2026-08-05 | Shared Spec 001·002를 `UPDATE_REQUIRED`로 판정했다. |
 | 2026-08-05 | 최종 문서 연결 감사를 완료하고 Implementation Specs 단계로 전환했다. |
 | 2026-08-05 | Player·DM User Guides, Quick Flow와 12개 Main System Guide를 완료했다. |
 | 2026-08-04 | Runtime Architecture와 Cross-System Integration 완료 감사를 통과했다. |
