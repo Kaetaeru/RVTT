@@ -40,8 +40,8 @@ DEFERRED
 | 5 | `DONE` | Rules, Character Action, Spell, Dice와 Effect | Capability·Opportunity·Spell Route·Roll·Resolution·Effect 수명주기 통합 |
 | 6 | `DONE` | Combat와 Encounter | Initiative Timeline·Turn·Reaction·Damage·Death·Objective·Time·Rollback 통합 |
 | 7 | `DONE` | Character, Inventory와 Downtime | 성장 Source·Build·State·Item·Equipment·Rest·Level Up·Crafting·Travel 통합 |
-| 8 | `IN_PROGRESS` | UI, Camera와 Presentation | Projection Replica·ViewModel·Input Context·Panel·CameraRequest·Presentation Recipe 통합 |
-| 9 | `QUEUED` | Journal과 Ping | Document·Section·Anchor·Permission·Search·Navigation과 비권위 Ping 흐름 통합 |
+| 8 | `DONE` | UI, Camera와 Presentation | Projection Replica·ViewModel·Input Context·Panel·CameraRequest·Presentation Recipe 통합 |
+| 9 | `IN_PROGRESS` | Journal과 Ping | Document·Section·Anchor·Permission·Search·Navigation과 비권위 Ping 흐름 통합 |
 | 10 | `QUEUED` | Scene Editor와 Authoring | DM Authoring Source·Tool Module·Publish·Validation·Live Patch 경계 통합 |
 | 11 | `QUEUED` | Diagnostics, Simulation과 Operations | Trace·Incident·Budget·Scenario·Fault Injection·Support·Recovery 검증 통합 |
 | 12 | `QUEUED` | Extension, Plugin과 Content Pack | Registry·Compiler·Policy·Recipe·Provider·Presentation Module 확장 경계 통합 |
@@ -83,6 +83,7 @@ Runtime Authority Foundation
 
 | 날짜 | 변경 |
 |---|---|
+| 2026-08-05 | UI·Camera·Presentation Guide를 완료하고 8번을 `DONE`, Journal·Ping Guide를 `IN_PROGRESS`로 전환했다. |
 | 2026-08-05 | Character·Inventory·Downtime Guide를 완료하고 7번을 `DONE`, UI·Camera·Presentation Guide를 `IN_PROGRESS`로 전환했다. |
 | 2026-08-05 | Combat·Encounter Guide를 완료하고 6번을 `DONE`, Character·Inventory·Downtime Guide를 `IN_PROGRESS`로 전환했다. |
 | 2026-08-05 | Rules·Character Action·Spell·Dice·Effect Guide를 완료하고 5번을 `DONE`, Combat·Encounter Guide를 `IN_PROGRESS`로 전환했다. |
