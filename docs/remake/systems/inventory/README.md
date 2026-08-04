@@ -10,6 +10,7 @@
   - Inventory·Equipment·Container·Scene Ground 간 원자적 Transfer
   - 바닥 아이템의 Item Presence Runtime Object
   - 드롭·투척·무장 해제·줍기·Stack 분할과 동시 획득
+  - Player·DM·System 역할별 상호작용 Surface
   - 저장·재접속·롤백·Streaming 경계
 - [`Runtime Object System과 Entity Lifecycle 계약`](../../architecture/runtime-object-system-and-entity-lifecycle-contract.md)
   - Scene에 놓인 Item Presence의 ID, Lifecycle, Spatial·Interaction Binding
@@ -23,6 +24,32 @@
 - [`inventory-loot-and-item-transfer-model.md`](inventory-loot-and-item-transfer-model.md)
   - 전리품 획득, 플레이어 간 전달, 화폐, 미확인 아이템과 DM 도구
 
+## 역할 구분
+
+모든 Inventory 행동·버튼·Command는 [`역할별 기능 접근 구분 작성 규칙`](../../DOCUMENT-ROLE-ACCESS-AUTHORING-RULE.md)을 따른다.
+
+### 플레이어 정상 행동
+
+- 자신이 제어하는 캐릭터의 아이템 줍기·드롭·사용
+- 허용된 Container 열기와 Loot 획득
+- 규칙이 허용하는 다른 캐릭터로의 이전
+- 공개 Item 정보 확인과 위치 핑
+
+### DM 전용 행동
+
+- Item 생성, 강제 배치·이전·회수·삭제·복원
+- 숨김 Definition, 저주, 식별 상태, 수량과 Charge 관리
+- Item Presence를 저널의 Actor·Object·Dungeon Room 링크 대상으로 작성
+- 거리·행동 비용을 우회하는 Inventory Override
+
+### 시스템 전용 처리
+
+- Item Presence 복구와 Streaming Materialization
+- 자동 Stack·World Bundle Projection
+- Transaction Recovery와 Rollback Branch 복원
+
+DM이 Actor 제어권을 통해 일반 줍기·사용·드롭을 수행할 때는 Player Command 경로를 사용한다. DM Override는 별도 Command와 Audit 기록을 사용한다.
+
 ## 고정 경계
 
 - 하나의 실제 아이템은 하나의 `ItemInstance`만 가진다.
@@ -31,15 +58,17 @@
 - Workspace Model과 Client Streaming 상태는 Item 존재의 권위가 아니다.
 - 드롭, Pickup, 투척, Stack 분할·병합과 Container Spill은 모두 Transaction을 사용한다.
 - Equipment와 Item Capability는 Character Build를 직접 수정하지 않고 현재 Item State에서 파생된다.
+- 플레이어 Context Menu에 DM 전용 저널·관리 기능을 섞지 않는다.
 
 ## 추천 읽기 순서
 
 1. `../../architecture/compiled-build-and-authoritative-state-pattern.md`
-2. `../../architecture/inventory-item-instance-and-world-presence-runtime-contract.md`
-3. `item-weapon-attack-profile-and-mastery-model.md`
-4. `inventory-loot-and-item-transfer-model.md`
-5. `../../architecture/rule-runtime-orchestrator-and-pending-execution-contract.md`
-6. `../../architecture/persistence-and-session-recovery-model.md`
+2. `../../DOCUMENT-ROLE-ACCESS-AUTHORING-RULE.md`
+3. `../../architecture/inventory-item-instance-and-world-presence-runtime-contract.md`
+4. `item-weapon-attack-profile-and-mastery-model.md`
+5. `inventory-loot-and-item-transfer-model.md`
+6. `../../architecture/rule-runtime-orchestrator-and-pending-execution-contract.md`
+7. `../../architecture/persistence-and-session-recovery-model.md`
 
 ## Guide Status
 
