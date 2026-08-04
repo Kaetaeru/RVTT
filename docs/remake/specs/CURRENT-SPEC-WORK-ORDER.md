@@ -92,8 +92,8 @@ Campaign과 시작 Scene 확인
 |---:|---|---|---|---|
 | 1 | `DONE` | Spec 단계 Work Order 수립 | 이 문서 | 첫 Slice, 의존 순서, Gate와 후속 Slice가 연결됨 |
 | 2 | `DONE` | 기존 Shared Spec 001·002 재검토 | [`Shared Spec 001·002 재검토 감사`](../audits/shared-spec-001-002-revalidation-audit.md) | `CURRENT·UPDATE_REQUIRED·SUPERSEDED` 판정과 후속 위치 확정 |
-| 3 | `IN_PROGRESS` | First Slice 구현 기준선·공통 계약 조사 | `runtime/001` 작성 준비 기록 | 실제 저장소 구현 경로 또는 Greenfield 상태, 재사용·대체 범위가 확인됨 |
-| 4 | `QUEUED` | Core Authority Identity·Version·Result Spec | `runtime/001-core-authority-identity-version-and-result.md` | 첫 Slice에 필요한 ID·Epoch·Revision·Result·Error 계약만 준비 완료 |
+| 3 | `DONE` | First Slice 구현 기준선·공통 계약 조사 | `runtime/001` §4 | GitHub Branch에서 Production Source Tree를 확인할 수 없다는 한계, 재사용 미확정과 신규 제안 경로 정책 기록 |
+| 4 | `IN_PROGRESS` | Core Authority Identity·Version·Result Spec | [`runtime/001`](runtime/001-core-authority-identity-version-and-result.md) | ID·Epoch·Revision·Result·Error 계약 작성, 실제 Source Tree 조사 전 `초안·BLOCKED` 유지 |
 | 5 | `QUEUED` | Command·Projection Protocol Spec | `networking/001-command-projection-and-resync-protocol.md` | Command Receipt·Result, Projection Snapshot·Event·Gap·Resync 계약 준비 완료 |
 | 6 | `QUEUED` | Campaign Join·Character Selection·Ready Spec | `session/001-campaign-join-character-selection-and-ready.md` | Membership·Role·Owner·Control·User Ready·Client Ready 흐름 준비 완료 |
 | 7 | `QUEUED` | Scene Entry Essential·Controlled Actor Bootstrap Spec | `scene/001-scene-entry-essential-and-controlled-actor-bootstrap.md` | Published Build Ref, Runtime Presence, Essential Activation과 Gameplay Gate 준비 완료 |
@@ -101,6 +101,8 @@ Campaign과 시작 Scene 확인
 | 9 | `QUEUED` | Snapshot·Journal·Reconnect Resume Spec | `persistence/001-first-slice-snapshot-journal-and-reconnect.md` | 위치·Control·Scene·Projection Cursor의 저장·복구·Full Resync 준비 완료 |
 | 10 | `QUEUED` | Walking Skeleton Deterministic·Roblox Integration Spec | `testing/001-join-move-disconnect-reconnect.md` | 정상·권한·Gap·중복·Disconnect·Restart·Disclosure Scenario 준비 완료 |
 | 11 | `QUEUED` | First Slice Spec 통합 감사 | `audits/first-session-walking-skeleton-spec-audit.md` | 모든 Spec 추적성·상태·Migration·Diagnostics·Test·문서 검증 통과 |
+
+현재 `runtime/001`은 구현 계약 초안이 작성됐으나 Production Source Tree 미확인 때문에 `준비 완료`로 전환하지 않는다. 계약 작성은 계속할 수 있지만 실제 Module 경로·재사용·대체 범위는 Source가 확인될 때 갱신한다.
 
 ## 4. First Slice 의존 관계
 
@@ -276,5 +278,6 @@ Implementation Specs 단계 전체 완료 조건:
 
 | 날짜 | 변경 |
 |---|---|
+| 2026-08-05 | GitHub Branch에서 Production Source Tree를 확인할 수 없다는 기준선 조사 결과를 기록하고 `runtime/001` 초안을 `IN_PROGRESS·BLOCKED` 상태로 연결했다. |
 | 2026-08-05 | First Session Walking Skeleton을 첫 수직 Slice로 확정하고 Runtime·Protocol·Session·Scene·Movement·Persistence·Testing Spec 순서를 수립했다. |
 | 2026-08-05 | Shared Spec 001·002를 `UPDATE_REQUIRED`로 판정하고 Rules Slice로 이동했다. |
