@@ -28,6 +28,12 @@
   - Derived Statistics, Modifier, Resource와 Capability Binding
   - 레벨업·재구성의 Build 교체와 State Migration
   - Character Persistence, Rollback과 Projection
+- [`Effect, Condition과 Ongoing Runtime 계약`](effect-condition-and-ongoing-runtime-contract.md)
+  - Condition·Ongoing Effect Definition과 불변 CompiledEffectBuild
+  - EffectRegistry, 권위 EffectInstance와 타입 있는 Binding
+  - Duration, End Condition, Stacking, Concentration과 Suppression
+  - Character Contribution, Form Overlay와 Runtime Object Ownership
+  - Persistence, Rollback, Projection과 실패 격리
 - [`Runtime Object System과 Entity Lifecycle 계약`](runtime-object-system-and-entity-lifecycle-contract.md)
   - Scene Presence의 공통 RuntimeObjectId, Incarnation과 AuthorityEpoch
   - Blueprint, Component 조합, Registry와 Specialized Store
@@ -86,6 +92,7 @@
 - Registry와 고정 ID
 - Scene Source, Compiler Build, Runtime Scene Snapshot과 Spatial Query
 - Character Progression Source, Character Build와 분리된 Character·Actor·Encounter State
+- Effect Definition, Effect Build, EffectInstance, Duration, Concentration과 Form Overlay
 - Runtime Layer, State Binding, Chunk와 Dependency Graph
 - Runtime Object Identity, Component, Lifecycle, Ownership과 Link
 - Client Interest, Streaming Activation Set, Cache, Eviction과 Scene Transition Ready
@@ -105,6 +112,8 @@ Source, Compiler, Build, Dynamic State, Migration과 Projection을 다루는 문
 Scene Source, Semantic Profile, Runtime Layer, Index, Chunk, Build와 게시를 다루는 문서는 [`Scene Compiler 계약`](scene-compiler-and-compiled-runtime-scene-contract.md)을 따른다.
 
 캐릭터 성장 원본, 파생 능력치, Capability, Resource, Character Current State와 Actor·Encounter Binding을 다루는 문서는 [`Character Runtime 계약`](character-runtime-and-compiled-character-build-contract.md)을 따른다.
+
+상태, 버프·디버프, 집중, 변신, 지속 영역, 소환, Duration, Stacking과 Suppression을 다루는 문서는 [`Effect Runtime 계약`](effect-condition-and-ongoing-runtime-contract.md)을 따른다.
 
 Actor, 문, 함정, 소환체, 지속 영역과 기타 Scene Presence의 생성·참조·비활성·복원·파괴를 다루는 문서는 [`Runtime Object System 계약`](runtime-object-system-and-entity-lifecycle-contract.md)을 따른다.
 
