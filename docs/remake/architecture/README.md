@@ -10,6 +10,11 @@
   - Runtime 계층, Query와 Command 경계를 고정한다.
   - Legacy `Walkable` Attribute 관례를 리메이크 권위 데이터에서 제외한다.
   - 모든 하위 Architecture·System·Spec 문서가 따라야 하는 공통 원칙이다.
+- [`Compiled Build와 Authoritative State 분리 패턴`](compiled-build-and-authoritative-state-pattern.md)
+  - Source, 불변 Compiled Build, 버전된 Authoritative State와 Projection의 공통 계층
+  - Build 교체와 State Migration의 원자성
+  - 도메인별로 다른 State 수명주기 유지
+  - Persistence의 Build Reference·Hash와 State 복구 경계
 - [`Scene Compiler와 Compiled Runtime Scene 계약`](scene-compiler-and-compiled-runtime-scene-contract.md)
   - Canonical Scene Source와 정규화 Semantic Contribution
   - Layer Builder, Runtime Object Blueprint와 State Binding
@@ -17,6 +22,12 @@
   - 부분 컴파일과 전체 Build 동일성
   - 원자적 게시, Last Known Good Build와 Live Patch 경계
   - 서버 Raw Build와 권한별 Client Disclosure Segment 분리
+- [`Character Runtime과 Compiled Character Build 계약`](character-runtime-and-compiled-character-build-contract.md)
+  - Character Progression Source와 불변 Character Build
+  - Persistent Character, Scene Actor와 Encounter State의 수명주기 분리
+  - Derived Statistics, Modifier, Resource와 Capability Binding
+  - 레벨업·재구성의 Build 교체와 State Migration
+  - Character Persistence, Rollback과 Projection
 - [`Runtime Object System과 Entity Lifecycle 계약`](runtime-object-system-and-entity-lifecycle-contract.md)
   - Scene Presence의 공통 RuntimeObjectId, Incarnation과 AuthorityEpoch
   - Blueprint, Component 조합, Registry와 Specialized Store
@@ -68,11 +79,13 @@
 ## 포함 범위
 
 - 서버·클라이언트 책임
+- Source, Compiled Build, Authoritative State, Migration과 Projection
 - Command, Read Request, revision, transaction과 Result
 - Versioned Protocol, Projection Stream, Snapshot Sync와 Client Ready
 - Ordering Key, Reservation, Logical Time, Atomic Commit과 Journal
 - Registry와 고정 ID
 - Scene Source, Compiler Build, Runtime Scene Snapshot과 Spatial Query
+- Character Progression Source, Character Build와 분리된 Character·Actor·Encounter State
 - Runtime Layer, State Binding, Chunk와 Dependency Graph
 - Runtime Object Identity, Component, Lifecycle, Ownership과 Link
 - Client Interest, Streaming Activation Set, Cache, Eviction과 Scene Transition Ready
@@ -87,7 +100,11 @@
 
 새 Architecture 문서는 먼저 [`Runtime Architecture Principles`](runtime-architecture-principles.md)를 따른다.
 
+Source, Compiler, Build, Dynamic State, Migration과 Projection을 다루는 문서는 [`Compiled Build와 Authoritative State 분리 패턴`](compiled-build-and-authoritative-state-pattern.md)을 따른다.
+
 Scene Source, Semantic Profile, Runtime Layer, Index, Chunk, Build와 게시를 다루는 문서는 [`Scene Compiler 계약`](scene-compiler-and-compiled-runtime-scene-contract.md)을 따른다.
+
+캐릭터 성장 원본, 파생 능력치, Capability, Resource, Character Current State와 Actor·Encounter Binding을 다루는 문서는 [`Character Runtime 계약`](character-runtime-and-compiled-character-build-contract.md)을 따른다.
 
 Actor, 문, 함정, 소환체, 지속 영역과 기타 Scene Presence의 생성·참조·비활성·복원·파괴를 다루는 문서는 [`Runtime Object System 계약`](runtime-object-system-and-entity-lifecycle-contract.md)을 따른다.
 
