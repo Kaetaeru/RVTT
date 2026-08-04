@@ -2,6 +2,29 @@
 
 화면 배치, 입력 문맥, 패널 상태와 사용자 피드백을 정의한다.
 
+## Global UI·UX Policy
+
+Production UI Script와 모든 화면이 먼저 따라야 하는 전역 정책:
+
+- [`UI·UX Global Policy Hub`](policies/README.md)
+- [`Visual Design Policy`](policies/visual-design-policy.md)
+- [`Interaction and Input Policy`](policies/interaction-and-input-policy.md)
+- [`Information Architecture and Density Policy`](policies/information-architecture-and-density-policy.md)
+- [`Feedback, Error and Recovery Policy`](policies/feedback-error-and-recovery-policy.md)
+- [`Accessibility and Motion Policy`](policies/accessibility-and-motion-policy.md)
+- [`UI·UX Review Checklist`](policies/UI-UX-REVIEW-CHECKLIST.md)
+- [`UI·UX Policy Completion Audit`](../audits/ui-ux-policy-completion-audit.md)
+
+우선순위:
+
+```text
+Product·Architecture·ADR
+→ Global UI·UX Policy
+→ Main System Guide
+→ 화면별 UI 문서·Wireframe
+→ Component·Script
+```
+
 ## Main System Guide
 
 - [`UI, Camera와 Presentation Guide`](../guides/ui/README.md)
@@ -35,6 +58,7 @@
 
 ## 영역
 
+- `policies/`: 전역 시각·상호작용·정보·피드백·접근성 정책과 Checklist
 - `common-input/`: RVTT 공통 의미 입력, Q/E, 1–5와 Input Context 표시
 - `scene-editor/`: Scene 저작 화면과 조작
 - `combat-hud/`: 전투 HUD, 행동·대상 지정과 Prompt UI
@@ -44,14 +68,15 @@
 
 ## 추천 읽기 순서
 
-1. `../guides/ui/README.md`
-2. `../guides/extension/README.md`
+1. `policies/README.md`
+2. `../guides/ui/README.md`
 3. `../architecture/ui-projection-view-model-input-context-and-recovery-runtime-contract.md`
 4. `../architecture/networking-command-event-and-client-synchronization-contract.md`
 5. `../architecture/session-play-mode-context-overlay-and-transition-contract.md`
 6. `common-input/common-input-grammar.md`
 7. 대상 화면의 UI 문서
 8. 해당 Gameplay Domain의 Architecture와 System 문서
+9. `policies/UI-UX-REVIEW-CHECKLIST.md`
 
 ## 고정 경계
 
@@ -65,11 +90,15 @@
 - Rollback과 재접속 후 이전 AuthorityEpoch의 Prompt·Selection·Command·Focus Token을 재사용하지 않는다.
 - DM 전용 정보를 Player Client에 보낸 뒤 화면에서 숨기지 않는다.
 - Panel Layout, UI Scale과 접근성 설정은 Gameplay Authority와 분리한다.
+- 화면별 임의 Style 값 대신 Semantic Design Token을 사용한다.
+- 색·Hover·Motion만으로 핵심 의미를 전달하지 않는다.
+- Production UI Script는 UI·UX Review Checklist를 완료해야 한다.
 
 ## Guide 상태
 
 ```text
 Guide Status: CURRENT
+Policy Status: CURRENT
 ```
 
-현재 UI, Camera, Presentation과 신뢰 Extension의 권위 문서 관계, 사용자 흐름과 복구 경계는 Main System Guide에 반영되어 있다. 관련 권위 계약이 변경되면 Guide를 `UPDATE_REQUIRED`로 전환한다.
+현재 UI, Camera, Presentation과 신뢰 Extension의 권위 문서 관계, 사용자 흐름, 시각·상호작용 Policy와 복구 경계가 연결돼 있다. 관련 권위 계약이나 Global Policy가 변경되면 영향을 받는 Guide·화면 문서·Implementation Script를 `UPDATE_REQUIRED`로 전환한다.
