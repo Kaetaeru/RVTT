@@ -15,13 +15,29 @@
 | C | 09–12 | [`Journal·Authoring·DM Operation·Extension`](checkpoint-c-slices-09-12.md) | `703530778ccbcdca3b23f6f810b4ec6ff422b590` | run #930 success | `checkpoint/specs-slices-09-12-2026-08-05` |
 | D | 13–16 | [`Official Content·NPC·Release`](checkpoint-d-slices-13-16.md) | `410ea6318712a68906fe742c506e4c8b2fa18bfc` | run #956 success | `checkpoint/specs-slices-13-16-2026-08-05` |
 
-복구 브랜치는 해당 Checkpoint Audit이 포함되고 문서 검증이 성공한 정확한 Commit을 가리킨다. 이후 Branch의 문서 변경을 되돌려야 할 때 현재 Work Order와 영향 범위를 확인한 뒤 비교·복구한다.
+## 최종 전체 복구 지점
+
+4개 Checkpoint 이후 Slice·Audit·Hub·Roadmap·Work Order 상태 갱신까지 모두 포함한 최종 복구 지점:
+
+```text
+Commit
+→ dbdd19f46d9c5c653563787c70384cc5d75be62d
+
+Docs CI
+→ run #974 success
+
+Recovery Branch
+→ checkpoint/all-slice-specifications-2026-08-05
+```
+
+복구 브랜치는 해당 Checkpoint 또는 최종 상태가 포함되고 문서 검증이 성공한 정확한 Commit을 가리킨다. 이후 문서 변경을 되돌려야 할 때 현재 Work Order와 영향 범위를 확인한 뒤 비교·복구한다.
 
 ```text
 A → Core playable session foundation
 B → Persistent player data and client surface
 C → Knowledge, authoring, live DM and extension platform
 D → Content coverage and release evidence gates
+Final → all slice packages, audits, indexes and current status
 ```
 
 Checkpoint 완료는 Production Code 완료를 의미하지 않는다. 모든 Checkpoint는 실제 Source Tree·Schema·Migration·Roblox Evidence가 없으므로 Production Readiness를 `BLOCKED`로 유지한다.
