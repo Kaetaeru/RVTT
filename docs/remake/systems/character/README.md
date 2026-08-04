@@ -4,14 +4,14 @@
 
 ## 관련 Main System Guide
 
+- [`Character, Inventory와 Downtime Guide`](../../guides/character/README.md)
+  - 성장 Source·Compiled Build·Persistent State와 Scene Actor·Encounter State의 권위 경계
+  - ItemInstance·Equipment·Spell Repository와 Rest·Level Up·Crafting·Travel 전체 흐름
 - [`Combat와 Encounter Guide`](../../guides/combat/README.md)
   - Damage·Healing·Temporary HP·VitalState·DeathSave·Death가 Encounter Turn과 Objective에 연결되는 경계
   - 사망 후 Opportunity·Concentration·Participant Eligibility 정리와 Deferred Turn Advance
 - [`Rules, Character Action, Spell, Dice와 Effect Guide`](../../guides/rules/README.md)
   - Character Build가 제공하는 Capability·Spell Route가 Action·Roll·Effect 실행으로 이어지는 경계
-- `Character, Inventory와 Downtime Guide`
-  - 현재 Main System Guide 작업 순서 7번에서 작성 중이다.
-  - 성장 Source·Build·Persistent State, Item·Equipment, Rest·Level Up·Crafting·Travel 전체 흐름을 통합한다.
 
 ## 최상위 권위 계약
 
@@ -90,7 +90,7 @@ Encounter State
 ## Guide 상태
 
 ```text
-Guide Status: READY_TO_WRITE
+Guide Status: CURRENT
 ```
 
-최신 Completion Audit에서 Character·Inventory·Downtime의 Architecture와 Cross-Domain Integration이 Main System Guide 작성 가능 상태로 판정됐다.
+Character·Inventory·Downtime의 전체 권위 흐름과 구현·검증 진입점은 Main System Guide에 통합됐다.
