@@ -14,3 +14,11 @@
 - [`scene-editor-interaction-and-layout.md`](scene-editor-interaction-and-layout.md)
 
 도구 동작은 [`../../systems/scene/`](../../systems/scene/), 모듈 계약은 [`../../architecture/scene-editor-tool-module-architecture.md`](../../architecture/scene-editor-tool-module-architecture.md)를 참고한다.
+
+## Guide 상태
+
+```text
+Guide Status: READY_TO_WRITE
+```
+
+Scene Source·Tool Module·Compiler·Publish·Live Patch의 권위 계약과 Completion Audit가 완료되어 Main System Guide를 작성할 수 있다.
