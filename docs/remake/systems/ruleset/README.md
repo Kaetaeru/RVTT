@@ -87,7 +87,7 @@ presentation_accessibility
 ## Guide 상태
 
 ```text
-Guide Status: NOT_READY
+Guide Status: READY_TO_WRITE
 ```
 
-UI, Diagnostics, Simulation과 Encounter–Game Time 통합 계약이 완료된 뒤 Main System Guide에 통합한다.
+최신 Completion Audit와 Main System Guide 작업 순서에서 Policy·Rules 실행 Guide 작성 조건을 통과했다.
