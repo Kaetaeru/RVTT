@@ -47,6 +47,10 @@ Guide는 새로운 제품 규칙, Architecture 결정, API, 데이터 구조나 
   - Guide Status: `CURRENT`
   - Encounter Proposal·Initiative Reveal·Timeline·Turn·Opportunity·Reaction과 Objective 진행
   - Damage·HP 0·Death 통합, Round·Campaign Time Boundary, Encounter End와 Branch Rollback 흐름
+- [`Character, Inventory와 Downtime`](character/README.md)
+  - Guide Status: `CURRENT`
+  - Character Progression Source·Compiled Build·Persistent State와 Scene Actor·Encounter State 경계
+  - ItemInstance·Equipment·World Presence, Rest·Level Up·Spellbook·Crafting·Training·Travel과 Atomic Completion 흐름
 
 ## 1. Guide의 역할
 
