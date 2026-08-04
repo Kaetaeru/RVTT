@@ -39,6 +39,10 @@ Guide는 새로운 제품 규칙, Architecture 결정, API, 데이터 구조나 
   - Guide Status: `CURRENT`
   - 실시간 Exploration 실행, Input Context, Candidate·Selection·Frozen Binding과 Capability 기반 Interaction
   - Observer별 Visibility·Detection·Knowledge·Disclosure, Fog와 Hover Projection, Hazard·Encounter 전환 흐름
+- [`Rules, Character Action, Spell, Dice와 Effect`](rules/README.md)
+  - Guide Status: `CURRENT`
+  - Frozen Policy·Capability·ActionOpportunity·RuleExecution·Recipe·TimingWindow의 규칙 실행 수명주기
+  - Spell Route·Payment·Component·Targeting, 서버 Roll·Reveal·Outcome, PendingEffect·EffectInstance·Duration 흐름
 
 ## 1. Guide의 역할
 
