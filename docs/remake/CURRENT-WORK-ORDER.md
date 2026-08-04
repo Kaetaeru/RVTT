@@ -3,7 +3,7 @@
 - 상태: ACTIVE
 - 문서 종류: Planning Work Order
 - 최종 갱신일: 2026-08-04
-- 근거 감사: [`Runtime Architecture 통합성과 Engine Completeness 감사`](audits/runtime-architecture-integration-and-engine-completeness-audit.md)
+- 근거 감사: [`Runtime Architecture Completion과 Main System Guide 준비도 감사`](audits/runtime-architecture-completion-and-main-guide-readiness-audit.md)
 
 이 문서는 RVTT 리메이크 기획·명세·구현의 **단일 작업 순서 기준**이다.
 
@@ -37,8 +37,8 @@ DEFERRED
 | 4 | `DONE` | Diagnostics와 Observability Runtime | Command→RuleExecution→Transaction→Event→Projection Trace, 권한별 진단, 성능·오류 Budget 계약 완료 |
 | 5 | `DONE` | Deterministic Simulation과 Test Harness | 고정 Seed·Snapshot Scenario·동시성·Reconnect·Rollback·정보 누출 테스트 계약 완료 |
 | 6 | `DONE` | Journal Anchor, Permission과 Projection 계약 | 문서·Section Identity, 월드 Anchor, 권한별 검색 Index, 안전한 Camera·Selection Intent 계약 완료 |
-| 7 | `IN_PROGRESS` | Cross-System Integration Contracts와 Completion Audit | Damage·Death·Combat 및 남은 Runtime 연결 계약, 순환·중복·공백 재감사 완료 |
-| 8 | `QUEUED` | Main System Guides | 권위 문서와 사용자 흐름을 영역별 Guide로 통합하고 폐기 문서를 제외한 읽기 순서 확정 |
+| 7 | `DONE` | Cross-System Integration Contracts와 Completion Audit | Damage·Death·Combat 및 남은 Runtime 연결 계약, 순환·중복·공백 재감사 완료 |
+| 8 | `IN_PROGRESS` | Main System Guides | 권위 문서와 사용자 흐름을 영역별 Guide로 통합하고 폐기 문서를 제외한 읽기 순서 확정 |
 | 9 | `QUEUED` | Implementation Specs | 수직 단위별 타입·모듈·Command·Network·Persistence·Test 계약 작성 |
 | 10 | `QUEUED` | Production Implementation | 승인된 Spec 순서대로 구현·테스트·리뷰·마이그레이션 수행 |
 
@@ -55,10 +55,19 @@ CURRENT-WORK-ORDER 확인
 → CURRENT-WORK-ORDER 갱신
 ```
 
+## Main System Guide 단계 원칙
+
+1. Guide는 새로운 Authority 결정을 만들지 않고 확정된 Architecture·ADR을 통합한다.
+2. 각 Guide는 권위 원본, 역할별 사용자 흐름, Command·Transaction·Projection 경로, 실패·복구와 구현 Spec 진입점을 포함한다.
+3. `SUPERSEDED`, `DISCONTINUED`, `ARCHIVED` 문서는 권위 읽기 순서에서 제외한다.
+4. 여러 Guide의 작성 순서를 정하거나 변경할 때는 이 문서 또는 하위 Guide 작업 순서를 먼저 갱신한다.
+5. Guide가 새로운 Architecture 공백을 발견하면 해당 Guide를 완료 처리하지 않고 Architecture·ADR 작업을 삽입한다.
+
 ## 변경 기록
 
 | 날짜 | 변경 |
 |---|---|
+| 2026-08-04 | Cross-Domain Outcome Cascade·Integration Boundary Runtime 계약과 ADR-0087을 확정하고 Completion Audit에서 현재 제품 범위의 Architecture·Integration을 완료로 판정했다. 7번을 `DONE`, Main System Guides를 `IN_PROGRESS`로 전환했다. |
 | 2026-08-04 | Journal Document·Section·Anchor·Permission·Search·Projection Runtime 계약과 ADR-0086을 완료했다. 기존 Journal·Ping 결합 문서를 분리하고 6번을 `DONE`, Cross-System Integration Contracts와 Completion Audit을 `IN_PROGRESS`로 전환했다. |
 | 2026-08-04 | Deterministic Simulation·Scenario·Test Harness Runtime 계약과 ADR-0085를 완료했다. 5번을 `DONE`으로 변경하고 Journal Anchor·Permission·Projection 계약을 `IN_PROGRESS`로 전환했다. |
 | 2026-08-04 | Diagnostics·Observability·Correlated Trace·Incident Runtime 계약과 ADR-0084를 완료했다. 4번을 `DONE`으로 변경하고 Deterministic Simulation과 Test Harness를 `IN_PROGRESS`로 전환했다. |
