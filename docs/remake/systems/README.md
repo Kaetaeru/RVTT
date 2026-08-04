@@ -7,6 +7,7 @@
 - `scene/`
 - `navigation/`
 - `character/`
+- `ruleset/`
 - `rules/`
 - `inventory/`
 - `combat/`
