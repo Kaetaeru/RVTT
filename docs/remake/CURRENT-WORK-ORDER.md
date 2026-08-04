@@ -66,7 +66,8 @@ CURRENT-WORK-ORDER 확인
   - [`Rules, Character Action, Spell, Dice와 Effect`](guides/rules/README.md)
   - [`Combat와 Encounter`](guides/combat/README.md)
   - [`Character, Inventory와 Downtime`](guides/character/README.md)
-- 현재 세부 작업: `UI, Camera와 Presentation Guide`
+  - [`UI, Camera와 Presentation`](guides/ui/README.md)
+- 현재 세부 작업: `Journal과 Ping Guide`
 
 1. Guide는 새로운 Authority 결정을 만들지 않고 확정된 Architecture·ADR을 통합한다.
 2. 각 Guide는 권위 원본, 역할별 사용자 흐름, Command·Transaction·Projection 경로, 실패·복구와 구현 Spec 진입점을 포함한다.
@@ -78,6 +79,7 @@ CURRENT-WORK-ORDER 확인
 
 | 날짜 | 변경 |
 |---|---|
+| 2026-08-05 | UI·Camera·Presentation Guide를 완료하고 Main System Guide 세부 작업을 Journal·Ping Guide로 전환했다. |
 | 2026-08-05 | Character·Inventory·Downtime Guide를 완료하고 Main System Guide 세부 작업을 UI·Camera·Presentation Guide로 전환했다. |
 | 2026-08-05 | Combat·Encounter Guide를 완료하고 Main System Guide 세부 작업을 Character·Inventory·Downtime Guide로 전환했다. |
 | 2026-08-05 | Rules·Character Action·Spell·Dice·Effect Guide를 완료하고 Main System Guide 세부 작업을 Combat·Encounter Guide로 전환했다. |
