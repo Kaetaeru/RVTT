@@ -4,6 +4,13 @@ Ruleset, Source Pack, Rule Content, Recipe Step, Policy, Scene Compiler Provider
 
 이 영역은 새로운 독립 Gameplay Engine을 소유하지 않는다. 각 확장은 기존 Domain의 Registry, Compiler, Command, Transaction, Projection, Diagnostics와 Simulation 계약 안에서 동작한다.
 
+## Main System Guide
+
+- [`Extension, Plugin과 Content Pack Guide`](../../guides/extension/README.md)
+  - Content Pack·Trusted Module·Campaign Authored Data 구분
+  - Registry·Compiler·Policy·Recipe·Provider·Presentation Module 등록·검증·Version·Migration
+  - Pack 활성화·제거·Last Known Good·Recovery·Disclosure·Simulation 검증
+
 ## 핵심 권위 문서
 
 ### Content Pack과 Policy
@@ -74,7 +81,7 @@ Ruleset, Source Pack, Rule Content, Recipe Step, Policy, Scene Compiler Provider
 ## Guide Status
 
 ```text
-READY_TO_WRITE
+CURRENT
 ```
 
-관련 Architecture와 ADR은 완료됐고 남은 값은 Pack 크기, Registry Budget, 보존 Version 수와 같은 측정형 기본값이다. Main System Guide 작성 후 `CURRENT`로 전환한다.
+현재 Source Pack·Trusted Module·Campaign Authored Content와 각 Registry 확장 경계는 Main System Guide에 반영되어 있다. 관련 권위 계약이 변경되면 Guide를 `UPDATE_REQUIRED`로 전환한다.
