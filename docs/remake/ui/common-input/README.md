@@ -4,6 +4,9 @@ Q 취소, E 승인, 문맥별 1–5와 입력 문맥 스택의 표시·우선순
 
 ## Main System Guide
 
+- [`UI, Camera와 Presentation Guide`](../../guides/ui/README.md)
+  - Physical Input→Semantic Action→Input Context→UI Intent의 공통 Client 흐름
+  - Q·E·1–5 단일 소비, Focus Token, Authority Prompt와 Epoch-safe 복구
 - [`Exploration, Selection, Interaction과 Perception Guide`](../../guides/exploration/README.md)
   - Physical Input에서 Semantic Action·Input Context·Selection Session으로 이어지는 흐름
   - Q·E 단일 소비, Candidate Navigation 분리와 Frozen Binding
