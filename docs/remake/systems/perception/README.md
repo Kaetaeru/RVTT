@@ -2,6 +2,13 @@
 
 수동 Fog of War, 시야·감각·은신, 관찰자별 탐지, 지식 상태와 정보 공개를 다룬다.
 
+## Main System Guide
+
+- [`Exploration, Selection, Interaction과 Perception Guide`](../../guides/exploration/README.md)
+  - Visible·Detected·Known·Disclosed와 Observer별 Projection 흐름
+  - Fog·Sense·Stealth·Search·Knowledge·Hover의 권위 경계
+  - Selection·Interaction Candidate와 Secret Runtime Identity 공개 차단
+
 ## 상위 권위 문서
 
 - [`Visibility, Knowledge, Detection과 Hover Information Runtime 계약`](../../architecture/visibility-knowledge-detection-and-hover-information-runtime-contract.md)
@@ -39,7 +46,7 @@
 ## Guide Status
 
 ```text
-READY_TO_WRITE
+CURRENT
 ```
 
-최신 Visibility·Knowledge·Detection·Hover Architecture, Selection·Interaction 계약과 Completion Audit에서 통합 Guide 작성 조건이 충족되었다.
+현재 권위 문서 관계와 Exploration·Selection·Interaction·Perception 흐름은 Main System Guide에 반영되어 있다. 권위 계약이 변경되면 Guide를 `UPDATE_REQUIRED`로 전환한다.
