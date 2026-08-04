@@ -5,8 +5,10 @@ Command, RuleExecution, Transaction, Domain Event, Projection, UI와 Presentatio
 ## 관련 Main System Guide
 
 - [`UI, Camera와 Presentation Guide`](../../guides/ui/README.md)
-  - Projection Apply·ViewModel·Input Context·Command Reconciliation과 Presentation Playback의 Client Trace 경계
-  - Panel·Module Failure Isolation, Permission-aware Error Surface와 Reconnect·Rollback 진단 흐름
+  - Projection Apply·ViewModel·Input·CameraRequest·Playback Trace와 Client Failure Isolation
+- [`Journal과 Ping Guide`](../../guides/journal/README.md)
+  - Journal Compile·Permission·Search·Anchor·Navigation Trace와 비밀 정보 Redaction
+  - Ping을 비권위 Client Experience Event로 기록하고 Gameplay Trace와 분리하는 경계
 
 ## 권위 문서
 
@@ -35,6 +37,8 @@ Command, RuleExecution, Transaction, Domain Event, Projection, UI와 Presentatio
   - Parent·Child Execution, TimingWindow, Prompt와 Reaction Trace
 - [`UI Runtime`](../../architecture/ui-projection-view-model-input-context-and-recovery-runtime-contract.md)
   - Replica Apply, ViewModel, Input Context, Command Reconciliation과 Error Boundary
+- [`Journal Runtime`](../../architecture/journal-document-section-anchor-permission-search-and-projection-runtime-contract.md)
+  - Journal Command·Compile·Permission·Search·Anchor·Navigation과 Disclosure Trace
 - [`Persistence와 Recovery`](../../architecture/persistence-and-session-recovery-model.md)
   - Recovery Journal과 Observability Trace의 분리
 - [`Deterministic Simulation과 Test Harness`](../../architecture/deterministic-simulation-scenario-and-test-harness-runtime-contract.md)
@@ -60,6 +64,17 @@ client.intent
 → presentation.playback
 ```
 
+Journal 세부 흐름:
+
+```text
+journal.command
+→ journal.compile
+→ journal.permission_evaluate
+→ journal.index_update
+→ journal.projection_build
+→ journal.search_query | journal.anchor_resolve | journal.navigation_resolve
+```
+
 ## 고정 경계
 
 - Diagnostics는 Gameplay State를 직접 변경하지 않는다.
@@ -67,6 +82,8 @@ client.intent
 - Client가 Server Trace ID와 Authority 결과를 확정하지 못한다.
 - Raw Trace를 Player나 DM에게 그대로 제공하지 않고 역할별 Diagnostic Projection을 만든다.
 - 비밀 정보는 화면뿐 아니라 Diagnostic Index와 Export 단계에서도 차단한다.
+- Journal Support Trace에 권한 없는 문서 제목, Section, Anchor Target, Search Token과 숨은 좌표를 넣지 않는다.
+- Ping Trace는 비권위 Experience Event이며 손실을 Authority Event Gap으로 분류하지 않는다.
 - 상세 Span은 Sampling할 수 있지만 권위 실행의 Terminal Marker는 유지한다.
 - Transaction Abort, Rollback, Projection Gap, Security·Disclosure 위반 후보와 Hard Budget 초과는 일반 Sampling으로 제거하지 않는다.
 - Diagnostics 자체 장애는 일반 Gameplay Commit을 되돌리지 않는다.
