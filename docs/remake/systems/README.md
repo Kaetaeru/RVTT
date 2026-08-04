@@ -16,6 +16,7 @@
 - `exploration/`
 - `events/`
 - `time/`
+- `downtime/`
 - `camera/`
 - `journal/`
 
