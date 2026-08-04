@@ -4,9 +4,9 @@
 
 ## 관련 Main System Guide
 
-- `Character, Inventory와 Downtime Guide`
-  - 현재 Main System Guide 작업 순서 7번에서 작성 중이다.
-  - Character Source·Build·State, Item·Equipment와 Rest·Level Up·Crafting·Travel Completion을 통합한다.
+- [`Character, Inventory와 Downtime Guide`](../../guides/character/README.md)
+  - Character Source·Build·State, Item·Equipment와 Rest·Level Up·Crafting·Travel Completion
+  - Participant Window, Reservation, Campaign Time Checkpoint와 Cross-Domain Atomic Completion
 - [`Combat와 Encounter Guide`](../../guides/combat/README.md)
   - Downtime 중 사건으로 Encounter가 시작될 때 Suspend·Mode Transition·복귀 경계
 - [`Rules, Character Action, Spell, Dice와 Effect Guide`](../../guides/rules/README.md)
@@ -97,7 +97,7 @@
 ## Guide 상태
 
 ```text
-Guide Status: READY_TO_WRITE
+Guide Status: CURRENT
 ```
 
-최신 Completion Audit에서 Downtime Activity·Game Time·Domain Completion과 Character·Inventory 연결이 Main System Guide 작성 가능 상태로 판정됐다.
+Character·Inventory·Downtime Guide가 Activity·Time·Reservation·Completion·Recovery의 전체 흐름과 구현 진입점을 현재 권위 문서에 맞게 통합한다.
