@@ -2,7 +2,7 @@
 
 - 상태: ACTIVE
 - 문서 종류: Planning Work Order
-- 최종 갱신일: 2026-08-04
+- 최종 갱신일: 2026-08-05
 - 근거 감사: [`Runtime Architecture Completion과 Main System Guide 준비도 감사`](audits/runtime-architecture-completion-and-main-guide-readiness-audit.md)
 
 이 문서는 RVTT 리메이크 기획·명세·구현의 **단일 작업 순서 기준**이다.
@@ -58,8 +58,11 @@ CURRENT-WORK-ORDER 확인
 ## Main System Guide 단계 원칙
 
 - 활성 세부 작업 순서: [`guides/CURRENT-GUIDE-WORK-ORDER.md`](guides/CURRENT-GUIDE-WORK-ORDER.md)
-- 현재 완료 Guide: [`Runtime Foundation과 Authority`](guides/runtime/README.md)
-- 현재 세부 작업: `Session, Networking, Persistence와 Recovery Guide`
+- 현재 완료 Guide:
+  - [`Runtime Foundation과 Authority`](guides/runtime/README.md)
+  - [`Session, Networking, Persistence와 Recovery`](guides/session/README.md)
+  - [`Scene, Streaming, Runtime Object, Spatial Query와 Navigation`](guides/scene/README.md)
+- 현재 세부 작업: `Exploration, Selection, Interaction과 Perception Guide`
 
 1. Guide는 새로운 Authority 결정을 만들지 않고 확정된 Architecture·ADR을 통합한다.
 2. 각 Guide는 권위 원본, 역할별 사용자 흐름, Command·Transaction·Projection 경로, 실패·복구와 구현 Spec 진입점을 포함한다.
@@ -71,6 +74,7 @@ CURRENT-WORK-ORDER 확인
 
 | 날짜 | 변경 |
 |---|---|
+| 2026-08-05 | Scene·Streaming·Runtime Object·Spatial Query·Navigation Guide를 완료하고 Main System Guide 세부 작업을 Exploration·Selection·Interaction·Perception Guide로 전환했다. |
 | 2026-08-04 | Main System Guide 세부 순서를 `guides/CURRENT-GUIDE-WORK-ORDER.md`에 확정했다. Runtime Foundation과 Authority Guide를 완료하고 Session·Networking·Persistence·Recovery Guide를 현재 세부 작업으로 전환했다. |
 | 2026-08-04 | Cross-Domain Outcome Cascade·Integration Boundary Runtime 계약과 ADR-0087을 확정하고 Completion Audit에서 현재 제품 범위의 Architecture·Integration을 완료로 판정했다. 7번을 `DONE`, Main System Guides를 `IN_PROGRESS`로 전환했다. |
 | 2026-08-04 | Journal Document·Section·Anchor·Permission·Search·Projection Runtime 계약과 ADR-0086을 완료했다. 기존 Journal·Ping 결합 문서를 분리하고 6번을 `DONE`, Cross-System Integration Contracts와 Completion Audit을 `IN_PROGRESS`로 전환했다. |
