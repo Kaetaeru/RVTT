@@ -1,1166 +1,820 @@
-# 36. 저장·자동 저장·재접속·서버 종료·세션 복구 모델
+# Persistence, Snapshot, Journal과 Recovery 계약
 
-- 상태: 초안
-- 작성일: 2026-08-03
-- 관련 문서:
-  - [`02. 핵심 세션 루프`](../product/core-session-loop.md)
-  - [`04. 장면과 월드`](../systems/scene/scenes-and-world.md)
-  - [`07. 장면 편집 상호작용과 레이아웃`](../ui/scene-editor/scene-editor-interaction-and-layout.md)
-  - [`22. EffectRecipe와 효과 해결·확정 모델`](effect-recipe-resolution-and-commit-model.md)
-  - [`25. HP 0·죽음 내성·휴식·자원 회복 모델`](../systems/character/zero-hit-points-death-saves-rest-and-resource-recovery-model.md)
-  - [`27. 주사위 굴림·연출·결과 확정 모델`](../systems/combat/dice-roll-presentation-and-resolution-gating-model.md)
-  - [`28. 인카운터·주도권·턴과 제어권 모델`](../systems/combat/encounter-initiative-turn-and-control-authority-model.md)
-  - [`31. 무설정 상호작용 프리팹과 상태 전환 모델`](../systems/interaction/zero-metadata-interaction-prefab-and-state-transition-model.md)
-  - [`32. 무설정 함정·비밀문·파괴 오브젝트 모델`](../systems/interaction/trap-secret-door-and-destructible-object-model.md)
-  - [`34. 공식 2024 형식 캐릭터 시트와 실시간 플레이어 UI 모델`](../ui/character-sheet/official-2024-character-sheet-and-live-player-ui.md)
+- 상태: 확정
+- 문서 종류: Architecture
+- 즉시 구현 명세 가능성: `READY_WITH_DEFAULTS`
+- 남은 기본값:
+  - 자동 Journal Flush와 Snapshot 요청의 기본 주기
+  - Manifest 및 Chunk 최대 목표 크기
+  - Snapshot Materialization의 최대 시간 예산
+  - 활성 Journal Segment와 Encounter Timeline의 기본 보존 기간
+  - 재시도 횟수, Backoff와 Save Queue 상한
+  - 장기 Tombstone·감사 기록 압축 시점
+  - 비활성 Campaign의 자동 Archive 시점
+- 작성일: 2026-08-04
+- 관련 ADR:
   - [`ADR-0042`](../decisions/ADR-0042-authoritative-checkpoints-command-journal-and-session-recovery.md)
+  - [`ADR-0043`](../decisions/ADR-0043-encounter-turn-snapshot-timeline-and-dm-rollback.md)
+  - [`ADR-0057`](../decisions/ADR-0057-canonical-scene-source-and-atomic-compiled-build-activation.md)
+  - [`ADR-0058`](../decisions/ADR-0058-stable-runtime-object-identity-and-command-driven-lifecycle.md)
+  - [`ADR-0059`](../decisions/ADR-0059-versioned-command-protocol-and-projection-stream-synchronization.md)
+  - [`ADR-0061`](../decisions/ADR-0061-persistent-rule-execution-orchestrator-and-nested-timing-windows.md)
+  - [`ADR-0062`](../decisions/ADR-0062-ordered-reservations-and-atomic-authority-transactions.md)
+  - [`ADR-0063`](../decisions/ADR-0063-manifest-chunk-snapshots-commit-journal-and-branch-recovery.md)
+- 관련 문서:
+  - [`Command Ordering, Logical Time와 Transaction Coordinator 계약`](command-ordering-logical-time-and-transaction-coordinator-contract.md)
+  - [`Rule Runtime Orchestrator와 Pending Execution 계약`](rule-runtime-orchestrator-and-pending-execution-contract.md)
+  - [`Runtime Object System과 Entity Lifecycle 계약`](runtime-object-system-and-entity-lifecycle-contract.md)
+  - [`Networking Command, Event와 Client Synchronization 계약`](networking-command-event-and-client-synchronization-contract.md)
+  - [`Scene Compiler와 Compiled Runtime Scene 계약`](scene-compiler-and-compiled-runtime-scene-contract.md)
+  - [`전투 턴 스냅샷 타임라인과 DM 되돌리기 모델`](../systems/combat/encounter-turn-snapshot-and-dm-rollback-model.md)
 
-## 1. 문서 목적
+## 1. 목적
 
-이 문서는 RVTT에서 다음 상황이 발생해도 캐릭터, 장면, 전투와 규칙 결과가 손실되거나 중복 적용되지 않도록 저장·복구 구조를 정의한다.
+이 문서는 RVTT의 권위 상태를 장기 저장하고, 서버 장애·재접속·세션 종료·스키마 변경·DM 전투 롤백 이후에도 중복 적용이나 부분 상태 없이 복구하는 공통 계약을 정의한다.
 
-- 플레이어가 잠시 연결을 잃고 재접속
-- DM이 앱이나 서버를 종료
-- 활성 서버가 예기치 않게 중단
-- 주사위 연출 도중 연결 종료
-- 공격·주문 효과의 일부 단계 처리 후 중단
-- 장면 편집 중 서버 중단
-- 같은 캠페인을 두 서버가 동시에 열려고 시도
-- 저장 스키마가 업데이트된 이후 과거 캠페인 로드
-- DM이 특정 체크포인트로 되돌리기
+대상:
 
-핵심 원칙:
+- Campaign 영구 저장
+- 활성 Session 복구
+- Authority Transaction Journal
+- Manifest와 Chunk 기반 Snapshot
+- Pending RuleExecution과 Resource Reservation 복구
+- Runtime Object Identity와 Incarnation 복구
+- Scene Build·Dynamic State·Fog·Discovery 저장
+- 서버 장애 판정과 Commit Marker
+- 중도 참여·재접속용 Projection 재구성
+- Encounter Rollback Branch
+- 저장 스키마와 Content Version 마이그레이션
+
+핵심 흐름:
 
 ```text
-권위 상태는 서버만 확정한다.
-확정된 명령은 한 번만 적용된다.
-클라이언트 연출은 잃어도 규칙 결과는 잃지 않는다.
-복구는 마지막 안전 경계부터 결정론적으로 진행한다.
+Authority Transaction Commit
+→ Domain State와 Revision 갱신
+→ Commit Journal과 Commit Marker 기록
+→ Snapshot Materialization
+→ Manifest와 Chunk 저장
+→ 이후 Journal Segment 연결
 ```
 
----
-
-## 2. 저장 데이터 분류
-
-RVTT는 모든 데이터를 하나의 거대한 저장 객체로 취급하지 않는다.
-
-### 2.1 CampaignPersistentState
-
-캠페인을 닫았다가 며칠 뒤 다시 열어도 유지되어야 하는 상태다.
+복구 흐름:
 
 ```text
-CampaignPersistentState
-├─ campaign metadata
-├─ ruleset and source pack versions
-├─ character records
-├─ progression choices
-├─ inventory ownership
-├─ equipment and attunement
-├─ spell learning and preparation configuration
-├─ scene definitions
-├─ published scene revisions
-├─ draft scene revisions
-├─ interaction object definitions and links
-├─ discovery fog masks
-├─ campaign settings
-├─ journal and handout references
-└─ named recovery checkpoints
+검증된 Snapshot Manifest
++ Snapshot 이후 Commit Journal
++ 현재 Build·Content Migration
+→ Authoritative Runtime State 재구성
+→ 새 AuthorityEpoch 발급
+→ Index·Projection·Presentation 재생성
 ```
 
-### 2.2 ActiveSessionState
+## 2. 사용자 결과
 
-현재 진행 중인 세션을 복구하기 위해 필요한 상태다.
+이 계약은 다음을 보장한다.
+
+- 서버가 공격 처리 중 종료되어도 피해와 주문 슬롯 중 하나만 남지 않는다.
+- 같은 Transaction, 피해, 아이템 생성과 자원 소비가 복구 중 두 번 적용되지 않는다.
+- 플레이어가 재접속해도 서버 권위 상태를 다시 받으며 로컬 상태를 저장 원본으로 사용하지 않는다.
+- 반응, 대상 선택 또는 DM 판정을 기다리던 RuleExecution을 안전하게 이어갈 수 있다.
+- Scene가 커져 저장 한도를 넘더라도 Manifest와 Chunk로 나눠 저장·검증·복구할 수 있다.
+- 전투 롤백 시 HP와 위치뿐 아니라 문, 함정, Fog, 공개된 적, Control Assignment와 Pending Execution까지 과거 상태로 돌아간다.
+- Rollback 이전 Timeline의 Prompt, Command와 비동기 작업이 새 Branch에 적용되지 않는다.
+- Client Presentation, Streaming Cache와 Roblox Instance 손상은 권위 저장을 훼손하지 않는다.
+- 저장 실패가 발생하면 마지막 검증된 Snapshot과 Commit Journal로 복구할 수 있다.
+
+## 3. 저장 계층의 권위 구분
+
+### 3.1 Authoring Source
+
+DM이 장기 편집하는 원본이다.
+
+예:
+
+- Campaign 설정
+- Character Source와 성장 선택
+- Scene Source와 Draft
+- Published Build Pointer
+- Asset Semantic Profile과 Content Pack 참조
+- Journal과 Handout
+
+### 3.2 Authoritative Runtime State
+
+세션 중 서버 Transaction으로 변경되는 현재 상태다.
+
+예:
+
+- Actor와 Runtime Object State
+- HP, 자원, Effect와 Concentration
+- Encounter·Turn·Control Assignment
+- 문·함정·상자·파괴 오브젝트 상태
+- Fog·Discovery·Perception Knowledge
+- Pending RuleExecution과 Resource Reservation
+- Runtime Quick Edit Overlay
+
+### 3.3 Derived Runtime Data
+
+권위 상태에서 다시 만들 수 있으므로 기본 저장 원본이 아니다.
 
 ```text
-ActiveSessionState
-├─ session id and state
-├─ active scene id
-├─ actor instances and transforms
-├─ current HP and temporary HP
-├─ expended resources
-├─ active effects and concentration
-├─ encounter session
-├─ initiative order
-├─ current round and turn
-├─ ownership and control assignment
-├─ doors, traps, chests and destructible states
-├─ current reveal fog masks
-├─ pending prompts and reactions
-└─ pending resolution recovery records
+Spatial Index
+Navigation Cache
+Query Cache
+Compiled Expression Cache
+Runtime Scene Provider Cache
+Projection Cache
+Client Interest와 Streaming Cache
+Presentation Model
+Tween·VFX·Camera 상태
+Roblox Physics 상태
 ```
 
-### 2.3 PlayerPreferenceState
+### 3.4 Player Preference
 
-규칙 결과와 무관한 개인 설정이다.
+규칙과 별개인 사용자 개인 설정이다.
 
 ```text
-PlayerPreferenceState
-├─ UI scale
-├─ hotbar layout
-├─ collapsed panels
-├─ character sheet view mode
-├─ input bindings
-├─ tooltip preferences
-├─ accessibility options
-└─ local camera preferences allowed for persistence
+UI Scale
+Hotbar 배치
+패널 접힘 상태
+입력 설정
+접근성 설정
+허용된 Camera Preference
 ```
 
-캐릭터가 아닌 플레이어 계정에 연결해서 저장한다.
+Campaign Snapshot과 분리된 계정 설정으로 저장한다.
 
-### 2.4 EphemeralPresentationState
+## 4. 저장 단위
 
-저장하지 않는다.
+모든 데이터를 하나의 거대한 DataStore Value로 저장하지 않는다.
 
 ```text
-EphemeralPresentationState
-├─ current camera transform
-├─ hover target
-├─ open tooltip
-├─ tween progress
-├─ dice rigid body positions
-├─ particles and sounds
-├─ unsubmitted placement ghost
-├─ drag preview
-└─ local targeting preview cache
+CampaignPersistenceManifest
+├─ campaign_core
+├─ character_source_chunks[]
+├─ character_runtime_chunks[]
+├─ inventory_chunks[]
+├─ scene_source_manifests[]
+├─ scene_dynamic_state_chunks[]
+├─ runtime_object_chunks[]
+├─ encounter_chunks[]
+├─ pending_execution_chunks[]
+├─ fog_discovery_chunks[]
+├─ ownership_control_chunks[]
+├─ journal_segment_refs[]
+├─ checkpoint_refs[]
+└─ integrity_manifest
 ```
 
-복구 후 이 항목은 현재 권위 상태를 기준으로 새로 만든다.
+Chunk는 저장 한도, 갱신 빈도와 권위 경계에 따라 나눈다. Chunk 경계가 규칙 Transaction 경계가 되지는 않는다.
 
----
-
-## 3. 권위 revision
-
-모든 권위 상태는 증가하는 revision을 가진다.
+## 5. Campaign Persistence Manifest
 
 ```text
-AuthorityRevision = 15241
-```
-
-하나의 원자적 트랜잭션이 확정되면 revision이 한 번 증가한다.
-
-```text
-Revision 15241
-→ 장검 공격 CommitGroup 확정
-→ Revision 15242
-```
-
-트랜잭션 안에서 다음이 함께 바뀔 수 있다.
-
-```text
-공격자의 행동 자원
-공격자의 무기 사용 상태
-대상의 HP
-새 상태 효과
-집중 종료
-전투 로그 항목
-관련 Feature 사용 횟수
-```
-
-일부만 revision에 포함되는 것을 허용하지 않는다.
-
-클라이언트는 자신의 마지막 수신 revision을 보낼 수 있지만, 서버는 클라이언트의 상태 내용을 신뢰하지 않는다.
-
----
-
-## 4. 권위 스냅샷
-
-스냅샷은 특정 revision에서 완전한 상태를 직렬화한 것이다.
-
-```text
-AuthoritativeSnapshot
-├─ header
-├─ campaign persistent section
-├─ active session section
-├─ index and reference table
-└─ integrity information
-```
-
-### 4.1 SnapshotHeader
-
-```text
-SnapshotHeader
-├─ snapshotId
+CampaignPersistenceManifest
+├─ manifestId
 ├─ campaignId
-├─ activeSessionId?
 ├─ schemaVersion
-├─ rulesetVersion
-├─ buildVersion
+├─ contentVersionSet
+├─ authorityEpochAtCapture
 ├─ authorityRevision
-├─ lastJournalSequence
-├─ createdAt
-├─ reason
+├─ branchId
+├─ snapshotId
 ├─ parentSnapshotId?
-└─ checksum
+├─ sourceRevisionRefs
+├─ publishedSceneBuildRefs
+├─ baseJournalSequence
+├─ chunkEntries[]
+├─ journalSegmentEntries[]
+├─ checkpointDirectoryRef?
+├─ createdAt
+├─ captureReason
+├─ writerLeaseId
+├─ integrityHash
+└─ completionMarker
 ```
 
-`reason` 예시:
+`completionMarker`가 없거나 Integrity 검증이 실패한 Manifest는 정상 Snapshot으로 활성화하지 않는다.
+
+## 6. Chunk 계약
 
 ```text
-periodic
-important_event
-manual
-before_encounter
-encounter_ended
-scene_published
-server_shutdown
-recovery_fork
+PersistenceChunkEntry
+├─ chunkId
+├─ chunkTypeId
+├─ schemaVersion
+├─ contentHash
+├─ byteSizeClass
+├─ compressionKind
+├─ encryptionPolicyRef?
+├─ dependencyChunkIds[]
+├─ authorityRevisionFrom
+├─ authorityRevisionTo
+├─ branchId
+├─ storageLocator
+├─ integrityHash
+└─ requiredForRecovery
 ```
 
-### 4.2 참조 안정성
+### 6.1 Chunk 원칙
 
-저장 데이터는 Workspace Instance 경로나 일시적 Roblox 객체 참조를 사용하지 않는다.
+- Stable ID와 Content Hash를 사용한다.
+- 배열 위치나 저장 Key 생성 순서를 Identity로 사용하지 않는다.
+- 필수 Chunk 하나라도 없으면 해당 Snapshot을 완전한 복구 지점으로 취급하지 않는다.
+- 선택적 UI 요약이나 장기 감사 자료가 없다고 권위 복구를 실패시키지 않는다.
+- 같은 Content Hash의 불변 Chunk는 재사용할 수 있다.
+- 사용자별 Projection과 비밀 정보 View를 Campaign Authority Chunk와 혼합하지 않는다.
+
+### 6.2 Chunk 작성 방식
 
 ```text
-잘못된 예
-Workspace.Scenes.Dungeon.Door42
-
-올바른 예
-sceneObjectId = "obj_01K..."
+Immutable State View 캡처
+→ Chunk 직렬화
+→ 개별 Hash 검증
+→ 임시 Locator에 저장
+→ Manifest Candidate 작성
+→ 모든 필수 Chunk 재검증
+→ Manifest Completion Marker 기록
+→ Current Snapshot Pointer 원자 교체
 ```
 
-Character, Actor, Item, SceneObject, Effect와 Encounter는 안정적인 ID를 가진다.
+Current Pointer를 먼저 바꾸지 않는다.
 
-### 4.3 스냅샷 생성 방식
+## 7. Authority Snapshot
 
-저장 시 게임 전체를 장시간 멈추지 않는다.
+Snapshot은 특정 `AuthorityEpoch + BranchId + AuthorityRevision`의 완전한 권위 상태를 재구성할 수 있는 Manifest와 Chunk 집합이다.
+
+Snapshot은 Roblox Workspace의 복사본이 아니다.
+
+포함:
+
+- Authoring Source 참조와 현재 Published Build
+- Persistent Character·Inventory·Item State
+- Runtime Object Directory와 Component State
+- Actor, Encounter와 Turn State
+- Scene Dynamic State와 Runtime Overlay
+- Fog·Discovery·Knowledge State
+- Pending RuleExecution과 Reservation
+- Ownership·Link·Control Assignment
+- Transaction·Resolution Ledger
+- 필요한 Archive와 Tombstone 범위
+
+포함하지 않음:
+
+- Workspace Instance 경로
+- MeshPart별 CFrame
+- Tween 진행률
+- 물리 주사위 위치
+- Client Camera
+- Streaming Cache
+- Query·Navigation Cache
+- VFX와 화면 효과
+
+## 8. Snapshot Consistency
+
+Snapshot 캡처를 위해 전체 게임을 장시간 정지하지 않는다.
 
 ```text
-안전 경계 도달
-→ 현재 immutable state view 캡처
-→ 다음 revision 진행 허용
-→ 캡처된 view를 백그라운드 직렬화 큐에 전달
-→ 무결성 검사
-→ 저장
+안전한 AuthorityRevision 확정
+→ Immutable State View와 Chunk Revision Set 고정
+→ 다음 Transaction 진행 허용
+→ 고정 View를 저장 Queue에서 직렬화
 ```
 
-단, 캡처 이후의 변경은 저널에 계속 기록한다.
+Snapshot의 모든 Chunk는 동일한 Capture Barrier와 Branch를 참조해야 한다.
 
----
+도메인별 Revision이 다를 수는 있지만 Manifest가 동일한 `authorityRevision`에서 읽은 일관된 Revision Set을 기록해야 한다.
 
-## 5. 명령 저널
+## 9. Commit Journal
 
-명령 저널은 마지막 정상 스냅샷 이후의 확정 변경을 보존한다.
-
-### 5.1 JournalEntry
+Journal은 사용자의 원시 입력이나 Store의 필드 단위 변경 목록이 아니라 **Commit된 Authority Transaction의 재생 가능한 의미 기록**이다.
 
 ```text
-JournalEntry
-├─ entryId
-├─ sequence
+AuthorityCommitJournalEntry
+├─ journalEntryId
+├─ journalSequence
 ├─ transactionId
-├─ idempotencyKey
-├─ commandType
+├─ transactionTypeId
+├─ transactionSchemaVersion
+├─ idempotencyKeys[]
+├─ authorityEpoch
+├─ branchId
 ├─ authorityRevisionBefore
 ├─ authorityRevisionAfter
-├─ committedPayload
-├─ affectedEntityIds
+├─ orderingKeys[]
+├─ readSetDigest
+├─ writeSetDigest
+├─ committedMutationRecords[]
+├─ domainRevisionResults[]
+├─ committedEventRecords[]
+├─ sourceCommandRefs[]
+├─ sourceExecutionIds[]
 ├─ committedAt
-├─ sourceUserId?
-├─ sourceActorId?
-├─ sourceSystem
-└─ auditFlags
+├─ integrityHash
+└─ commitMarker
 ```
 
-### 5.2 저장하는 것은 의미 명령
+### 9.1 Commit Marker
+
+- Commit Marker 없음: 복구 시 미적용 Transaction으로 취급한다.
+- Commit Marker 있음: 동일 `transactionId`를 다시 적용하지 않고 결과를 복구한다.
+- Marker와 State가 불일치하면 자동 추측하지 않고 Recovery Audit 상태로 전환한다.
+
+### 9.2 저장하지 않는 것
 
 ```text
-ApplyDamage
-SpendResource
-MoveActorCommitted
-ChangeDoorState
-TransferItemOwnership
-CommitPreparedSpells
-PublishSceneRevision
-StartEncounter
-EndEncounter
-CreateFogMaskOperation
-```
-
-다음과 같은 저수준 변경 목록을 저널의 주된 계약으로 삼지 않는다.
-
-```text
-Part.CFrame 변경
-TextLabel.Text 변경
-Attribute 하나 변경
+클라이언트 MouseMove
+Camera 이동
+Hover
 Tween 시작
+Remote 도착 순서
+Workspace Part 변경
+미제출 Preview
 ```
 
-의미 명령은 스키마 마이그레이션, 감사 로그와 장애 분석이 쉽다.
+## 10. Journal Segment와 압축
 
-### 5.3 멱등성
-
-서버는 다음 식별자를 이미 처리했는지 확인한다.
+Journal은 무한 단일 배열이 아니라 Segment로 저장한다.
 
 ```text
-transactionId
-resolutionId
-rollId
-commitGroupId
-journalEntryId
+JournalSegment
+├─ segmentId
+├─ branchId
+├─ sequenceFrom
+├─ sequenceTo
+├─ authorityRevisionFrom
+├─ authorityRevisionTo
+├─ previousSegmentHash
+├─ entries[]
+├─ integrityHash
+└─ sealed
 ```
 
-같은 요청이 네트워크 재전송이나 복구 재생으로 다시 도착해도 결과를 두 번 적용하지 않는다.
+검증된 Snapshot이 생성되면 그 이전 Journal은 활성 복구 경로에서 압축할 수 있다.
 
-### 5.4 저널 압축
+다만 다음은 정책에 따라 별도 보존한다.
 
-정상 스냅샷이 생성되고 검증되면 해당 스냅샷 이전 저널은 활성 복구 경로에서 압축할 수 있다.
+- DM 감사 로그
+- Encounter Rollback Timeline
+- 경제·아이템 소유권 변경 기록
+- Admin Override
+- Migration 기록
+- Rollback Branch 관계
 
-감사와 DM 복구에 필요한 요약 기록은 별도 보존한다.
+## 11. Pending RuleExecution 저장
 
----
-
-## 6. 안전 저장 경계
-
-### 6.1 규칙 행동
+RuleExecution이 사용자 입력, TimingWindow, Child Execution 또는 Presentation Gate를 기다리는 중이어도 권위 상태다.
 
 ```text
-ActionIntent 수신
-→ 대상과 비용 검증
-→ 주사위 봉인
-→ 연출
-→ 결과 공개
-→ EffectRecipe 해결
-→ CommitGroup 원자적 확정
-→ 안전 저장 경계
+PendingRuleExecutionSnapshot
+├─ executionId
+├─ rootExecutionId
+├─ parentExecutionId?
+├─ executionSchemaVersion
+├─ recipeId
+├─ recipeHash
+├─ currentState
+├─ currentStepRef
+├─ bindingStoreSnapshot
+├─ resourceReservations[]
+├─ rollRecords[]
+├─ pendingEffects[]
+├─ committedCommitGroupIds[]
+├─ timingWindowStack[]
+├─ pendingInputs[]
+├─ childExecutionRefs[]
+├─ dependencyRevisionTokens[]
+├─ executionBudgetState
+├─ authorityEpoch
+├─ branchId
+└─ integrityHash
 ```
 
-일반 스냅샷은 `CommitGroup` 확정 전후 중간에 상태를 잘라 저장하지 않는다.
+복구 시:
 
-### 6.2 턴
+1. AuthorityEpoch와 Branch를 새 서버 기준으로 갱신한다.
+2. Recipe와 Handler Version 호환성을 확인한다.
+3. 이미 Commit된 Group은 다시 적용하지 않는다.
+4. Resource Reservation을 현재 Store와 대조한다.
+5. Pending Input과 TimingWindow를 새 Projection으로 다시 발행한다.
+6. 이전 Connection Epoch의 응답을 거부한다.
+7. 재개할 수 없으면 DM 검토 또는 정의된 안전 취소 정책을 사용한다.
+
+## 12. Resource Reservation 저장
+
+Ordering Reservation은 짧은 실행 순서 보호이므로 Snapshot에 장기 보존하지 않는다.
+
+Resource Reservation은 Pending RuleExecution과 함께 보존할 수 있다.
 
 ```text
-TurnStarting 전체 처리 완료
-→ 안전 경계
-
-Action 또는 Opportunity 확정
-→ 안전 경계
-
-TurnEnding 전체 처리 완료
-→ 안전 경계
+PersistedResourceReservation
+├─ reservationId
+├─ executionId
+├─ resourceOwnerRef
+├─ resourceTypeId
+├─ amount
+├─ spendTiming
+├─ createdRevision
+├─ expiresByPolicy
+└─ state
 ```
 
-### 6.3 장면 편집
+복구 후 실제로 소비됐는지 Commit Journal과 Ledger를 먼저 확인한다.
 
 ```text
-고스트 조정
-→ 저장하지 않음
+Commit 확인됨
+→ spent 상태 복원
 
-마우스 드래그 중
-→ 저장하지 않음
+Commit 없음, 실행 재개 가능
+→ reserved 상태 복원
 
-서버 편집 명령 확정
-→ 저널 기록
-→ 안전 경계
+Commit 없음, 실행 취소
+→ release
 ```
 
-다중 선택 작업은 전체가 성공하거나 전체가 실패한다.
+## 13. Runtime Object 복구
 
-### 6.4 Fog 편집
-
-하나의 셀렉션 박스로 실행한 마스크 연산은 하나의 트랜잭션이다.
+Snapshot은 다음을 보존한다.
 
 ```text
-AddDiscoveryVolume
-RemoveDiscoveryVolume
-AddCurrentRevealVolume
-RemoveCurrentRevealVolume
+RuntimeObjectId
+RuntimeIncarnation
+Lifecycle State
+Blueprint와 Build Binding
+Component Manifest
+Component State Refs
+Ownership와 Link
+Persistence Class
+Archive Record
+필요한 Tombstone
 ```
 
-박스 드래그 중간 크기는 저장하지 않는다.
-
----
-
-## 7. PendingResolution 복구
-
-규칙 해결이 시작됐지만 아직 전체 CommitGroup이 완료되지 않은 경우를 위한 별도 기록이다.
+복구 시 Workspace Model을 저장본에서 복사하지 않는다.
 
 ```text
-PendingResolutionRecoveryRecord
-├─ resolutionId
-├─ actionIntentId
-├─ initiatorActorId
-├─ targetSnapshot
-├─ capabilityId
-├─ selectedVariantId
-├─ sealedRolls
-├─ presentationStage
-├─ reservedResources
-├─ committedStepIds
-├─ unresolvedStepIds
-├─ currentAuthorityRevision
-├─ recoveryPolicy
-└─ expiresAt
+권위 Object Directory 복원
+→ Specialized Store 복원
+→ Ownership·Link 검증
+→ Spatial·Interaction·Rule Index 재구성
+→ Disclosure Projection 생성
+→ Client Presentation Materialization
 ```
 
-### 7.1 presentationStage
+복구된 서버는 새 `AuthorityEpoch`를 사용한다. Incarnation은 일반 서버 재시작만으로 임의 증가시키지 않지만, Archive Restore·Migration·Rebind 정책이 요구하면 증가할 수 있다.
+
+## 14. Scene 저장과 Build
+
+구분:
 
 ```text
-prepared
-roll_sealed
-awaiting_presentation
-result_revealed
-resolving_effects
-awaiting_reaction
-ready_to_commit
-committed
-cancelled
+Scene Source Revision
+Published BuildId
+Runtime Dynamic State Revision
+Runtime SnapshotId
 ```
 
-### 7.2 recoveryPolicy
+Compiled Build와 Index는 재생성 가능한 Artifact지만, Published Build의 Content Hash와 Version Set을 Snapshot에 기록한다.
+
+복구 시 동일 Build를 불러올 수 없으면:
+
+1. Source와 Compiler Version으로 동일 Build 재생성을 시도한다.
+2. Content Hash 일치를 검사한다.
+3. 동일성 보장이 안 되면 자동으로 다른 Build를 활성화하지 않는다.
+4. Migration 또는 DM 승인 절차를 사용한다.
+
+Runtime Quick Edit Overlay는 Source로 승격되지 않았더라도 활성 세션 복구에 필요한 경우 Session Chunk에 저장한다.
+
+## 15. Fog, Discovery와 Knowledge
+
+다음을 분리한다.
 
 ```text
-resume
-reveal_then_resume
-skip_presentation_and_resume
-abort_before_cost
-rollback_reservation
-require_dm_review
+Discovery State
+→ 장기적으로 발견한 정보
+
+Current Reveal State
+→ 현재 보이는 영역
+
+Detection·Knowledge State
+→ 알려진 적, 마지막 위치와 비밀 오브젝트 발견
 ```
 
-### 7.3 자원 예약
+Campaign 정책에 따라 Discovery는 장기 저장하고 Current Reveal은 Scene·Session State로 저장한다.
 
-주문 슬롯이나 행동 자원은 해결 중 중복 사용을 막기 위해 예약할 수 있다.
+Encounter Rollback은 사용자 요구에 따라 다음을 과거 상태로 복원한다.
+
+- Current Reveal
+- Discovery 변경
+- 적의 공개 여부
+- 비밀문·함정 발견 여부
+- Last Known Position
+- Detection Relation
+
+이미 사람이 본 정보를 기억에서 지울 수는 없으므로 DM UI는 비가역적 지식 경고를 표시한다.
+
+## 16. 서버 장애 복구
 
 ```text
-available
-→ reserved by resolutionId
-→ committed as spent
+Writer Lease 확인
+→ 최신 완료 Manifest 탐색
+→ Chunk Integrity 검증
+→ Snapshot Materialization
+→ Snapshot 이후 Journal Segment 검증
+→ Commit Marker가 있는 Transaction만 재생
+→ Pending Execution과 Reservation 복원
+→ Index와 Projection 재생성
+→ 새 AuthorityEpoch 발급
+→ Client Full Resync
 ```
 
-행동이 안전 취소되면 예약만 해제한다. 이미 규칙상 소비가 확정된 자원은 되돌리지 않는다.
+복구 중 일반 Gameplay Command를 허용하지 않는다.
 
-### 7.4 효과 단계 중단
+### 16.1 In-flight Transaction
 
 ```text
-화염 피해 확정
-→ committedStepIds에 기록
+Commit Marker 없음
+→ Transaction 폐기
+→ Resource Reservation과 Staging 정리
 
-추가 점화 효과 처리 전 중단
-→ 점화 단계만 재개
+Commit Marker 있음
+→ Commit 결과 복원
+→ Event·Projection은 필요 시 다시 생성
 ```
 
-화염 피해를 다시 적용하지 않는다.
+VFX, Camera Cue와 Presentation Ack는 복구 판정에 사용하지 않는다.
 
----
-
-## 8. 자동 저장 정책
-
-### 8.1 저장 요청 종류
+## 17. 정상 서버 종료
 
 ```text
-journal_flush
-snapshot_requested
-checkpoint_requested
-pre_shutdown_flush
-manual_save
+새 Gameplay Command 접수 중지
+→ 진행 중 Transaction 안전 경계 대기
+→ Pending Execution 저장 가능 상태 확인
+→ Journal Flush
+→ 필요 시 Snapshot Capture
+→ Manifest 검증
+→ Session 종료 상태 Commit
+→ Writer Lease 해제
 ```
 
-### 8.2 중요 사건
+종료 시간 안에 Snapshot을 완성하지 못해도 Commit Journal이 정상 Flush되었다면 마지막 Snapshot에서 복구할 수 있다.
 
-다음 사건은 즉시 저널 flush와 스냅샷 또는 체크포인트 예약을 발생시킨다.
+## 18. 단일 Writer와 Lease
 
-```text
-캐릭터 생성 완료
-레벨업 선택 확정
-Feat·특성·주문 습득 확정
-아이템 소유권 이전
-마법 아이템 조율 변경
-긴 휴식 완료
-Actor 장기 사망·부활
-인카운터 시작
-인카운터 종료
-장면 게시
-대규모 Fog 편집 완료
-DM 수동 체크포인트
-캠페인 설정 변경
-```
-
-### 8.3 연속 변화 debounce
-
-다음 변경은 저널에는 즉시 기록하되 전체 스냅샷은 병합한다.
+같은 Campaign Authority Branch에 두 서버가 동시에 쓰지 못하게 한다.
 
 ```text
-여러 번의 피해·회복
-짧은 시간 안의 이동 연속 확정
-여러 문·상자 상태 변경
-Hotbar 재배치
-장면 오브젝트 반복 이동
-```
-
-### 8.4 정기 체크포인트
-
-활성 세션에는 정기 안전 체크포인트가 필요하다. 정확한 간격은 운영 설정으로 두되, 빈번한 전체 저장보다 저널 flush를 우선한다.
-
-```text
-짧은 간격
-→ Journal flush
-
-더 긴 간격
-→ 검증된 Snapshot
-```
-
-### 8.5 저장 큐
-
-```text
-PersistenceCoordinator
-├─ DirtyDomainTracker
-├─ JournalBuffer
-├─ SnapshotScheduler
-├─ CheckpointManager
-├─ SaveWorker
-├─ RetryPolicy
-├─ IntegrityValidator
-└─ RecoveryIndex
-```
-
-동일 캠페인에 대한 저장은 순서를 유지한다. 오래 걸리는 스냅샷 때문에 최신 저널 flush가 막히지 않도록 우선순위를 구분한다.
-
----
-
-## 9. 체크포인트
-
-### 9.1 자동 체크포인트
-
-```text
-Autosave 01
-Before Encounter: Goblin Cave
-After Encounter: Goblin Cave
-Before Scene Publish: Cragmaw Entrance
-After Long Rest
-Before Level Up Commit
-Server Shutdown
-```
-
-### 9.2 이름 지정 체크포인트
-
-DM은 이름과 메모를 지정할 수 있다.
-
-```text
-이름: 성문 전투 직전
-메모: 경비병과 협상 실패 후
-```
-
-### 9.3 보존 정책
-
-```text
-latest authoritative snapshot
-recent rolling autosaves
-important event checkpoints
-named checkpoints
-migration backups
-```
-
-자동 저장은 설정된 개수나 기간 이후 정리할 수 있다. 이름 지정 체크포인트는 DM이 명시적으로 삭제하기 전까지 별도 취급한다.
-
-### 9.4 복구는 새 revision
-
-```text
-Revision 2000의 체크포인트 선택
-현재 Revision 2350
-→ 체크포인트 상태를 기반으로 Revision 2351 recovery fork 생성
-```
-
-과거 기록을 직접 수정하지 않는다.
-
----
-
-## 10. 플레이어 연결 종료
-
-### 10.1 DisconnectState
-
-```text
-connected
-connection_lost_grace
-absent
-rejoining
-recovered
-```
-
-짧은 네트워크 단절에는 grace 기간을 둘 수 있다.
-
-### 10.2 Actor 상태
-
-플레이어가 나가도 Actor를 즉시 삭제하지 않는다.
-
-```text
-ActorOwnership
-→ 원래 플레이어 유지
-
-ControlAssignment
-→ disconnect policy에 따라 변경 가능
-```
-
-### 10.3 전투 이탈 정책
-
-캠페인 또는 현재 인카운터에서 선택한다.
-
-```text
-pause_on_actor_turn
-suggest_dm_takeover
-auto_transfer_to_dm
-delegate_to_selected_player
-server_automation
-hold_position_and_skip
-```
-
-기본 권장값:
-
-```text
-현재 처리 중 행동은 안전 경계까지 완료
-→ 다음 입력이 필요한 순간 일시정지
-→ DM에게 제어권 인수 제안
-```
-
-자동으로 공격하거나 자원을 소비하는 AI 위임은 DM이 사전에 허용한 경우에만 사용한다.
-
-### 10.4 반응 대기 중 이탈
-
-```text
-Ask 반응 대기
-→ grace 기간
-→ 사전 설정된 반응 정책 확인
-→ DM 결정 또는 건너뛰기
-```
-
-무한정 세션을 멈추지 않는다.
-
----
-
-## 11. 같은 서버 재접속
-
-```text
-플레이어 인증
-→ 활성 세션 참가 권한 확인
-→ ownership 조회
-→ 최신 AuthorityRevision 전송
-→ 필요한 Projection 생성
-→ 입력 문맥 복원
-```
-
-복원 대상:
-
-```text
-현재 Actor 선택
-캐릭터 시트 실시간 값
-Hotbar 구성
-현재 턴과 이니셔티브
-지속 효과
-현재 Fog 가시성
-대기 중 Prompt
-대기 중 Reaction
-RollPresentation 결과 상태
-```
-
-카메라와 Hover 상태는 복원하지 않고 현재 Actor 주변으로 안전하게 재초기화한다.
-
-### 11.1 재접속 시 PendingResolution
-
-```text
-awaiting_presentation
-→ 주사위 연출 다시 보기 또는 결과 표시
-
-result_revealed
-→ 결과 카드와 다음 단계 복구
-
-awaiting_reaction
-→ 남은 시간과 선택지 복구
-
-committed
-→ 최신 결과만 동기화
-```
-
----
-
-## 12. 새 서버에서 세션 재개
-
-활성 서버가 사라진 경우 캠페인 로비에서 `세션 복구`가 가능해야 한다.
-
-```text
-CampaignLease 상태 확인
-→ 마지막 Snapshot 로드
-→ 이후 JournalEntry 순서대로 재생
-→ PendingResolution 검사
-→ 무결성 검사
-→ 새 AuthorityRevision 발행
-→ 활성 장면 생성
-→ 플레이어 참가 허용
-```
-
-### 12.1 복구 전 검사
-
-```text
-모든 참조 ID 존재
-Actor와 Character 연결 유효
-Item 소유권 중복 없음
-Encounter 현재 entry 유효
-Effect source와 target 유효
-SceneObject prefab 해석 가능
-Fog volume 데이터 유효
-Journal sequence 누락 없음
-```
-
-심각한 문제가 있으면 자동으로 플레이를 시작하지 않고 DM 복구 화면으로 이동한다.
-
----
-
-## 13. 서버 종료 절차
-
-### 13.1 ShutdownStateMachine
-
-```text
-running
-→ draining
-→ reaching_safe_boundary
-→ flushing_journal
-→ writing_snapshot
-→ marking_resumable
-→ closed
-```
-
-### 13.2 draining
-
-- 새 플레이어 입장을 제한한다.
-- 새 장시간 행동과 대규모 편집 트랜잭션 시작을 막는다.
-- 현재 진행 중인 짧은 명령은 안전 경계까지 처리한다.
-- UI에 저장 중 상태를 표시한다.
-
-### 13.3 안전 취소
-
-안전 경계까지 끝낼 수 없는 작업은 정책에 따라 취소한다.
-
-```text
-제출되지 않은 대상 지정
-→ 취소
-
-고스트 배치
-→ 취소
-
-예약만 된 자원
-→ 예약 해제
-
-이미 공개된 주사위와 규칙상 확정된 비용
-→ 유지
-
-절반 적용 EffectRecipe
-→ RecoveryRecord 기록
-```
-
-### 13.4 최종 저장 우선순위
-
-```text
-1. JournalBuffer
-2. CommitGroup 상태와 Character 장기 데이터
-3. ActiveSessionState
-4. Scene draft and fog edits
-5. Player preferences
-```
-
-최종 Snapshot 쓰기에 실패해도 저널이 보존되면 이전 스냅샷에서 재생할 수 있다.
-
----
-
-## 14. 단일 권위 서버와 Lease
-
-### 14.1 CampaignLease
-
-```text
-CampaignLease
+CampaignWriterLease
 ├─ campaignId
-├─ authorityServerId
-├─ fencingToken
+├─ branchId
+├─ leaseId
+├─ serverInstanceId
 ├─ acquiredAt
 ├─ renewedAt
 ├─ expiresAt
-└─ mode
+└─ authorityEpoch
 ```
 
-`mode`:
+Lease를 잃은 서버는 새 Transaction Commit을 중지한다.
+
+Lease 만료를 근거로 다른 서버가 인계할 때 이전 서버의 늦은 Commit을 AuthorityEpoch와 Lease 검증으로 거부한다.
+
+## 19. 재접속과 중도 참여
+
+재접속 Client는 Persistence Snapshot을 직접 받지 않는다.
 
 ```text
-read_write
-read_only_recovery
-migration
+서버 Authority State 복구
+→ 사용자별 Projection Snapshot 생성
+→ Event Catch-up
+→ Streaming Activation Set 준비
+→ Gameplay Ready
 ```
 
-### 14.2 fencingToken
+Client가 보낸 로컬 Character, Actor, Fog와 Inventory 상태는 복구 원본이 아니다.
 
-새 서버가 권한을 인수할 때 더 높은 token을 받는다.
+같은 서버에 재접속할 때는 Projection Delta Resume가 가능하지만, AuthorityEpoch가 변경된 서버 복구 후에는 Full Projection Resync를 기본으로 한다.
+
+## 20. Encounter Rollback Branch
+
+DM 전투 롤백은 현재 State를 역연산하거나 일반 Restore Command를 여러 개 실행하는 기능이 아니다.
 
 ```text
-Server A token 17
-Server B token 18
+Rollback Checkpoint 선택
+→ 현재 Branch 동결
+→ Checkpoint Manifest와 Delta 검증
+→ 새 BranchId 생성
+→ 새 AuthorityEpoch 발급
+→ 과거 권위 상태 Materialize
+→ 이후 Transaction 무효화 Ledger 기록
+→ Pending Execution·Prompt 재구성 또는 정책상 취소
+→ Projection Full Resync
+→ 새 Branch에서 Encounter 재개
 ```
 
-Server A의 늦은 저장 요청은 거절된다.
+### 20.1 복원 범위
 
-### 14.3 중복 실행 감지
+- Encounter와 Turn State
+- Actor 위치·HP·자원·Effect
+- Runtime Object와 Dynamic Scene State
+- Inventory와 생성·소비된 Item
+- Fog·Discovery·Knowledge
+- Control Assignment
+- Pending RuleExecution과 Reservation
+- Roll·Transaction·Idempotency Ledger
 
-DM이 같은 캠페인을 다른 서버에서 열려고 하면:
+### 20.2 유지하는 것
+
+사용자 요구에 따라 일반 세션 로그는 삭제하거나 과거로 되돌리지 않는다.
+
+대신 로그와 감사 기록에 Branch를 표시한다.
 
 ```text
-활성 세션으로 참가
-읽기 전용으로 열기
-기존 서버 종료 요청
-복구 권한 인수
-취소
+이 기록은 폐기된 Branch에서 발생했습니다.
 ```
 
-권한 인수는 만료 또는 명시적 안전 절차를 요구한다.
+Client 화면의 현재 규칙 상태는 새 Branch Projection으로 교체한다.
 
----
+## 21. Named Recovery Checkpoint와 Encounter Timeline
 
-## 15. 장면 초안과 게시본
+### Named Recovery Checkpoint
 
-### 15.1 SceneRevision
+DM이 세션 전체 안전 경계에 이름을 붙인다.
 
 ```text
-SceneRevision
-├─ sceneId
-├─ revisionId
-├─ parentRevisionId
-├─ status
-├─ objectGraph
-├─ navigationDataRef
-├─ interactionGraph
-├─ fogDefinitions
-├─ createdBy
-└─ createdAt
+성 입장 전
+보스방 문 열기 전
+긴 휴식 직후
 ```
 
-`status`:
+### Encounter Timeline
+
+전투 시작부터 종료까지 턴 경계를 선택 가능하게 유지한다.
+
+내부 구현은 Base Snapshot + Delta Journal + Materialized Snapshot을 사용할 수 있지만 DM에게는 완전한 턴 상태처럼 보여야 한다.
+
+활성 전투가 끝나기 전에는 턴 선택 가능성을 없애는 압축을 하지 않는다.
+
+## 22. 저장 실패 정책
+
+### Journal Flush 실패
+
+- 해당 Transaction의 영구 확인 상태를 명확히 유지한다.
+- Commit Marker 내구성이 보장되지 않으면 후속 고위험 Command를 일시 차단할 수 있다.
+- 무한 재시도하지 않고 Backoff와 DM 진단을 사용한다.
+
+### Snapshot 실패
+
+- 현재 Authority Runtime은 계속될 수 있다.
+- Last Known Good Snapshot Pointer를 변경하지 않는다.
+- Journal Retention을 연장한다.
+- 다음 안전 경계에서 재시도한다.
+
+### Chunk 일부 실패
+
+- Manifest Completion Marker를 쓰지 않는다.
+- 기존 완료 Snapshot을 유지한다.
+- 임시 Chunk는 GC 대상에 등록한다.
+
+### 저장 공간 한도
+
+- Manifest와 Chunk 분할을 사용한다.
+- 필수 권위 State를 조용히 생략하지 않는다.
+- 장기 감사·Presentation 요약 등 선택 자료부터 정책적으로 압축한다.
+- 더 이상 안전하게 저장할 수 없으면 새 위험 Command를 제한하고 DM에게 알린다.
+
+## 23. 스키마와 Content Migration
 
 ```text
-draft
-published
-archived
-recovery_copy
+Stored Schema Version
+→ Migration Plan 선택
+→ 임시 Branch에서 변환
+→ 참조·ID·무결성 검증
+→ 현재 Ruleset·Content Version과 호환성 검사
+→ Candidate Snapshot 작성
+→ 검증 성공 시 활성화
 ```
 
-### 15.2 편집 중 종료
+Migration은 반복 실행에 안전해야 한다.
 
-- 마지막 확정 편집 명령까지 초안에 복원한다.
-- 드래그 중간값과 고스트는 버린다.
-- 게시본은 영향받지 않는다.
-- 초안 무결성 검사 실패 시 마지막 정상 초안 또는 게시본을 제공한다.
+금지:
 
-### 15.3 게시
+- Live Snapshot을 제자리에서 파괴적으로 수정
+- 실패한 Migration 일부를 Current Pointer로 지정
+- 누락된 Content를 임의로 다른 Definition으로 대체
+- RuntimeObjectId, ItemInstanceId와 CharacterId를 이름으로 재생성
+
+## 24. Integrity와 Recovery Audit
+
+최소 검사:
+
+- Manifest Completion Marker
+- Chunk Hash와 Dependency
+- Journal Hash Chain
+- Transaction Commit Marker
+- AuthorityRevision 연속성
+- Branch와 AuthorityEpoch
+- RuntimeObject Incarnation
+- Ownership Cycle
+- Strong Link 대상
+- Item Ownership 단일성
+- Pending Execution Recipe Hash
+- Resource Reservation과 Commit Ledger 일치
+- Scene Build Content Hash
+
+자동 복구가 안전하지 않으면 `recovery_review_required`로 열고 DM에게 선택 가능한 복구 지점과 손상 범위를 보여 준다.
+
+## 25. 보안과 공개 범위
+
+Campaign Authority Snapshot, Raw Journal과 비밀 Object State는 Player Client에 전달하지 않는다.
+
+백업·진단 Export도 Role과 권한을 검사한다.
+
+Projection Snapshot은 Persistence Snapshot에서 사용자별 Disclosure를 적용해 별도로 생성한다.
+
+## 26. Service 책임
 
 ```text
-초안 검사
-→ 이동·차단 데이터 검사
-→ 상호작용 링크 검사
-→ 참조 프리팹 검사
-→ PublishSceneRevision Commit
-→ 게시 전·후 체크포인트
+PersistenceCoordinator
+├─ CampaignWriterLeaseService
+├─ SnapshotCaptureCoordinator
+├─ ManifestWriter
+├─ ChunkStore
+├─ JournalWriter
+├─ JournalSegmentManager
+├─ CommitDurabilityService
+├─ PendingExecutionPersistenceAdapter
+├─ EncounterCheckpointStore
+├─ RecoveryPlanner
+├─ RecoveryExecutor
+├─ BranchManager
+├─ MigrationRegistry
+├─ IntegrityVerifier
+└─ PersistenceDiagnostics
 ```
 
----
+Persistence Service가 전투, Item, Fog와 Runtime Object 규칙을 직접 구현하지 않는다. 각 Domain은 Versioned Snapshot Adapter와 Mutation Journal Serializer를 등록한다.
 
-## 16. 캐릭터와 인벤토리 일관성
+## 27. 성능 원칙
 
-### 16.1 아이템 이전
+- Transaction마다 전체 Snapshot을 만들지 않는다.
+- Commit Journal은 작은 의미 기록으로 Append한다.
+- Snapshot은 안전한 Revision View를 비동기 직렬화한다.
+- 변경되지 않은 불변 Chunk는 Content Hash로 재사용할 수 있다.
+- 활성 Encounter Timeline은 선택 가능성을 보장하면서 주기적으로 Materialize한다.
+- 저장 Queue, Journal Lag, Chunk 크기와 복구 시간을 측정한다.
+- 권위 Gameplay Thread에서 대형 JSON 직렬화와 DataStore Retry를 직접 수행하지 않는다.
+
+## 28. 진단 UX
+
+DM에게 내부 저장 Key보다 다음을 보여 준다.
 
 ```text
-소유자 A에서 제거
-+ 소유자 B에 추가
-+ 장착 상태 갱신
-+ 파생 수치 재계산
-= 하나의 CommitGroup
+마지막 정상 저장: 라운드 3 · 전사 턴 종료
+현재 변경사항: 저널에 안전하게 기록됨
+새 전체 스냅샷: 생성 중
 ```
 
-아이템이 양쪽에 동시에 존재하거나 사라지는 중간 상태를 저장하지 않는다.
-
-### 16.2 레벨업
-
-레벨업 마법사 선택은 초안으로 저장할 수 있지만 실제 캐릭터에는 확정 전 적용하지 않는다.
+실패 예:
 
 ```text
-LevelUpDraft
-→ 선택 검증
-→ 미리보기
-→ E 확정
-→ CharacterProgression CommitGroup
-→ 중요 체크포인트
+전체 스냅샷 생성에 실패했습니다.
+현재 세션은 마지막 정상 스냅샷과 이후 기록으로 복구할 수 있습니다.
+다음 안전 지점에서 다시 시도합니다.
 ```
 
-### 16.3 HP와 자원
-
-현재 HP, 주문 슬롯, Feature 횟수는 ActiveSessionState에 즉시 반영한다. 캠페인을 닫을 때 장기 상태로 함께 보존한다.
-
----
-
-## 17. Fog 저장
+복구 검토 예:
 
 ```text
-DiscoveryMask
-→ CampaignPersistentState
-
-CurrentRevealMask
-→ ActiveSessionState
+마지막 Transaction의 완료 여부를 자동으로 확인할 수 없습니다.
+선택 가능한 복구 지점:
+1. 라운드 4 시작
+2. 라운드 3 종료
 ```
 
-장면을 다시 시작할 때 정책에 따라 `CurrentRevealMask`를 유지하거나 Discovery 기반 기본 공개 상태로 초기화할 수 있다.
-
-Fog Assist의 제안 미리보기는 저장하지 않는다. DM이 승인한 마스크 연산만 저장한다.
-
----
-
-## 18. DM 저장·복구 화면
-
-### 18.1 저장 상태 표시
-
-```text
-저장됨
-변경 사항 있음
-저장 중
-저장 재시도 중
-저장 실패
-복구 필요
-```
-
-평상시 화면을 방해하지 않는 작은 상태 아이콘으로 표시하고, 오류 시만 확장한다.
-
-### 18.2 체크포인트 목록
-
-```text
-시간
-이름
-생성 이유
-장면
-인카운터 상태
-AuthorityRevision
-빌드·스키마 버전
-무결성 상태
-```
-
-### 18.3 비교 미리보기
-
-복구 전에 현재 상태와 체크포인트 차이를 요약한다.
-
-```text
-캐릭터 4명 중 2명 HP 변경
-아이템 소유권 3건 변경
-장면 오브젝트 12개 변경
-Fog volume 4건 변경
-현재 인카운터 제거
-지속 효과 6개 변경
-```
-
-### 18.4 복구 범위
-
-기본은 전체 일관 복구다. 제한적 부분 복구는 참조 관계를 깨뜨릴 수 있으므로 별도 안전 작업으로 제공한다.
-
-초기 지원:
-
-```text
-전체 캠페인·활성 세션 복구
-현재 장면 초안만 복구
-플레이어 환경설정 초기화
-```
-
-캐릭터 한 명의 HP만 과거로 되돌리는 식의 부분 복구는 일반 체크포인트 UI가 아니라 DM Override 명령으로 처리한다.
-
-### 18.5 복구 확정
-
-```text
-영향 요약 확인
-→ 복구 사유 입력
-→ E 길게 누르기 또는 명시적 확인
-→ 새로운 recovery fork 생성
-→ 감사 로그 기록
-```
-
----
-
-## 19. 오류 처리
-
-### 19.1 저장 실패
-
-```text
-일시 오류
-→ 지수적 backoff 재시도
-→ 저널 버퍼 유지
-
-반복 실패
-→ DM 경고
-→ 위험한 장기 작업 제한 가능
-→ 로컬 상태를 저장됐다고 표시하지 않음
-```
-
-### 19.2 무결성 실패
-
-```text
-checksum 불일치
-journal sequence 누락
-참조 ID 누락
-중복 Item ownership
-잘못된 schemaVersion
-```
-
-자동 수리가 확실한 경우에만 수행한다. 불명확한 경우 원본을 보존하고 이전 정상 스냅샷을 제안한다.
-
-### 19.3 콘텐츠 누락
-
-저장된 Actor가 참조하는 사용자 JSON 정의나 프리팹이 현재 빌드에 없을 수 있다.
-
-```text
-원본 저장 유지
-→ MissingDefinition placeholder 생성
-→ DM에게 누락 항목 표시
-→ 대체 정의 연결 또는 콘텐츠 복구
-```
-
-데이터를 임의 삭제하지 않는다.
-
----
-
-## 20. 스키마 마이그레이션
-
-### 20.1 순차 마이그레이션
-
-```text
-v12
-→ migrate v12 to v13
-→ migrate v13 to v14
-→ validate v14
-→ runtime model
-```
-
-중간 버전을 건너뛰는 거대한 변환보다 작은 순차 변환을 유지한다.
-
-### 20.2 마이그레이션 백업
-
-마이그레이션 전 읽기 전용 백업 체크포인트를 만든다.
-
-```text
-pre_migration_v12
-```
-
-변환 실패 시 원본을 덮어쓰지 않는다.
-
-### 20.3 콘텐츠 버전
-
-저장 스키마와 규칙 콘텐츠 버전은 분리한다.
-
-```text
-schemaVersion
-rulesetVersion
-sourcePackVersions
-```
-
-공식 규칙 데이터가 변경되더라도 기존 캐릭터 선택과 생성 당시 출처를 추적할 수 있어야 한다.
-
----
-
-## 21. 감사 로그
-
-다음 작업은 감사 로그에 남긴다.
-
-```text
-DM 수동 저장
-체크포인트 생성·삭제
-복구 실행
-캐릭터 수치 Override
-아이템 소유권 강제 변경
-인카운터 강제 종료
-중복 서버 권한 인수
-마이그레이션
-저장 무결성 자동 수리
-```
-
-감사 로그는 플레이어에게 공개되는 전투 로그와 분리한다.
-
----
-
-## 22. 성능 원칙
-
-- 매 프레임 전체 상태를 직렬화하지 않는다.
-- Dirty domain과 의미 명령을 기반으로 저장한다.
-- 스냅샷 생성 중 규칙 처리 전체를 장시간 정지하지 않는다.
-- 큰 장면 object graph는 변경된 revision 단위로 분할할 수 있다.
-- PlayerPreference 저장 실패가 전투 권위 저장을 막지 않는다.
-- 저장 큐가 밀리면 낮은 우선순위 스냅샷을 합치되 저널 항목은 누락하지 않는다.
-- 저장 크기, 직렬화 시간, 재시도 횟수와 복구 재생 시간을 측정한다.
-
-관측 지표:
-
-```text
-journal flush latency
-snapshot serialization time
-snapshot write latency
-pending dirty bytes
-retry count
-checkpoint count
-recovery replay duration
-migration duration
-integrity failure count
-```
-
----
-
-## 23. 테스트 요구사항
-
-### 23.1 규칙 해결
-
-- 공격 굴림 봉인 직후 서버 종료
-- 명중 공개 후 피해 굴림 전 종료
-- 피해 적용 후 상태 효과 적용 전 종료
-- 반응 선택 대기 중 종료
-- 동일 resolution 재전송
-- 자원 예약 상태에서 안전 취소
-
-### 23.2 인카운터
-
-- 턴 시작 효과 처리 도중 종료
-- NPC 그룹 턴 중 플레이어 재접속
-- 참가자 추가 도중 종료
-- 인카운터 종료 처리 도중 종료
-- 현재 턴 Actor 연결 종료
-
-### 23.3 장면
-
-- 오브젝트 다중 이동 드래그 중 종료
-- 편집 트랜잭션 확정 직후 종료
-- 장면 게시 검사 중 종료
-- Fog 셀렉션 박스 조정 중 종료
-- 문 Tween 도중 종료
-- 파괴 오브젝트 상태 전환 도중 종료
-
-Tween 중 종료 후에는 저장된 논리 상태에 해당하는 최종 스냅샷 상태로 즉시 생성한다. Tween 중간 프레임을 복원하지 않는다.
-
-### 23.4 저장 인프라
-
-- Snapshot 저장 실패 후 저널 기반 복구
-- JournalEntry 중복
-- Journal sequence 누락
-- 오래된 서버의 fencing token 쓰기
-- 두 서버 동시 권한 요청
-- checksum 실패
-- 마이그레이션 실패
-- 누락된 사용자 콘텐츠 정의
-
-### 23.5 사용자 경험
-
-- 재접속 후 시트와 Hotbar 일치
-- 재접속 후 Fog 비밀 정보 누출 없음
-- 반응창 복구
-- 저장 실패 상태 표시
-- 복구 비교 화면
-- UI 설정만 별도로 초기화
-
----
-
-## 24. 완료 기준
-
-이 기능은 다음이 증명되어야 완료로 본다.
-
-- 확정된 규칙 명령이 장애 후 유실되지 않는다.
-- 동일 명령이 복구 과정에서 두 번 적용되지 않는다.
-- 캐릭터, 인벤토리, 장면과 인카운터가 같은 revision으로 복원된다.
-- 주사위 연출 중 장애가 발생해도 봉인된 결과와 적용 여부를 판단할 수 있다.
-- 미완성 고스트와 Tween 중간 상태가 저장되지 않는다.
-- 플레이어 재접속 후 권한·제어권·시트·Hotbar가 서버 상태와 일치한다.
-- 활성 캠페인을 두 서버가 동시에 수정할 수 없다.
-- DM이 체크포인트 차이를 확인하고 새 revision으로 복구할 수 있다.
-- 마이그레이션 실패가 원본 저장을 파괴하지 않는다.
-- 저장 실패와 복구 필요 상태가 DM에게 명확히 표시된다.
+## 29. 완료 기준
+
+1. Snapshot + Journal로 동일 권위 상태를 복구할 수 있다.
+2. Commit Marker 없는 Transaction이 부분 적용되지 않는다.
+3. 같은 Transaction과 Item 생성이 두 번 적용되지 않는다.
+4. 저장 한도 초과 데이터를 Manifest와 Chunk로 분리한다.
+5. Chunk 일부 실패가 Last Known Good Snapshot을 교체하지 않는다.
+6. Pending RuleExecution과 Resource Reservation을 복구할 수 있다.
+7. RuntimeObjectId, Incarnation과 Tombstone을 보존한다.
+8. 복구 서버가 새 AuthorityEpoch를 발급한다.
+9. Client는 Raw Persistence가 아닌 Projection Snapshot으로 재동기화한다.
+10. Encounter Rollback이 Fog, 공개 적, 문, 함정, Control과 Pending Execution을 복원한다.
+11. Rollback 이전 Branch의 Command와 Prompt를 거부한다.
+12. 일반 로그는 삭제하지 않고 Branch 표시로 보존한다.
+13. Migration 실패가 기존 Snapshot을 손상시키지 않는다.
+14. Scene Build와 Dynamic State를 혼합하지 않는다.
+15. Workspace와 Presentation을 저장 원본으로 사용하지 않는다.
+
+## 30. 비목표
+
+- Roblox Workspace 전체를 Save Model로 사용하지 않는다.
+- 모든 Transaction마다 전체 Campaign Snapshot을 만들지 않는다.
+- Client Local State를 서버 복구 원본으로 사용하지 않는다.
+- Rollback을 역방향 Command 모음으로 구현하지 않는다.
+- VFX·Tween·Camera와 물리 주사위 상태를 복원하지 않는다.
+- 하나의 거대한 DataStore Value에 모든 Campaign 데이터를 넣지 않는다.
+- 저장 실패를 조용히 무시하고 계속 위험한 Commit을 누적하지 않는다.
