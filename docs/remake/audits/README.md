@@ -2,7 +2,7 @@
 
 기획 완성도, 문서 충돌, 구현 준비도와 마이그레이션 결과를 검토한다.
 
-Audit은 제품 동작을 새로 정의하지 않는다. 새 결정이 필요하면 관련 기획 문서와 ADR에 반영한다.
+Audit은 제품 동작을 새로 정의하지 않는다. 새 결정이 필요하면 관련 Architecture와 ADR에 먼저 반영한다.
 
 ## 현재 작업 기준
 
@@ -12,17 +12,20 @@ Audit은 제품 동작을 새로 정의하지 않는다. 새 결정이 필요하
 
 ## 현재 유효한 문서
 
-- [`runtime-architecture-integration-and-engine-completeness-audit.md`](runtime-architecture-integration-and-engine-completeness-audit.md)
-  - 전체 Runtime의 의존 방향, 권위, Policy, 역할, 수명주기와 Engine 누락을 검토한다.
-  - Gameplay Engine은 조건부 완성으로 판정하고 Policy Composition, UI, Diagnostics, Simulation을 구현 전 BLOCKER로 분류한다.
-  - Journal 공유 계약과 Encounter↔Game Time 통합 경계를 후속 과제로 기록한다.
+- [`runtime-architecture-completion-and-main-guide-readiness-audit.md`](runtime-architecture-completion-and-main-guide-readiness-audit.md)
+  - 이전 감사의 Policy, UI, Diagnostics, Simulation, Journal과 Integration BLOCKER 해소를 재검증한다.
+  - 현재 제품 범위의 Core·Support Runtime과 Cross-System Integration을 완료로 판정한다.
+  - Main System Guide 단계는 `READY`, Production Implementation은 Guide·Spec 전이므로 아직 미시작으로 판정한다.
 - [`document-migration-validation.md`](document-migration-validation.md)
   - 문서 이동 결과, 누락·중복·링크 상태를 검증한다.
 
-## Discontinued Audit
+## Superseded·Discontinued Audit
 
-다음 Audit은 작성 당시에는 유효했지만 이후 결정과 Architecture 계약으로 핵심 판정이 해소되어 현재 판단에 사용할 수 없다.
+다음 Audit은 작성 당시에는 유효했지만 후속 Architecture와 Completion Audit이 핵심 판정을 인계했다.
 
+- [`runtime-architecture-integration-and-engine-completeness-audit.md`](runtime-architecture-integration-and-engine-completeness-audit.md)
+  - ADR-0081~0087과 후속 계약이 당시 BLOCKER를 해소했다.
+  - 현재 판단에는 최신 Completion Audit을 사용한다.
 - [`pre-implementation-planning-readiness-audit.md`](pre-implementation-planning-readiness-audit.md)
 - [`planning-audit-resolution-status.md`](planning-audit-resolution-status.md)
 - [`cross-system-foundation-contract-gap-audit.md`](cross-system-foundation-contract-gap-audit.md)
