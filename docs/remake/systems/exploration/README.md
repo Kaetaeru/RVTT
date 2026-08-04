@@ -46,3 +46,11 @@
 - 공격 입력만으로 모든 상황에서 Encounter를 즉시 시작하지 않는다.
 - 함정·위험 사건은 필요한 Actor 또는 지역만 정지시키며 이유 없이 세션 전체를 멈추지 않는다.
 - 전투 전환 시 이동·주문·상호작용의 진행 상태를 명시적으로 분류하고 하나의 전환 경계에서 처리한다.
+
+## Guide Status
+
+```text
+READY_TO_WRITE
+```
+
+최신 Completion Audit와 Main System Guide 작업 순서에서 Exploration·Selection·Interaction·Perception 통합 Guide의 작성 가능성이 확인되었다.
