@@ -2,22 +2,34 @@
 
 - 상태: ACTIVE
 - 문서 종류: Documentation Index
-- 현재 단계: `IMPLEMENTATION SPECS`
+- 현재 단계: `SLICE 01 SCRIPT MANIFEST`
 - Runtime Architecture: `COMPLETE`
 - Main System Guides: `COMPLETE`
 - Player·DM User Guides와 Quick Flow: `COMPLETE`
-- 구현 명세 전 최종 문서 연결 감사: `COMPLETE`
+- 16 Slice Specification Checkpoints: `COMPLETE`
+- UI·UX Global Policies: `COMPLETE`
+- Greenfield Production Workspace: `BOOTSTRAPPED`
 
-RVTT Remake의 제품 결정, Architecture, 기능 기획, UI, 사용자 경험, Main System Guide, Implementation Spec과 Audit을 역할별로 관리한다.
+RVTT Remake의 제품 결정, Architecture, 기능 기획, UI·UX Policy, Main System Guide, Implementation Spec과 Audit을 역할별로 관리한다. 실제 Production Source는 별도 `implementation/` Root에서 관리한다.
 
 ## 현재 작업
 
-- 단일 작업 순서: [`CURRENT-WORK-ORDER.md`](CURRENT-WORK-ORDER.md)
-- Implementation Spec Hub: [`specs/README.md`](specs/README.md)
-- Implementation Spec Template: [`templates/implementation-spec-template.md`](templates/implementation-spec-template.md)
-- 최종 문서 연결 감사: [`audits/pre-implementation-document-linkage-audit.md`](audits/pre-implementation-document-linkage-audit.md)
+- 상위 작업 순서: [`CURRENT-WORK-ORDER.md`](CURRENT-WORK-ORDER.md)
+- Slice Roadmap: [`specs/SLICE-ROADMAP.md`](specs/SLICE-ROADMAP.md)
+- Spec 인계 상태: [`specs/CURRENT-SPEC-WORK-ORDER.md`](specs/CURRENT-SPEC-WORK-ORDER.md)
+- UI·UX Policy Hub: [`ui/policies/README.md`](ui/policies/README.md)
+- UI·UX Review Checklist: [`ui/policies/UI-UX-REVIEW-CHECKLIST.md`](ui/policies/UI-UX-REVIEW-CHECKLIST.md)
+- Production Workspace: [`implementation/README.md`](../../implementation/README.md)
+- Roblox Implementation Work Order: [`implementation/roblox/CURRENT-WORK-ORDER.md`](../../implementation/roblox/CURRENT-WORK-ORDER.md)
 
-현재 첫 작업은 `specs/CURRENT-SPEC-WORK-ORDER.md`를 만들고, 초기 Shared Spec 001·002를 재검토한 뒤 첫 수직 Slice를 확정하는 것이다. Production Implementation은 아직 시작하지 않는다.
+현재 작업:
+
+```text
+Slice 01 First Session Walking Skeleton
+→ implementation/roblox/manifests/slice-01-script-manifest.md
+```
+
+Production Luau Script는 아직 작성하지 않았다.
 
 ## 처음 읽는 경로
 
@@ -33,33 +45,38 @@ RVTT Remake의 제품 결정, Architecture, 기능 기획, UI, 사용자 경험,
 - [`DM Guide`](user-guides/dm/README.md)
 - [`User Guide Hub`](user-guides/README.md)
 
-### 구현 명세를 작성할 때
+### UI·UX를 설계·구현할 때
 
 ```text
-CURRENT-WORK-ORDER
-→ Quick Flow의 대상 사용자 구간
-→ 관련 Player 또는 DM Guide
-→ Runtime Foundation Guide
-→ 현재 Domain Main System Guide
-→ 직접 인접 Guide
-→ Guide가 연결한 Product·Architecture·System·UI·ADR
-→ 기존 관련 Spec
-→ Implementation Spec Template
-→ 새 수직 Spec
+UI·UX Global Policy
+→ UI Main Guide
+→ 공통 입력
+→ 화면별 UI 문서
+→ Slice Contract
+→ Review Checklist
+→ Script
 ```
 
-읽을 문서:
+- [`UI·UX Policy Hub`](ui/policies/README.md)
+- [`UI Main Guide`](guides/ui/README.md)
+- [`공통 입력 교과서`](ui/common-input/common-input-grammar.md)
+- [`UI 문서 Hub`](ui/README.md)
 
-1. 저장소 루트 [`AGENTS.md`](../../AGENTS.md)
-2. [`AGENTS.md`](AGENTS.md)
-3. [`AGENTS-PLANNING-ADDENDUM.md`](AGENTS-PLANNING-ADDENDUM.md)
-4. [`CURRENT-WORK-ORDER.md`](CURRENT-WORK-ORDER.md)
-5. [`Quick Flow`](user-guides/QUICK-FLOW.md)
-6. 관련 [`User Guide`](user-guides/README.md)
-7. [`Main System Guide Hub`](guides/README.md)
-8. Guide가 연결한 직접 Authority Documents와 ADR
-9. [`DOCUMENT-GUIDE.md`](DOCUMENT-GUIDE.md)
-10. [`Implementation Spec Template`](templates/implementation-spec-template.md)
+### Production Script를 작성할 때
+
+```text
+Roblox Implementation Work Order
+→ 현재 Slice Contract
+→ Script Manifest
+→ 가장 위의 IN_PROGRESS Script
+→ Test
+→ Review·Commit
+```
+
+- [`Production Root`](../../implementation/README.md)
+- [`Roblox Workspace`](../../implementation/roblox/README.md)
+- [`Roblox Implementation Work Order`](../../implementation/roblox/CURRENT-WORK-ORDER.md)
+- [`Manifest 규칙`](../../implementation/roblox/manifests/README.md)
 
 ## 문서 역할
 
@@ -69,37 +86,29 @@ CURRENT-WORK-ORDER
 | [`product/`](product) | 제품 범위·지원 정책·비목표 | 권위 |
 | [`architecture/`](architecture) | 공통 Runtime·Source·Build·State·통합 계약 | 권위 |
 | [`systems/`](systems) | 기능 영역별 동작과 사용자 흐름 | 권위 |
-| [`ui/`](ui) | 화면·입력 문맥·표시와 사용자 피드백 | 권위 |
+| [`ui/`](ui) | 화면·입력·Global UI·UX Policy와 사용자 피드백 | 권위 |
 | [`decisions/`](decisions) | 되돌리기 어려운 Architecture Decision | 권위 |
 | [`guides/`](guides) | 권위 문서 관계·경계·읽기 순서 | 비권위 Reference |
-| [`specs/`](specs) | Module·Type·Command·저장·Test 구현 계약 | 준비 완료 시 권위 |
+| [`specs/`](specs) | Slice·Module·Type·Command·저장·Test 구현 계약 | 준비 완료 시 권위 |
 | [`audits/`](audits) | 충돌·완료·단계·연결 판정 | 판정 문서 |
 | [`templates/`](templates) | 문서 필수 항목 누락 방지 | 형식 |
 | [`archive/`](archive) | 현재 판단에 사용하지 않는 역사 기록 | 비권위 |
+| [`implementation/`](../../implementation) | 실제 Roblox Source·Test·Migration·Tooling | Production Source |
 
 ## 권위 방향
 
 ```text
 사용자의 최신 명시적 결정
 → 확정 ADR
-→ 확정 Product·Architecture·System·UI
+→ 확정 Product·Architecture·System·UI Policy
 → 준비 완료 Implementation Spec
-```
-
-```text
-User Guide
-→ 사용자가 무엇을 보고 무엇을 하는지 설명
-
-Main System Guide
-→ 어느 Authority Document를 어떤 순서로 읽는지 설명
-
-Audit
-→ 충돌·완료·준비도와 연결을 검사
+→ Script Manifest
+→ Production Script·Test
 ```
 
 - User Guide와 Main System Guide가 권위 문서와 충돌하면 권위 문서가 우선한다.
-- User Guide와 Main System Guide를 Authority Tree의 Parent로 기록하지 않는다.
-- 새 Product·Architecture 결정이 필요하면 Guide나 Spec에 숨겨 넣지 않고 직접 권위 문서와 ADR을 먼저 수정한다.
+- Global UI·UX Policy는 화면별 UI 문서와 Component 구현보다 우선한다.
+- 새 Product·Architecture 결정이 필요하면 Guide·Policy·Spec·Script에 숨겨 넣지 않고 직접 권위 문서와 ADR을 먼저 수정한다.
 
 ## 제품 고정 전제
 
@@ -119,7 +128,18 @@ Audit
 - NPC 자동 대화, 음악, 환경음과 모든 SFX는 비목표
 - 성능·안정성·오류 격리·수정 가능한 코드 구조는 완료 조건
 
-상세 Product Authority는 [`product/README.md`](product/README.md)를 따른다.
+## UI·UX Policy 요약
+
+- Dark Tactical Fantasy + Professional Tool 시각 언어
+- Semantic Design Token만 사용
+- 전장 우선 Layout과 Progressive Disclosure
+- Semantic Input·Input Context·Q/E·1–5
+- Pending·Receipt·Projection·Error·Resync·Recovery 상태
+- Player·DM·Observer Projection 분리
+- UI Scale·Keyboard Focus·Reduced Motion·Flash·Camera Comfort
+- Low-end Fallback에서도 핵심 결과·Warning·Focus 유지
+
+상세 Policy는 [`ui/policies/README.md`](ui/policies/README.md)를 따른다.
 
 ## Main System Guides
 
@@ -136,23 +156,36 @@ Audit
 11. [`Diagnostics, Simulation과 Operations`](guides/diagnostics/README.md)
 12. [`Extension, Plugin과 Content Pack`](guides/extension/README.md)
 
-12개 Guide는 모두 `CURRENT`다. 도메인별 User Flow 대응표와 읽기 순서는 [`guides/README.md`](guides/README.md)를 따른다.
+## Implementation 상태
 
-## Implementation Specs
+```text
+16 Slice 통합 명세·감사
+→ COMPLETE
 
-Spec은 다음을 포함한다.
+UI·UX Policy Foundation
+→ COMPLETE
 
-- Quick Flow와 Player·DM Acceptance Flow
-- 직접 Authority Requirement 추적성
-- Package·Module·Service 책임
-- Luau Type와 Versioned Schema
-- Command·Read·Network·Projection 계약
-- Persistence·Migration·Recovery·Rollback
-- Ordering·Reservation·Transaction·Outbox·Projection Barrier
-- Diagnostics·Stable Error·Budget·Health
-- Deterministic Scenario와 Roblox Integration Test
+implementation/roblox Service Folder
+→ CREATED
 
-현재 초기 Shared Spec 001·002는 [`Shared Spec Index`](specs/shared/README.md)에서 `REVIEW_REQUIRED`로 관리한다.
+Slice 01 Script Manifest
+→ IN_PROGRESS
+
+Production Luau Script
+→ NOT STARTED
+```
+
+구현은 [`implementation/roblox/CURRENT-WORK-ORDER.md`](../../implementation/roblox/CURRENT-WORK-ORDER.md)를 따른다.
+
+## 완료 감사
+
+1. [`Runtime Architecture Completion`](audits/runtime-architecture-completion-and-main-guide-readiness-audit.md)
+2. [`Main System Guide Consistency와 Hub Completion`](audits/main-system-guide-consistency-and-document-hub-completion-audit.md)
+3. [`Player·DM User Guide Completion`](audits/player-and-dm-user-guide-completion-audit.md)
+4. [`All-slice Specification Checkpoint Completion`](audits/all-slice-specification-checkpoint-completion-audit.md)
+5. [`UI·UX Global Policy Completion`](audits/ui-ux-policy-completion-audit.md)
+6. [`Implementation Workspace Bootstrap`](audits/implementation-workspace-bootstrap-audit.md)
+7. [`Document Migration Validation`](audits/document-migration-validation.md)
 
 ## 문서 수명주기
 
@@ -163,14 +196,3 @@ Spec은 다음을 포함한다.
 - 정책: [`DOCUMENT-LIFECYCLE-AND-DISCONTINUATION.md`](DOCUMENT-LIFECYCLE-AND-DISCONTINUATION.md)
 
 `SUPERSEDED`, `DISCONTINUED`, `ARCHIVED`와 충돌하는 오래된 Draft는 현재 Authority와 추천 읽기 순서에서 제외한다.
-
-## 완료 감사
-
-1. [`Runtime Architecture Completion`](audits/runtime-architecture-completion-and-main-guide-readiness-audit.md)
-2. [`Main System Guide Consistency와 Hub Completion`](audits/main-system-guide-consistency-and-document-hub-completion-audit.md)
-3. [`Player·DM User Guide Completion`](audits/player-and-dm-user-guide-completion-audit.md)
-4. [`Quick Flow와 Flowchart Completion`](audits/user-guide-quick-flow-and-flowchart-audit.md)
-5. [`Pre-Implementation Document Linkage`](audits/pre-implementation-document-linkage-audit.md)
-6. [`Document Migration Validation`](audits/document-migration-validation.md)
-
-최종 연결 감사 결과 Implementation Specs는 `READY TO START`, Production Implementation은 `NOT STARTED`다.
