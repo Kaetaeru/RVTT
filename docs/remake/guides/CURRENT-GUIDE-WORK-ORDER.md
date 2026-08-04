@@ -38,8 +38,8 @@ DEFERRED
 | 3 | `DONE` | Scene, Streaming, Runtime Object, Spatial Query와 Navigation | Scene Source부터 Live Presence·Chunk·Query·Path·Movement까지 월드 Runtime 흐름 통합 |
 | 4 | `DONE` | Exploration, Selection, Interaction과 Perception | 실시간 이동·행동·대상 지정·상호작용·시야·탐지·Encounter 전환 통합 |
 | 5 | `DONE` | Rules, Character Action, Spell, Dice와 Effect | Capability·Opportunity·Spell Route·Roll·Resolution·Effect 수명주기 통합 |
-| 6 | `IN_PROGRESS` | Combat와 Encounter | Initiative Timeline·Turn·Reaction·Damage·Death·Objective·Time·Rollback 통합 |
-| 7 | `QUEUED` | Character, Inventory와 Downtime | 성장 Source·Build·State·Item·Equipment·Rest·Level Up·Crafting·Travel 통합 |
+| 6 | `DONE` | Combat와 Encounter | Initiative Timeline·Turn·Reaction·Damage·Death·Objective·Time·Rollback 통합 |
+| 7 | `IN_PROGRESS` | Character, Inventory와 Downtime | 성장 Source·Build·State·Item·Equipment·Rest·Level Up·Crafting·Travel 통합 |
 | 8 | `QUEUED` | UI, Camera와 Presentation | Projection Replica·ViewModel·Input Context·Panel·CameraRequest·Presentation Recipe 통합 |
 | 9 | `QUEUED` | Journal과 Ping | Document·Section·Anchor·Permission·Search·Navigation과 비권위 Ping 흐름 통합 |
 | 10 | `QUEUED` | Scene Editor와 Authoring | DM Authoring Source·Tool Module·Publish·Validation·Live Patch 경계 통합 |
@@ -83,6 +83,7 @@ Runtime Authority Foundation
 
 | 날짜 | 변경 |
 |---|---|
+| 2026-08-05 | Combat·Encounter Guide를 완료하고 6번을 `DONE`, Character·Inventory·Downtime Guide를 `IN_PROGRESS`로 전환했다. |
 | 2026-08-05 | Rules·Character Action·Spell·Dice·Effect Guide를 완료하고 5번을 `DONE`, Combat·Encounter Guide를 `IN_PROGRESS`로 전환했다. |
 | 2026-08-05 | Exploration·Selection·Interaction·Perception Guide를 완료하고 4번을 `DONE`, Rules·Character Action·Spell·Dice·Effect Guide를 `IN_PROGRESS`로 전환했다. |
 | 2026-08-05 | Scene·Streaming·Runtime Object·Spatial Query·Navigation Guide를 완료하고 3번을 `DONE`, Exploration·Selection·Interaction·Perception Guide를 `IN_PROGRESS`로 전환했다. |
