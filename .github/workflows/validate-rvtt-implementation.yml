@@ -1,0 +1,32 @@
+name: Validate RVTT implementation
+
+on:
+  pull_request:
+    paths:
+      - "implementation/roblox/**"
+      - ".github/workflows/validate-rvtt-implementation.yml"
+  push:
+    branches:
+      - planning/rvtt-remake
+    paths:
+      - "implementation/roblox/**"
+      - ".github/workflows/validate-rvtt-implementation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate implementation structure and policies
+        run: python implementation/roblox/tooling/validate_implementation.py
