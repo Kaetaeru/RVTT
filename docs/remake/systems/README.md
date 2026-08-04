@@ -13,6 +13,9 @@
 - `perception/`
 - `interaction/`
 - `session/`
+- `exploration/`
+- `events/`
+- `time/`
 - `camera/`
 - `journal/`
 
