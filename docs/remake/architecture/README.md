@@ -17,6 +17,11 @@
   - Canonical Scene Source, 불변 Build Package, Runtime Layer와 원자적 게시
 - [`Character Runtime과 Compiled Character Build 계약`](character-runtime-and-compiled-character-build-contract.md)
   - Character Source·Build와 Persistent Character·Actor·Encounter State 분리
+- [`Character Action Opportunity와 2024 Core Action Runtime 계약`](character-action-opportunity-and-2024-core-action-runtime-contract.md)
+  - 2024 기본 행동 11종과 파생 행동 지원
+  - Action·Bonus Action·Reaction·Movement Opportunity
+  - Ready, 즉흥 행동과 DM Adjudication Pending
+  - 전투·탐험의 공통 Capability·RuleExecution 경계
 - [`Effect, Condition과 Ongoing Runtime 계약`](effect-condition-and-ongoing-runtime-contract.md)
   - CompiledEffectBuild, EffectInstance, Duration, Concentration, Stacking과 Suppression
 - [`Inventory, ItemInstance와 World Presence Runtime 계약`](inventory-item-instance-and-world-presence-runtime-contract.md)
@@ -48,7 +53,8 @@
 - Source, Compiler, Immutable Build, Authoritative State, Migration과 Projection
 - Command, revision, transaction, Ordering, Reservation과 Journal
 - Scene Source, Runtime Scene, Spatial Query, Navigation과 Streaming
-- Character, Effect, ItemInstance와 Runtime Object의 권위 경계
+- Character, Character Action, Effect, ItemInstance와 Runtime Object의 권위 경계
+- Action·Bonus Action·Reaction·Movement Opportunity와 2024 기본 행동
 - Inventory·Equipment·Container와 Scene Ground Item Presence
 - Capability, RuleExecution, Recipe, TimingWindow와 PendingEffect
 - 저장·복구·재접속·롤백과 Presentation 확장 계약
@@ -64,6 +70,8 @@ Source, Compiler, Build, Dynamic State, Migration과 Projection을 다루는 문
 Scene Source, Semantic Profile, Runtime Layer, Index, Chunk와 게시를 다루는 문서는 [`Scene Compiler 계약`](scene-compiler-and-compiled-runtime-scene-contract.md)을 따른다.
 
 캐릭터 성장 원본, 파생 능력치, Capability, Resource와 Character·Actor·Encounter State를 다루는 문서는 [`Character Runtime 계약`](character-runtime-and-compiled-character-build-contract.md)을 따른다.
+
+기본 행동, Action Economy, Bonus Action, Reaction, Ready와 즉흥 행동을 다루는 문서는 [`Character Action Runtime 계약`](character-action-opportunity-and-2024-core-action-runtime-contract.md)을 따른다.
 
 상태, 집중, 변신, 지속 영역, 소환, Duration, Stacking과 Suppression을 다루는 문서는 [`Effect Runtime 계약`](effect-condition-and-ongoing-runtime-contract.md)을 따른다.
 
