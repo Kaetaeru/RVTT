@@ -2,6 +2,11 @@
 
 규칙 세트, Source Pack Policy Patch, Campaign·Scope 설정, Policy Composition과 Frozen Snapshot을 다룬다.
 
+## Main System Guide
+
+- [`Rules, Character Action, Spell, Dice와 Effect Guide`](../../guides/rules/README.md)
+  - Policy Composition과 Frozen Snapshot이 Character Capability·RuleExecution·Spell·Roll·Effect 실행에 적용되는 전체 흐름
+
 ## 상위 권위 문서
 
 - [`Ruleset Policy Registry, Composition과 Frozen Snapshot Runtime 계약`](../../architecture/ruleset-policy-registry-composition-and-frozen-snapshot-runtime-contract.md)
@@ -77,17 +82,18 @@ presentation_accessibility
 
 ## 추천 읽기 순서
 
-1. `../../architecture/runtime-architecture-principles.md`
-2. `../../architecture/compiled-build-and-authoritative-state-pattern.md`
-3. `../../decisions/ADR-0003-ruleset-source-packs-localization.md`
-4. `../../architecture/ruleset-policy-registry-composition-and-frozen-snapshot-runtime-contract.md`
-5. `../../decisions/ADR-0081-versioned-policy-composition-and-frozen-ruleset-snapshots.md`
-6. Policy를 사용하는 관련 Runtime Architecture
+1. `../../guides/rules/README.md`
+2. `../../architecture/runtime-architecture-principles.md`
+3. `../../architecture/compiled-build-and-authoritative-state-pattern.md`
+4. `../../decisions/ADR-0003-ruleset-source-packs-localization.md`
+5. `../../architecture/ruleset-policy-registry-composition-and-frozen-snapshot-runtime-contract.md`
+6. `../../decisions/ADR-0081-versioned-policy-composition-and-frozen-ruleset-snapshots.md`
+7. Policy를 사용하는 관련 Runtime Architecture
 
 ## Guide 상태
 
 ```text
-Guide Status: READY_TO_WRITE
+Guide Status: CURRENT
 ```
 
-최신 Completion Audit와 Main System Guide 작업 순서에서 Policy·Rules 실행 Guide 작성 조건을 통과했다.
+현재 Guide: [`Rules, Character Action, Spell, Dice와 Effect`](../../guides/rules/README.md)
