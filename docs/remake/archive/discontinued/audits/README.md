@@ -11,4 +11,10 @@
 - [`cross-system-foundation-contract-gap-audit.md`](cross-system-foundation-contract-gap-audit.md)
   - ADR-0054~0064와 Scene·Spatial·Navigation·Lifecycle·Networking·Streaming·Transaction·Persistence 계약이 당시 공백을 해소했다.
 
+## 2026-08-04 2차 정리
+
+- [`runtime-architecture-integration-and-engine-completeness-audit.md`](runtime-architecture-integration-and-engine-completeness-audit.md)
+  - ADR-0081~0087과 Policy·UI·Diagnostics·Simulation·Journal·Cross-Domain Integration 계약이 당시 BLOCKER를 해소했다.
+  - 현재 판정은 [`Runtime Architecture Completion과 Main System Guide 준비도 감사`](../../../audits/runtime-architecture-completion-and-main-guide-readiness-audit.md)를 따른다.
+
 원문 전체는 각 파일의 원래 경로에 대한 Git 기록으로 보존된다.
