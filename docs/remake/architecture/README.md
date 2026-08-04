@@ -8,98 +8,50 @@
   - 사용자 경험을 상위 제약으로 둔다.
   - Scene Source, Compiled Runtime, Dynamic State와 Presentation을 분리한다.
   - Runtime 계층, Query와 Command 경계를 고정한다.
-  - Legacy `Walkable` Attribute 관례를 리메이크 권위 데이터에서 제외한다.
   - 모든 하위 Architecture·System·Spec 문서가 따라야 하는 공통 원칙이다.
 - [`Compiled Build와 Authoritative State 분리 패턴`](compiled-build-and-authoritative-state-pattern.md)
   - Source, 불변 Compiled Build, 버전된 Authoritative State와 Projection의 공통 계층
   - Build 교체와 State Migration의 원자성
   - 도메인별로 다른 State 수명주기 유지
-  - Persistence의 Build Reference·Hash와 State 복구 경계
 - [`Scene Compiler와 Compiled Runtime Scene 계약`](scene-compiler-and-compiled-runtime-scene-contract.md)
-  - Canonical Scene Source와 정규화 Semantic Contribution
-  - Layer Builder, Runtime Object Blueprint와 State Binding
-  - 불변 Build Package, Chunk, Spatial Index와 Dependency Graph
-  - 부분 컴파일과 전체 Build 동일성
-  - 원자적 게시, Last Known Good Build와 Live Patch 경계
-  - 서버 Raw Build와 권한별 Client Disclosure Segment 분리
+  - Canonical Scene Source, 불변 Build Package, Runtime Layer와 원자적 게시
 - [`Character Runtime과 Compiled Character Build 계약`](character-runtime-and-compiled-character-build-contract.md)
-  - Character Progression Source와 불변 Character Build
-  - Persistent Character, Scene Actor와 Encounter State의 수명주기 분리
-  - Derived Statistics, Modifier, Resource와 Capability Binding
-  - 레벨업·재구성의 Build 교체와 State Migration
-  - Character Persistence, Rollback과 Projection
+  - Character Source·Build와 Persistent Character·Actor·Encounter State 분리
 - [`Effect, Condition과 Ongoing Runtime 계약`](effect-condition-and-ongoing-runtime-contract.md)
-  - Condition·Ongoing Effect Definition과 불변 CompiledEffectBuild
-  - EffectRegistry, 권위 EffectInstance와 타입 있는 Binding
-  - Duration, End Condition, Stacking, Concentration과 Suppression
-  - Character Contribution, Form Overlay와 Runtime Object Ownership
-  - Persistence, Rollback, Projection과 실패 격리
+  - CompiledEffectBuild, EffectInstance, Duration, Concentration, Stacking과 Suppression
+- [`Inventory, ItemInstance와 World Presence Runtime 계약`](inventory-item-instance-and-world-presence-runtime-contract.md)
+  - CompiledItemBuild와 권위 ItemInstance State
+  - Inventory·Equipment·Container·Scene Ground의 배타적 Location Binding
+  - Item Presence Runtime Object와 바닥 아이템 상호작용
+  - 드롭·투척·Pickup·Stack 분할·병합의 원자적 Transfer
+  - 저장·재접속·롤백·Streaming 경계
 - [`Runtime Object System과 Entity Lifecycle 계약`](runtime-object-system-and-entity-lifecycle-contract.md)
-  - Scene Presence의 공통 RuntimeObjectId, Incarnation과 AuthorityEpoch
-  - Blueprint, Component 조합, Registry와 Specialized Store
-  - Spawn·Suspend·Archive·Restore·Destroy Lifecycle Command
-  - Ownership·Link Graph, Tombstone과 Scene Transfer
-  - Snapshot·Rollback, Build Rebind와 Presentation Materialization 경계
-  - Character·Item·Effect 원본과 Runtime Scene Presence 분리
+  - Scene Presence의 RuntimeObjectId, Incarnation, Lifecycle, Ownership과 Presentation Materialization
 - [`Networking Command, Event와 Client Synchronization 계약`](networking-command-event-and-client-synchronization-contract.md)
-  - Versioned Protocol Envelope와 고정 Message Lane
-  - Command·Read Request, Receipt·Result와 구조화 Error
-  - Idempotency, Ordering Key, Rate Limit과 Backpressure
-  - 사용자별 Authority Projection Stream과 Disclosure
-  - Projection Snapshot, Event Catch-up, 재접속과 Client Ready
-  - 권위 Event와 병합 가능한 Presentation Signal 분리
+  - Versioned Protocol, Command·Result, Projection Stream, Snapshot Sync와 Client Ready
 - [`Command Ordering, Logical Time와 Transaction Coordinator 계약`](command-ordering-logical-time-and-transaction-coordinator-contract.md)
-  - 타입 있는 Ordering Key와 충돌 Command 직렬화
-  - 다중 Key의 안정적 Reservation 순서와 Deadlock 방지
-  - Ordering Reservation과 장기 Resource Reservation 분리
-  - Read Set, Write Set, Precondition과 Commit Graph
-  - 원자적 Authority Commit, Revision, Journal과 Recovery
-  - DM Override, 충돌 재검증과 Rollback Epoch 경계
+  - Ordering Key, Reservation, Commit Graph, 원자적 Commit, Revision과 Journal
 - [`Scene Streaming, Client Interest와 Ready Activation 계약`](scene-streaming-client-interest-and-ready-activation-contract.md)
-  - Server Authority Runtime과 Client Streaming 분리
-  - Client-safe Chunk, Projection Segment와 Presentation Bundle
-  - Projection Interest와 Presentation Interest
-  - Activation Set, Essential Ready, Camera·Movement Prefetch와 Eviction
-  - 공개 범위 기반 Chunk Grant와 비밀 Geometry 보호
-  - Prepare·Commit 기반 Scene Transition과 그룹 전환
-  - Roblox StreamingEnabled를 저수준 Adapter로 제한
+  - Authority Runtime과 Client Streaming, Activation Set, Prefetch, Eviction과 Scene Transition
 - [`Spatial Query Engine과 Provider 계약`](spatial-query-engine-and-provider-contract.md)
-  - Runtime Scene Snapshot에 고정된 공간 질의 계약
-  - 타입 있는 Spatial Reference, Shape, Request와 Immutable Result
-  - Geometry, Occupancy, Visibility Evidence, Rule Field와 Interaction Query
-  - Provider Registry, Budget, Cache, Trace와 비밀 정보 공개 정책
-  - Perception, Navigation Planner와 Movement Executor의 책임 경계
+  - Snapshot-bound 공간 질의, Provider, Cache, Budget와 공개 정책
 - [`Runtime Navigation, Path Planning과 Movement Execution 계약`](runtime-navigation-path-planning-and-movement-execution-contract.md)
-  - Hybrid Traversal Domain과 연속 Path Corridor
-  - SpatialBodyProfile과 구성 공간 Clearance
-  - Navigation Planner, Movement Coordinator와 Movement Executor
-  - Progress Checkpoint, Swept Body, 이동력 소비와 Timing Window
-  - 탐험 클릭·WASD, 전투 이동, Dynamic Replan과 Occupancy
+  - Traversal Domain, Path Corridor, Clearance, Checkpoint와 Movement Execution
 - [`Rule Runtime Orchestrator와 Pending Execution 계약`](rule-runtime-orchestrator-and-pending-execution-contract.md)
-  - 모든 공격·주문·Feature·Item·Trigger의 공통 RuleExecution 상태기계
-  - Capability 검증, 비용 예약, Recipe 실행과 PendingEffect 수집
-  - RuleEvent, 중첩 TimingWindow, Capability Offer와 Child Execution
-  - CommitGroup 준비, 사후 Event, 저장·재접속과 Rollback
-  - Presentation Gate, 실행 Budget, Cycle 방지와 사용자별 Projection
+  - RuleExecution, 비용 예약, Recipe, TimingWindow, PendingEffect와 CommitGroup
+- [`Persistence와 Session Recovery 모델`](persistence-and-session-recovery-model.md)
+  - Manifest·Chunk Snapshot, Commit Journal, Recovery와 Rollback Branch
 
 ## 포함 범위
 
 - 서버·클라이언트 책임
-- Source, Compiled Build, Authoritative State, Migration과 Projection
-- Command, Read Request, revision, transaction과 Result
-- Versioned Protocol, Projection Stream, Snapshot Sync와 Client Ready
-- Ordering Key, Reservation, Logical Time, Atomic Commit과 Journal
-- Registry와 고정 ID
-- Scene Source, Compiler Build, Runtime Scene Snapshot과 Spatial Query
-- Character Progression Source, Character Build와 분리된 Character·Actor·Encounter State
-- Effect Definition, Effect Build, EffectInstance, Duration, Concentration과 Form Overlay
-- Runtime Layer, State Binding, Chunk와 Dependency Graph
-- Runtime Object Identity, Component, Lifecycle, Ownership과 Link
-- Client Interest, Streaming Activation Set, Cache, Eviction과 Scene Transition Ready
-- Traversal Domain, 경로 계획과 Movement Execution
-- Capability, RuleExecution, Recipe, TimingWindow와 Effect
-- 저장·복구와 마이그레이션
-- PresentationRecipe와 확장 계약
+- Source, Compiler, Immutable Build, Authoritative State, Migration과 Projection
+- Command, revision, transaction, Ordering, Reservation과 Journal
+- Scene Source, Runtime Scene, Spatial Query, Navigation과 Streaming
+- Character, Effect, ItemInstance와 Runtime Object의 권위 경계
+- Inventory·Equipment·Container와 Scene Ground Item Presence
+- Capability, RuleExecution, Recipe, TimingWindow와 PendingEffect
+- 저장·복구·재접속·롤백과 Presentation 확장 계약
 
 기능별 사용자 흐름은 `../systems/`, 화면 구조는 `../ui/`, 실제 파일 계약은 `../specs/`에 둔다.
 
@@ -109,24 +61,26 @@
 
 Source, Compiler, Build, Dynamic State, Migration과 Projection을 다루는 문서는 [`Compiled Build와 Authoritative State 분리 패턴`](compiled-build-and-authoritative-state-pattern.md)을 따른다.
 
-Scene Source, Semantic Profile, Runtime Layer, Index, Chunk, Build와 게시를 다루는 문서는 [`Scene Compiler 계약`](scene-compiler-and-compiled-runtime-scene-contract.md)을 따른다.
+Scene Source, Semantic Profile, Runtime Layer, Index, Chunk와 게시를 다루는 문서는 [`Scene Compiler 계약`](scene-compiler-and-compiled-runtime-scene-contract.md)을 따른다.
 
-캐릭터 성장 원본, 파생 능력치, Capability, Resource, Character Current State와 Actor·Encounter Binding을 다루는 문서는 [`Character Runtime 계약`](character-runtime-and-compiled-character-build-contract.md)을 따른다.
+캐릭터 성장 원본, 파생 능력치, Capability, Resource와 Character·Actor·Encounter State를 다루는 문서는 [`Character Runtime 계약`](character-runtime-and-compiled-character-build-contract.md)을 따른다.
 
-상태, 버프·디버프, 집중, 변신, 지속 영역, 소환, Duration, Stacking과 Suppression을 다루는 문서는 [`Effect Runtime 계약`](effect-condition-and-ongoing-runtime-contract.md)을 따른다.
+상태, 집중, 변신, 지속 영역, 소환, Duration, Stacking과 Suppression을 다루는 문서는 [`Effect Runtime 계약`](effect-condition-and-ongoing-runtime-contract.md)을 따른다.
 
-Actor, 문, 함정, 소환체, 지속 영역과 기타 Scene Presence의 생성·참조·비활성·복원·파괴를 다루는 문서는 [`Runtime Object System 계약`](runtime-object-system-and-entity-lifecycle-contract.md)을 따른다.
+아이템 정의, ItemInstance, Inventory, Equipment, Container, 바닥 드롭·Pickup·투척과 Item Presence를 다루는 문서는 [`Inventory와 Item Runtime 계약`](inventory-item-instance-and-world-presence-runtime-contract.md)을 따른다.
 
-Remote, Client Command, Read Request, Event 복제, 중도 참여, 재접속, Snapshot Sync와 Client Ready를 다루는 문서는 [`Networking 계약`](networking-command-event-and-client-synchronization-contract.md)을 따른다.
+Actor, 문, 함정, 소환체, Item Presence와 기타 Scene Presence의 생성·참조·비활성·복원·파괴를 다루는 문서는 [`Runtime Object System 계약`](runtime-object-system-and-entity-lifecycle-contract.md)을 따른다.
 
-둘 이상의 권위 Store, Actor, Object, Inventory, Encounter, Scene 또는 Campaign 상태를 변경하거나 Command 충돌 순서를 다루는 문서는 [`Command Ordering과 Transaction Coordinator 계약`](command-ordering-logical-time-and-transaction-coordinator-contract.md)을 따른다.
+Remote, Client Command, Event 복제, 중도 참여, 재접속, Snapshot Sync와 Client Ready를 다루는 문서는 [`Networking 계약`](networking-command-event-and-client-synchronization-contract.md)을 따른다.
 
-Scene Chunk, Client Interest, Presentation Materialization, Camera·이동 Prefetch, Chunk Eviction과 Scene Transition 준비를 다루는 문서는 [`Scene Streaming 계약`](scene-streaming-client-interest-and-ready-activation-contract.md)을 따른다.
+둘 이상의 권위 Store, Actor, Object, Inventory, Encounter, Scene 또는 Campaign 상태를 변경하거나 Command 충돌 순서를 다루는 문서는 [`Transaction Coordinator 계약`](command-ordering-logical-time-and-transaction-coordinator-contract.md)을 따른다.
 
-공간, 거리, 점유, 시야 증거, 영역 포함이나 이동 가능성을 사용하는 문서는 [`Spatial Query Engine과 Provider 계약`](spatial-query-engine-and-provider-contract.md)을 추가로 따른다.
+Scene Chunk, Client Interest, Presentation Materialization, Prefetch, Eviction과 Scene Transition을 다루는 문서는 [`Scene Streaming 계약`](scene-streaming-client-interest-and-ready-activation-contract.md)을 따른다.
+
+공간, 거리, 점유, 시야, 영역 포함, 배치와 이동 가능성을 사용하는 문서는 [`Spatial Query 계약`](spatial-query-engine-and-provider-contract.md)을 따른다.
 
 경로 계획, 이동 비용, 중단, 점유와 위치 변경을 사용하는 문서는 [`Runtime Navigation 계약`](runtime-navigation-path-planning-and-movement-execution-contract.md)을 따른다.
 
-Capability 실행, Recipe 시작·중단·재개, RuleEvent, TimingWindow, Reaction, PendingEffect, CommitGroup과 Pending Execution 복구를 다루는 문서는 [`Rule Runtime Orchestrator 계약`](rule-runtime-orchestrator-and-pending-execution-contract.md)을 따른다.
+Capability 실행, Recipe, RuleEvent, TimingWindow, Reaction, PendingEffect와 CommitGroup을 다루는 문서는 [`Rule Runtime Orchestrator 계약`](rule-runtime-orchestrator-and-pending-execution-contract.md)을 따른다.
 
-동일한 결정을 여러 문서에 반복하지 않는다. 전체 계층과 권위 원칙은 이 문서에 연결하고, 각 하위 문서는 자신의 데이터·상태·실패·성능 계약만 추가한다.
+동일한 결정을 여러 문서에 반복하지 않는다. 각 하위 문서는 자신의 데이터·상태·실패·성능 계약만 추가한다.
