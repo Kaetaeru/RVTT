@@ -4,6 +4,9 @@
 
 ## 관련 Main System Guide
 
+- [`UI, Camera와 Presentation Guide`](../../guides/ui/README.md)
+  - Projection Barrier의 원자적 Client Replica 적용과 Command Reconciliation
+  - Presentation Failure Isolation, Audience·Disclosure와 이전 Epoch ACK 차단
 - [`Combat와 Encounter Guide`](../../guides/combat/README.md)
   - Damage·Temporary HP·Current HP·VitalState·DeathSave Immediate Closure
   - Death 이후 Objective·Turn Advance Follow-up, Encounter End Transaction과 Projection Barrier
@@ -122,4 +125,4 @@ Subscriber가 Store를 직접 수정하지 않고 새 Command 또는 RuleExecuti
 Guide Status: READY_FOR_MAIN_GUIDE_PHASE
 ```
 
-Combat·Encounter, Rules, Character·Inventory·Downtime 관련 Integration 흐름은 현재 각 Main System Guide에 연결됐다. 나머지 UI·Journal·Authoring·Operations 영역은 후속 Guide 순서에서 계속 통합한다.
+Combat·Encounter, Rules, Character·Inventory·Downtime와 UI·Camera·Presentation 관련 Integration 흐름은 현재 각 Main System Guide에 연결됐다. 나머지 Journal·Authoring·Operations 영역은 후속 Guide 순서에서 계속 통합한다.
