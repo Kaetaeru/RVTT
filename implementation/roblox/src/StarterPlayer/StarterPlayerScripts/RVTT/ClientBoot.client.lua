@@ -2,16 +2,15 @@
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
 local Names = require(ReplicatedStorage.RVTT.Shared.Protocol.RemoteNames)
 
 local remoteFolder = ReplicatedStorage:WaitForChild(Names.FOLDER)
 local remotes = {
-	command = remoteFolder:WaitForChild(Names.COMMAND) :: RemoteEvent,
-	receipt = remoteFolder:WaitForChild(Names.RECEIPT) :: RemoteEvent,
-	projection = remoteFolder:WaitForChild(Names.PROJECTION) :: RemoteEvent,
-	sync = remoteFolder:WaitForChild(Names.SYNC) :: RemoteFunction,
-	clientReady = remoteFolder:WaitForChild(Names.CLIENT_READY) :: RemoteEvent,
+    command = remoteFolder:WaitForChild(Names.COMMAND) :: RemoteEvent,
+    receipt = remoteFolder:WaitForChild(Names.RECEIPT) :: RemoteEvent,
+    projection = remoteFolder:WaitForChild(Names.PROJECTION) :: RemoteEvent,
+    sync = remoteFolder:WaitForChild(Names.SYNC) :: RemoteFunction,
+    clientReady = remoteFolder:WaitForChild(Names.CLIENT_READY) :: RemoteEvent,
 }
 
 local clientModules = script.Client
@@ -26,33 +25,35 @@ local command = CommandClient.new(remotes, replica)
 local inputStack = InputContextStack.new()
 local inputRouter = SemanticInputRouter.new(inputStack)
 
-command:start(function(result)
-	if not result.ok then
-		warn("[RVTT Command]", result.error.code)
-	end
-end)
-
-remotes.projection.OnClientEvent:Connect(function(envelope)
-	replica:apply(envelope)
-end)
-
-local syncSucceeded, snapshot = pcall(function()
-	return remotes.sync:InvokeServer()
-end)
-if syncSucceeded and snapshot ~= nil then
-	replica:apply(snapshot)
+local function fullResync()
+    local succeeded, snapshot = pcall(function()
+        return remotes.sync:InvokeServer()
+    end)
+    if succeeded and snapshot ~= nil then
+        replica:apply(snapshot, true)
+    end
 end
 
+command:start(function(message)
+    if message.phase == "terminal" and message.result ~= nil and not message.result.ok then
+        warn("[RVTT Command]", message.result.error.code)
+        if message.result.error.code == "STALE_EPOCH" or message.result.error.code == "STALE_REVISION" then
+            fullResync()
+        end
+    end
+end)
+
+replica.GapDetected:Connect(function()
+    fullResync()
+end)
+remotes.projection.OnClientEvent:Connect(function(envelope)
+    replica:apply(envelope, false)
+end)
+
+fullResync()
 inputRouter:start()
-ClientRuntime.set({
-	Replica = replica,
-	Command = command,
-	Input = inputStack,
-})
+ClientRuntime.set({ Replica = replica, Command = command, Input = inputStack })
 remotes.clientReady:FireServer()
 
-local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
-local loadingGui = playerGui:FindFirstChild("RVTT_Loading")
-if loadingGui ~= nil then
-	loadingGui:Destroy()
-end
+local loadingGui = Players.LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("RVTT_Loading")
+if loadingGui ~= nil then loadingGui:Destroy() end

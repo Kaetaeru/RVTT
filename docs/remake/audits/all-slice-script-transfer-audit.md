@@ -1,41 +1,72 @@
-# All-slice Contract-to-Script Transfer Audit
+# All-slice Script Transfer Audit
 
-- 상태: IMPLEMENTED_UNVERIFIED
+- 상태: `IMPLEMENTED_UNVERIFIED`
 - 감사일: 2026-08-05
-- 구현 Root: [`implementation/roblox`](../../../implementation/roblox/README.md)
-- Script Manifest: [`all-slices-script-manifest.md`](../../../implementation/roblox/manifests/all-slices-script-manifest.md)
-- Implementation Status: [`IMPLEMENTATION-STATUS.md`](../../../implementation/roblox/IMPLEMENTATION-STATUS.md)
+- 구현 Root: `implementation/roblox/`
+- Script Manifest: `implementation/roblox/manifests/all-slices-script-manifest.md`
+
+## 결과
+
+16개 Slice 계약을 Greenfield Roblox Service 구조의 Runtime·Domain·Client·UI·Test Source로 이전했다.
+
+```text
+Luau Source·Test
+→ 76 files
+
+Domain Script
+→ 18 files
+
+Registered Command
+→ 53 commands
+
+Explicit Authorization
+→ 53 / 53
+```
+
+## 보안·권위 검수
+
+- 모든 Remote Command가 명시적 Authorization을 가진다.
+- Character·Actor·Item Ownership과 Runtime Controller를 구분한다.
+- Movement·Interaction·Attack·Turn End는 제어 가능한 Actor만 요청할 수 있다.
+- D20 Modifier·DC·AC·Damage는 Client Payload가 아니라 Server State에서 계산한다.
+- System-only Command는 Remote Client가 호출할 수 없다.
+- Player Projection에서 DM Workspace·Scene Source·비공개 Character 세부 정보를 제거한다.
+- `_G`, `shared`와 UI Component의 Remote 직접 호출을 금지한다.
+
+## Persistence·Recovery
+
+- Schema Migration Registry
+- DataStore Adapter
+- Debounced Persistence Coordinator
+- In-memory Snapshot Journal
+- AuthorityEpoch 재발급 Restore·Rollback
+- Projection Sequence Gap 감지와 Full Resync
+
+실제 DataStore·Server Restart·Rollback은 Roblox 환경에서 아직 검증하지 않았다.
+
+## Test Source
+
+- Core·Envelope Unit Spec
+- Domain Registration과 Authorization Spec
+- Authority Idempotency Flow Spec
+- Security Boundary Spec
+- Projection Negative Disclosure Spec
+- Static Structure·Policy Validator
 
 ## 판정
 
 ```text
-Shared Runtime·Protocol·Authority·Persistence
-→ IMPLEMENTED
+계약의 Script 구조 이전
+→ COMPLETE
 
-Slices 01–12 Domain Baseline
-→ IMPLEMENTED
+정적 보안·구조 검사
+→ PASS
 
-Slices 13–15 Runtime·Import Gate
-→ IMPLEMENTED_WITH_OFFICIAL_DATA_BLOCKER
+Roblox Studio·DataStore·Physics·UI·Performance
+→ UNVERIFIED
 
-Slice 16 Release Evidence Gate
-→ IMPLEMENTED_UNVERIFIED
-
-Roblox Studio·Multi-client·DataStore·Performance Evidence
-→ NOT RUN
+공식 D&D Data
+→ BLOCKED BY SOURCE·RIGHTS REVIEW
 ```
 
-## 구조 검사
-
-- Production과 Test Rojo mapping 분리
-- UI Component의 Remote 직접 호출 없음
-- Client는 Projection Replica와 Command Intent만 사용
-- Server가 Command 검증과 Authority Commit 소유
-- 모든 Domain은 Registry를 통해 Command를 등록
-- Transaction 실패 시 Authority State 교체 없음
-- Snapshot Journal과 Migration Registry 존재
-- 공식 콘텐츠는 Rights 상태가 승인되지 않으면 등록 불가
-
-## 제한
-
-이 감사는 코드 생성과 정적 구조의 완료를 판정한다. Luau typecheck와 Roblox Studio 실행 증거가 없으므로 Build Acceptance 또는 Release Ready가 아니다.
+따라서 상태는 `IMPLEMENTED_UNVERIFIED`이며 Release Ready가 아니다.

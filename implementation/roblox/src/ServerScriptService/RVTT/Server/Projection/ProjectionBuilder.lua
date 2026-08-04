@@ -1,41 +1,36 @@
 --!strict
 
-local DeepCopy = require(game:GetService("ReplicatedStorage").RVTT.Shared.Core.DeepCopy)
 local Version = require(game:GetService("ReplicatedStorage").RVTT.Shared.Core.Version)
+local DomainProjectionPolicy = require(script.Parent.DomainProjectionPolicy)
 
 local ProjectionBuilder = {}
 ProjectionBuilder.__index = ProjectionBuilder
 
 function ProjectionBuilder.new()
-	return setmetatable({ sequenceByUserId = {} }, ProjectionBuilder)
-end
-
-local function removeSecrets(payload, role: string)
-	if role == "dm" then
-		return payload
-	end
-	payload.dm = nil
-	payload.secrets = nil
-	for _, domain in payload.domains or {} do
-		if type(domain) == "table" then
-			domain.secrets = nil
-		end
-	end
-	return payload
+    return setmetatable({ sequenceByUserId = {} }, ProjectionBuilder)
 end
 
 function ProjectionBuilder:build(state, userId: number, role: string)
-	local sequence = (self.sequenceByUserId[userId] or 0) + 1
-	self.sequenceByUserId[userId] = sequence
-	local payload = removeSecrets(DeepCopy(state) :: { [string]: unknown }, role)
-	return {
-		protocolVersion = Version.PROTOCOL,
-		authorityEpoch = state.authorityEpoch,
-		revision = state.revision,
-		projectionSequence = sequence,
-		projectionType = "authority.snapshot",
-		payload = payload,
-	}
+    local sequence = (self.sequenceByUserId[userId] or 0) + 1
+    self.sequenceByUserId[userId] = sequence
+    local viewer = { userId = userId, role = role }
+    local projectedDomains = {}
+    for domainId, domainState in state.domains do
+        projectedDomains[domainId] = DomainProjectionPolicy.project(domainId, domainState, viewer, state.domains)
+    end
+    return {
+        protocolVersion = Version.PROTOCOL,
+        authorityEpoch = state.authorityEpoch,
+        revision = state.revision,
+        projectionSequence = sequence,
+        projectionType = "authority.snapshot",
+        payload = {
+            schemaVersion = state.schemaVersion,
+            authorityEpoch = state.authorityEpoch,
+            revision = state.revision,
+            domains = projectedDomains,
+        },
+    }
 end
 
 return ProjectionBuilder

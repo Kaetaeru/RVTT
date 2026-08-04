@@ -1,9 +1,110 @@
 --!strict
-local Helpers=require(script.Parent.DomainHelpers);local Domain={id="time",slice=7}
-function Domain.initialState()return{campaignSeconds=0,schedules={},activities={}}end
-function Domain.register(registry)
-	registry:register({commandType="time.advance",domainId=Domain.id,authorize=function(c)return Helpers.requireRole(c,{"dm"})end,validate=function(p)return type(p.seconds)=="number" and p.seconds>=0 end,execute=function(_,s,p)s.campaignSeconds+=math.floor(p.seconds);local due={};for id,item in s.schedules do if item.dueAt<=s.campaignSeconds and item.status=="scheduled"then item.status="due";table.insert(due,id)end end;return{campaignSeconds=s.campaignSeconds,due=due}end})
-	registry:register({commandType="time.schedule",domainId=Domain.id,validate=function(p)return Helpers.hasString(p,"scheduleId") and type(p.afterSeconds)=="number"end,execute=function(_,s,p)s.schedules[p.scheduleId]={dueAt=s.campaignSeconds+math.max(0,math.floor(p.afterSeconds)),payload=p.payload or{},status="scheduled"};return s.schedules[p.scheduleId]end})
-	registry:register({commandType="time.activity",domainId=Domain.id,validate=function(p)return Helpers.hasString(p,"activityId") and Helpers.hasString(p,"kind")end,execute=function(c,s,p)s.activities[p.activityId]={kind=p.kind,ownerUserId=c.playerId,status=p.status or"started",startedAt=s.campaignSeconds};return s.activities[p.activityId]end})
+
+local Helpers = require(script.Parent.DomainHelpers)
+
+local Domain = { id = "time", slice = 7 }
+local ALLOWED_ACTIVITY = { rest = true, travel = true, crafting = true, training = true, downtime = true }
+
+function Domain.initialState()
+    return { campaignSeconds = 0, schedules = {}, activities = {} }
 end
+
+function Domain.register(registry)
+    registry:register({
+        commandType = "time.advance",
+        domainId = Domain.id,
+        authorize = function(context)
+            return Helpers.requireRole(context, { "dm" })
+        end,
+        validate = function(payload)
+            return Helpers.hasNumber(payload, "seconds") and payload.seconds >= 0 and payload.seconds <= 31536000
+        end,
+        execute = function(_, state, payload)
+            state.campaignSeconds += math.floor(payload.seconds)
+            local due = {}
+            for id, item in state.schedules do
+                if item.dueAt <= state.campaignSeconds and item.status == "scheduled" then
+                    item.status = "due"
+                    table.insert(due, id)
+                end
+            end
+            return { campaignSeconds = state.campaignSeconds, due = due }
+        end,
+    })
+
+    registry:register({
+        commandType = "time.schedule",
+        domainId = Domain.id,
+        authorize = function(context)
+            return Helpers.requireRole(context, { "dm" })
+        end,
+        validate = function(payload)
+            return Helpers.hasString(payload, "scheduleId")
+                and Helpers.hasNumber(payload, "afterSeconds")
+                and payload.afterSeconds >= 0
+        end,
+        execute = function(_, state, payload)
+            if state.schedules[payload.scheduleId] ~= nil then
+                return Helpers.conflict("schedule id already exists")
+            end
+            state.schedules[payload.scheduleId] = {
+                dueAt = state.campaignSeconds + math.floor(payload.afterSeconds),
+                payload = payload.payload or {},
+                status = "scheduled",
+            }
+            return state.schedules[payload.scheduleId]
+        end,
+    })
+
+    registry:register({
+        commandType = "time.start_activity",
+        domainId = Domain.id,
+        authorize = function(context, domains, payload)
+            return Helpers.authenticated(context)
+                and Helpers.ownsCharacter(context, domains, payload.characterId)
+        end,
+        validate = function(payload)
+            return Helpers.hasString(payload, "activityId")
+                and Helpers.hasString(payload, "kind")
+                and Helpers.hasString(payload, "characterId")
+                and ALLOWED_ACTIVITY[payload.kind] == true
+        end,
+        execute = function(context, state, payload)
+            if state.activities[payload.activityId] ~= nil then
+                return Helpers.conflict("activity id already exists")
+            end
+            state.activities[payload.activityId] = {
+                kind = payload.kind,
+                characterId = payload.characterId,
+                ownerUserId = context.playerId,
+                status = "started",
+                startedAt = state.campaignSeconds,
+            }
+            return state.activities[payload.activityId]
+        end,
+    })
+
+    registry:register({
+        commandType = "time.resolve_activity",
+        domainId = Domain.id,
+        authorize = function(context, domains, payload)
+            local activity = domains.time.activities[payload.activityId]
+            return context.role == "dm" or (activity ~= nil and activity.ownerUserId == context.playerId)
+        end,
+        validate = function(payload)
+            return Helpers.hasString(payload, "activityId")
+                and (payload.status == "completed" or payload.status == "cancelled")
+        end,
+        execute = function(_, state, payload)
+            local activity = state.activities[payload.activityId]
+            if activity == nil then
+                return Helpers.notFound("activity", payload.activityId)
+            end
+            activity.status = payload.status
+            activity.resolvedAt = state.campaignSeconds
+            return activity
+        end,
+    })
+end
+
 return table.freeze(Domain)
