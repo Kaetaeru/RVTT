@@ -44,8 +44,8 @@ DEFERRED
 | 9 | `DONE` | Journal과 Ping | Document·Section·Anchor·Permission·Search·Navigation과 비권위 Ping 흐름 통합 |
 | 10 | `DONE` | Scene Editor와 Authoring | DM Authoring Source·Tool Module·Publish·Validation·Live Patch 경계 통합 |
 | 11 | `DONE` | Diagnostics, Simulation과 Operations | Trace·Incident·Budget·Scenario·Fault Injection·Support·Recovery 검증 통합 |
-| 12 | `IN_PROGRESS` | Extension, Plugin과 Content Pack | Registry·Compiler·Policy·Recipe·Provider·Presentation Module 확장 경계 통합 |
-| 13 | `QUEUED` | Guide 일관성 감사와 문서 허브 갱신 | 전체 Guide 링크·권위 중복·상태·추천 읽기 순서 검사와 Main Guide 단계 완료 판정 |
+| 12 | `DONE` | Extension, Plugin과 Content Pack | Registry·Compiler·Policy·Recipe·Provider·Presentation Module 확장 경계 통합 |
+| 13 | `IN_PROGRESS` | Guide 일관성 감사와 문서 허브 갱신 | 전체 Guide 링크·권위 중복·상태·추천 읽기 순서 검사와 Main Guide 단계 완료 판정 |
 
 ## 순서 원칙
 
@@ -83,6 +83,7 @@ Runtime Authority Foundation
 
 | 날짜 | 변경 |
 |---|---|
+| 2026-08-05 | Extension·Plugin·Content Pack Guide를 완료하고 12번을 `DONE`, Guide 일관성 감사와 문서 허브 갱신을 `IN_PROGRESS`로 전환했다. |
 | 2026-08-05 | Diagnostics·Simulation·Operations Guide를 완료하고 11번을 `DONE`, Extension·Plugin·Content Pack Guide를 `IN_PROGRESS`로 전환했다. |
 | 2026-08-05 | Scene Editor·Authoring Guide를 완료하고 10번을 `DONE`, Diagnostics·Simulation·Operations Guide를 `IN_PROGRESS`로 전환했다. |
 | 2026-08-05 | Journal·Ping Guide를 완료하고 9번을 `DONE`, Scene Editor·Authoring Guide를 `IN_PROGRESS`로 전환했다. |
