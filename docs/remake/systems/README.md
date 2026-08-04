@@ -9,6 +9,7 @@
 - `character/`
 - `ruleset/`
 - `rules/`
+- `extension/`
 - `inventory/`
 - `combat/`
 - `perception/`
