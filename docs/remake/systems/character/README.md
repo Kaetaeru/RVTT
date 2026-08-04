@@ -9,7 +9,9 @@
   - 사망 후 Opportunity·Concentration·Participant Eligibility 정리와 Deferred Turn Advance
 - [`Rules, Character Action, Spell, Dice와 Effect Guide`](../../guides/rules/README.md)
   - Character Build가 제공하는 Capability·Spell Route가 Action·Roll·Effect 실행으로 이어지는 경계
-  - Character 성장·Inventory·Downtime 전체 Guide는 별도 작업 순서를 따른다.
+- `Character, Inventory와 Downtime Guide`
+  - 현재 Main System Guide 작업 순서 7번에서 작성 중이다.
+  - 성장 Source·Build·Persistent State, Item·Equipment, Rest·Level Up·Crafting·Travel 전체 흐름을 통합한다.
 
 ## 최상위 권위 계약
 
@@ -88,7 +90,7 @@ Encounter State
 ## Guide 상태
 
 ```text
-Guide Status: READY_FOR_MAIN_GUIDE_PHASE
+Guide Status: READY_TO_WRITE
 ```
 
-HP 0·Death·Encounter 연결은 현재 Combat Guide에 통합됐다. Character 성장·Inventory·Downtime 전체 흐름은 후속 Main System Guide에서 완료한다.
+최신 Completion Audit에서 Character·Inventory·Downtime의 Architecture와 Cross-Domain Integration이 Main System Guide 작성 가능 상태로 판정됐다.
