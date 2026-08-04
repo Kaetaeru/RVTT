@@ -18,6 +18,12 @@
   - Selection·DM Authoring·Pause·Presentation·Rollback Review Overlay
   - Scene Transition·Join·Reconnect·Recovery·Build Migration Gate
   - Role·Mode·Overlay·Transition을 결합한 Effective Command Policy
+- [`UI Projection, ViewModel, Input Context와 Recovery Runtime 계약`](ui-projection-view-model-input-context-and-recovery-runtime-contract.md)
+  - Permission-aware Projection의 원자적 Client Replica 적용
+  - Projection→ViewModel→Component→Semantic Input→UI Intent 흐름
+  - Panel·Modal·Prompt, Focus와 Q/E Input Context
+  - Command Result와 Projection Reconciliation
+  - Reconnect·Resync·Rollback·Role Change 후 Epoch-safe UI 복구
 - [`Exploration 실시간 이동, 행동과 Encounter 전환 Runtime 계약`](exploration-real-time-movement-action-and-encounter-transition-runtime-contract.md)
   - 클릭 이동과 WASD 토큰 이동의 공통 권위 경계
   - Actor별 Movement·RuleExecution·Interaction 실행 슬롯
@@ -106,6 +112,7 @@
 - Source, Compiler, Immutable Build, Authoritative State, Migration과 Projection
 - Ruleset·Source Pack·Campaign·Scope Policy Composition과 Frozen Snapshot
 - Session Base Mode, Context, Overlay, Transition과 Command Gate
+- Permission-aware Projection Replica, ViewModel, Panel·Modal·Focus·Input Context와 UI Recovery
 - Exploration 실시간 이동, Actor별 실행 충돌, Hazard와 Encounter 전환
 - Encounter Participant, Initiative Timeline, Turn, Opportunity, Objective와 종료
 - Encounter Temporal Boundary, Campaign Time Atomic Commit, Scheduler Due Bridge와 Boundary Gate
@@ -135,6 +142,7 @@
 - Source·Build·State·Migration을 다루면 [`Compiled Build 패턴`](compiled-build-and-authoritative-state-pattern.md)을 따른다.
 - 교체 가능한 규칙 방식, Ruleset·Campaign·Scope 설정, Policy 우선순위·충돌·Version과 진행 중 실행의 규칙 고정을 다루면 [`Ruleset Policy Runtime 계약`](ruleset-policy-registry-composition-and-frozen-snapshot-runtime-contract.md)을 따른다.
 - Exploration·Encounter·Downtime, Context, UI·Authoring Overlay, Scene Transition·Join·Recovery를 다루면 [`Session Runtime 계약`](session-play-mode-context-overlay-and-transition-contract.md)을 따른다.
+- Projection Replica, ViewModel, Panel·Modal·Prompt, Focus, Q/E Input Context, Command Reconciliation과 Client UI 복구를 다루면 [`UI Runtime 계약`](ui-projection-view-model-input-context-and-recovery-runtime-contract.md)을 따른다.
 - 탐험 WASD·클릭 이동, 실시간 행동 충돌, Hazard와 Encounter 진입을 다루면 [`Exploration Runtime 계약`](exploration-real-time-movement-action-and-encounter-transition-runtime-contract.md)을 따른다.
 - Initiative, Timeline, Turn·Round, Opportunity, Participant, Objective와 Encounter 종료를 다루면 [`Encounter Runtime 계약`](encounter-timeline-turn-opportunity-and-objective-runtime-contract.md)을 따른다.
 - Encounter Round Boundary와 Campaign Time, Scheduler Due와 다음 Round Gate의 통합을 다루면 [`Encounter–Game Time 통합 계약`](encounter-game-time-temporal-boundary-and-scheduler-integration-contract.md)을 따른다.
