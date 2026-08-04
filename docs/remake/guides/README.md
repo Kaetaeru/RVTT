@@ -63,6 +63,10 @@ Guide는 새로운 제품 규칙, Architecture 결정, API, 데이터 구조나 
   - Guide Status: `CURRENT`
   - DM Authoring Overlay, Scene Source·Stable Object·Tool Module·Authoring Command와 Edit History
   - Candidate Build·Diagnostic·Test Play·Atomic Publish, Runtime Quick Edit·Source Promotion과 안전한 Live Patch 흐름
+- [`Diagnostics, Simulation과 Operations`](diagnostics/README.md)
+  - Guide Status: `CURRENT`
+  - Correlated Trace·Decision·Budget·Incident·Health·Support와 Permission-aware Diagnostic Projection
+  - Production-parity Scenario·Fault Injection·Disclosure·Restart·Rollback·Incident Replay와 Recovery Operations 흐름
 
 ## 1. Guide의 역할
 
