@@ -8,6 +8,9 @@
   - Projection Replica·ViewModel·Panel·Semantic Input·UI Intent의 공통 Client 흐름
   - CameraRequest·Focus·Follow·Bookmark와 Presentation Recipe·Queue·Marker·Fallback
   - Reconnect·Rollback·Role Change 후 Epoch-safe UI·Camera·Presentation 복구
+- [`Journal과 Ping Guide`](../guides/journal/README.md)
+  - Journal Document·Outline·Search·Backlink·Edit Projection과 Recoverable Draft
+  - Safe Navigation CameraRequest·Selection Intent와 위치·경로 Ping Input·Presentation 경계
 
 ## 최상위 권위 계약
 
