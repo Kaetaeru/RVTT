@@ -14,7 +14,7 @@
 
 1. 가장 위의 `IN_PROGRESS` 항목을 먼저 완료한다.
 2. 하나의 Spec은 구현·검증·복구 가능한 사용자 결과 또는 그 결과에 꼭 필요한 최소 Foundation만 다룬다.
-3. Foundation Spec은 첫 수직 Slice에 필요한 계약까지만 정의하며 미래 전체 Runtime을 미리 구현하도록 요구하지 않는다.
+3. Foundation Spec은 현재 수직 Slice에 필요한 계약까지만 정의하며 미래 전체 Runtime을 미리 구현하도록 요구하지 않는다.
 4. Quick Flow와 User Guide는 Acceptance Flow를 제공하고, Product·Architecture·System·UI·ADR은 구현 계약의 직접 근거가 된다.
 5. 실제 코드·Schema·Test 구조를 조사하지 못한 Spec은 `준비 완료`로 올리지 않는다.
 6. 새 Product 동작이나 Architecture 결정이 필요하면 Spec 작성을 중단하고 권위 문서를 먼저 갱신한다.
@@ -194,18 +194,19 @@ Core Identity·Version·Result
 ```text
 Shared 001·002
 → First Session Walking Skeleton의 선행 조건 아님
-→ Rules·Action Slice에서 최신 RuleExecution·Transaction·Event·Projection 계약에 맞춰 갱신
+→ First Slice 직후 Core Rules Kernel에서 최신 계약에 맞춰 갱신
 ```
 
 갱신 순서:
 
 ```text
 Core Authority·Protocol·Persistence 기반 완료
-→ Ruleset Policy·RuleExecution Adapter Spec
+→ Ruleset Policy·Character Math·RuleExecution Adapter Spec
 → Shared 001 Recipe Definition·Registry·Compiler 갱신
 → Shared 002 Step Handler Provider·Invoker 갱신
-→ Roll·PendingEffect·Guided·Presentation Step Specs
-→ Rules Slice 통합 감사
+→ D20 Test·Roll·PendingEffect·Guided Input Spec
+→ 대표 Ability Check·Attack·Save·Damage 수직 검증
+→ Core Rules Kernel 통합 감사
 ```
 
 기존 파일명은 우선 유지하고, 실제 책임 분할 결과가 명확해질 때만 대체 Spec과 Migration 관계를 만든다.
@@ -214,42 +215,63 @@ Core Authority·Protocol·Persistence 기반 완료
 
 First Session Walking Skeleton 완료 뒤 다음 순서로 진행한다.
 
-### Slice 2 — Exploration Interaction
+### Slice 2 — Core Rules Kernel
+
+이 Slice부터 D&D 핵심 규칙 엔진을 넣는다. 전체 직업·주문 콘텐츠를 한 번에 넣는 단계가 아니라, 이후 모든 행동과 전투가 공유할 규칙 계산·실행 기반을 완성하는 단계다.
+
+```text
+Ruleset Policy와 dnd5e-2024 Core Profile
+→ Character Ability·Proficiency·Skill·Save·AC·HP 파생값
+→ RuleExecution Orchestrator Adapter
+→ Shared Recipe Runtime 001·002 갱신
+→ D20 Test·Advantage·Disadvantage·DC·AC
+→ Attack Roll·Saving Throw·Damage·Healing
+→ Resource Cost·Condition 최소 기반
+→ 대표 Ability Check·Basic Attack·Save 수직 검증
+→ 저장·재접속·진단·결정적 테스트
+```
+
+이 Slice의 명시적 비범위:
+
+- Initiative·Turn·Reaction 전체 Encounter Runtime
+- 모든 직업·하위직업·Feat·Spell·Item 콘텐츠
+- 전체 상태 이상 목록
+- 고급 Timing Window와 복잡한 예외 규칙 전체
+
+### Slice 3 — Exploration Interaction
+
+Core Rules Kernel의 Ability Check·Save·Effect를 재사용한다.
 
 ```text
 Selection·Focus·Input Context
 → Door·Container·Item Interaction
+→ Search·Study·Lock·Trap 판정
 → DM Adjudication
 → Fog·Knowledge·Disclosure
 → Reconnect·Concurrency·Security
 ```
 
-### Slice 3 — Character Action·Rules
-
-```text
-Ruleset Policy·Character Capability
-→ RuleExecution Orchestrator Adapter
-→ Shared Recipe Runtime 001·002 갱신
-→ Roll·Effect·Guided Input
-→ Action·Spell·Item 사용
-```
-
 ### Slice 4 — Encounter
+
+Core Rules Kernel 위에 전투 순서와 행동 경제를 추가한다.
 
 ```text
 Encounter Proposal
 → Initiative·Timeline·Turn·Opportunity
-→ Movement·Action·Reaction
-→ Damage·Death·Objective·Time
+→ Movement·Action·Bonus Action·Reaction
+→ Attack·Save·Damage·Condition 통합
+→ Death·Concentration·Objective·Game Time
 → Rollback
 ```
 
-### Slice 5 — Character·Inventory·Downtime
+### Slice 5 — Character·Inventory·Downtime와 Rules Content 확장
 
 ```text
 Character Build·Persistent State
+→ Class·Subclass·Feat·Spell·Item Content
 → Inventory·Equipment·World Presence
 → Rest·Level Up·Spell Preparation·Downtime
+→ dnd5e-2024 Player Content 확대
 ```
 
 ### Slice 6 — DM Authoring·Journal·Extension
@@ -278,6 +300,7 @@ Implementation Specs 단계 전체 완료 조건:
 
 | 날짜 | 변경 |
 |---|---|
+| 2026-08-05 | Core Rules Kernel을 Exploration Interaction보다 앞선 Slice 2로 이동했다. Ability Check·Attack·Save·Damage 등 공통 규칙을 먼저 완성해 탐험 상호작용과 Encounter가 같은 엔진을 사용하도록 했다. |
 | 2026-08-05 | GitHub Branch에서 Production Source Tree를 확인할 수 없다는 기준선 조사 결과를 기록하고 `runtime/001` 초안을 `IN_PROGRESS·BLOCKED` 상태로 연결했다. |
 | 2026-08-05 | First Session Walking Skeleton을 첫 수직 Slice로 확정하고 Runtime·Protocol·Session·Scene·Movement·Persistence·Testing Spec 순서를 수립했다. |
-| 2026-08-05 | Shared Spec 001·002를 `UPDATE_REQUIRED`로 판정하고 Rules Slice로 이동했다. |
+| 2026-08-05 | Shared Spec 001·002를 `UPDATE_REQUIRED`로 판정했다. |
