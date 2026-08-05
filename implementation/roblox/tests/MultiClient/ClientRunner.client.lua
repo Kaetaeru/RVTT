@@ -11,10 +11,7 @@ end
 
 local player = Players.LocalPlayer
 local identityDeadline = os.clock() + 20
-while
-	os.clock() < identityDeadline
-	and player:GetAttribute("RVTT_MultiClientActive") == nil
-	do
+while os.clock() < identityDeadline and player:GetAttribute("RVTT_MultiClientActive") == nil do
 	task.wait(0.05)
 end
 if player:GetAttribute("RVTT_MultiClientActive") ~= true then
@@ -108,7 +105,11 @@ local function sendUsingProjection(commandType: string, payload: any, projection
 	return waitForTerminal(commandId) or failure("RECEIPT_TIMEOUT")
 end
 
-local function sendWithRetry(commandType: string, payload: any, firstProjection: any?): (any, number)
+local function sendWithRetry(
+	commandType: string,
+	payload: any,
+	firstProjection: any?
+): (any, number)
 	local projection = firstProjection
 	local staleRetries = 0
 	for _ = 1, 8 do
@@ -213,10 +214,12 @@ control.OnClientEvent:Connect(function(message)
 				then projection.payload.domains
 				else nil
 			local character = if type(domains) == "table" then domains.character else nil
-			local drafts = if type(character) == "table" and type(character.drafts) == "table"
+			local drafts = if type(character) == "table"
+					and type(character.drafts) == "table"
 				then character.drafts
 				else {}
-			local workspace = if type(domains) == "table" and type(domains.dm_workspace) == "table"
+			local workspace = if type(domains) == "table"
+					and type(domains.dm_workspace) == "table"
 				then domains.dm_workspace
 				else {}
 			local dmDraft = if type(message.dmDraftId) == "string"
@@ -245,7 +248,9 @@ control.OnClientEvent:Connect(function(message)
 				sequenceIncreasing = first ~= nil
 					and second ~= nil
 					and second.projectionSequence > first.projectionSequence,
-				revisionStable = first ~= nil and second ~= nil and second.revision == first.revision,
+				revisionStable = first ~= nil
+					and second ~= nil
+					and second.revision == first.revision,
 				epochStable = first ~= nil
 					and second ~= nil
 					and second.authorityEpoch == first.authorityEpoch,
