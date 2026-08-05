@@ -118,5 +118,9 @@ return function(harness)
 	harness:expect(restoredActor ~= nil, "reconnect restores the actor")
 	harness:equal(restoredActor.position.x, destination.x, "reconnect restores actor X")
 	harness:equal(restoredActor.position.z, destination.z, "reconnect restores actor Z")
-	harness:equal(restored.session.connections[userKey], "connected", "reconnect restores connection")
+	harness:equal(
+		restored.session.connections[userKey],
+		"connected",
+		"reconnect restores connection"
+	)
 end

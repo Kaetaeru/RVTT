@@ -5,11 +5,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local rvtt = ReplicatedStorage:WaitForChild("RVTT")
 local acceptanceMode = rvtt:FindFirstChild("Slice01AcceptanceMode")
-if
-	acceptanceMode == nil
-	or not acceptanceMode:IsA("BoolValue")
-	or acceptanceMode.Value ~= true
-then
+if acceptanceMode == nil or not acceptanceMode:IsA("BoolValue") or acceptanceMode.Value ~= true then
 	return
 end
 
@@ -62,7 +58,8 @@ subtitle.Position = UDim2.fromOffset(20, 48)
 subtitle.Size = UDim2.new(1, -40, 0, 22)
 subtitle.BackgroundTransparency = 1
 subtitle.Font = Enum.Font.Gotham
-subtitle.Text = "Production 명령·Projection·Persistence를 그대로 사용하는 검증 전용 화면"
+subtitle.Text =
+	"Production 명령·Projection·Persistence를 그대로 사용하는 검증 전용 화면"
 subtitle.TextColor3 = Color3.fromRGB(166, 173, 184)
 subtitle.TextSize = 13
 subtitle.TextXAlignment = Enum.TextXAlignment.Left
@@ -192,7 +189,8 @@ instruction.Position = UDim2.fromOffset(14, 366)
 instruction.Size = UDim2.new(1, -28, 0, 88)
 instruction.BackgroundTransparency = 1
 instruction.Font = Enum.Font.Gotham
-instruction.Text = "순서: 왼쪽 1~6 실행 → Scene 토큰 선택 → 이동 실행 → saved 로그 확인 → Stop/Play → 복구 검증"
+instruction.Text =
+	"순서: 왼쪽 1~6 실행 → Scene 토큰 선택 → 이동 실행 → saved 로그 확인 → Stop/Play → 복구 검증"
 instruction.TextColor3 = Color3.fromRGB(184, 191, 202)
 instruction.TextSize = 12
 instruction.TextWrapped = true
@@ -532,7 +530,10 @@ verifyButton.Activated:Connect(function()
 		setOperation("Reconnect Recovery PASS · Character·Scene·Position 확인")
 		print("[RVTT Slice01] reconnect recovery PASS")
 	else
-		setOperation("Reconnect Recovery 미충족 · 왼쪽 단계와 Position을 확인하세요.", true)
+		setOperation(
+			"Reconnect Recovery 미충족 · 왼쪽 단계와 Position을 확인하세요.",
+			true
+		)
 	end
 end)
 
@@ -565,13 +566,14 @@ render = function()
 		else "1. 세션 참가·DM 역할 갱신"
 	buttons.Character.Text = if hasCharacter
 		then "2. 테스트 캐릭터 준비 · PASS"
-		elseif state.draftId ~= nil
-		then "2. Draft 활성화"
+		elseif state.draftId ~= nil then "2. Draft 활성화"
 		else "2. 테스트 캐릭터 준비"
 	buttons.Select.Text = if selected then "3. Character 선택 · PASS" else "3. Character 선택"
 	buttons.Ready.Text = if state.ready == true then "4. Ready · PASS" else "4. Ready"
 	buttons.Start.Text = if active then "5. Scene 시작 · PASS" else "5. Scene 시작"
-	buttons.Enter.Text = if entered then "6. Scene 입장·Actor 생성 · PASS" else "6. Scene 입장·Actor 생성"
+	buttons.Enter.Text = if entered
+		then "6. Scene 입장·Actor 생성 · PASS"
+		else "6. Scene 입장·Actor 생성"
 	buttons.Move.Text = if state.moved == true
 		then "7. 선택 Token 서버 권위 이동 · PASS/재이동"
 		else "7. 선택 Token 서버 권위 이동"
