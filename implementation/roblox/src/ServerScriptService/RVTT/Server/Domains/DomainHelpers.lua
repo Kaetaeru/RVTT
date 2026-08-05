@@ -133,7 +133,7 @@ function DomainHelpers.validateAbilityScores(value: unknown): boolean
 	return true
 end
 
-function DomainHelpers.notFound(kind: string, id: string)
+function DomainHelpers.notFound(kind: string, id: string): any
 	return Result.err(
 		"NOT_FOUND",
 		"error.common.not_found",
@@ -142,7 +142,7 @@ function DomainHelpers.notFound(kind: string, id: string)
 	)
 end
 
-function DomainHelpers.conflict(reason: string)
+function DomainHelpers.conflict(reason: string): any
 	return Result.err(
 		"CONFLICT",
 		"error.common.conflict",
