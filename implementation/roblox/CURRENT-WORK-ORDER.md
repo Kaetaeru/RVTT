@@ -2,7 +2,7 @@
 
 - 상태: `IMPLEMENTED_STUDIO_BASELINE_VERIFIED`
 - 문서 종류: Production Implementation Work Order
-- 최종 갱신일: 2026-08-05
+- 최종 갱신일: 2026-08-06
 - 실행 테스트 규칙: [`EXECUTION-TEST-RULES.md`](EXECUTION-TEST-RULES.md)
 - Script Manifest: [`manifests/all-slices-script-manifest.md`](manifests/all-slices-script-manifest.md)
 - 구현 상태: [`IMPLEMENTATION-STATUS.md`](IMPLEMENTATION-STATUS.md)
@@ -33,14 +33,14 @@ Roblox Avatar Auto-Spawn Disable
 Slice 01 Authority·Persistence·Reconnect
 → VERIFIED IN STUDIO
 
-Slice 01 3D World Token Layer
-→ IMPLEMENTED · CI PASSED
+Slice 01 World Interaction Batch
+→ VERIFIED IN STUDIO · 16/16 PASS
 
 실행 테스트 방식
 → BATCH ACCEPTANCE RULE ACTIVE
 
 현재 작업
-→ Slice 01 World Interaction Batch Studio Acceptance
+→ Slice 01 Production Build Acceptance Audit
 ```
 
 기존 Studio Evidence:
@@ -62,6 +62,24 @@ Character·Scene·Position Recovery
 → PASS
 ```
 
+2026-08-06 Slice 01 World Interaction Evidence:
+
+```text
+[RVTT Batch Summary] batch=slice01-world-interaction result=PASS passed=16 failed=0 pending=0 revision=73
+
+Token Pick
+→ PASS · method=screen · world ray hit=Workspace.RVTT_AcceptanceBoard.MoveSurface
+
+State Restore
+→ PASS · revision=72 · position=(-22.94,0.00,-57.40)
+
+Movement Command
+→ PASS · baseRevision=72 · acceptedRevision=73
+
+Projection Move
+→ PASS · revision=73 · position=(-15.34,0.00,-56.93)
+```
+
 ## 2. 실행 테스트 원칙
 
 Studio 수동 검사는 개별 수정마다 요청하지 않는다.
@@ -77,11 +95,7 @@ Studio 수동 검사는 개별 수정마다 요청하지 않는다.
 
 단일 Raycast 수정, 로그 추가, 문구 변경, 타입 오류 수정은 별도의 수동 게시 Gate가 아니다. 자동 Gate가 실패한 상태에서도 사용자 검사를 요청하지 않는다.
 
-재사용 실행 스크립트:
-
-```text
-tooling/run-studio-acceptance-batch.ps1
-```
+사용자에게 전달하는 Build 명령은 저장소에서 바로 실행 가능한 전체 Windows PowerShell 블록으로 제공한다.
 
 ## 3. 현재 작업 순서
 
@@ -96,8 +110,8 @@ tooling/run-studio-acceptance-batch.ps1
 | 7 | DONE | Slice 01 Authority Acceptance | Join→Select→Ready→Scene→Move→Reconnect 상태 복구 |
 | 8 | DONE | Slice 01 3D World Token Baseline | Projection Renderer·Asset Resolver·월드 입력 연결 |
 | 9 | DONE | Slice 01 World Interaction Batch | Picking·Selection·Destination·Camera·Move·Diagnostics·Recovery와 Final Summary 구현·CI PASS |
-| 10 | IN_PROGRESS | Slice 01 Batch Studio Acceptance | 단일 게시에서 전체 World Interaction Flow와 Final Summary 확인 |
-| 11 | QUEUED | Slice 01 Production Build Acceptance Audit | 실행 Evidence와 권위·복구 Checklist 판정 |
+| 10 | DONE | Slice 01 Batch Studio Acceptance | Final Summary `passed=16 failed=0 pending=0` 및 revision 72→73 확인 |
+| 11 | IN_PROGRESS | Slice 01 Production Build Acceptance Audit | Production Project의 권위·보안·복구·Acceptance 전용 코드 격리 판정 |
 | 12 | QUEUED | Slice 02 Rules·D20 Batch | 판정·Attack·Damage·Projection·복구를 한 묶음으로 구현·검증 |
 | 13 | QUEUED | Slices 03–16 Batch Acceptance | 관련 Slice를 Milestone 단위로 묶어 검증 |
 | 14 | QUEUED | DataStore·Restart Recovery Batch | Restart·Lease·Migration·Conflict 검증 |
@@ -105,32 +119,55 @@ tooling/run-studio-acceptance-batch.ps1
 | 16 | QUEUED | UI Accessibility QA | Keyboard·Focus·Contrast·User Test |
 | 17 | QUEUED | Performance·Fault·Soak | 측정 Evidence와 Release Gate |
 
-## 4. 현재 Slice 01 World Interaction Batch
+## 4. Slice 01 World Interaction Batch 판정
 
-이번 Batch의 구현과 자동 Gate가 완료됐다. 다음 검사는 한 번의 Studio Batch Acceptance다.
-
-```text
-3D Token Projection 안정화
-→ 화면·월드 좌표 Token Picking
-→ Raycast 실패 시 Screen-space Picking Fallback
-→ 선택 Highlight와 명확한 선택 상태
-→ Board Destination Marker
-→ movement.commit 서버 권위 이동
-→ Command Receipt·Revision·Projection 진단
-→ 3D Camera Pan·Zoom·Frame
-→ Persistence Save·Reconnect Restore
-→ Final Batch Summary
-```
-
-현재 관측 결함:
+최종 상태:
 
 ```text
-WT-PICK-01
-사용자가 보이는 Token을 클릭했지만 Input Raycast가
-Workspace.RVTT_AcceptanceBoard.MoveSurface를 반환함
+SLICE_01_WORLD_INTERACTION_BATCH_STUDIO_VERIFIED
 ```
 
-Raycast와 Screen-space Bounds를 결합한 이중 Picking, 확대 Hitbox, 구조화 진단을 구현했다. 실제 Roblox Engine 입력 결과는 최종 Batch Acceptance에서 한 번 확인한다.
+검증된 범위:
+
+```text
+3D Token Projection
+→ PASS
+
+Raycast 실패 시 Screen-space Picking Fallback
+→ PASS
+
+선택 Highlight와 선택 상태
+→ PASS
+
+Board Destination Marker
+→ PASS
+
+movement.commit 서버 권위 이동
+→ PASS
+
+Command Receipt·Revision·Projection
+→ PASS
+
+3D Camera Pan·Zoom·Frame
+→ PASS
+
+Persistence Save·Reconnect Restore
+→ PASS
+
+Roblox Avatar Suppression
+→ PASS
+
+Final Batch Summary
+→ passed=16 failed=0 pending=0
+```
+
+기존 결함 `WT-PICK-01` 판정:
+
+```text
+RESOLVED
+```
+
+World Raycast는 `Workspace.RVTT_AcceptanceBoard.MoveSurface`를 반환했지만 Screen-space Token Bounds가 동일 입력에서 Actor를 선택했다. 이후 Highlight, Destination Marker, `movement.commit`, 서버 승인 revision 73, Projection 위치 갱신까지 연결됐다.
 
 ## 5. Slice 01 3D World Token 구조
 
@@ -183,21 +220,19 @@ sourceCharacterId
 
 임시 미니어처와 Acceptance Panel은 최종 시각 디자인 후보가 아니다.
 
-## 7. Acceptance Harness와 로그
+## 7. Production Build Acceptance Audit 범위
 
-`slice01-acceptance.project.json`은 실제 Production Server·Client·Networking·Projection·Persistence를 사용한다.
+다음 Gate는 추가 기능 구현이나 개별 Studio 재검사가 아니라 Production Project 판정이다.
 
-Batch Harness 요구 사항:
+- `default.project.json`에 Acceptance 전용 DM Override·Board·Panel이 포함되지 않는지 확인
+- Production Client가 서버 Projection으로만 Token Transform을 갱신하는지 확인
+- `movement.commit` 권한·Revision·Validation이 서버 경계를 유지하는지 확인
+- 공개되지 않은 Actor가 Viewer Projection과 Workspace에 생성되지 않는지 확인
+- Roblox Avatar Suppression이 Production Boot에서도 유지되는지 확인
+- Persistence Restore가 Acceptance Harness 없이 Production Runtime 계약으로 연결되는지 확인
+- Placeholder Visual을 Production Ready Art로 오인하지 않도록 Gate를 분리하는지 확인
 
-- 저장 상태가 있으면 자동 재개
-- 가능한 준비 단계 자동 실행
-- 전체 Batch 상태를 한 화면에 표시
-- 입력·Command·Projection·Persistence의 구조화 로그
-- 최종 `PASS` 또는 실패 항목 목록 출력
-- 정상 시 사용자는 Final Summary만 공유
-- 실패 시 Final Summary와 첫 번째 관련 오류만 공유
-
-Acceptance 전용 DM Override와 이동 보드·카메라·진단은 이 프로젝트에만 존재한다. `default.project.json`의 권한·월드 구성에는 포함되지 않는다.
+Audit 결과가 PASS일 때 Slice 01 Production Build Acceptance를 닫고 Slice 02 Rules·D20 Batch로 이동한다.
 
 ## 8. UI 디자인 해석
 
@@ -221,12 +256,11 @@ ACCENT_THEME_PERSISTENCE_VERIFIED
 Slice 01 Delta:
 
 ```text
-SLICE_01_WORLD_INTERACTION_BATCH_IMPLEMENTED_STUDIO_PENDING
+SLICE_01_WORLD_INTERACTION_BATCH_STUDIO_VERIFIED
 ```
 
 다음을 의미하지 않는다.
 
-- 3D World Token Studio Acceptance 완료
 - 실제 최종 OBJ·MeshPart Art Pack 승인 완료
 - Slice 02–16 Acceptance 완료
 - Cross-server 복구 완료
@@ -240,6 +274,11 @@ Slice 01 World Interaction Batch Implementation·자동 Gate
 → PASS
 
 단일 Slice 01 Batch Studio Acceptance
-→ Slice 01 Production Build Acceptance Audit
-→ Slice 02 Rules·D20 Batch
+→ PASS · 16/16
+
+Slice 01 Production Build Acceptance Audit
+→ IN PROGRESS
+
+Slice 02 Rules·D20 Batch
+→ QUEUED
 ```
