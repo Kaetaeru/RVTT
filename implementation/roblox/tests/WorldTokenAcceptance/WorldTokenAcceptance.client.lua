@@ -130,7 +130,7 @@ instructions.Size = UDim2.new(1, -32, 0, 58)
 instructions.BackgroundTransparency = 1
 instructions.Font = Enum.Font.Gotham
 instructions.Text =
-	"자동 준비 후 3D Token을 클릭하고, 다른 바닥 위치를 클릭하세요. 중클릭 드래그=Pan · Wheel=Zoom · F=Frame"
+	"실제 입력 필수: 중클릭 드래그=Pan · Wheel=Zoom · F 또는 Token Frame=Frame. 이후 Token 선택·바닥 이동을 확인하세요."
 instructions.TextColor3 = Color3.fromRGB(184, 191, 202)
 instructions.TextSize = 12
 instructions.TextWrapped = true
@@ -536,46 +536,21 @@ local function prepareScene()
 	until os.clock() >= deadline
 
 	markStateChecks(state)
-	setOperation("자동 준비 PASS · 3D Token을 클릭하고 바닥으로 이동하세요")
+	setOperation("자동 준비 PASS · 실제 카메라 입력과 Token 이동을 확인하세요")
 end
 
-local function runCameraSelfCheck()
-	local currentCamera = Workspace.CurrentCamera
-	if currentCamera == nil then
-		fail("camera-frame", "CurrentCamera missing")
-		fail("camera-pan", "CurrentCamera missing")
-		fail("camera-zoom", "CurrentCamera missing")
-		return
-	end
-
-	if worldTokens.Camera:frameAll() then
-		pass("camera-frame", "frameAll")
-	else
-		fail("camera-frame", "frameAll returned false")
-	end
-	local beforePan = currentCamera.CFrame
-	if worldTokens.Camera:panPixels(Vector2.new(28, -14)) then
-		local moved = (currentCamera.CFrame.Position - beforePan.Position).Magnitude > 0.001
-		if moved then
-			pass("camera-pan", "middle-drag path")
-		else
-			fail("camera-pan", "camera position unchanged")
+local function initializeCameraChecks()
+	local requirements = {
+		["camera-frame"] = "press F or Token Frame",
+		["camera-pan"] = "middle-click drag",
+		["camera-zoom"] = "mouse wheel",
+	}
+	for id, detail in requirements do
+		if summary.checks[id].status ~= "pass" then
+			summary:pending(id, detail)
 		end
-	else
-		fail("camera-pan", "pan returned false")
 	end
-	local beforeZoom = currentCamera.CFrame
-	if worldTokens.Camera:zoomBy(-1) then
-		local moved = (currentCamera.CFrame.Position - beforeZoom.Position).Magnitude > 0.001
-		if moved then
-			pass("camera-zoom", "wheel path")
-		else
-			fail("camera-zoom", "camera position unchanged")
-		end
-	else
-		fail("camera-zoom", "zoom returned false")
-	end
-	worldTokens.Camera:frameAll()
+	refresh()
 end
 
 local function run(action: () -> ())
@@ -636,22 +611,58 @@ prepareButton.Activated:Connect(function()
 	task.spawn(function()
 		run(function()
 			prepareScene()
-			runCameraSelfCheck()
+			initializeCameraChecks()
 		end)
 	end)
 end)
 
 frameButton.Activated:Connect(function()
-	if worldTokens.Camera:frameSelected() then
-		pass("camera-frame", "selected token")
-		setOperation("선택 Token Frame")
-	end
+	worldTokens.Camera:requestFrame("button", false)
 	renderState()
 end)
 
 summaryButton.Activated:Connect(function()
 	summary:log(client.Replica.revision)
 	setOperation("현재 Final Summary를 Output에 기록했습니다")
+end)
+
+worldTokens.Camera.InputResolved:Connect(function(action, source, applied, changed, processed)
+	local id = if action == "frame"
+		then "camera-frame"
+		elseif action == "pan"
+		then "camera-pan"
+		elseif action == "zoom"
+		then "camera-zoom"
+		else nil
+	if id == nil then
+		return
+	end
+	local passed = applied == true and (action == "frame" or changed == true)
+	local detail = string.format(
+		"source=%s applied=%s changed=%s processed=%s",
+		tostring(source),
+		tostring(applied),
+		tostring(changed),
+		tostring(processed)
+	)
+	if passed then
+		pass(id, detail)
+	else
+		fail(id, detail)
+	end
+	setOperation(if passed then "카메라 실제 입력 PASS · " .. action else "카메라 입력 실패 · " .. action, not passed)
+	print(
+		string.format(
+			"[RVTT Batch Camera] action=%s source=%s result=%s applied=%s changed=%s processed=%s",
+			tostring(action),
+			tostring(source),
+			if passed then "PASS" else "FAIL",
+			tostring(applied),
+			tostring(changed),
+			tostring(processed)
+		)
+	)
+	renderState()
 end)
 
 worldTokens.PickResolved:Connect(function(actorId, method, selected, hitName)
@@ -769,6 +780,7 @@ if player.Character == nil then
 else
 	fail("avatar-suppression", "Roblox Character exists")
 end
+initializeCameraChecks()
 renderState()
 refresh()
 
@@ -784,6 +796,6 @@ task.spawn(function()
 	detectInitialRestore()
 	run(function()
 		prepareScene()
-		runCameraSelfCheck()
+		initializeCameraChecks()
 	end)
 end)
