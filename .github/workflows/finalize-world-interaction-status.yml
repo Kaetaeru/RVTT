@@ -1,0 +1,93 @@
+name: Finalize world interaction status
+
+on:
+  push:
+    branches:
+      - planning/rvtt-remake
+    paths:
+      - .github/workflows/finalize-world-interaction-status.yml
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: planning/rvtt-remake
+          fetch-depth: 0
+      - name: Update batch status documents
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          work = Path("implementation/roblox/CURRENT-WORK-ORDER.md")
+          text = work.read_text(encoding="utf-8")
+          replacements = {
+              "→ Slice 01 World Interaction Batch Implementation": "→ Slice 01 World Interaction Batch Studio Acceptance",
+              "| 9 | IN_PROGRESS | Slice 01 World Interaction Batch | Picking·Selection·Destination·Camera·Move·Diagnostics·Recovery 완성 |": "| 9 | DONE | Slice 01 World Interaction Batch | Picking·Selection·Destination·Camera·Move·Diagnostics·Recovery와 Final Summary 구현·CI PASS |",
+              "| 10 | QUEUED | Slice 01 Batch Studio Acceptance | 단일 게시에서 전체 World Interaction Flow와 Final Summary 확인 |": "| 10 | IN_PROGRESS | Slice 01 Batch Studio Acceptance | 단일 게시에서 전체 World Interaction Flow와 Final Summary 확인 |",
+              "이번 Batch는 다음 항목을 모두 구현한 뒤 한 번만 Studio 검사를 요청한다.": "이번 Batch의 구현과 자동 Gate가 완료됐다. 다음 검사는 한 번의 Studio Batch Acceptance다.",
+              "이 결함만을 위한 추가 Place 게시를 요청하지 않는다. Batch 내부에서 Picking Fallback과 진단을 함께 구현한 뒤 최종 Acceptance에서 다시 확인한다.": "Raycast와 Screen-space Bounds를 결합한 이중 Picking, 확대 Hitbox, 구조화 진단을 구현했다. 실제 Roblox Engine 입력 결과는 최종 Batch Acceptance에서 한 번 확인한다.",
+              "SLICE_01_WORLD_INTERACTION_BATCH_IN_PROGRESS": "SLICE_01_WORLD_INTERACTION_BATCH_IMPLEMENTED_STUDIO_PENDING",
+              "Slice 01 World Interaction Batch Implementation\n→ 자동 회귀·정적 CI PASS\n→ 단일 Slice 01 Batch Studio Acceptance": "Slice 01 World Interaction Batch Implementation·자동 Gate\n→ PASS\n\n단일 Slice 01 Batch Studio Acceptance",
+          }
+          for old, new in replacements.items():
+              if old not in text:
+                  raise SystemExit(f"CURRENT-WORK-ORDER replacement missing: {old}")
+              text = text.replace(old, new)
+          work.write_text(text, encoding="utf-8")
+
+          status = Path("implementation/roblox/IMPLEMENTATION-STATUS.md")
+          text = status.read_text(encoding="utf-8")
+          replacements = {
+              "SLICE_01_WORLD_INTERACTION_BATCH_IN_PROGRESS": "SLICE_01_WORLD_INTERACTION_BATCH_IMPLEMENTED_STUDIO_PENDING",
+              "이 결함은 단독 Studio 재검사를 요청하지 않는다. Picking Fallback, Camera, Selection Feedback, Movement Diagnostics와 함께 구현한 뒤 한 번의 Batch Acceptance에서 확인한다.": "Raycast와 Screen-space Bounds를 결합한 이중 Picking, 확대 Hitbox, Camera, Selection Feedback, Movement Diagnostics를 구현했다. 실제 Roblox Engine 입력 결과는 한 번의 Batch Acceptance에서 확인한다.",
+              "Studio World Interaction Batch\n→ IN PROGRESS": "Studio World Interaction Batch\n→ IMPLEMENTED · STUDIO PENDING",
+              "향후 Batch Harness는 다음을 제공한다.": "Batch Harness는 다음을 제공한다.",
+              "Slice 01 World Interaction Batch Implementation\n→ 자동 회귀·정적 CI PASS\n→ 단일 Slice 01 Batch Studio Acceptance": "Slice 01 World Interaction Batch Implementation·자동 Gate\n→ PASS\n\n단일 Slice 01 Batch Studio Acceptance",
+          }
+          for old, new in replacements.items():
+              if old not in text:
+                  raise SystemExit(f"IMPLEMENTATION-STATUS replacement missing: {old}")
+              text = text.replace(old, new)
+          marker = "## Slice 01 3D World Token Baseline"
+          static_gate = """## World Interaction Batch 자동 Gate
+
+최종 구현 Gate:
+
+```text
+Structure·Security·Policy
+→ PASS
+
+StyLua·Selene
+→ PASS
+
+Production·Test·Multi-client·Persistence·Slice 01 Rojo Build
+→ PASS
+
+Production·Test Luau Type Analysis
+→ PASS
+
+Remake Documentation Validation
+→ PASS
+```
+
+구현 범위에는 Dual Picking, 선택 Highlight, Destination Marker, Command Receipt·Revision 진단, Projection Reconcile Summary, Camera Frame·Pan·Zoom, Reconnect Restore, 16항목 Final Batch Summary가 포함된다.
+
+"""
+          if marker not in text:
+              raise SystemExit("IMPLEMENTATION-STATUS insertion marker missing")
+          text = text.replace(marker, static_gate + marker, 1)
+          status.write_text(text, encoding="utf-8")
+          PY
+          rm -f .github/workflows/finalize-world-interaction-status.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "docs: mark world interaction batch Studio pending"
+          git push origin HEAD:planning/rvtt-remake
