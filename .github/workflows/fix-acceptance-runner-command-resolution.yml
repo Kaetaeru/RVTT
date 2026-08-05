@@ -1,0 +1,176 @@
+name: Fix acceptance runner command resolution
+
+on:
+  push:
+    branches:
+      - planning/rvtt-remake
+    paths:
+      - .github/workflows/fix-acceptance-runner-command-resolution.yml
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: planning/rvtt-remake
+          fetch-depth: 0
+
+      - name: Patch PowerShell command resolution
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("implementation/roblox/tooling/run-studio-acceptance-batch.ps1")
+          text = path.read_text(encoding="utf-8")
+
+          old = 'function Json([string]$Path) { Get-Content -Raw -Encoding UTF8 $Path | ConvertFrom-Json }\nfunction Download([string]$Url, [string]$Path) {'
+          new = '''function Json([string]$Path) { Get-Content -Raw -Encoding UTF8 $Path | ConvertFrom-Json }
+function CommandPaths([string]$Name) {
+    $paths = [System.Collections.Generic.List[string]]::new()
+    foreach ($command in @(Get-Command $Name -All -ErrorAction SilentlyContinue)) {
+        $candidate = if ($command.Path) { [string]$command.Path } else { [string]$command.Source }
+        if (-not [string]::IsNullOrWhiteSpace($candidate) -and (Test-Path -LiteralPath $candidate)) {
+            $full = [IO.Path]::GetFullPath($candidate)
+            if (-not $paths.Contains($full)) { [void]$paths.Add($full) }
+        }
+    }
+    return ,$paths.ToArray()
+}
+function Download([string]$Url, [string]$Path) {'''
+          if old not in text:
+              raise SystemExit("Json insertion anchor missing")
+          text = text.replace(old, new, 1)
+
+          old = '''    $installed = Get-Command rojo -ErrorAction SilentlyContinue
+    if ($installed) {
+        $version = (& $installed.Source --version 2>&1 | Out-String).Trim()
+        if ($LASTEXITCODE -eq 0 -and $version -match [regex]::Escape([string]$Manifest.rojo.version)) { return $installed.Source }
+    }
+'''
+          new = '''    foreach ($candidate in @(CommandPaths "rojo")) {
+        try {
+            $version = (& $candidate --version 2>&1 | Out-String).Trim()
+            if ($LASTEXITCODE -eq 0 -and $version -match [regex]::Escape([string]$Manifest.rojo.version)) {
+                return [string]$candidate
+            }
+        } catch {
+            Write-Warning "Rojo candidate could not start · executable=$candidate error=$($_.Exception.Message)"
+        }
+    }
+'''
+          if old not in text:
+              raise SystemExit("Rojo installed block missing")
+          text = text.replace(old, new, 1)
+
+          old = '''function SourceFromLocalRepo([string]$Head, [string]$RepoRoot, [string]$Destination) {
+    $git = Get-Command git -ErrorAction SilentlyContinue
+    if (-not $git) { return $false }
+
+    Step "using local repository $RepoRoot"
+    Set-Location $RepoRoot
+
+    & $git.Source -C $RepoRoot cat-file -e "${Head}^{commit}" 2>$null
+'''
+          new = '''function SourceFromLocalRepo([string]$Head, [string]$RepoRoot, [string]$Destination) {
+    $gitCandidates = @(CommandPaths "git")
+    if ($gitCandidates.Count -eq 0) { return $false }
+    $git = [string]$gitCandidates[0]
+
+    Step "using local repository $RepoRoot"
+    Set-Location $RepoRoot
+
+    & $git -C $RepoRoot cat-file -e "${Head}^{commit}" *> $null
+'''
+          if old not in text:
+              raise SystemExit("SourceFromLocalRepo header missing")
+          text = text.replace(old, new, 1)
+          text = text.replace('& $git.Source -C $RepoRoot fetch origin $Branch --prune', '& $git -C $RepoRoot fetch origin $Branch --prune 2>&1 | ForEach-Object { Write-Host $_ }')
+          text = text.replace('& $git.Source -C $RepoRoot fetch origin $Head', '& $git -C $RepoRoot fetch origin $Head 2>&1 | ForEach-Object { Write-Host $_ }')
+          text = text.replace('& $git.Source -C $RepoRoot cat-file -e "${Head}^{commit}" 2>$null', '& $git -C $RepoRoot cat-file -e "${Head}^{commit}" *> $null')
+          text = text.replace('& $git.Source -C $RepoRoot archive --format=zip --output=$zip $Head', '& $git -C $RepoRoot archive --format=zip --output=$zip $Head *> $null')
+
+          old = '''        & $Executable @Arguments
+        if ($LASTEXITCODE -eq 0) { return $true }
+'''
+          new = '''        & $Executable @Arguments 2>&1 | ForEach-Object { Write-Host $_ }
+        if ($LASTEXITCODE -eq 0) { return $true }
+'''
+          if old not in text:
+              raise SystemExit("TryPythonValidator invocation missing")
+          text = text.replace(old, new, 1)
+
+          old = '''    $python = Get-Command python -ErrorAction SilentlyContinue
+    $py = Get-Command py -ErrorAction SilentlyContinue
+    if ($python -and (TryPythonValidator $python.Source @($validator))) { return }
+    if ($py -and (TryPythonValidator $py.Source @("-3", $validator))) { return }
+'''
+          new = '''    foreach ($candidate in @(CommandPaths "python")) {
+        if (TryPythonValidator $candidate @($validator)) { return }
+    }
+    foreach ($candidate in @(CommandPaths "py")) {
+        if (TryPythonValidator $candidate @("-3", $validator)) { return }
+    }
+'''
+          if old not in text:
+              raise SystemExit("Validate command discovery block missing")
+          text = text.replace(old, new, 1)
+
+          old = '''    if ($PreferredRepo -ne "C:\\Users\\somsn\\RVTT") { throw "preferred repository path contract changed" }
+    Write-Host "RVTT acceptance bootstrap SelfTest passed" -ForegroundColor Green
+'''
+          new = '''    if ($PreferredRepo -ne "C:\\Users\\somsn\\RVTT") { throw "preferred repository path contract changed" }
+    $powershellCandidates = @(CommandPaths "powershell")
+    if ($powershellCandidates.Count -lt 1) { throw "PowerShell executable resolution failed" }
+    foreach ($candidate in $powershellCandidates) {
+        if ($candidate -isnot [string] -or -not (Test-Path -LiteralPath $candidate)) {
+            throw "CommandPaths returned an invalid executable candidate"
+        }
+    }
+    Write-Host "RVTT acceptance bootstrap SelfTest passed" -ForegroundColor Green
+'''
+          if old not in text:
+              raise SystemExit("SelfTest anchor missing")
+          text = text.replace(old, new, 1)
+
+          old = '''$sourceRoot = Source $head
+$robloxRoot = Join-Path $sourceRoot "implementation\\roblox"
+'''
+          new = '''$sourceCandidates = @(Source $head)
+$sourceRoot = @($sourceCandidates | Where-Object { $_ -is [string] -and (Test-Path -LiteralPath $_) } | Select-Object -Last 1)
+if ($sourceRoot.Count -ne 1) { throw "verified source path resolution failed" }
+$sourceRoot = [string]$sourceRoot[0]
+$robloxRoot = Join-Path $sourceRoot "implementation\\roblox"
+'''
+          if old not in text:
+              raise SystemExit("Source assignment block missing")
+          text = text.replace(old, new, 1)
+
+          old = '''$rojo = Rojo $manifest
+StopStudio
+'''
+          new = '''$rojoCandidates = @(Rojo $manifest)
+$rojo = @($rojoCandidates | Where-Object { $_ -is [string] -and (Test-Path -LiteralPath $_) } | Select-Object -Last 1)
+if ($rojo.Count -ne 1) { throw "Rojo executable path resolution failed" }
+$rojo = [string]$rojo[0]
+Step "using Rojo executable $rojo"
+StopStudio
+'''
+          if old not in text:
+              raise SystemExit("Rojo assignment block missing")
+          text = text.replace(old, new, 1)
+
+          path.write_text(text, encoding="utf-8")
+          PY
+
+          rm -f .github/workflows/fix-acceptance-runner-command-resolution.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "fix: normalize acceptance runner executable paths"
+          git push origin HEAD:planning/rvtt-remake
