@@ -30,10 +30,14 @@ function ClientRuntime.get(): Runtime?
 end
 
 function ClientRuntime.await(): Runtime
-	if current ~= nil then
-		return current
+	local existing = current
+	if existing ~= nil then
+		return existing
 	end
-	return ready.Event:Wait()
+
+	local runtime = ready.Event:Wait()
+	assert(type(runtime) == "table", "ClientRuntime readiness payload must be a table")
+	return runtime :: any
 end
 
 return ClientRuntime
