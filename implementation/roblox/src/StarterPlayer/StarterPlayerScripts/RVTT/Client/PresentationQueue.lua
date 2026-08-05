@@ -1,9 +1,12 @@
 --!strict
+
 local Queue = {}
 Queue.__index = Queue
+
 function Queue.new(preferences)
 	return setmetatable({ items = {}, running = false, preferences = preferences }, Queue)
 end
+
 function Queue:enqueue(intent)
 	table.insert(self.items, intent)
 	if not self.running then
@@ -12,10 +15,14 @@ function Queue:enqueue(intent)
 		end)
 	end
 end
+
 function Queue:_drain()
 	self.running = true
 	while #self.items > 0 do
 		local intent = table.remove(self.items, 1)
+		if intent == nil then
+			break
+		end
 		if not (self.preferences.reducedMotion and intent.importance == "ambient") then
 			if intent.play then
 				local ok, err = xpcall(intent.play, debug.traceback)
@@ -28,4 +35,5 @@ function Queue:_drain()
 	end
 	self.running = false
 end
+
 return Queue
