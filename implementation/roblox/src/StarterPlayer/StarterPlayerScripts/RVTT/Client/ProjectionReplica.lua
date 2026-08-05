@@ -4,18 +4,13 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Signal = require(ReplicatedStorage.RVTT.Shared.Core.Signal)
 local Contract = require(ReplicatedStorage.RVTT.Shared.Protocol.ProjectionContract)
 
-export type ProjectionEnvelope = {
-	authorityEpoch: string,
-	revision: number,
-	projectionSequence: number,
-	payload: any,
-}
+export type ProjectionEnvelope = Contract.ProjectionEnvelope
 
 export type Replica = {
 	epoch: string?,
 	revision: number,
 	sequence: number,
-	payload: any,
+	payload: { [string]: unknown },
 	Changed: any,
 	GapDetected: any,
 	apply: (self: Replica, envelope: ProjectionEnvelope, force: boolean?) -> boolean,
