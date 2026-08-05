@@ -1,0 +1,15 @@
+{
+  "name": "RVTTLiveDataStoreTest",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {"RVTT": {"$path": "src/ReplicatedStorage/RVTT"}},
+    "ServerScriptService": {
+      "RVTT": {
+        "$className": "Folder",
+        "Server": {"$path": "src/ServerScriptService/RVTT/Server"}
+      },
+      "RVTTLiveDataStoreTests": {"$path": "tests/LiveDataStore"}
+    },
+    "ServerStorage": {"RVTT": {"$path": "src/ServerStorage/RVTT"}}
+  }
+}
