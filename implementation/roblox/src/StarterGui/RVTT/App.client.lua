@@ -2,6 +2,11 @@
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+if ReplicatedStorage:FindFirstChild("RVTT_TestMode") ~= nil then
+	return
+end
+
 local player = Players.LocalPlayer
 local Tokens = require(ReplicatedStorage.RVTT.Shared.UI.DesignTokens)
 local components = script.Parent.UI.Components
