@@ -6,7 +6,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 errors: list[str] = []
 
-for project in ("default.project.json", "test.project.json"):
+for project in ("default.project.json", "test.project.json", "live-datastore.project.json"):
     try:
         json.loads((ROOT / project).read_text(encoding="utf-8"))
     except Exception as exc:
@@ -53,6 +53,7 @@ required = [
     "src/StarterPlayer/StarterPlayerScripts/RVTT/ClientBoot.client.lua",
     "src/StarterPlayer/StarterPlayerScripts/RVTT/Client/ClientRuntime.lua",
     "src/StarterGui/RVTT/App.client.lua",
+    "tests/LiveDataStore/DataStoreRunner.server.lua",
     "manifests/all-slices-script-manifest.md",
 ]
 for relative in required:
