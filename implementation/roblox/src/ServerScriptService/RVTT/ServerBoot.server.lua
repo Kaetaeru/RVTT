@@ -76,6 +76,12 @@ end)
 local studioPersistenceEnabled = game:GetAttribute("RVTT_EnableStudioPersistence") == true
 local persistenceEnabled = not RunService:IsStudio() or studioPersistenceEnabled
 if persistenceEnabled then
+	print(string.format(
+		"[RVTT Persistence] enabled gameId=%d placeId=%d studio=%s",
+		game.GameId,
+		game.PlaceId,
+		tostring(RunService:IsStudio())
+	))
 	local migrations = MigrationRegistry.new(Version.SCHEMA)
 	local migrationModule = ServerStorage.RVTT.Migrations:WaitForChild("001_InitialSchema")
 	migrations:register(0, require(migrationModule))
@@ -85,10 +91,14 @@ if persistenceEnabled then
 	if loadResult.ok and loadResult.value ~= nil then
 		local restoreResult = runtime:restore(loadResult.value)
 		if not restoreResult.ok then
-			diagnostics:record("error", "AUTHORITY_RESTORE_FAILED", {})
+			diagnostics:record("error", "AUTHORITY_RESTORE_FAILED", {
+				code = restoreResult.error.code,
+			})
 		end
 	elseif not loadResult.ok then
-		diagnostics:record("warning", "PERSISTENCE_DEGRADED", {})
+		diagnostics:record("warning", "PERSISTENCE_DEGRADED", {
+			code = loadResult.error.code,
+		})
 	end
 	runtime:onCommitted(function(state)
 		persistence:markDirty(state)
@@ -97,7 +107,9 @@ if persistenceEnabled then
 	game:BindToClose(function()
 		local result = persistence:flushUntilClean()
 		if not result.ok then
-			diagnostics:record("error", "PERSISTENCE_SHUTDOWN_FLUSH_FAILED", {})
+			diagnostics:record("error", "PERSISTENCE_SHUTDOWN_FLUSH_FAILED", {
+				code = result.error.code,
+			})
 		end
 	end)
 else

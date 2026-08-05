@@ -18,13 +18,21 @@ if not RunService:IsStudio() then
 end
 
 local Version = require(ReplicatedStorage.RVTT.Shared.Core.Version)
+local AccentPreference = require(ReplicatedStorage.RVTT.Shared.UI.AccentPreference)
 local Server = ServerScriptService.RVTT.Server
+local AuthorityRuntime = require(Server.Runtime.AuthorityRuntime)
+local CommandRegistry = require(Server.Runtime.CommandRegistry)
 local Diagnostics = require(Server.Runtime.Diagnostics)
+local EventOutbox = require(Server.Runtime.EventOutbox)
+local TransactionCoordinator = require(Server.Runtime.TransactionCoordinator)
 local MigrationRegistry = require(Server.Persistence.MigrationRegistry)
 local ProfileStore = require(Server.Persistence.ProfileStore)
+local SnapshotJournal = require(Server.Persistence.SnapshotJournal)
+local ServiceGraph = require(Server.Bootstrap.ServiceGraph)
 
 local STORE_NAME = "RVTT_Authority_Integration_v1"
 local key = "live:" .. HttpService:GenerateGUID(false)
+local authorityKey = key .. ":authority"
 local rawStore = DataStoreService:GetDataStore(STORE_NAME)
 local diagnostics = Diagnostics.new()
 local migrations = MigrationRegistry.new(Version.SCHEMA)
@@ -54,6 +62,22 @@ local function document(revision: number, authorityEpoch: string): any
 	}
 end
 
+local function authorityRuntime(): any
+	local registry = CommandRegistry.new()
+	local runtimeDiagnostics = Diagnostics.new()
+	local runtime = AuthorityRuntime.new(
+		registry,
+		TransactionCoordinator.new(runtimeDiagnostics),
+		EventOutbox.new(),
+		runtimeDiagnostics,
+		SnapshotJournal.new(32)
+	)
+	for _, domain in ServiceGraph.domainModules() do
+		runtime:installDomain(domain)
+	end
+	return runtime
+end
+
 local ran, trace = xpcall(function()
 	local initial = store:save(key, document(1, "epoch:live"))
 	expect(initial.ok, "initial UpdateAsync save succeeds")
@@ -65,6 +89,7 @@ local ran, trace = xpcall(function()
 		expect(loaded.value.authorityEpoch == "epoch:live", "loaded epoch matches saved epoch")
 	else
 		expect(false, "saved document is present")
+		expect(false, "saved document contains its authority epoch")
 	end
 
 	local stale = store:save(key, document(0, "epoch:live"))
@@ -89,18 +114,65 @@ local ran, trace = xpcall(function()
 	else
 		expect(false, "newer document is present")
 	end
+
+	local runtime = authorityRuntime()
+	local snapshot = runtime:snapshot()
+	local commandId = "live:accent"
+	local preference = runtime:execute({
+		player = {} :: any,
+		playerId = 123,
+		role = "player",
+		origin = "remote",
+		commandId = commandId,
+		correlationId = commandId,
+	}, {
+		protocolVersion = Version.PROTOCOL,
+		commandId = commandId,
+		commandType = "ui.set_preference",
+		correlationId = commandId,
+		authorityEpoch = snapshot.authorityEpoch,
+		expectedRevision = snapshot.revision,
+		payload = {
+			key = AccentPreference.KEY,
+			value = "teal",
+		},
+	})
+	expect(preference.ok, "real authority accepts an Accent preference")
+
+	local authoritySnapshot = runtime:snapshot()
+	local authoritySave = store:save(authorityKey, authoritySnapshot)
+	expect(authoritySave.ok, "real all-domain authority snapshot saves")
+
+	local authorityLoad = store:load(authorityKey)
+	expect(authorityLoad.ok, "real all-domain authority snapshot reloads")
+	if authorityLoad.ok and authorityLoad.value ~= nil then
+		expect(
+			authorityLoad.value.revision == authoritySnapshot.revision,
+			"real authority revision persists"
+		)
+		local byUser = authorityLoad.value.domains.ui_preferences.byUser
+		expect(
+			byUser["123"] ~= nil and byUser["123"][AccentPreference.KEY] == "teal",
+			"Accent preference persists inside the real authority document"
+		)
+	else
+		expect(false, "real authority document is present")
+		expect(false, "real authority document contains the Accent preference")
+	end
 end, debug.traceback)
 
 if not ran then
 	expect(false, "unexpected exception: " .. tostring(trace))
 end
 
-local cleanupOk, cleanupError = pcall(function()
-	rawStore:RemoveAsync(key)
-end)
-expect(cleanupOk, "temporary DataStore key is removed")
-if not cleanupOk then
-	table.insert(failures, "cleanup error: " .. tostring(cleanupError))
+for _, cleanupKey in { key, authorityKey } do
+	local cleanupOk, cleanupError = pcall(function()
+		rawStore:RemoveAsync(cleanupKey)
+	end)
+	expect(cleanupOk, "temporary DataStore key is removed: " .. cleanupKey)
+	if not cleanupOk then
+		table.insert(failures, "cleanup error: " .. tostring(cleanupError))
+	end
 end
 
 print(string.format("[RVTT Live DataStore] passed=%d failed=%d", passed, failed))

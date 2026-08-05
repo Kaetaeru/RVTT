@@ -3,6 +3,7 @@
 return function(harness)
 	local Server = game:GetService("ServerScriptService").RVTT.Server
 	local MigrationRegistry = require(Server.Persistence.MigrationRegistry)
+	local PersistenceDocumentValidator = require(Server.Persistence.PersistenceDocumentValidator)
 
 	local migrations = MigrationRegistry.new(2)
 	migrations:register(0, function(document)
@@ -71,6 +72,29 @@ return function(harness)
 		domains = {},
 	})
 	harness:expect(not invalidRevision.ok, "invalid revision is rejected")
+
+	local validDocument, validFailure = PersistenceDocumentValidator.validate(Runtime:snapshot())
+	harness:expect(
+		validDocument,
+		"real authority snapshot is DataStore-safe: " .. tostring(validFailure)
+	)
+
+	local unsupportedDocument, unsupportedFailure = PersistenceDocumentValidator.validate({
+		revision = 1,
+		position = Vector3.zero,
+	})
+	harness:expect(
+		not unsupportedDocument and type(unsupportedFailure) == "string",
+		"Roblox userdata is rejected before DataStore save"
+	)
+
+	local mixedDocument = PersistenceDocumentValidator.validate({ [1] = "array", named = "field" })
+	harness:expect(not mixedDocument, "mixed dictionary and array keys are rejected")
+
+	local cyclic = {}
+	cyclic.self = cyclic
+	local cyclicDocument = PersistenceDocumentValidator.validate(cyclic)
+	harness:expect(not cyclicDocument, "cyclic tables are rejected")
 
 	local fakeStore = { saved = {} }
 	function fakeStore:load(_key)

@@ -4,6 +4,7 @@ local DataStoreService = game:GetService("DataStoreService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Result = require(ReplicatedStorage.RVTT.Shared.Core.Result)
 local ValueGuard = require(ReplicatedStorage.RVTT.Shared.Core.ValueGuard)
+local PersistenceDocumentValidator = require(script.Parent.PersistenceDocumentValidator)
 
 local ProfileStore = {}
 ProfileStore.__index = ProfileStore
@@ -17,6 +18,10 @@ local function revisionOf(value: any): number?
 		return nil
 	end
 	return revision
+end
+
+local function failureDetails(reason: string): { [string]: unknown }
+	return { reason = reason }
 end
 
 function ProfileStore.new(
@@ -37,15 +42,41 @@ function ProfileStore.new(
 end
 
 function ProfileStore.load(self: any, key: string): any
-	local ok, value = pcall(function()
+	local ok, valueOrFailure = pcall(function()
 		return self.store:GetAsync(key)
 	end)
 	if not ok then
-		self.diagnostics:record("error", "DATASTORE_LOAD_FAILED", { key = key })
-		return Result.err("PERSISTENCE_FAILED", "error.persistence.failed", true)
+		local reason = tostring(valueOrFailure)
+		self.diagnostics:record("error", "DATASTORE_LOAD_FAILED", {
+			key = key,
+			reason = reason,
+		})
+		return Result.err(
+			"PERSISTENCE_FAILED",
+			"error.persistence.failed",
+			true,
+			failureDetails(reason)
+		)
 	end
+
+	local value = valueOrFailure
 	if value == nil then
 		return Result.ok(nil)
+	end
+
+	local valid, validationFailure = PersistenceDocumentValidator.validate(value)
+	if not valid then
+		local reason = validationFailure or "stored document is invalid"
+		self.diagnostics:record("error", "DATASTORE_DOCUMENT_INVALID", {
+			key = key,
+			reason = reason,
+		})
+		return Result.err(
+			"PERSISTENCE_INVALID",
+			"error.persistence.invalid",
+			false,
+			failureDetails(reason)
+		)
 	end
 	return self.migrations:apply(value)
 end
@@ -56,8 +87,24 @@ function ProfileStore.save(self: any, key: string, value: any): any
 		return Result.err("PERSISTENCE_INVALID", "error.persistence.invalid", false)
 	end
 
+	local valid, validationFailure = PersistenceDocumentValidator.validate(value)
+	if not valid then
+		local reason = validationFailure or "candidate document is invalid"
+		self.diagnostics:record("error", "DATASTORE_DOCUMENT_INVALID", {
+			key = key,
+			reason = reason,
+			revision = candidateRevision,
+		})
+		return Result.err(
+			"PERSISTENCE_INVALID",
+			"error.persistence.invalid",
+			false,
+			failureDetails(reason)
+		)
+	end
+
 	local conflict = false
-	local ok = pcall(function()
+	local ok, updateFailure = pcall(function()
 		self.store:UpdateAsync(key, function(current: any): any
 			conflict = false
 			local currentRevision = revisionOf(current)
@@ -82,8 +129,18 @@ function ProfileStore.save(self: any, key: string, value: any): any
 		end)
 	end)
 	if not ok then
-		self.diagnostics:record("error", "DATASTORE_SAVE_FAILED", { key = key })
-		return Result.err("PERSISTENCE_FAILED", "error.persistence.failed", true)
+		local reason = tostring(updateFailure)
+		self.diagnostics:record("error", "DATASTORE_SAVE_FAILED", {
+			key = key,
+			reason = reason,
+			revision = candidateRevision,
+		})
+		return Result.err(
+			"PERSISTENCE_FAILED",
+			"error.persistence.failed",
+			true,
+			failureDetails(reason)
+		)
 	end
 	if conflict then
 		self.diagnostics:record("warning", "DATASTORE_REVISION_CONFLICT", {

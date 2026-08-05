@@ -19,6 +19,18 @@ local function revisionOf(state: any): number?
 	return revision
 end
 
+local function failureSummary(result: any): string
+	if result.ok then
+		return "none"
+	end
+	local failure = result.error
+	local reason = if type(failure.details) == "table" then failure.details.reason else nil
+	if type(reason) == "string" then
+		return string.format("%s: %s", failure.code, reason)
+	end
+	return failure.code
+end
+
 function PersistenceCoordinator.new(store: any, key: string, diagnostics: any): any
 	return setmetatable({
 		store = store,
@@ -34,11 +46,26 @@ end
 
 function PersistenceCoordinator.load(self: any): any
 	local result = self.store:load(self.key)
-	if result.ok and result.value ~= nil then
-		local revision = revisionOf(result.value)
-		if revision ~= nil then
-			self.lastSavedRevision = revision
+	if result.ok then
+		if result.value == nil then
+			print(string.format("[RVTT Persistence] no saved document key=%s", self.key))
+		else
+			local revision = revisionOf(result.value)
+			if revision ~= nil then
+				self.lastSavedRevision = revision
+			end
+			print(string.format(
+				"[RVTT Persistence] loaded key=%s revision=%s",
+				self.key,
+				tostring(revision)
+			))
 		end
+	else
+		warn(string.format(
+			"[RVTT Persistence] load failed key=%s %s",
+			self.key,
+			failureSummary(result)
+		))
 	end
 	return result
 end
@@ -87,8 +114,19 @@ function PersistenceCoordinator.flush(self: any): any
 		if self.dirty == snapshot then
 			self.dirty = nil
 		end
+		print(string.format(
+			"[RVTT Persistence] saved key=%s revision=%s",
+			self.key,
+			tostring(snapshotRevision)
+		))
 	else
 		self.diagnostics:increment("persistence.flush_failed")
+		warn(string.format(
+			"[RVTT Persistence] save failed key=%s revision=%s %s",
+			self.key,
+			tostring(snapshotRevision),
+			failureSummary(result)
+		))
 	end
 	self.flushing = false
 	self.flushCompleted:Fire()
