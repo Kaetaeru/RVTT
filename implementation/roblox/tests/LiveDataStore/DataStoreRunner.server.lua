@@ -8,11 +8,7 @@ local ServerScriptService = game:GetService("ServerScriptService")
 local ServerStorage = game:GetService("ServerStorage")
 
 local testMode = ReplicatedStorage:FindFirstChild("RVTT_TestMode")
-if
-	testMode == nil
-	or not testMode:IsA("StringValue")
-	or testMode.Value ~= "live-datastore"
-then
+if testMode == nil or not testMode:IsA("StringValue") or testMode.Value ~= "live-datastore" then
 	return
 end
 
