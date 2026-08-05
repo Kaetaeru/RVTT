@@ -4,7 +4,7 @@
 - 작성일: 2026-08-05
 - 최종 갱신일: 2026-08-05
 - 범위: 16개 Slice 계약의 Greenfield Runtime·Domain·Client·UI·Test baseline
-- 최신 구현 Head: `be8e7bdc540fb7238add63c0f03f12452209b7f4`
+- 최신 구현 Head: `fee64cf527cc914ded7f81879f64f51eeab9ee5c`
 - Studio 검증 근거: [`Roblox Studio Runtime Baseline Validation Audit`](../../docs/remake/audits/roblox-studio-runtime-baseline-validation-audit.md)
 
 ## 구현된 공통 계약
@@ -32,7 +32,10 @@ Implementation
 Static·Toolchain CI
 → PASSED
 
-Roblox Studio Acceptance
+Automated Studio Tests
+→ PASSED
+
+Visual·Input Studio Acceptance
 → PENDING
 ```
 
@@ -54,15 +57,42 @@ Roblox Studio Acceptance
 
 - `Unit/AccentTheme.spec.lua`
 - `Integration/UiPreferenceFlow.spec.lua`
-- 새 Test 포함 예상 Studio 결과: `passed=150 failed=0`
 
-`150`은 Test Source 기준 예상 Assertion 수이며 아직 Studio 실행 Evidence가 아니다.
+2026-08-05 18:04 KST Studio 실행 결과:
 
-## 검증 완료
+```text
+[RVTT Tests] passed=173 failed=0
+[RVTT Live DataStore] passed=10 failed=0
+```
 
-### GitHub Actions
+`173/0`은 깨끗하게 새로 Build한 Test Place에서도 재현된 현재 기준값이다.
 
-최신 Accent Theme Head에서 다음이 모두 통과했다.
+## Studio Boot 동기화 교착 수정
+
+관찰된 문제:
+
+```text
+default.project.json Play
+→ RVTT · 동기화 중
+→ UI가 열리지 않고 무기한 대기
+```
+
+원인:
+
+- Server가 Remote를 생성하기 전에 기본 캠페인 DataStore Load를 동기식으로 기다렸다.
+- Client는 최초 Full Resync가 끝난 뒤에만 `ClientRuntime`을 공개했다.
+- DataStore 또는 Sync 응답이 지연되면 App과 Loading 종료가 모두 차단됐다.
+
+수정:
+
+- Remote·Projection Publisher를 Persistence Load보다 먼저 시작한다.
+- 기본 Studio Play에서는 Live Persistence를 비활성화한다.
+- Studio Live Persistence는 `RVTT_EnableStudioPersistence=true`일 때만 활성화한다.
+- Client Runtime을 최초 Full Resync 전에 공개한다.
+- `clientReady` Projection을 우선 사용하고 Full Resync는 비동기 Fallback으로 실행한다.
+- Remote 대기에 10초 제한과 화면 진단 메시지를 추가한다.
+
+수정 Head `fee64cf`는 다음 GitHub Actions를 모두 통과했다.
 
 - Structure·Security·Policy Validator
 - StyLua Format
@@ -70,7 +100,9 @@ Roblox Studio Acceptance
 - Production·Test·Multi-client Rojo Build
 - Production·Test Luau Type Analysis
 
-### Roblox Studio Baseline
+수정 후 실제 Studio UI 재검수는 아직 필요하다.
+
+## 기존 Roblox Studio Baseline
 
 2026-08-05 15:42 KST 실행 결과:
 
@@ -90,21 +122,19 @@ Roblox Studio Acceptance
 - Viewer별 Private Projection과 DM 정보 은닉
 - Disconnect·Reconnect와 Full Resync
 
-Accent Theme 변경은 위 Studio 실행 이후 추가됐으므로 별도 Studio Acceptance가 필요하다.
-
 ## 상태 해석
-
-`IMPLEMENTED_STUDIO_BASELINE_VERIFIED`는 기존 Source baseline이 정적 Toolchain과 Roblox Studio Runtime 기본 검증을 통과했다는 뜻이다.
 
 현재 Accent Theme Delta는 다음 상태다.
 
 ```text
-ACCENT_THEME_IMPLEMENTED_CI_VERIFIED_STUDIO_PENDING
+ACCENT_THEME_AUTOMATED_TESTS_VERIFIED_UI_PENDING
 ```
 
 다음을 의미하지 않는다.
 
-- Accent 설정의 실제 Studio 시각·입력·재접속 검증 완료
+- 부팅 수정 후 실제 Studio UI 표시 확인 완료
+- 여섯 Palette의 시각·입력·접근성 Acceptance 완료
+- Studio Play 종료 후 Preference 영구 복구 완료
 - Slice 01 전체 사용자 흐름 Acceptance 완료
 - Slices 02–16 Build Acceptance 완료
 - 서버 종료·재시작과 Cross-server 저장 복구 완료
@@ -113,15 +143,31 @@ ACCENT_THEME_IMPLEMENTED_CI_VERIFIED_STUDIO_PENDING
 - 성능·장시간 Soak 완료
 - Production Ready 또는 Release Ready
 
+## Studio Persistence 주의
+
+기본 `default.project.json` Studio Play는 UI 검수를 막지 않도록 Live Persistence를 사용하지 않는다.
+
+```text
+Default Studio Play
+→ Session 내 Accent 선택·Projection 검수
+
+Live Persistence 검수
+→ live-datastore.project.json
+또는
+→ DataModel Attribute RVTT_EnableStudioPersistence=true
+```
+
+Play 종료 후 마지막 Accent 복구는 Live Persistence를 명시적으로 활성화한 별도 Gate에서 검증한다.
+
 ## 아직 미검증
 
+- 수정 Head에서 Loading 화면이 정상 종료되는지 확인
 - 기본 Gold Theme의 실제 Studio 렌더링
 - 여섯 Accent Palette의 Hover·Selected·Focus·Contrast
 - Settings Q 종료와 Keyboard Focus 순서
 - Accent 선택 후 Projection Reconciliation
-- 재접속 후 Accent Preference 복구
+- Live Persistence 활성화 상태의 Accent Preference 복구
 - 의미색이 사용자 Accent에 의해 변경되지 않는지 확인
-- 새 Unit·Integration Test의 Studio 실행
 - Slice 01 `Join → Select → Ready → Scene → Move → Reconnect`
 - Slices 02–16 사용자·보안·복구 Scenario
 - DataStore server restart·Cross-server Lease·Migration Recovery
