@@ -71,4 +71,25 @@ return function(harness)
 		domains = {},
 	})
 	harness:expect(not invalidRevision.ok, "invalid revision is rejected")
+
+	local fakeStore = { saved = {} }
+	function fakeStore:load(_key)
+		return { ok = true, value = { revision = 3 } }
+	end
+	function fakeStore:save(_key, value)
+		table.insert(self.saved, value)
+		return { ok = true, value = true }
+	end
+
+	local PersistenceCoordinator = require(Server.Persistence.PersistenceCoordinator)
+	local coordinator = PersistenceCoordinator.new(fakeStore, "test", Diagnostics)
+	local loaded = coordinator:load()
+	harness:expect(loaded.ok, "coordinator loads existing revision")
+	harness:expect(not coordinator:markDirty({ revision = 3 }), "saved revision is not re-queued")
+	harness:expect(coordinator:markDirty({ revision = 5 }), "newer revision becomes dirty")
+	harness:expect(not coordinator:markDirty({ revision = 4 }), "older revision cannot replace dirty state")
+	harness:equal(coordinator.dirty.revision, 5, "highest pending revision is retained")
+	local flushed = coordinator:flush()
+	harness:expect(flushed.ok, "newest pending revision flushes")
+	harness:equal(coordinator.lastSavedRevision, 5, "saved revision advances monotonically")
 end
