@@ -186,10 +186,10 @@ SLICE_01_ACCEPTANCE_HARNESS_READY_STUDIO_PENDING
 - Accent Preference가 유지된다.
 - 관련 Output 오류가 없다.
 
-정적 Gate Evidence Head:
+최종 정적 Gate Head:
 
 ```text
-c096f3493c75673eaa6c2b9225cecf98c00ffca4
+0dae097891c28172792eb2326bce636b0d31e0a2
 ```
 
 - Structure·Policy Validator: PASS
