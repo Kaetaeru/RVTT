@@ -9,7 +9,7 @@ return function(harness)
 	end
 	harness:expect(#domains >= 18, "all slice and slice-01 support domains registered")
 	harness:expect(#Registry:list() >= 35, "command coverage")
-	for commandType, descriptor in Registry:descriptors() do
+	for commandType, descriptor in Registry:all() do
 		harness:expect(
 			type(descriptor.authorize) == "function",
 			commandType .. " has explicit authorization"
