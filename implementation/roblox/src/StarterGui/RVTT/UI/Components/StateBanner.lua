@@ -4,7 +4,7 @@ return function(): TextLabel
 	local l = Instance.new("TextLabel")
 	l.Name = "StateBanner"
 	l.Size = UDim2.new(1, -32, 0, 40)
-	l.Position = UDim2.new(0, 16, 0, 16)
+	l.Position = UDim2.fromOffset(16, 16)
 	l.BackgroundColor3 = Tokens.Color.SurfaceRaised
 	l.TextColor3 = Tokens.Color.TextPrimary
 	l.TextSize = Tokens.TextSize.Body
