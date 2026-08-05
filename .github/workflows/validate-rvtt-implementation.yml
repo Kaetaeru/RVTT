@@ -145,6 +145,10 @@ jobs:
         working-directory: implementation/roblox
         run: rojo build test.project.json --output /tmp/RVTT-tests.rbxlx
 
+      - name: Build multi-client place with Rojo
+        working-directory: implementation/roblox
+        run: rojo build multi-client.project.json --output /tmp/RVTT-multi-client.rbxlx
+
       - name: Generate production Rojo sourcemap
         working-directory: implementation/roblox
         run: rojo sourcemap default.project.json --output sourcemap.json
@@ -152,6 +156,10 @@ jobs:
       - name: Generate test Rojo sourcemap
         working-directory: implementation/roblox
         run: rojo sourcemap test.project.json --output test-sourcemap.json
+
+      - name: Generate multi-client Rojo sourcemap
+        working-directory: implementation/roblox
+        run: rojo sourcemap multi-client.project.json --output multi-client-sourcemap.json
 
       - name: Download pinned Roblox type definitions
         working-directory: implementation/roblox
@@ -230,6 +238,8 @@ jobs:
             implementation/roblox/tests
             implementation/roblox/default.project.json
             implementation/roblox/test.project.json
+            implementation/roblox/live-datastore.project.json
+            implementation/roblox/multi-client.project.json
             implementation/roblox/stylua.toml
             implementation/roblox/selene.toml
           if-no-files-found: error
