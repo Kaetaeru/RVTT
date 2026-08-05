@@ -1,6 +1,6 @@
 --!strict
 
-return function(harness)
+return function(harness: any)
 	local ReplicatedStorage = game:GetService("ReplicatedStorage")
 	local AccentPreference = require(ReplicatedStorage.RVTT.Shared.UI.AccentPreference)
 	local Server = game:GetService("ServerScriptService").RVTT.Server

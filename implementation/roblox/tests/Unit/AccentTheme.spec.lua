@@ -1,6 +1,6 @@
 --!strict
 
-return function(harness)
+return function(harness: any)
 	local UI = game:GetService("ReplicatedStorage").RVTT.Shared.UI
 	local AccentPreference = require(UI.AccentPreference)
 	local AccentPalette = require(UI.AccentPalette)
