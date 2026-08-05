@@ -13,6 +13,10 @@ local specs: { Spec } = {
 	{ name = "Envelope.spec", runner = require(script.Parent.Unit["Envelope.spec"]) :: any },
 	{ name = "Persistence.spec", runner = require(script.Parent.Unit["Persistence.spec"]) :: any },
 	{
+		name = "ProfileStore.spec",
+		runner = require(script.Parent.Unit["ProfileStore.spec"]) :: any,
+	},
+	{
 		name = "DomainRegistration.spec",
 		runner = require(script.Parent.Integration["DomainRegistration.spec"]) :: any,
 	},
