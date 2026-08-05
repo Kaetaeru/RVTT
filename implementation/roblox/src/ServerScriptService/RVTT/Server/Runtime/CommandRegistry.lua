@@ -18,7 +18,7 @@ export type Descriptor = {
 	domainId: string,
 	validate: (({ [string]: unknown }) -> boolean)?,
 	authorize: (CommandContext, DomainMap, { [string]: unknown }) -> boolean,
-	execute: (CommandContext, { [string]: any }, { [string]: unknown }, DomainMap) -> unknown,
+	execute: (CommandContext, { [string]: any }, { [string]: unknown }, DomainMap) -> any,
 	remoteAllowed: boolean?,
 	refreshAuthorityEpoch: boolean?,
 }
