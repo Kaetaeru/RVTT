@@ -2,7 +2,6 @@
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Identity = require(ReplicatedStorage.RVTT.Shared.Core.Identity)
-local Result = require(ReplicatedStorage.RVTT.Shared.Core.Result)
 local Helpers = require(script.Parent.DomainHelpers)
 local ActorProfileResolver = require(script.Parent.Parent.Rules.ActorProfileResolver)
 local RuleResolver = require(script.Parent.Parent.Rules.RuleResolver)
