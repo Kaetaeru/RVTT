@@ -4,7 +4,7 @@
 - 작성일: 2026-08-05
 - 최종 갱신일: 2026-08-05
 - 범위: 16개 Slice 계약의 Greenfield Runtime·Domain·Client·UI·Test baseline
-- 최신 구현 Head: `fee64cf527cc914ded7f81879f64f51eeab9ee5c`
+- 최신 구현 Head: `a23baf9815b2b52cafb0e2c7530c4131546d2fce`
 - Studio 검증 근거: [`Roblox Studio Runtime Baseline Validation Audit`](../../docs/remake/audits/roblox-studio-runtime-baseline-validation-audit.md)
 
 ## 구현된 공통 계약
@@ -18,10 +18,11 @@
 - AuthorityEpoch·Revision·Projection Gap·Full Resync
 - Migration·DataStore Adapter·Debounced Persistence Coordinator
 - Semantic Input·Client Runtime·Token 기반 UI Shell
+- Roblox 기본 아바타와 RVTT Token·Character 모델 분리
 - 16개 Slice Domain Command baseline
 - Unit·Integration·Security·Disclosure Test Source
 
-## 사용자 Accent Theme 변경
+## 사용자 Accent Theme
 
 상태:
 
@@ -36,6 +37,9 @@ Automated Studio Tests
 → PASSED
 
 Visual·Input Studio Acceptance
+→ PASSED
+
+Persistence Studio Acceptance
 → PENDING
 ```
 
@@ -51,14 +55,8 @@ Visual·Input Studio Acceptance
 - Q 입력을 이용한 Settings Context 종료
 - Server Projection 도착 후 권위값 Reconciliation
 - 일반 Accent와 Role·Success·Warning·Danger 의미색 분리
-- State Banner·Action Prompt·Panel Shell의 Semantic Theme 적용
 
-추가 Test Source:
-
-- `Unit/AccentTheme.spec.lua`
-- `Integration/UiPreferenceFlow.spec.lua`
-
-2026-08-05 18:04 KST Studio 실행 결과:
+2026-08-05 18:04 KST Studio 자동 테스트:
 
 ```text
 [RVTT Tests] passed=173 failed=0
@@ -67,32 +65,47 @@ Visual·Input Studio Acceptance
 
 `173/0`은 깨끗하게 새로 Build한 Test Place에서도 재현된 현재 기준값이다.
 
+2026-08-05 18:31 KST Studio Visual·Input Acceptance:
+
+- Loading 화면 종료와 RVTT App 표시
+- 기본 Gold 표시
+- 6개 Palette 전환
+- 선택됨 Label·Stroke 이동
+- 3초 후 선택 Accent 유지
+- Q로 Settings 닫기
+- 다시 열었을 때 선택값 유지
+- 관련 Output 오류 없음
+
 ## Studio Boot 동기화 교착 수정
-
-관찰된 문제:
-
-```text
-default.project.json Play
-→ RVTT · 동기화 중
-→ UI가 열리지 않고 무기한 대기
-```
 
 원인:
 
-- Server가 Remote를 생성하기 전에 기본 캠페인 DataStore Load를 동기식으로 기다렸다.
-- Client는 최초 Full Resync가 끝난 뒤에만 `ClientRuntime`을 공개했다.
-- DataStore 또는 Sync 응답이 지연되면 App과 Loading 종료가 모두 차단됐다.
+- Server가 Remote 생성 전에 기본 캠페인 DataStore Load를 동기식으로 기다렸다.
+- Client가 최초 Full Resync 이후에만 `ClientRuntime`을 공개했다.
 
 수정:
 
-- Remote·Projection Publisher를 Persistence Load보다 먼저 시작한다.
-- 기본 Studio Play에서는 Live Persistence를 비활성화한다.
-- Studio Live Persistence는 `RVTT_EnableStudioPersistence=true`일 때만 활성화한다.
-- Client Runtime을 최초 Full Resync 전에 공개한다.
-- `clientReady` Projection을 우선 사용하고 Full Resync는 비동기 Fallback으로 실행한다.
-- Remote 대기에 10초 제한과 화면 진단 메시지를 추가한다.
+- Remote·Projection Publisher를 Persistence Load보다 먼저 시작
+- 기본 Studio Play Live Persistence 비활성화
+- `RVTT_EnableStudioPersistence=true`에서만 Studio Live Persistence 활성화
+- Client Runtime 조기 공개
+- `clientReady` 우선 Projection과 비동기 Full Resync Fallback
+- Remote 대기 10초 제한과 진단 메시지
 
-수정 Head `fee64cf`는 다음 GitHub Actions를 모두 통과했다.
+수정 후 실제 Studio에서 Loading 종료와 App 표시를 확인했다.
+
+## Roblox 기본 캐릭터 비활성화
+
+제품 계약상 플레이어 표현은 Roblox 아바타가 아니라 RVTT의 리그 없는 OBJ·MeshPart Token이다.
+
+구현:
+
+- `default.project.json`의 `Players.CharacterAutoLoads=false`
+- `ServerBoot.server.lua`에서 `Players.CharacterAutoLoads=false` 재강제
+- 이미 생성된 `Player.Character`가 있으면 접속 처리 시 제거
+- RVTT Character·Actor·Token 도메인 상태에는 영향 없음
+
+구현 Head `a23baf9`에서 다음 GitHub Actions가 모두 통과했다.
 
 - Structure·Security·Policy Validator
 - StyLua Format
@@ -100,11 +113,25 @@ default.project.json Play
 - Production·Test·Multi-client Rojo Build
 - Production·Test Luau Type Analysis
 
-수정 후 실제 Studio UI 재검수는 아직 필요하다.
+실제 Studio에서 기본 Roblox 아바타가 생성되지 않는지는 다음 Acceptance Gate에서 확인한다.
+
+## UI 시각 디자인 상태
+
+현재 UI는 기능·입력 검증용 Placeholder Shell이다. 최종 시각 디자인으로 간주하지 않는다.
+
+추후 전면 개편 시 일관성을 유지하기 위해 다음 구조를 보존한다.
+
+- 화면 로직과 시각 표현 분리
+- 색상·간격·Typography·Radius의 Token 관리
+- 공통 Button·Panel·Modal·Banner 컴포넌트 사용
+- Accent와 Semantic Status Color 계약 유지
+- 기능 테스트를 외형이 아닌 상태·입력·권위 동기화 기준으로 유지
+
+부분적인 화면별 미화는 보류하고 별도 `UI Visual Redesign Gate`에서 일괄 교체한다.
 
 ## 기존 Roblox Studio Baseline
 
-2026-08-05 15:42 KST 실행 결과:
+2026-08-05 15:42 KST:
 
 ```text
 [RVTT Tests] passed=108 failed=0
@@ -112,33 +139,21 @@ default.project.json Play
 [RVTT MultiClient] passed=56 failed=0 clients=3 staleRetries=3
 ```
 
-검증된 Runtime baseline:
-
-- Unit·Integration Runtime
-- 실제 DataStoreService Save·Load·Conflict·Cleanup
-- DM·Player·Observer 3-client Remote 흐름
-- Authorization과 Unauthorized State 불변
-- Concurrent Join·Stale Revision Recovery·중복 Commit 방지
-- Viewer별 Private Projection과 DM 정보 은닉
-- Disconnect·Reconnect와 Full Resync
-
 ## 상태 해석
 
-현재 Accent Theme Delta는 다음 상태다.
+현재 Accent Theme Delta 상태:
 
 ```text
-ACCENT_THEME_AUTOMATED_TESTS_VERIFIED_UI_PENDING
+ACCENT_THEME_VISUAL_INPUT_VERIFIED_PERSISTENCE_PENDING
 ```
 
 다음을 의미하지 않는다.
 
-- 부팅 수정 후 실제 Studio UI 표시 확인 완료
-- 여섯 Palette의 시각·입력·접근성 Acceptance 완료
-- Studio Play 종료 후 Preference 영구 복구 완료
+- Live Persistence 상태의 Accent 재접속 복구 완료
+- Roblox 기본 아바타 비생성 Studio 확인 완료
 - Slice 01 전체 사용자 흐름 Acceptance 완료
-- Slices 02–16 Build Acceptance 완료
+- Slices 02–16 Acceptance 완료
 - 서버 종료·재시작과 Cross-server 저장 복구 완료
-- Navigation·Physics·Streaming 검증 완료
 - UI 최종 시각 품질·접근성 완료
 - 성능·장시간 Soak 완료
 - Production Ready 또는 Release Ready
@@ -149,7 +164,7 @@ ACCENT_THEME_AUTOMATED_TESTS_VERIFIED_UI_PENDING
 
 ```text
 Default Studio Play
-→ Session 내 Accent 선택·Projection 검수
+→ Session 내 UI 검수
 
 Live Persistence 검수
 → live-datastore.project.json
@@ -157,22 +172,15 @@ Live Persistence 검수
 → DataModel Attribute RVTT_EnableStudioPersistence=true
 ```
 
-Play 종료 후 마지막 Accent 복구는 Live Persistence를 명시적으로 활성화한 별도 Gate에서 검증한다.
-
 ## 아직 미검증
 
-- 수정 Head에서 Loading 화면이 정상 종료되는지 확인
-- 기본 Gold Theme의 실제 Studio 렌더링
-- 여섯 Accent Palette의 Hover·Selected·Focus·Contrast
-- Settings Q 종료와 Keyboard Focus 순서
-- Accent 선택 후 Projection Reconciliation
+- 기본 Roblox 아바타가 생성되지 않는지 실제 Studio 확인
 - Live Persistence 활성화 상태의 Accent Preference 복구
-- 의미색이 사용자 Accent에 의해 변경되지 않는지 확인
 - Slice 01 `Join → Select → Ready → Scene → Move → Reconnect`
 - Slices 02–16 사용자·보안·복구 Scenario
 - DataStore server restart·Cross-server Lease·Migration Recovery
 - Navigation·Physics·Streaming·Large Scene
-- UI Visual QA와 Accessibility User Test
+- 전면 UI Visual Redesign와 Accessibility User Test
 - Performance·Memory·Network·Fault·Soak Evidence
 
 ## 데이터 차단
