@@ -12,7 +12,7 @@ export type Result<T> = { ok: true, value: T } | { ok: false, error: Failure }
 local Result = {}
 
 function Result.ok<T>(value: T): Result<T>
-	return { ok = true, value = value }
+	return ({ ok = true, value = value } :: any) :: Result<T>
 end
 
 function Result.err<T>(
@@ -21,7 +21,7 @@ function Result.err<T>(
 	retryable: boolean,
 	details: { [string]: unknown }?
 ): Result<T>
-	return {
+	return ({
 		ok = false,
 		error = {
 			code = code,
@@ -29,14 +29,14 @@ function Result.err<T>(
 			retryable = retryable,
 			details = details,
 		},
-	}
+	} :: any) :: Result<T>
 end
 
 function Result.map<T, U>(result: Result<T>, transform: (T) -> U): Result<U>
 	if result.ok then
 		return Result.ok(transform(result.value))
 	end
-	return result :: Result<U>
+	return result :: any
 end
 
 return table.freeze(Result)
