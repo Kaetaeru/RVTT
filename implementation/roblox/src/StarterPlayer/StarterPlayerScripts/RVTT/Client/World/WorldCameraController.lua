@@ -55,7 +55,7 @@ function Controller.new(renderer: any, enabled: boolean): Controller
 	}, Controller) :: any
 end
 
-function Controller:_apply(event: string): boolean
+function Controller._apply(self: Controller, event: string): boolean
 	if not self.enabled then
 		return false
 	end

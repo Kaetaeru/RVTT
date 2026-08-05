@@ -584,7 +584,10 @@ local function run(action: () -> ())
 	end
 	busy = true
 	renderState()
-	local succeeded, errorMessage = xpcall(action, debug.traceback)
+	local errorMessage: any = nil
+	local succeeded = xpcall(action, function(errorValue)
+		errorMessage = debug.traceback(tostring(errorValue))
+	end)
 	busy = false
 	if not succeeded then
 		setOperation("Batch 작업 실패 · Output의 첫 오류를 확인하세요", true)
