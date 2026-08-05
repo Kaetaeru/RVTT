@@ -5,7 +5,7 @@ local ContextActionService = game:GetService("ContextActionService")
 local Router = {}
 Router.__index = Router
 
-local bindings = {
+local bindings: { [string]: { Enum.KeyCode } } = {
 	Cancel = { Enum.KeyCode.Q },
 	Confirm = { Enum.KeyCode.E },
 	PrimaryAction1 = { Enum.KeyCode.One },
