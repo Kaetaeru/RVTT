@@ -204,6 +204,13 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: luau-type-analysis-${{ github.run_id }}
-          path: implementation/roblox/typecheck.log
+          path: |
+            implementation/roblox/typecheck.log
+            implementation/roblox/src
+            implementation/roblox/tests
+            implementation/roblox/default.project.json
+            implementation/roblox/test.project.json
+            implementation/roblox/stylua.toml
+            implementation/roblox/selene.toml
           if-no-files-found: error
           retention-days: 7
