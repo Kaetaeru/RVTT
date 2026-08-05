@@ -79,14 +79,15 @@ local function roleResolver(player: Player): string
 end
 
 local builder = ProjectionBuilder.new()
-local publisher: any = ProjectionPublisher.new(runtime, builder, remotes, roleResolver)
+local publisher: any = ProjectionPublisher.new(runtime, builder, remotes, roleResolver, nil)
 local router: any = CommandRouter.new(
 	runtime,
 	remotes,
 	RateLimiter.new(1, 30),
 	roleResolver,
 	publisher,
-	diagnostics
+	diagnostics,
+	nil
 )
 
 publisher:start()
