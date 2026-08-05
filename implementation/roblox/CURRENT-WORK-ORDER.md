@@ -186,6 +186,18 @@ SLICE_01_ACCEPTANCE_HARNESS_READY_STUDIO_PENDING
 - Accent Preference가 유지된다.
 - 관련 Output 오류가 없다.
 
+정적 Gate Evidence Head:
+
+```text
+c096f3493c75673eaa6c2b9225cecf98c00ffca4
+```
+
+- Structure·Policy Validator: PASS
+- StyLua: PASS
+- Selene: PASS
+- Production·Test·Multi-client·Persistence·Slice 01 Rojo Build: PASS
+- Production·Test Luau Type Analysis: PASS
+
 ## 7. 다음 Gate
 
 ```text
