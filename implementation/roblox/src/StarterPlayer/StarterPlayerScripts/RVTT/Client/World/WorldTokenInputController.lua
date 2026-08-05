@@ -136,13 +136,18 @@ function Controller.start(self: Controller)
 		return
 	end
 	self.connection = UserInputService.InputBegan:Connect(function(input, processed)
+		local primary = input.UserInputType == Enum.UserInputType.MouseButton1
+			or input.UserInputType == Enum.UserInputType.Touch
 		if processed then
+			if primary then
+				local position = screenPosition(input)
+				debugClick(
+					string.format("ignored processed input screen=(%.1f, %.1f)", position.X, position.Y)
+				)
+			end
 			return
 		end
-		if
-			input.UserInputType == Enum.UserInputType.MouseButton1
-			or input.UserInputType == Enum.UserInputType.Touch
-		then
+		if primary then
 			self:_handlePrimary(input)
 		elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
 			self.renderer:setSelected(nil)
