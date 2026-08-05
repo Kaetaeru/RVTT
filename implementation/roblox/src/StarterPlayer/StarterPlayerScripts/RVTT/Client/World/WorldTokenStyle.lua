@@ -10,4 +10,13 @@ return table.freeze({
 	LabelOffset = Vector3.new(0, 4.35, 0),
 	SelectionHitboxMinimum = Vector3.new(4.5, 5.5, 4.5),
 	SelectionHitboxPadding = Vector3.new(1.2, 0.6, 1.2),
+	ScreenPickPaddingPixels = 10,
+	ScreenPickFallbackPixels = 18,
+	DestinationMarkerDiameter = 3.6,
+	DestinationPending = Color3.fromRGB(217, 184, 95),
+	DestinationAccepted = Color3.fromRGB(98, 169, 230),
+	DestinationProjected = Color3.fromRGB(88, 184, 138),
+	DestinationRejected = Color3.fromRGB(220, 105, 105),
+	DestinationProjectionTolerance = 0.35,
+	DestinationMarkerLifetimeSeconds = 2,
 })

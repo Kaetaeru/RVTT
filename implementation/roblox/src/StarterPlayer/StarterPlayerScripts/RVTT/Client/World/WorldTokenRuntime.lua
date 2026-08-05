@@ -1,5 +1,7 @@
 --!strict
 
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local WorldCameraController = require(script.Parent.WorldCameraController)
 local WorldTokenRenderer = require(script.Parent.WorldTokenRenderer)
 local WorldTokenInputController = require(script.Parent.WorldTokenInputController)
 
@@ -8,8 +10,13 @@ export type Runtime = {
 	Command: any,
 	Renderer: any,
 	Input: any,
+	Camera: any,
 	SelectionChanged: any,
+	PickResolved: any,
 	MoveRequested: any,
+	MoveResolved: any,
+	Reconciled: any,
+	DestinationChanged: any,
 	connection: any,
 	started: boolean,
 	start: (self: Runtime) -> (),
@@ -19,16 +26,47 @@ export type Runtime = {
 local Runtime = {}
 Runtime.__index = Runtime
 
+local rvtt = ReplicatedStorage:WaitForChild("RVTT")
+local acceptanceMode = rvtt:FindFirstChild("Slice01AcceptanceMode")
+local ACCEPTANCE_MODE = acceptanceMode ~= nil
+	and acceptanceMode:IsA("BoolValue")
+	and acceptanceMode.Value
+
+local function logProjection(summary: any)
+	if not ACCEPTANCE_MODE then
+		return
+	end
+	if summary.created == 0 and summary.updated == 0 and summary.removed == 0 then
+		return
+	end
+	print(
+		string.format(
+			"[RVTT WorldToken Projection] event=reconcile revision=%s created=%d updated=%d removed=%d count=%d",
+			tostring(summary.revision),
+			summary.created,
+			summary.updated,
+			summary.removed,
+			summary.count
+		)
+	)
+end
+
 function Runtime.new(replica: any, command: any): Runtime
 	local renderer = WorldTokenRenderer.new(nil, nil)
 	local input = WorldTokenInputController.new(renderer, replica, command)
+	local camera = WorldCameraController.new(renderer, ACCEPTANCE_MODE)
 	return setmetatable({
 		Replica = replica,
 		Command = command,
 		Renderer = renderer,
 		Input = input,
+		Camera = camera,
 		SelectionChanged = renderer.SelectionChanged,
+		PickResolved = input.PickResolved,
 		MoveRequested = input.MoveRequested,
+		MoveResolved = input.MoveResolved,
+		Reconciled = renderer.Reconciled,
+		DestinationChanged = renderer.DestinationChanged,
 		connection = nil,
 		started = false,
 	}, Runtime) :: any
@@ -39,11 +77,15 @@ function Runtime.start(self: Runtime)
 		return
 	end
 	self.started = true
-	self.Renderer:reconcile(self.Replica.payload)
-	self.connection = self.Replica.Changed:Connect(function(payload)
-		self.Renderer:reconcile(payload)
+	logProjection(self.Renderer:reconcile(self.Replica.payload, self.Replica.revision))
+	self.connection = self.Replica.Changed:Connect(function(payload, envelope)
+		local revision = if type(envelope) == "table" and type(envelope.revision) == "number"
+			then envelope.revision
+			else self.Replica.revision
+		logProjection(self.Renderer:reconcile(payload, revision))
 	end)
 	self.Input:start()
+	self.Camera:start()
 end
 
 function Runtime.destroy(self: Runtime)
@@ -55,6 +97,7 @@ function Runtime.destroy(self: Runtime)
 		self.connection:Disconnect()
 		self.connection = nil
 	end
+	self.Camera:destroy()
 	self.Input:destroy()
 	self.Renderer:destroy()
 end

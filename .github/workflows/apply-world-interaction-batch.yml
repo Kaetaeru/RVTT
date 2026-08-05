@@ -1,0 +1,33 @@
+name: Apply world interaction batch
+
+on:
+  push:
+    branches:
+      - planning/rvtt-remake
+    paths:
+      - .batch-payload/world-batch.part00
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: planning/rvtt-remake
+          fetch-depth: 0
+      - name: Apply compressed batch files
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .batch-payload/world-batch.part* | base64 --decode > /tmp/world-batch-files.tgz
+          tar -xzf /tmp/world-batch-files.tgz -C implementation/roblox
+          rm -rf .batch-payload
+          rm -f .github/workflows/apply-world-interaction-batch.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "feat: complete Slice 01 world interaction batch"
+          git push origin HEAD:planning/rvtt-remake
