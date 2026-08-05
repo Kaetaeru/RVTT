@@ -21,7 +21,7 @@ permissions:
   contents: read
 
 env:
-  ROJO_VERSION: "7.6.1"
+  ROJO_VERSION: "7.7.0"
   STYLUA_VERSION: "2.5.2"
   SELENE_VERSION: "0.31.0"
   LUAU_LSP_VERSION: "1.69.0"
