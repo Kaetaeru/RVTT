@@ -42,6 +42,14 @@ jobs:
           if ! command -v stylua >/dev/null 2>&1; then
             cargo install stylua --version "${STYLUA_VERSION}" --features luau --locked
           fi
+          cp "$(command -v stylua)" /tmp/stylua
+
+      - name: Upload StyLua binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: stylua-${{ github.run_id }}
+          path: /tmp/stylua
+          retention-days: 1
 
       - name: Apply patch to the Roblox project root
         shell: bash
@@ -52,6 +60,16 @@ jobs:
           done > /tmp/rvtt-type-fixes.patch.gz.b64
           base64 --decode /tmp/rvtt-type-fixes.patch.gz.b64 | gzip --decompress > /tmp/rvtt-type-fixes.patch
           git apply --directory=implementation/roblox /tmp/rvtt-type-fixes.patch
+          python - <<'PY'
+          from pathlib import Path
+          path = Path("implementation/roblox/src/StarterPlayer/StarterPlayerScripts/RVTT/Client/ClientRuntime.lua")
+          content = path.read_text(encoding="utf-8")
+          content = content.replace(
+              "handlers: { [string]: (...any) -> boolean\n\t) -> (),",
+              "handlers: { [string]: (...any) -> boolean }\n\t) -> (),",
+          )
+          path.write_text(content, encoding="utf-8")
+          PY
           stylua implementation/roblox/src implementation/roblox/tests
 
       - name: Commit fixes and remove applicator
