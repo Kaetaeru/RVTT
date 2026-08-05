@@ -22,7 +22,7 @@ local ClientRuntime = {}
 function ClientRuntime.set(runtime: Runtime)
 	assert(current == nil, "ClientRuntime has already been initialized")
 	current = runtime
-	ready:Fire(runtime)
+	ready:Fire()
 end
 
 function ClientRuntime.get(): Runtime?
@@ -35,9 +35,10 @@ function ClientRuntime.await(): Runtime
 		return existing
 	end
 
-	local runtime = ready.Event:Wait()
-	assert(type(runtime) == "table", "ClientRuntime readiness payload must be a table")
-	return runtime :: any
+	ready.Event:Wait()
+	local runtime = current
+	assert(runtime ~= nil, "ClientRuntime readiness event fired before initialization")
+	return runtime
 end
 
 return ClientRuntime
