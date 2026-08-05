@@ -1,9 +1,14 @@
 --!strict
 
+local ContextActionService = game:GetService("ContextActionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
 local Signal = require(ReplicatedStorage.RVTT.Shared.Core.Signal)
+
+local FRAME_ACTION = "RVTTWorldCameraFrame"
+local PAN_ACTION = "RVTTWorldCameraPan"
+local INPUT_PRIORITY = Enum.ContextActionPriority.High.Value
 
 export type Controller = {
 	renderer: any,
@@ -17,9 +22,19 @@ export type Controller = {
 	previousType: Enum.CameraType?,
 	previousCFrame: CFrame?,
 	Changed: any,
+	InputResolved: any,
 	_apply: (self: Controller, event: string) -> boolean,
+	_reportInput: (
+		self: Controller,
+		action: string,
+		source: string,
+		processed: boolean,
+		before: CFrame?,
+		applied: boolean
+	) -> (),
 	framePosition: (self: Controller, position: Vector3, distance: number?) -> boolean,
 	frameSelected: (self: Controller) -> boolean,
+	requestFrame: (self: Controller, source: string, processed: boolean?) -> boolean,
 	frameAll: (self: Controller) -> boolean,
 	panPixels: (self: Controller, delta: Vector2) -> boolean,
 	zoomBy: (self: Controller, steps: number) -> boolean,
@@ -39,6 +54,16 @@ local function flatUnit(vector: Vector3, fallback: Vector3): Vector3
 	return if flat.Magnitude > 0.001 then flat.Unit else fallback
 end
 
+local function cframeChanged(before: CFrame?, after: CFrame?): boolean
+	if before == nil or after == nil then
+		return false
+	end
+	if (after.Position - before.Position).Magnitude > 0.001 then
+		return true
+	end
+	return before.LookVector:Dot(after.LookVector) < 0.99999
+end
+
 function Controller.new(renderer: any, enabled: boolean): Controller
 	return setmetatable({
 		renderer = renderer,
@@ -52,6 +77,7 @@ function Controller.new(renderer: any, enabled: boolean): Controller
 		previousType = nil,
 		previousCFrame = nil,
 		Changed = Signal.new(),
+		InputResolved = Signal.new(),
 	}, Controller) :: any
 end
 
@@ -73,6 +99,29 @@ function Controller._apply(self: Controller, event: string): boolean
 	currentCamera.CFrame = CFrame.lookAt(self.target + offset, self.target)
 	self.Changed:Fire(event, self.target, self.distance, currentCamera.CFrame)
 	return true
+end
+
+function Controller._reportInput(
+	self: Controller,
+	action: string,
+	source: string,
+	processed: boolean,
+	before: CFrame?,
+	applied: boolean
+)
+	local currentCamera = camera()
+	local changed = currentCamera ~= nil and cframeChanged(before, currentCamera.CFrame)
+	self.InputResolved:Fire(action, source, applied, changed, processed)
+	print(
+		string.format(
+			"[RVTT WorldCamera Input] action=%s source=%s applied=%s changed=%s processed=%s",
+			action,
+			source,
+			tostring(applied),
+			tostring(changed),
+			tostring(processed)
+		)
+	)
 end
 
 function Controller.framePosition(self: Controller, position: Vector3, distance: number?): boolean
@@ -97,6 +146,14 @@ function Controller.frameSelected(self: Controller): boolean
 	return self:framePosition(boundsCFrame.Position, distance)
 end
 
+function Controller.requestFrame(self: Controller, source: string, processed: boolean?): boolean
+	local currentCamera = camera()
+	local before = if currentCamera ~= nil then currentCamera.CFrame else nil
+	local applied = self:frameSelected()
+	self:_reportInput("frame", source, processed == true, before, applied)
+	return applied
+end
+
 function Controller.frameAll(self: Controller): boolean
 	local center, size = self.renderer:getWorldBounds()
 	if center == nil or size == nil then
@@ -107,7 +164,7 @@ function Controller.frameAll(self: Controller): boolean
 end
 
 function Controller.panPixels(self: Controller, delta: Vector2): boolean
-	if not self.enabled then
+	if not self.enabled or delta.Magnitude <= 0 then
 		return false
 	end
 	local currentCamera = camera()
@@ -122,7 +179,7 @@ function Controller.panPixels(self: Controller, delta: Vector2): boolean
 end
 
 function Controller.zoomBy(self: Controller, steps: number): boolean
-	if not self.enabled then
+	if not self.enabled or steps == 0 then
 		return false
 	end
 	self.distance = math.clamp(self.distance * (1 + steps * 0.12), 12, 120)
@@ -140,43 +197,64 @@ function Controller.start(self: Controller)
 	end
 	self:frameAll()
 
-	table.insert(
-		self.connections,
-		UserInputService.InputBegan:Connect(function(input, processed)
-			if processed then
-				return
+	ContextActionService:BindActionAtPriority(
+		FRAME_ACTION,
+		function(_actionName: string, inputState: Enum.UserInputState): Enum.ContextActionResult
+			if inputState ~= Enum.UserInputState.Begin then
+				return Enum.ContextActionResult.Sink
 			end
-			if input.UserInputType == Enum.UserInputType.MouseButton3 then
+			if UserInputService:GetFocusedTextBox() ~= nil then
+				return Enum.ContextActionResult.Pass
+			end
+			self:requestFrame("keyboard-f", false)
+			return Enum.ContextActionResult.Sink
+		end,
+		false,
+		INPUT_PRIORITY,
+		Enum.KeyCode.F
+	)
+	ContextActionService:BindActionAtPriority(
+		PAN_ACTION,
+		function(_actionName: string, inputState: Enum.UserInputState): Enum.ContextActionResult
+			if inputState == Enum.UserInputState.Begin then
 				self.dragging = true
-			elseif input.KeyCode == Enum.KeyCode.F then
-				self:frameSelected()
-			end
-		end)
-	)
-	table.insert(
-		self.connections,
-		UserInputService.InputEnded:Connect(function(input)
-			if input.UserInputType == Enum.UserInputType.MouseButton3 then
+				print("[RVTT WorldCamera Input] action=pan-start source=mouse-middle")
+			elseif inputState == Enum.UserInputState.End or inputState == Enum.UserInputState.Cancel then
 				self.dragging = false
+				print("[RVTT WorldCamera Input] action=pan-end source=mouse-middle")
 			end
-		end)
+			return Enum.ContextActionResult.Sink
+		end,
+		false,
+		INPUT_PRIORITY,
+		Enum.UserInputType.MouseButton3
 	)
+
 	table.insert(
 		self.connections,
 		UserInputService.InputChanged:Connect(function(input, processed)
-			if processed then
-				return
-			end
+			local current = camera()
+			local before = if current ~= nil then current.CFrame else nil
 			if input.UserInputType == Enum.UserInputType.MouseWheel then
-				self:zoomBy(-input.Position.Z)
+				local applied = self:zoomBy(-input.Position.Z)
+				self:_reportInput("zoom", "mouse-wheel", processed, before, applied)
 			elseif self.dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-				self:panPixels(Vector2.new(input.Delta.X, input.Delta.Y))
+				local applied = self:panPixels(Vector2.new(input.Delta.X, input.Delta.Y))
+				self:_reportInput("pan", "mouse-middle-drag", processed, before, applied)
 			end
+		end)
+	)
+	table.insert(
+		self.connections,
+		UserInputService.WindowFocusReleased:Connect(function()
+			self.dragging = false
 		end)
 	)
 end
 
 function Controller.destroy(self: Controller)
+	ContextActionService:UnbindAction(FRAME_ACTION)
+	ContextActionService:UnbindAction(PAN_ACTION)
 	for _, connection in self.connections do
 		connection:Disconnect()
 	end
@@ -191,6 +269,7 @@ function Controller.destroy(self: Controller)
 			currentCamera.CFrame = self.previousCFrame
 		end
 	end
+	self.InputResolved:Destroy()
 	self.Changed:Destroy()
 end
 
