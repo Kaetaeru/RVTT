@@ -149,6 +149,10 @@ jobs:
         working-directory: implementation/roblox
         run: rojo build multi-client.project.json --output /tmp/RVTT-multi-client.rbxlx
 
+      - name: Build persistence acceptance place with Rojo
+        working-directory: implementation/roblox
+        run: rojo build persistence-acceptance.project.json --output /tmp/RVTT-persistence-acceptance.rbxlx
+
       - name: Generate production Rojo sourcemap
         working-directory: implementation/roblox
         run: rojo sourcemap default.project.json --output sourcemap.json
@@ -240,6 +244,7 @@ jobs:
             implementation/roblox/test.project.json
             implementation/roblox/live-datastore.project.json
             implementation/roblox/multi-client.project.json
+            implementation/roblox/persistence-acceptance.project.json
             implementation/roblox/stylua.toml
             implementation/roblox/selene.toml
           if-no-files-found: error
