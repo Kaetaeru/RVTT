@@ -2,6 +2,11 @@
   "name": "RVTT",
   "tree": {
     "$className": "DataModel",
+    "Players": {
+      "$properties": {
+        "CharacterAutoLoads": false
+      }
+    },
     "ReplicatedFirst": {"RVTT": {"$path": "src/ReplicatedFirst/RVTT"}},
     "ReplicatedStorage": {"RVTT": {"$path": "src/ReplicatedStorage/RVTT"}},
     "ServerScriptService": {"RVTT": {"$path": "src/ServerScriptService/RVTT"}},

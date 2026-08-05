@@ -13,6 +13,8 @@ then
 	return
 end
 
+Players.CharacterAutoLoads = false
+
 local Version = require(ReplicatedStorage.RVTT.Shared.Core.Version)
 local Server = script.Parent.Server
 local CommandRegistry = require(Server.Runtime.CommandRegistry)
@@ -107,7 +109,15 @@ end
 
 router:start()
 
+local function removeRobloxAvatar(player: Player)
+	local character = player.Character
+	if character ~= nil then
+		character:Destroy()
+	end
+end
+
 local function recordConnected(player: Player)
+	removeRobloxAvatar(player)
 	runtime:executeSystem("session.connection", { userId = player.UserId, status = "connected" })
 end
 
@@ -123,5 +133,9 @@ publisher:publishAll()
 diagnostics:record(
 	"info",
 	"SERVER_BOOTED",
-	{ commandCount = #registry:list(), persistenceEnabled = persistenceEnabled } :: { [string]: unknown }
+	{
+		commandCount = #registry:list(),
+		persistenceEnabled = persistenceEnabled,
+		robloxCharacterAutoLoads = Players.CharacterAutoLoads,
+	} :: { [string]: unknown }
 )
