@@ -40,12 +40,15 @@ function Envelope.validateCommand(value: unknown)
     if envelope.authorityEpoch ~= nil and not isShortString(envelope.authorityEpoch, 160) then
         return Result.err("INVALID_ENVELOPE", "error.protocol.invalid_envelope", false)
     end
-    if envelope.expectedRevision ~= nil and (
-        not ValueGuard.isFiniteNumber(envelope.expectedRevision)
-        or envelope.expectedRevision :: number < 0
-        or (envelope.expectedRevision :: number) % 1 ~= 0
-    ) then
-        return Result.err("INVALID_ENVELOPE", "error.protocol.invalid_envelope", false)
+    if envelope.expectedRevision ~= nil then
+        if not ValueGuard.isFiniteNumber(envelope.expectedRevision) then
+            return Result.err("INVALID_ENVELOPE", "error.protocol.invalid_envelope", false)
+        end
+
+        local expectedRevision = envelope.expectedRevision :: number
+        if expectedRevision < 0 or expectedRevision % 1 ~= 0 then
+            return Result.err("INVALID_ENVELOPE", "error.protocol.invalid_envelope", false)
+        end
     end
 
     return Result.ok(envelope :: CommandEnvelope)
