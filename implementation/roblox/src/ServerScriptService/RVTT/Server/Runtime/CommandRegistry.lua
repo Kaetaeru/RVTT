@@ -27,7 +27,7 @@ local CommandRegistry = {}
 CommandRegistry.__index = CommandRegistry
 
 function CommandRegistry.new()
-	return setmetatable({ descriptors = {} }, CommandRegistry)
+	return setmetatable({ _descriptors = {} }, CommandRegistry)
 end
 
 function CommandRegistry:register(descriptor: Descriptor)
@@ -42,14 +42,14 @@ function CommandRegistry:register(descriptor: Descriptor)
 	)
 	assert(type(descriptor.execute) == "function", "execute required: " .. descriptor.commandType)
 	assert(
-		self.descriptors[descriptor.commandType] == nil,
+		self._descriptors[descriptor.commandType] == nil,
 		"duplicate command: " .. descriptor.commandType
 	)
-	self.descriptors[descriptor.commandType] = table.freeze(descriptor)
+	self._descriptors[descriptor.commandType] = table.freeze(descriptor)
 end
 
 function CommandRegistry:get(commandType: string)
-	local descriptor = self.descriptors[commandType]
+	local descriptor = self._descriptors[commandType]
 	if descriptor == nil then
 		return Result.err(
 			"UNKNOWN_COMMAND",
@@ -63,15 +63,15 @@ end
 
 function CommandRegistry:list(): { string }
 	local values = {}
-	for commandType in self.descriptors do
+	for commandType in self._descriptors do
 		table.insert(values, commandType)
 	end
 	table.sort(values)
 	return values
 end
 
-function CommandRegistry:descriptors()
-	return self.descriptors
+function CommandRegistry:all()
+	return self._descriptors
 end
 
 return CommandRegistry
