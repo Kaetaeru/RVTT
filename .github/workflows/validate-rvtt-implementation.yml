@@ -45,16 +45,18 @@ jobs:
           ref: planning/rvtt-remake
           fetch-depth: 0
 
-      - name: Cache pinned StyLua
+      - name: Restore pinned Roblox tool cache
         uses: actions/cache@v4
         with:
           path: |
+            ~/.cargo/bin/rojo
             ~/.cargo/bin/stylua
+            ~/.cargo/bin/selene
             ~/.cargo/registry
             ~/.cargo/git
-          key: rvtt-stylua-${{ runner.os }}-${{ env.STYLUA_VERSION }}
+          key: rvtt-rust-tools-${{ runner.os }}-rojo-7.6.1-stylua-${{ env.STYLUA_VERSION }}-selene-0.31.0
 
-      - name: Install pinned StyLua
+      - name: Install pinned StyLua when missing
         shell: bash
         run: |
           set -euo pipefail
