@@ -20,7 +20,12 @@ export type InputContextStack = {
 	) -> (),
 	remove: (self: InputContextStack, name: string) -> (),
 }
-export type Runtime = { Replica: ProjectionReplica, Command: any, Input: InputContextStack }
+export type Runtime = {
+	Replica: ProjectionReplica,
+	Command: any,
+	Input: InputContextStack,
+	WorldTokens: any,
+}
 
 local current: Runtime? = nil
 local ready = Instance.new("BindableEvent")
