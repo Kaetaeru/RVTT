@@ -6,7 +6,13 @@
     "ReplicatedStorage": {"RVTT": {"$path": "src/ReplicatedStorage/RVTT"}},
     "ServerScriptService": {
       "RVTT": {"$path": "src/ServerScriptService/RVTT"},
-      "RVTTTests": {"$path": "tests"}
+      "RVTTTests": {
+        "$className": "Folder",
+        "TestHarness": {"$path": "tests/TestHarness.lua"},
+        "TestRunner": {"$path": "tests/TestRunner.server.lua"},
+        "Unit": {"$path": "tests/Unit"},
+        "Integration": {"$path": "tests/Integration"}
+      }
     },
     "ServerStorage": {"RVTT": {"$path": "src/ServerStorage/RVTT"}},
     "StarterPlayer": {"StarterPlayerScripts": {"RVTT": {"$path": "src/StarterPlayer/StarterPlayerScripts/RVTT"}}},
