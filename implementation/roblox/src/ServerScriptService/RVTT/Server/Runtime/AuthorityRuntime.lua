@@ -1,8 +1,10 @@
 --!strict
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local DeepCopy = require(ReplicatedStorage.RVTT.Shared.Core.DeepCopy)
 local Identity = require(ReplicatedStorage.RVTT.Shared.Core.Identity)
 local Result = require(ReplicatedStorage.RVTT.Shared.Core.Result)
+local ValueGuard = require(ReplicatedStorage.RVTT.Shared.Core.ValueGuard)
 local Version = require(ReplicatedStorage.RVTT.Shared.Core.Version)
 
 local MAX_IDEMPOTENCY_RECORDS = 4096
@@ -26,6 +28,7 @@ function AuthorityRuntime.new(
 	self.processedCommands = {}
 	self.processedOrder = {}
 	self.commitListeners = {}
+	self.domainInitializers = {}
 	self.state = {
 		schemaVersion = Version.SCHEMA,
 		authorityEpoch = Identity.new("epoch"),
@@ -37,6 +40,8 @@ end
 
 function AuthorityRuntime:installDomain(domain)
 	assert(self.state.domains[domain.id] == nil, "duplicate domain: " .. domain.id)
+	assert(type(domain.initialState) == "function", "domain initialState required: " .. domain.id)
+	self.domainInitializers[domain.id] = domain.initialState
 	self.state.domains[domain.id] = domain.initialState()
 	domain.register(self.registry)
 end
@@ -161,9 +166,31 @@ function AuthorityRuntime:restore(document)
 	then
 		return Result.err("MIGRATION_FAILED", "error.persistence.migration_failed", false)
 	end
-	document.authorityEpoch = Identity.new("epoch")
-	document.revision = math.max(0, document.revision or 0)
-	self.state = document
+	if not ValueGuard.isFiniteNumber(document.revision) then
+		return Result.err("MIGRATION_FAILED", "error.persistence.migration_failed", false)
+	end
+
+	local revision = document.revision :: number
+	if revision < 0 or revision % 1 ~= 0 then
+		return Result.err("MIGRATION_FAILED", "error.persistence.migration_failed", false)
+	end
+
+	local restored = DeepCopy(document)
+	local restoredDomains = {}
+	for domainId, initialState in self.domainInitializers do
+		local candidate = restored.domains[domainId]
+		if type(candidate) == "table" then
+			restoredDomains[domainId] = candidate
+		else
+			restoredDomains[domainId] = initialState()
+		end
+	end
+
+	restored.schemaVersion = Version.SCHEMA
+	restored.authorityEpoch = Identity.new("epoch")
+	restored.revision = revision
+	restored.domains = restoredDomains
+	self.state = restored
 	table.clear(self.processedCommands)
 	table.clear(self.processedOrder)
 	return Result.ok(true)
