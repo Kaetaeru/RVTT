@@ -40,7 +40,7 @@ Slice 01 3D World Token Layer
 → BATCH ACCEPTANCE RULE ACTIVE
 
 현재 작업
-→ Slice 01 World Interaction Batch Implementation
+→ Slice 01 World Interaction Batch Studio Acceptance
 ```
 
 기존 Studio Evidence:
@@ -95,8 +95,8 @@ tooling/run-studio-acceptance-batch.ps1
 | 6 | DONE | Accent Theme·Avatar·Persistence | Visual·Input·Save·Reload·Character Suppression 확인 |
 | 7 | DONE | Slice 01 Authority Acceptance | Join→Select→Ready→Scene→Move→Reconnect 상태 복구 |
 | 8 | DONE | Slice 01 3D World Token Baseline | Projection Renderer·Asset Resolver·월드 입력 연결 |
-| 9 | IN_PROGRESS | Slice 01 World Interaction Batch | Picking·Selection·Destination·Camera·Move·Diagnostics·Recovery 완성 |
-| 10 | QUEUED | Slice 01 Batch Studio Acceptance | 단일 게시에서 전체 World Interaction Flow와 Final Summary 확인 |
+| 9 | DONE | Slice 01 World Interaction Batch | Picking·Selection·Destination·Camera·Move·Diagnostics·Recovery와 Final Summary 구현·CI PASS |
+| 10 | IN_PROGRESS | Slice 01 Batch Studio Acceptance | 단일 게시에서 전체 World Interaction Flow와 Final Summary 확인 |
 | 11 | QUEUED | Slice 01 Production Build Acceptance Audit | 실행 Evidence와 권위·복구 Checklist 판정 |
 | 12 | QUEUED | Slice 02 Rules·D20 Batch | 판정·Attack·Damage·Projection·복구를 한 묶음으로 구현·검증 |
 | 13 | QUEUED | Slices 03–16 Batch Acceptance | 관련 Slice를 Milestone 단위로 묶어 검증 |
@@ -107,7 +107,7 @@ tooling/run-studio-acceptance-batch.ps1
 
 ## 4. 현재 Slice 01 World Interaction Batch
 
-이번 Batch는 다음 항목을 모두 구현한 뒤 한 번만 Studio 검사를 요청한다.
+이번 Batch의 구현과 자동 Gate가 완료됐다. 다음 검사는 한 번의 Studio Batch Acceptance다.
 
 ```text
 3D Token Projection 안정화
@@ -130,7 +130,7 @@ WT-PICK-01
 Workspace.RVTT_AcceptanceBoard.MoveSurface를 반환함
 ```
 
-이 결함만을 위한 추가 Place 게시를 요청하지 않는다. Batch 내부에서 Picking Fallback과 진단을 함께 구현한 뒤 최종 Acceptance에서 다시 확인한다.
+Raycast와 Screen-space Bounds를 결합한 이중 Picking, 확대 Hitbox, 구조화 진단을 구현했다. 실제 Roblox Engine 입력 결과는 최종 Batch Acceptance에서 한 번 확인한다.
 
 ## 5. Slice 01 3D World Token 구조
 
@@ -221,7 +221,7 @@ ACCENT_THEME_PERSISTENCE_VERIFIED
 Slice 01 Delta:
 
 ```text
-SLICE_01_WORLD_INTERACTION_BATCH_IN_PROGRESS
+SLICE_01_WORLD_INTERACTION_BATCH_IMPLEMENTED_STUDIO_PENDING
 ```
 
 다음을 의미하지 않는다.
@@ -236,9 +236,10 @@ SLICE_01_WORLD_INTERACTION_BATCH_IN_PROGRESS
 ## 10. 다음 Gate
 
 ```text
-Slice 01 World Interaction Batch Implementation
-→ 자동 회귀·정적 CI PASS
-→ 단일 Slice 01 Batch Studio Acceptance
+Slice 01 World Interaction Batch Implementation·자동 Gate
+→ PASS
+
+단일 Slice 01 Batch Studio Acceptance
 → Slice 01 Production Build Acceptance Audit
 → Slice 02 Rules·D20 Batch
 ```

@@ -91,7 +91,7 @@ BATCH_ACCEPTANCE_RULE_ACTIVE
 현재 Delta:
 
 ```text
-SLICE_01_WORLD_INTERACTION_BATCH_IN_PROGRESS
+SLICE_01_WORLD_INTERACTION_BATCH_IMPLEMENTED_STUDIO_PENDING
 ```
 
 이번 Batch 범위:
@@ -117,7 +117,7 @@ WT-PICK-01
 Workspace.RVTT_AcceptanceBoard.MoveSurface를 반환함
 ```
 
-이 결함은 단독 Studio 재검사를 요청하지 않는다. Picking Fallback, Camera, Selection Feedback, Movement Diagnostics와 함께 구현한 뒤 한 번의 Batch Acceptance에서 확인한다.
+Raycast와 Screen-space Bounds를 결합한 이중 Picking, 확대 Hitbox, Camera, Selection Feedback, Movement Diagnostics를 구현했다. 실제 Roblox Engine 입력 결과는 한 번의 Batch Acceptance에서 확인한다.
 
 ## Slice 01 3D World Token Baseline
 
@@ -140,7 +140,7 @@ Persistence·Reconnect Acceptance Place
 → IMPLEMENTED
 
 Studio World Interaction Batch
-→ IN PROGRESS
+→ IMPLEMENTED · STUDIO PENDING
 ```
 
 ### Projection Renderer
@@ -199,7 +199,7 @@ Move Surface 선택
 
 `slice01-acceptance.project.json`은 실제 Production Server·Client·Networking·Projection·Persistence를 사용한다.
 
-향후 Batch Harness는 다음을 제공한다.
+Batch Harness는 다음을 제공한다.
 
 - 저장 상태 자동 재개
 - 준비 단계 자동화
@@ -253,9 +253,10 @@ Experience 게시 자체는 Batch당 한 번만 사용자가 수행한다.
 ## 다음 Gate
 
 ```text
-Slice 01 World Interaction Batch Implementation
-→ 자동 회귀·정적 CI PASS
-→ 단일 Slice 01 Batch Studio Acceptance
+Slice 01 World Interaction Batch Implementation·자동 Gate
+→ PASS
+
+단일 Slice 01 Batch Studio Acceptance
 → Slice 01 Production Build Acceptance Audit
 → Slice 02 Rules·D20 Batch
 ```
