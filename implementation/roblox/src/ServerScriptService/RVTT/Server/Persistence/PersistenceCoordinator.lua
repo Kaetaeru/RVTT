@@ -54,18 +54,22 @@ function PersistenceCoordinator.load(self: any): any
 			if revision ~= nil then
 				self.lastSavedRevision = revision
 			end
-			print(string.format(
-				"[RVTT Persistence] loaded key=%s revision=%s",
-				self.key,
-				tostring(revision)
-			))
+			print(
+				string.format(
+					"[RVTT Persistence] loaded key=%s revision=%s",
+					self.key,
+					tostring(revision)
+				)
+			)
 		end
 	else
-		warn(string.format(
-			"[RVTT Persistence] load failed key=%s %s",
-			self.key,
-			failureSummary(result)
-		))
+		warn(
+			string.format(
+				"[RVTT Persistence] load failed key=%s %s",
+				self.key,
+				failureSummary(result)
+			)
+		)
 	end
 	return result
 end
@@ -114,19 +118,23 @@ function PersistenceCoordinator.flush(self: any): any
 		if self.dirty == snapshot then
 			self.dirty = nil
 		end
-		print(string.format(
-			"[RVTT Persistence] saved key=%s revision=%s",
-			self.key,
-			tostring(snapshotRevision)
-		))
+		print(
+			string.format(
+				"[RVTT Persistence] saved key=%s revision=%s",
+				self.key,
+				tostring(snapshotRevision)
+			)
+		)
 	else
 		self.diagnostics:increment("persistence.flush_failed")
-		warn(string.format(
-			"[RVTT Persistence] save failed key=%s revision=%s %s",
-			self.key,
-			tostring(snapshotRevision),
-			failureSummary(result)
-		))
+		warn(
+			string.format(
+				"[RVTT Persistence] save failed key=%s revision=%s %s",
+				self.key,
+				tostring(snapshotRevision),
+				failureSummary(result)
+			)
+		)
 	end
 	self.flushing = false
 	self.flushCompleted:Fire()

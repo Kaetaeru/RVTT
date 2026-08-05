@@ -76,12 +76,14 @@ end)
 local studioPersistenceEnabled = game:GetAttribute("RVTT_EnableStudioPersistence") == true
 local persistenceEnabled = not RunService:IsStudio() or studioPersistenceEnabled
 if persistenceEnabled then
-	print(string.format(
-		"[RVTT Persistence] enabled gameId=%d placeId=%d studio=%s",
-		game.GameId,
-		game.PlaceId,
-		tostring(RunService:IsStudio())
-	))
+	print(
+		string.format(
+			"[RVTT Persistence] enabled gameId=%d placeId=%d studio=%s",
+			game.GameId,
+			game.PlaceId,
+			tostring(RunService:IsStudio())
+		)
+	)
 	local migrations = MigrationRegistry.new(Version.SCHEMA)
 	local migrationModule = ServerStorage.RVTT.Migrations:WaitForChild("001_InitialSchema")
 	migrations:register(0, require(migrationModule))
