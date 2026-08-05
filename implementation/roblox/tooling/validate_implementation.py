@@ -11,6 +11,7 @@ for project in (
     "test.project.json",
     "live-datastore.project.json",
     "multi-client.project.json",
+    "persistence-acceptance.project.json",
 ):
     try:
         json.loads((ROOT / project).read_text(encoding="utf-8"))
