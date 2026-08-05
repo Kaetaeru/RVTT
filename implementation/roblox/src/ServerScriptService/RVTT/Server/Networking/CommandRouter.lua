@@ -7,13 +7,18 @@ local Result = require(ReplicatedStorage.RVTT.Shared.Core.Result)
 local CommandRouter = {}
 CommandRouter.__index = CommandRouter
 
+local function defaultPlayerIdResolver(player: Player): number
+	return player.UserId
+end
+
 function CommandRouter.new(
 	runtime,
 	remotes,
 	rateLimiter,
 	roleResolver,
 	projectionPublisher,
-	diagnostics
+	diagnostics,
+	playerIdResolver
 )
 	return setmetatable({
 		runtime = runtime,
@@ -22,6 +27,7 @@ function CommandRouter.new(
 		roleResolver = roleResolver,
 		projectionPublisher = projectionPublisher,
 		diagnostics = diagnostics,
+		playerIdResolver = playerIdResolver or defaultPlayerIdResolver,
 	}, CommandRouter)
 end
 
@@ -35,7 +41,8 @@ end
 
 function CommandRouter:start()
 	self.remotes.command.OnServerEvent:Connect(function(player, rawEnvelope)
-		local key = tostring(player.UserId)
+		local playerId = self.playerIdResolver(player)
+		local key = tostring(playerId)
 		if not self.rateLimiter:allow(key) then
 			self.remotes.receipt:FireClient(
 				player,
@@ -61,7 +68,7 @@ function CommandRouter:start()
 
 		local context = {
 			player = player,
-			playerId = player.UserId,
+			playerId = playerId,
 			role = self.roleResolver(player),
 			origin = "remote",
 			commandId = envelope.commandId,
