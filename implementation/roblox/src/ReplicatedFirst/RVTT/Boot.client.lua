@@ -27,11 +27,12 @@ label.BackgroundColor3 = Color3.fromRGB(18, 20, 24)
 label.TextColor3 = Color3.fromRGB(238, 239, 242)
 label.Text = "RVTT · 동기화 중"
 label.TextSize = 22
+label.TextWrapped = true
 label.Parent = gui
 gui.Parent = playerGui
 
 task.delay(15, function()
-	if gui.Parent ~= nil then
-		label.Text = "연결이 지연되고 있습니다. 다시 동기화합니다."
+	if gui.Parent ~= nil and label.Text == "RVTT · 동기화 중" then
+		label.Text = "서버 초기화가 지연되고 있습니다. Output의 [RVTT Boot] 로그를 확인하세요."
 	end
 end)

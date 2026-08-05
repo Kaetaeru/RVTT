@@ -2,6 +2,7 @@
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local ServerScriptService = game:GetService("ServerScriptService")
 local ServerStorage = game:GetService("ServerStorage")
 
@@ -41,31 +42,6 @@ for _, domain in ServiceGraph.domainModules() do
 	runtime:installDomain(domain)
 end
 
-local migrations = MigrationRegistry.new(Version.SCHEMA)
-local migrationModule = ServerStorage.RVTT.Migrations:WaitForChild("001_InitialSchema")
-migrations:register(0, require(migrationModule))
-local store = ProfileStore.new("RVTT_Authority_v1", migrations, diagnostics)
-local persistence = PersistenceCoordinator.new(store, "campaign:default", diagnostics)
-local loadResult = persistence:load()
-if loadResult.ok and loadResult.value ~= nil then
-	local restoreResult = runtime:restore(loadResult.value)
-	if not restoreResult.ok then
-		diagnostics:record("error", "AUTHORITY_RESTORE_FAILED", {})
-	end
-elseif not loadResult.ok then
-	diagnostics:record("warning", "PERSISTENCE_DEGRADED", {})
-end
-runtime:onCommitted(function(state)
-	persistence:markDirty(state)
-end)
-
-game:BindToClose(function()
-	local result = persistence:flushUntilClean()
-	if not result.ok then
-		diagnostics:record("error", "PERSISTENCE_SHUTDOWN_FLUSH_FAILED", {})
-	end
-end)
-
 local remotes = RemoteBootstrap.create()
 local function roleResolver(player: Player): string
 	if game.PrivateServerOwnerId ~= 0 and player.UserId == game.PrivateServerOwnerId then
@@ -91,21 +67,62 @@ local router: any = CommandRouter.new(
 )
 
 publisher:start()
-router:start()
-
-Players.PlayerAdded:Connect(function(player)
-	runtime:executeSystem("session.connection", { userId = player.UserId, status = "connected" })
-end)
-Players.PlayerRemoving:Connect(function(player)
-	runtime:executeSystem("session.connection", { userId = player.UserId, status = "disconnected" })
-end)
-
 remotes.clientReady.OnServerEvent:Connect(function(player)
 	publisher:publish(player)
 end)
 
+local studioPersistenceEnabled = game:GetAttribute("RVTT_EnableStudioPersistence") == true
+local persistenceEnabled = not RunService:IsStudio() or studioPersistenceEnabled
+if persistenceEnabled then
+	local migrations = MigrationRegistry.new(Version.SCHEMA)
+	local migrationModule = ServerStorage.RVTT.Migrations:WaitForChild("001_InitialSchema")
+	migrations:register(0, require(migrationModule))
+	local store = ProfileStore.new("RVTT_Authority_v1", migrations, diagnostics)
+	local persistence = PersistenceCoordinator.new(store, "campaign:default", diagnostics)
+	local loadResult = persistence:load()
+	if loadResult.ok and loadResult.value ~= nil then
+		local restoreResult = runtime:restore(loadResult.value)
+		if not restoreResult.ok then
+			diagnostics:record("error", "AUTHORITY_RESTORE_FAILED", {})
+		end
+	elseif not loadResult.ok then
+		diagnostics:record("warning", "PERSISTENCE_DEGRADED", {})
+	end
+	runtime:onCommitted(function(state)
+		persistence:markDirty(state)
+	end)
+
+	game:BindToClose(function()
+		local result = persistence:flushUntilClean()
+		if not result.ok then
+			diagnostics:record("error", "PERSISTENCE_SHUTDOWN_FLUSH_FAILED", {})
+		end
+	end)
+else
+	diagnostics:record("info", "STUDIO_PERSISTENCE_DISABLED", {})
+	print(
+		"[RVTT Boot] Studio persistence disabled; use live-datastore.project.json or set RVTT_EnableStudioPersistence=true"
+	)
+end
+
+router:start()
+
+local function recordConnected(player: Player)
+	runtime:executeSystem("session.connection", { userId = player.UserId, status = "connected" })
+end
+
+Players.PlayerAdded:Connect(recordConnected)
+Players.PlayerRemoving:Connect(function(player)
+	runtime:executeSystem("session.connection", { userId = player.UserId, status = "disconnected" })
+end)
+for _, player in Players:GetPlayers() do
+	recordConnected(player)
+end
+publisher:publishAll()
+
 diagnostics:record(
 	"info",
 	"SERVER_BOOTED",
-	{ commandCount = #registry:list() } :: { [string]: unknown }
+	{ commandCount = #registry:list(), persistenceEnabled = persistenceEnabled }
+		:: { [string]: unknown }
 )

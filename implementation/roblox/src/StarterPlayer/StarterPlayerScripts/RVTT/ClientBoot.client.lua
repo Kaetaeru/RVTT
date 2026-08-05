@@ -7,15 +7,63 @@ if ReplicatedStorage:FindFirstChild("RVTT_TestMode") ~= nil then
 	return
 end
 
+local BOOT_TIMEOUT_SECONDS = 10
 local Names = require(ReplicatedStorage.RVTT.Shared.Protocol.RemoteNames)
+local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
 
-local remoteFolder = ReplicatedStorage:WaitForChild(Names.FOLDER)
+local function setLoadingStatus(message: string)
+	local loadingGui = playerGui:FindFirstChild("RVTT_Loading")
+	local status = if loadingGui ~= nil then loadingGui:FindFirstChild("Status") else nil
+	if status ~= nil and status:IsA("TextLabel") then
+		status.Text = message
+	end
+end
+
+local function failBoot(message: string)
+	setLoadingStatus(message)
+	warn("[RVTT ClientBoot]", message)
+end
+
+local function waitForRemote(parent: Instance, name: string, className: string): Instance?
+	local instance = parent:WaitForChild(name, BOOT_TIMEOUT_SECONDS)
+	if instance == nil then
+		failBoot("서버 초기화 실패 · 누락된 Remote: " .. name)
+		return nil
+	end
+	if instance.ClassName ~= className then
+		failBoot("서버 초기화 실패 · Remote 형식 오류: " .. name)
+		return nil
+	end
+	return instance
+end
+
+local remoteFolder = ReplicatedStorage:WaitForChild(Names.FOLDER, BOOT_TIMEOUT_SECONDS)
+if remoteFolder == nil then
+	failBoot("서버 초기화 실패 · Remote 폴더를 찾지 못했습니다")
+	return
+end
+
+local commandRemote = waitForRemote(remoteFolder, Names.COMMAND, "RemoteEvent")
+local receiptRemote = waitForRemote(remoteFolder, Names.RECEIPT, "RemoteEvent")
+local projectionRemote = waitForRemote(remoteFolder, Names.PROJECTION, "RemoteEvent")
+local syncRemote = waitForRemote(remoteFolder, Names.SYNC, "RemoteFunction")
+local clientReadyRemote = waitForRemote(remoteFolder, Names.CLIENT_READY, "RemoteEvent")
+if
+	commandRemote == nil
+	or receiptRemote == nil
+	or projectionRemote == nil
+	or syncRemote == nil
+	or clientReadyRemote == nil
+then
+	return
+end
+
 local remotes = {
-	command = remoteFolder:WaitForChild(Names.COMMAND) :: RemoteEvent,
-	receipt = remoteFolder:WaitForChild(Names.RECEIPT) :: RemoteEvent,
-	projection = remoteFolder:WaitForChild(Names.PROJECTION) :: RemoteEvent,
-	sync = remoteFolder:WaitForChild(Names.SYNC) :: RemoteFunction,
-	clientReady = remoteFolder:WaitForChild(Names.CLIENT_READY) :: RemoteEvent,
+	command = commandRemote :: RemoteEvent,
+	receipt = receiptRemote :: RemoteEvent,
+	projection = projectionRemote :: RemoteEvent,
+	sync = syncRemote :: RemoteFunction,
+	clientReady = clientReadyRemote :: RemoteEvent,
 }
 
 local clientModules = script.Parent.Client
@@ -29,13 +77,21 @@ local replica = ProjectionReplica.new()
 local command = CommandClient.new(remotes, replica)
 local inputStack = InputContextStack.new()
 local inputRouter = SemanticInputRouter.new(inputStack)
+local syncInFlight = false
 
 local function fullResync()
+	if syncInFlight then
+		return
+	end
+	syncInFlight = true
 	local succeeded, snapshot = pcall(function()
 		return remotes.sync:InvokeServer()
 	end)
+	syncInFlight = false
 	if succeeded and snapshot ~= nil then
 		replica:apply(snapshot :: any, true)
+	elseif not succeeded then
+		warn("[RVTT ClientBoot] full resync failed", snapshot)
 	end
 end
 
@@ -46,24 +102,31 @@ command:start(function(message)
 			message.result.error.code == "STALE_EPOCH"
 			or message.result.error.code == "STALE_REVISION"
 		then
-			fullResync()
+			task.spawn(fullResync)
 		end
 	end
 end)
 
 replica.GapDetected:Connect(function()
-	fullResync()
+	task.spawn(fullResync)
 end)
 remotes.projection.OnClientEvent:Connect(function(envelope)
 	replica:apply(envelope :: any, false)
 end)
 
-fullResync()
 inputRouter:start()
 ClientRuntime.set({ Replica = replica, Command = command, Input = inputStack })
-remotes.clientReady:FireServer()
 
-local loadingGui = Players.LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("RVTT_Loading")
+local loadingGui = playerGui:FindFirstChild("RVTT_Loading")
 if loadingGui ~= nil then
 	loadingGui:Destroy()
 end
+
+remotes.clientReady:FireServer()
+task.delay(2, function()
+	if replica.revision < 0 then
+		task.spawn(fullResync)
+	end
+end)
+
+print("[RVTT ClientBoot] runtime ready")
