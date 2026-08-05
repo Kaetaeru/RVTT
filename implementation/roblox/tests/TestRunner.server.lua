@@ -1,5 +1,11 @@
 --!strict
 
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local testMode = ReplicatedStorage:FindFirstChild("RVTT_TestMode")
+if testMode == nil or not testMode:IsA("StringValue") or testMode.Value ~= "unit" then
+	return
+end
+
 local Harness = require(script.Parent.TestHarness)
 local harness = Harness.new()
 
