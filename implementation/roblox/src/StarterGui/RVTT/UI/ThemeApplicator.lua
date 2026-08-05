@@ -44,11 +44,7 @@ local function lookup(colors: ColorMap, value: any): Color3?
 end
 
 local function applyText(instance: Instance, color: Color3)
-	if
-		instance:IsA("TextLabel")
-		or instance:IsA("TextButton")
-		or instance:IsA("TextBox")
-	then
+	if instance:IsA("TextLabel") or instance:IsA("TextButton") or instance:IsA("TextBox") then
 		(instance :: any).TextColor3 = color
 	end
 end
