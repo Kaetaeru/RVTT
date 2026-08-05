@@ -142,7 +142,11 @@ function Controller.start(self: Controller)
 			if primary then
 				local position = screenPosition(input)
 				debugClick(
-					string.format("ignored processed input screen=(%.1f, %.1f)", position.X, position.Y)
+					string.format(
+						"ignored processed input screen=(%.1f, %.1f)",
+						position.X,
+						position.Y
+					)
 				)
 			end
 			return
