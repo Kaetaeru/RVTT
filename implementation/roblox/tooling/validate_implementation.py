@@ -12,6 +12,7 @@ for project in (
     "live-datastore.project.json",
     "multi-client.project.json",
     "persistence-acceptance.project.json",
+    "slice01-acceptance.project.json",
 ):
     try:
         json.loads((ROOT / project).read_text(encoding="utf-8"))
@@ -60,6 +61,8 @@ required = [
     "src/StarterPlayer/StarterPlayerScripts/RVTT/Client/ClientRuntime.lua",
     "src/StarterGui/RVTT/App.client.lua",
     "tests/Integration/MultiViewerFlow.spec.lua",
+    "tests/Integration/Slice01Flow.spec.lua",
+    "tests/Slice01Acceptance/Slice01Acceptance.client.lua",
     "tests/LiveDataStore/DataStoreRunner.server.lua",
     "tests/MultiClient/ServerRunner.server.lua",
     "tests/MultiClient/ClientRunner.client.lua",
