@@ -123,6 +123,5 @@ publisher:publishAll()
 diagnostics:record(
 	"info",
 	"SERVER_BOOTED",
-	{ commandCount = #registry:list(), persistenceEnabled = persistenceEnabled }
-		:: { [string]: unknown }
+	{ commandCount = #registry:list(), persistenceEnabled = persistenceEnabled } :: { [string]: unknown }
 )

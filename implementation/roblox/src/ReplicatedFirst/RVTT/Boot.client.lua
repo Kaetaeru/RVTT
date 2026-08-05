@@ -33,6 +33,7 @@ gui.Parent = playerGui
 
 task.delay(15, function()
 	if gui.Parent ~= nil and label.Text == "RVTT · 동기화 중" then
-		label.Text = "서버 초기화가 지연되고 있습니다. Output의 [RVTT Boot] 로그를 확인하세요."
+		label.Text =
+			"서버 초기화가 지연되고 있습니다. Output의 [RVTT Boot] 로그를 확인하세요."
 	end
 end)
