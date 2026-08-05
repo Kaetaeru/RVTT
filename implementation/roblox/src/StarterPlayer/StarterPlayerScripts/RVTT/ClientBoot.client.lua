@@ -24,47 +24,89 @@ local function failBoot(message: string)
 	warn("[RVTT ClientBoot]", message)
 end
 
-local function waitForRemote(parent: Instance, name: string, className: string): Instance?
-	local instance = parent:WaitForChild(name, BOOT_TIMEOUT_SECONDS)
-	if instance == nil then
-		failBoot("서버 초기화 실패 · 누락된 Remote: " .. name)
+local function uniqueTypedChild(parent: Instance, name: string, className: string): Instance?
+	local match = nil
+	for _, child in parent:GetChildren() do
+		if child.Name == name then
+			if match ~= nil or child.ClassName ~= className then
+				return nil
+			end
+			match = child
+		end
+	end
+	return match
+end
+
+local function resolveRemoteSet(folder: Folder): any?
+	local command = uniqueTypedChild(folder, Names.COMMAND, "RemoteEvent")
+	local receipt = uniqueTypedChild(folder, Names.RECEIPT, "RemoteEvent")
+	local projection = uniqueTypedChild(folder, Names.PROJECTION, "RemoteEvent")
+	local sync = uniqueTypedChild(folder, Names.SYNC, "RemoteFunction")
+	local clientReady = uniqueTypedChild(folder, Names.CLIENT_READY, "RemoteEvent")
+	if
+		command == nil
+		or receipt == nil
+		or projection == nil
+		or sync == nil
+		or clientReady == nil
+	then
 		return nil
 	end
-	if instance.ClassName ~= className then
-		failBoot("서버 초기화 실패 · Remote 형식 오류: " .. name)
-		return nil
+	return {
+		command = command :: RemoteEvent,
+		receipt = receipt :: RemoteEvent,
+		projection = projection :: RemoteEvent,
+		sync = sync :: RemoteFunction,
+		clientReady = clientReady :: RemoteEvent,
+	}
+end
+
+local function describeRemoteCandidates(): string
+	local descriptions = {}
+	for _, candidate in ReplicatedStorage:GetChildren() do
+		if candidate.Name == Names.FOLDER then
+			local children = {}
+			for _, child in candidate:GetChildren() do
+				table.insert(children, child.Name .. ":" .. child.ClassName)
+			end
+			table.sort(children)
+			table.insert(
+				descriptions,
+				candidate.ClassName .. "[" .. table.concat(children, ",") .. "]"
+			)
+		end
 	end
-	return instance
+	if #descriptions == 0 then
+		return "none"
+	end
+	return table.concat(descriptions, " | ")
 end
 
-local remoteFolder = ReplicatedStorage:WaitForChild(Names.FOLDER, BOOT_TIMEOUT_SECONDS)
-if remoteFolder == nil then
-	failBoot("서버 초기화 실패 · Remote 폴더를 찾지 못했습니다")
+local function waitForRemoteSet(): any?
+	local deadline = os.clock() + BOOT_TIMEOUT_SECONDS
+	repeat
+		for _, candidate in ReplicatedStorage:GetChildren() do
+			if candidate.Name == Names.FOLDER and candidate:IsA("Folder") then
+				local remotes = resolveRemoteSet(candidate)
+				if remotes ~= nil then
+					return remotes
+				end
+			end
+		end
+		task.wait(0.05)
+	until os.clock() >= deadline
+
+	failBoot(
+		"서버 초기화 실패 · 완전한 Remote 세트를 찾지 못했습니다 · candidates="
+			.. describeRemoteCandidates()
+	)
+	return nil
+end
+
+local remotes = waitForRemoteSet()
+if remotes == nil then
 	return
 end
-
-local commandRemote = waitForRemote(remoteFolder, Names.COMMAND, "RemoteEvent")
-local receiptRemote = waitForRemote(remoteFolder, Names.RECEIPT, "RemoteEvent")
-local projectionRemote = waitForRemote(remoteFolder, Names.PROJECTION, "RemoteEvent")
-local syncRemote = waitForRemote(remoteFolder, Names.SYNC, "RemoteFunction")
-local clientReadyRemote = waitForRemote(remoteFolder, Names.CLIENT_READY, "RemoteEvent")
-if
-	commandRemote == nil
-	or receiptRemote == nil
-	or projectionRemote == nil
-	or syncRemote == nil
-	or clientReadyRemote == nil
-then
-	return
-end
-
-local remotes = {
-	command = commandRemote :: RemoteEvent,
-	receipt = receiptRemote :: RemoteEvent,
-	projection = projectionRemote :: RemoteEvent,
-	sync = syncRemote :: RemoteFunction,
-	clientReady = clientReadyRemote :: RemoteEvent,
-}
 
 local clientModules = script.Parent.Client
 local ProjectionReplica = require(clientModules.ProjectionReplica)
