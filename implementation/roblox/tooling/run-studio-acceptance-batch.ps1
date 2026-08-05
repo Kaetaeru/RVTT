@@ -1,137 +1,207 @@
 [CmdletBinding()]
 param(
-    [string]$Branch = "planning/rvtt-remake",
-    [string]$Project = "slice01-acceptance.project.json",
     [string]$ExpectedHead = "",
-    [switch]$SkipPull,
-    [switch]$SkipValidator,
-    [switch]$NoOpen
+    [string]$Project = "",
+    [switch]$NoOpen,
+    [switch]$Refresh,
+    [switch]$SelfTest
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+$ProgressPreference = "SilentlyContinue"
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-function Assert-NativeSuccess {
-    param([string]$Operation)
+$Repository = "Kaetaeru/RVTT"
+$Branch = "planning/rvtt-remake"
+$ManifestUrl = "https://raw.githubusercontent.com/$Repository/$Branch/implementation/roblox/acceptance-batch.json"
+$CacheRoot = if ($env:LOCALAPPDATA) { Join-Path $env:LOCALAPPDATA "RVTT\AcceptanceBootstrap" } else { Join-Path ([IO.Path]::GetTempPath()) "RVTT-AcceptanceBootstrap" }
 
-    if ($LASTEXITCODE -ne 0) {
-        throw "$Operation 실패 · exitCode=$LASTEXITCODE"
+function Step([string]$Text) { Write-Host "[RVTT Bootstrap] $Text" -ForegroundColor Cyan }
+function Native([string]$Name) { if ($LASTEXITCODE -ne 0) { throw "$Name failed · exitCode=$LASTEXITCODE" } }
+function Json([string]$Path) { Get-Content -Raw -Encoding UTF8 $Path | ConvertFrom-Json }
+function Download([string]$Url, [string]$Path) {
+    New-Item -ItemType Directory -Force (Split-Path -Parent $Path) | Out-Null
+    $tmp = "${Path}.partial"
+    $errorRecord = $null
+    for ($attempt = 1; $attempt -le 3; $attempt++) {
+        try {
+            Remove-Item $tmp -Force -ErrorAction SilentlyContinue
+            Invoke-WebRequest -UseBasicParsing -Uri $Url -OutFile $tmp -TimeoutSec 120
+            if ((Get-Item $tmp).Length -le 0) { throw "empty download" }
+            Move-Item -Force $tmp $Path
+            return
+        } catch {
+            $errorRecord = $_
+            if ($attempt -lt 3) { Start-Sleep -Seconds 2 }
+        }
+    }
+    throw "download failed · url=$Url · error=$errorRecord"
+}
+function ValidateManifest($Manifest) {
+    foreach ($field in @("schemaVersion", "repository", "branch", "verifiedHead", "project", "rojo")) {
+        if ($null -eq $Manifest.PSObject.Properties[$field]) { throw "acceptance-batch.json missing $field" }
+    }
+    if ($Manifest.schemaVersion -ne 1) { throw "unsupported acceptance manifest schema" }
+    if ([string]$Manifest.verifiedHead -notmatch "^[0-9a-f]{40}$") { throw "verifiedHead must be a full commit SHA" }
+}
+function Manifest() {
+    $cached = Join-Path $CacheRoot "acceptance-batch.json"
+    try {
+        $candidate = "${cached}.remote"
+        Step "fetching verified acceptance manifest"
+        Download $ManifestUrl $candidate
+        $value = Json $candidate
+        ValidateManifest $value
+        Move-Item -Force $candidate $cached
+        return $value
+    } catch {
+        if ($PSScriptRoot) {
+            $local = Join-Path (Split-Path -Parent $PSScriptRoot) "acceptance-batch.json"
+            if (Test-Path $local) {
+                Write-Warning "network unavailable; using local acceptance manifest"
+                $value = Json $local
+                ValidateManifest $value
+                return $value
+            }
+        }
+        if (Test-Path $cached) {
+            Write-Warning "network unavailable; using Offline cache"
+            $value = Json $cached
+            ValidateManifest $value
+            return $value
+        }
+        throw
     }
 }
-
-$repo = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot "..\..\.."))
-$roblox = Join-Path $repo "implementation\roblox"
-$projectPath = Join-Path $roblox $Project
-
-if (-not (Test-Path (Join-Path $repo ".git"))) {
-    throw "Git 저장소를 찾지 못했습니다: $repo"
+function Arch() {
+    $value = if ($env:PROCESSOR_ARCHITEW6432) { $env:PROCESSOR_ARCHITEW6432 } else { $env:PROCESSOR_ARCHITECTURE }
+    if ($value -match "ARM64") { "windowsArm64" } else { "windowsX64" }
 }
-if (-not (Test-Path $projectPath)) {
-    throw "Rojo Project를 찾지 못했습니다: $projectPath"
+function Rojo($Manifest) {
+    $architecture = Arch
+    $asset = $Manifest.rojo.assets.$architecture
+    $root = Join-Path $CacheRoot "tools\rojo-$($Manifest.rojo.version)-$architecture"
+    $exe = Join-Path $root "rojo.exe"
+    if ($Refresh) { Remove-Item $root -Recurse -Force -ErrorAction SilentlyContinue }
+    if (Test-Path $exe) {
+        $version = (& $exe --version 2>&1 | Out-String).Trim()
+        if ($LASTEXITCODE -eq 0 -and $version -match [regex]::Escape([string]$Manifest.rojo.version)) { return $exe }
+        Remove-Item $root -Recurse -Force -ErrorAction SilentlyContinue
+    }
+    $installed = Get-Command rojo -ErrorAction SilentlyContinue
+    if ($installed) {
+        $version = (& $installed.Source --version 2>&1 | Out-String).Trim()
+        if ($LASTEXITCODE -eq 0 -and $version -match [regex]::Escape([string]$Manifest.rojo.version)) { return $installed.Source }
+    }
+    Step "installing pinned Rojo $($Manifest.rojo.version)"
+    $zip = Join-Path $CacheRoot "downloads\$([IO.Path]::GetFileName([string]$asset.url))"
+    Download ([string]$asset.url) $zip
+    $hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+    if ($hash -ne ([string]$asset.sha256).ToLowerInvariant()) { throw "Rojo SHA256 mismatch" }
+    $extract = "${root}.extracting"
+    Remove-Item $extract -Recurse -Force -ErrorAction SilentlyContinue
+    Expand-Archive $zip $extract -Force
+    $found = Get-ChildItem $extract -Filter rojo.exe -File -Recurse | Select-Object -First 1
+    if (-not $found) { throw "rojo.exe missing from downloaded archive" }
+    New-Item -ItemType Directory -Force $root | Out-Null
+    Copy-Item -Force $found.FullName $exe
+    Remove-Item $extract -Recurse -Force
+    return $exe
 }
-if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
-    throw "git 명령을 찾지 못했습니다."
+function Source([string]$Head) {
+    $root = Join-Path $CacheRoot "sources\$Head"
+    $ready = Join-Path $root ".rvtt-source-ready"
+    if ($Refresh) { Remove-Item $root -Recurse -Force -ErrorAction SilentlyContinue }
+    if ((Test-Path $ready) -and (Test-Path (Join-Path $root "implementation\roblox"))) { return $root }
+    Step "downloading isolated verified source $Head"
+    $zip = Join-Path $CacheRoot "downloads\RVTT-$Head.zip"
+    Download "https://github.com/$Repository/archive/$Head.zip" $zip
+    $extract = Join-Path $CacheRoot "extracting\$Head"
+    Remove-Item $extract -Recurse -Force -ErrorAction SilentlyContinue
+    Expand-Archive $zip $extract -Force
+    $first = Get-ChildItem $extract -Directory | Select-Object -First 1
+    if (-not $first -or -not (Test-Path (Join-Path $first.FullName "implementation\roblox"))) { throw "verified source archive is incomplete" }
+    New-Item -ItemType Directory -Force (Split-Path -Parent $root) | Out-Null
+    Remove-Item $root -Recurse -Force -ErrorAction SilentlyContinue
+    Move-Item $first.FullName $root
+    Set-Content -Encoding ASCII $ready $Head
+    Remove-Item $extract -Recurse -Force -ErrorAction SilentlyContinue
+    return $root
 }
-if (-not (Get-Command rojo -ErrorAction SilentlyContinue)) {
-    throw "rojo 명령을 찾지 못했습니다."
-}
-
-$dirty = @(git -C $repo status --porcelain)
-Assert-NativeSuccess "git status"
-if ($dirty.Count -gt 0) {
-    Write-Host "변경된 파일:" -ForegroundColor Yellow
-    $dirty | ForEach-Object { Write-Host "  $_" -ForegroundColor Yellow }
-    throw "Dirty Worktree에서는 Acceptance Batch를 실행하지 않습니다. 변경을 Commit 또는 Stash하세요."
-}
-
-if (-not $SkipPull) {
-    git -C $repo fetch origin
-    Assert-NativeSuccess "git fetch"
-
-    git -C $repo switch $Branch
-    Assert-NativeSuccess "git switch"
-
-    git -C $repo pull --ff-only origin $Branch
-    Assert-NativeSuccess "git pull --ff-only"
-}
-
-$head = (git -C $repo rev-parse --short HEAD).Trim()
-Assert-NativeSuccess "git rev-parse"
-
-if ($ExpectedHead -ne "" -and $head -ne $ExpectedHead) {
-    throw "검증된 Head 불일치 · expected=$ExpectedHead actual=$head"
-}
-
-if (-not $SkipValidator) {
-    $validator = Join-Path $roblox "tooling\validate_implementation.py"
+function Validate([string]$RobloxRoot, [string]$ProjectName) {
+    $validator = Join-Path $RobloxRoot "tooling\validate_implementation.py"
     $python = Get-Command python -ErrorAction SilentlyContinue
     $py = Get-Command py -ErrorAction SilentlyContinue
-
-    if ($python) {
-        & $python.Source $validator
-        Assert-NativeSuccess "Implementation Validator"
-    }
-    elseif ($py) {
-        & $py.Source -3 $validator
-        Assert-NativeSuccess "Implementation Validator"
-    }
-    else {
-        throw "python 또는 py 명령을 찾지 못했습니다. -SkipValidator로 명시적으로 건너뛸 수 있습니다."
+    if ($python) { & $python.Source $validator; Native "validate_implementation.py"; return }
+    if ($py) { & $py.Source -3 $validator; Native "validate_implementation.py"; return }
+    Step "Python unavailable; using built-in validator"
+    Get-Content -Raw -Encoding UTF8 (Join-Path $RobloxRoot $ProjectName) | ConvertFrom-Json | Out-Null
+    foreach ($path in @("src\ServerScriptService\RVTT\ServerBoot.server.lua", "src\StarterPlayer\StarterPlayerScripts\RVTT\ClientBoot.client.lua", "tests\WorldTokenAcceptance\WorldTokenAcceptance.client.lua")) {
+        if (-not (Test-Path (Join-Path $RobloxRoot $path))) { throw "fallback validator missing $path" }
     }
 }
-
-Get-Process RobloxStudioBeta -ErrorAction SilentlyContinue |
-    Stop-Process -Force
-
-$outputRoot = Join-Path $env:TEMP "RVTT-Acceptance"
-New-Item -ItemType Directory -Force -Path $outputRoot | Out-Null
-
-$projectSlug = [System.IO.Path]::GetFileNameWithoutExtension($Project)
-if ($projectSlug.EndsWith(".project")) {
-    $projectSlug = $projectSlug.Substring(0, $projectSlug.Length - ".project".Length)
+function StopStudio() {
+    $running = @(Get-Process -Name RobloxStudioBeta,RobloxStudio -ErrorAction SilentlyContinue)
+    if ($running.Count) { Step "closing existing Roblox Studio"; $running | Stop-Process -Force; Start-Sleep -Seconds 2 }
 }
-$output = Join-Path $outputRoot ("RVTT-{0}-{1}.rbxlx" -f $projectSlug, $head)
-$manifest = Join-Path $outputRoot ("RVTT-{0}-{1}-manifest.txt" -f $projectSlug, $head)
+function Studio() {
+    $root = Join-Path $env:LOCALAPPDATA "Roblox\Versions"
+    if (Test-Path $root) {
+        $exe = Get-ChildItem $root -Filter RobloxStudioBeta.exe -File -Recurse -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+        if ($exe) { return $exe.FullName }
+    }
+    return $null
+}
+function RunSelfTest() {
+    if (-not $PSScriptRoot) { throw "SelfTest requires file execution" }
+    $value = Json (Join-Path (Split-Path -Parent $PSScriptRoot) "acceptance-batch.json")
+    ValidateManifest $value
+    foreach ($key in @("windowsX64", "windowsArm64")) {
+        if ([string]$value.rojo.assets.$key.sha256 -notmatch "^[0-9a-f]{64}$") { throw "invalid $key Rojo hash" }
+    }
+    Write-Host "RVTT acceptance bootstrap SelfTest passed" -ForegroundColor Green
+}
 
+if ($SelfTest) { RunSelfTest; return }
+if ([Environment]::OSVersion.Platform -ne [PlatformID]::Win32NT) { throw "Windows with Roblox Studio is required" }
+New-Item -ItemType Directory -Force $CacheRoot | Out-Null
+$manifest = Manifest
+$head = [string]$manifest.verifiedHead
+if ($ExpectedHead) {
+    if (-not $head.StartsWith($ExpectedHead, [StringComparison]::OrdinalIgnoreCase)) { $head = $ExpectedHead }
+}
+if (-not $Project) { $Project = [string]$manifest.project }
+$sourceRoot = Source $head
+$robloxRoot = Join-Path $sourceRoot "implementation\roblox"
+if (-not (Test-Path (Join-Path $robloxRoot $Project))) { throw "Rojo Project not found: $Project" }
+Validate $robloxRoot $Project
+$rojo = Rojo $manifest
+StopStudio
+
+$short = $head.Substring(0, [Math]::Min(12, $head.Length))
+$slug = [IO.Path]::GetFileNameWithoutExtension($Project).Replace(".project", "")
+$outputRoot = Join-Path ([IO.Path]::GetTempPath()) "RVTT-Acceptance"
+New-Item -ItemType Directory -Force $outputRoot | Out-Null
+$output = Join-Path $outputRoot "RVTT-$slug-$short.rbxlx"
+$report = Join-Path $outputRoot "RVTT-$slug-$short-manifest.txt"
 Remove-Item $output -Force -ErrorAction SilentlyContinue
-
-Push-Location $roblox
-try {
-    rojo build $Project --output $output
-    Assert-NativeSuccess "rojo build"
-}
-finally {
-    Pop-Location
-}
-
-$timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss K"
-$manifestContent = @"
+Step "rojo build $Project from verified Head $short"
+Push-Location $robloxRoot
+try { & $rojo build $Project --output $output; Native "rojo build" } finally { Pop-Location }
+@"
 RVTT Studio Acceptance Batch
-Generated: $timestamp
-Branch: $Branch
-Head: $head
+Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss K")
+Verified Head: $head
 Project: $Project
 Place: $output
+Source Cache: $sourceRoot
 
-Execution rule:
-1. Publish this Place to the existing designated test Place once.
-2. Do not connect the Rojo plugin after opening the built Place.
-3. Run the complete Batch Acceptance flow once.
-4. On PASS, report the final Batch Summary only.
-5. On FAIL, report the final Batch Summary and the first related [RVTT ...] error line.
-"@
-Set-Content -Path $manifest -Value $manifestContent -Encoding UTF8
-
-Write-Host ""
-Write-Host "RVTT Acceptance Batch 준비 완료" -ForegroundColor Green
-Write-Host "  Branch : $Branch"
-Write-Host "  Head   : $head"
-Write-Host "  Project: $Project"
-Write-Host "  Place  : $output"
-Write-Host "  Manifest: $manifest"
-Write-Host ""
-Write-Host "게시와 수동 검사는 이 Batch에서 한 번만 수행합니다." -ForegroundColor Cyan
-
+Bootstrap: current-directory independent; Git not required; Python optional; pinned Rojo SHA256 verified; Dirty Worktree isolated; Offline cache enabled.
+"@ | Set-Content -Encoding UTF8 $report
+Write-Host "RVTT Acceptance Batch ready`n  Head: $head`n  Place: $output`n  Manifest: $report" -ForegroundColor Green
 if (-not $NoOpen) {
-    Start-Process -FilePath $output
+    $studio = Studio
+    if ($studio) { Start-Process $studio -ArgumentList "`"$output`"" }
+    else { try { Start-Process $output } catch { throw "Roblox Studio is not installed or .rbxlx is not associated · $output" } }
 }
