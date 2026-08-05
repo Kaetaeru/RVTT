@@ -15,8 +15,8 @@ function Signal.new<T...>(): Signal<T...>
 	return self :: Signal<T...>
 end
 
-function Signal:Connect(callback)
-	local listeners = self._listeners
+function Signal.Connect(signal, callback)
+	local listeners = signal._listeners
 	local token = {}
 	listeners[token] = callback
 	local connection = {}
