@@ -87,7 +87,10 @@ return function(harness)
 	harness:expect(loaded.ok, "coordinator loads existing revision")
 	harness:expect(not coordinator:markDirty({ revision = 3 }), "saved revision is not re-queued")
 	harness:expect(coordinator:markDirty({ revision = 5 }), "newer revision becomes dirty")
-	harness:expect(not coordinator:markDirty({ revision = 4 }), "older revision cannot replace dirty state")
+	harness:expect(
+		not coordinator:markDirty({ revision = 4 }),
+		"older revision cannot replace dirty state"
+	)
 	harness:equal(coordinator.dirty.revision, 5, "highest pending revision is retained")
 	local flushed = coordinator:flush()
 	harness:expect(flushed.ok, "newest pending revision flushes")
