@@ -10,6 +10,7 @@ if acceptanceMode == nil or not acceptanceMode:IsA("BoolValue") or not acceptanc
 	return
 end
 
+local BatchSummary = require(ReplicatedStorage.RVTT.Shared.Diagnostics.BatchSummary)
 local player = Players.LocalPlayer
 local playerScripts = player:WaitForChild("PlayerScripts")
 local clientFolder = playerScripts:WaitForChild("RVTT"):WaitForChild("Client")
@@ -17,9 +18,30 @@ local ClientRuntime = (require :: any)(clientFolder:WaitForChild("ClientRuntime"
 local client = ClientRuntime.await()
 local worldTokens = client.WorldTokens
 
+local BATCH_NAME = "slice01-world-interaction"
 local SCENE_ID = "scene:slice-01-acceptance"
 local HERO_NAME = "Slice 01 Hero"
 local COMMAND_TIMEOUT_SECONDS = 10
+local INITIAL_RESTORE_WAIT_SECONDS = 4
+
+local summary = BatchSummary.new(BATCH_NAME, {
+	{ id = "boot", label = "Client Runtime Boot" },
+	{ id = "dm-role", label = "Acceptance DM Role" },
+	{ id = "character", label = "Active Character Selection" },
+	{ id = "scene", label = "Active Scene and Actor" },
+	{ id = "token-projection", label = "Workspace 3D Token Projection" },
+	{ id = "state-restore", label = "Loaded Character Scene Position Restore" },
+	{ id = "avatar-suppression", label = "Roblox Avatar Suppression" },
+	{ id = "camera-frame", label = "3D Camera Frame" },
+	{ id = "camera-pan", label = "3D Camera Pan" },
+	{ id = "camera-zoom", label = "3D Camera Zoom" },
+	{ id = "token-pick", label = "Ray or Screen-space Token Pick" },
+	{ id = "selection-highlight", label = "Selected Token Highlight" },
+	{ id = "destination-marker", label = "Board Destination Marker" },
+	{ id = "move-command", label = "movement.commit Submission" },
+	{ id = "command-accepted", label = "Server Command Acceptance" },
+	{ id = "projection-move", label = "Server Projection Position Update" },
+})
 
 local function createBoard()
 	local existing = Workspace:FindFirstChild("RVTT_AcceptanceBoard")
@@ -72,14 +94,8 @@ end
 
 createBoard()
 
-local camera = Workspace.CurrentCamera
-if camera ~= nil then
-	camera.CameraType = Enum.CameraType.Scriptable
-	camera.CFrame = CFrame.lookAt(Vector3.new(28, 24, 28), Vector3.new(8, 0, 8))
-end
-
 local gui = Instance.new("ScreenGui")
-gui.Name = "RVTT_WorldToken_Acceptance"
+gui.Name = "RVTT_WorldInteraction_Batch"
 gui.ResetOnSpawn = false
 gui.DisplayOrder = 220
 gui.Parent = player:WaitForChild("PlayerGui")
@@ -87,9 +103,9 @@ gui.Parent = player:WaitForChild("PlayerGui")
 local panel = Instance.new("Frame")
 panel.Name = "Panel"
 panel.Position = UDim2.fromOffset(18, 18)
-panel.Size = UDim2.fromOffset(390, 286)
+panel.Size = UDim2.fromOffset(520, 560)
 panel.BackgroundColor3 = Color3.fromRGB(25, 28, 34)
-panel.BackgroundTransparency = 0.08
+panel.BackgroundTransparency = 0.06
 panel.BorderSizePixel = 0
 panel.Parent = gui
 
@@ -102,7 +118,7 @@ title.Position = UDim2.fromOffset(16, 12)
 title.Size = UDim2.new(1, -32, 0, 30)
 title.BackgroundTransparency = 1
 title.Font = Enum.Font.GothamBold
-title.Text = "Slice 01 · 3D World Token Acceptance"
+title.Text = "Slice 01 · World Interaction Batch"
 title.TextColor3 = Color3.fromRGB(238, 240, 244)
 title.TextSize = 17
 title.TextXAlignment = Enum.TextXAlignment.Left
@@ -110,11 +126,10 @@ title.Parent = panel
 
 local instructions = Instance.new("TextLabel")
 instructions.Position = UDim2.fromOffset(16, 44)
-instructions.Size = UDim2.new(1, -32, 0, 56)
+instructions.Size = UDim2.new(1, -32, 0, 58)
 instructions.BackgroundTransparency = 1
 instructions.Font = Enum.Font.Gotham
-instructions.Text =
-	"1) Scene 준비  2) 월드의 3D Token 클릭  3) 바닥 클릭으로 서버 권위 이동  4) 저장 후 Stop·Play 복구"
+instructions.Text = "자동 준비 후 3D Token을 클릭하고, 다른 바닥 위치를 클릭하세요. 중클릭 드래그=Pan · Wheel=Zoom · F=Frame"
 instructions.TextColor3 = Color3.fromRGB(184, 191, 202)
 instructions.TextSize = 12
 instructions.TextWrapped = true
@@ -122,29 +137,46 @@ instructions.TextXAlignment = Enum.TextXAlignment.Left
 instructions.TextYAlignment = Enum.TextYAlignment.Top
 instructions.Parent = panel
 
-local status = Instance.new("TextLabel")
-status.Position = UDim2.fromOffset(16, 102)
-status.Size = UDim2.new(1, -32, 0, 92)
-status.BackgroundColor3 = Color3.fromRGB(19, 22, 27)
-status.BorderSizePixel = 0
-status.Font = Enum.Font.Code
-status.TextColor3 = Color3.fromRGB(219, 224, 231)
-status.TextSize = 12
-status.TextWrapped = true
-status.TextXAlignment = Enum.TextXAlignment.Left
-status.TextYAlignment = Enum.TextYAlignment.Top
-status.Parent = panel
+local stateLabel = Instance.new("TextLabel")
+stateLabel.Position = UDim2.fromOffset(16, 104)
+stateLabel.Size = UDim2.new(1, -32, 0, 74)
+stateLabel.BackgroundColor3 = Color3.fromRGB(19, 22, 27)
+stateLabel.BorderSizePixel = 0
+stateLabel.Font = Enum.Font.Code
+stateLabel.TextColor3 = Color3.fromRGB(219, 224, 231)
+stateLabel.TextSize = 12
+stateLabel.TextWrapped = true
+stateLabel.TextXAlignment = Enum.TextXAlignment.Left
+stateLabel.TextYAlignment = Enum.TextYAlignment.Top
+stateLabel.Parent = panel
 
-local statusCorner = Instance.new("UICorner")
-statusCorner.CornerRadius = UDim.new(0, 5)
-statusCorner.Parent = status
+local stateCorner = Instance.new("UICorner")
+stateCorner.CornerRadius = UDim.new(0, 5)
+stateCorner.Parent = stateLabel
+
+local checklist = Instance.new("TextLabel")
+checklist.Position = UDim2.fromOffset(16, 188)
+checklist.Size = UDim2.new(1, -32, 0, 268)
+checklist.BackgroundColor3 = Color3.fromRGB(19, 22, 27)
+checklist.BorderSizePixel = 0
+checklist.Font = Enum.Font.Code
+checklist.TextColor3 = Color3.fromRGB(219, 224, 231)
+checklist.TextSize = 11
+checklist.TextWrapped = false
+checklist.TextXAlignment = Enum.TextXAlignment.Left
+checklist.TextYAlignment = Enum.TextYAlignment.Top
+checklist.Parent = panel
+
+local checklistCorner = Instance.new("UICorner")
+checklistCorner.CornerRadius = UDim.new(0, 5)
+checklistCorner.Parent = checklist
 
 local operation = Instance.new("TextLabel")
-operation.Position = UDim2.fromOffset(16, 252)
-operation.Size = UDim2.new(1, -32, 0, 24)
+operation.Position = UDim2.fromOffset(16, 514)
+operation.Size = UDim2.new(1, -32, 0, 28)
 operation.BackgroundTransparency = 1
 operation.Font = Enum.Font.Gotham
-operation.Text = "대기 중"
+operation.Text = "Batch 초기화 중"
 operation.TextColor3 = Color3.fromRGB(166, 173, 184)
 operation.TextSize = 12
 operation.TextXAlignment = Enum.TextXAlignment.Left
@@ -153,7 +185,7 @@ operation.Parent = panel
 local function makeButton(name: string, text: string, x: number, width: number): TextButton
 	local button = Instance.new("TextButton")
 	button.Name = name
-	button.Position = UDim2.fromOffset(x, 204)
+	button.Position = UDim2.fromOffset(x, 466)
 	button.Size = UDim2.fromOffset(width, 36)
 	button.BackgroundColor3 = Color3.fromRGB(72, 91, 122)
 	button.BorderSizePixel = 0
@@ -168,13 +200,66 @@ local function makeButton(name: string, text: string, x: number, width: number):
 	return button
 end
 
-local prepareButton = makeButton("Prepare", "Scene 준비·재개", 16, 116)
-local frameButton = makeButton("Frame", "Token 카메라", 140, 108)
-local verifyButton = makeButton("Verify", "복구 검증", 256, 118)
+local prepareButton = makeButton("Prepare", "자동 준비 재실행", 16, 146)
+local frameButton = makeButton("Frame", "Token Frame", 170, 120)
+local summaryButton = makeButton("Summary", "Final Summary", 298, 150)
 
 local terminalResults: { [string]: any } = {}
 local busy = false
+local passSummaryLogged = false
 local lastProjectedPosition = "none"
+local lastPickMethod = "none"
+local lastCommandId = "none"
+local moveStartPosition: Vector3? = nil
+
+local function setOperation(message: string, failed: boolean?)
+	operation.Text = message
+	operation.TextColor3 = if failed == true
+		then Color3.fromRGB(232, 126, 126)
+		else Color3.fromRGB(166, 173, 184)
+end
+
+local function statusToken(status: string): string
+	if status == "pass" then
+		return "PASS"
+	end
+	if status == "fail" then
+		return "FAIL"
+	end
+	return "...."
+end
+
+local function renderChecklist()
+	local lines = {}
+	for _, id in summary.order do
+		local record = summary.checks[id]
+		table.insert(lines, string.format("[%s] %-20s %s", statusToken(record.status), id, record.detail))
+	end
+	checklist.Text = table.concat(lines, "\n")
+end
+
+local function maybeLogPass()
+	if summary:result() == "PASS" and not passSummaryLogged then
+		passSummaryLogged = true
+		setOperation("World Interaction Batch PASS · Final Summary가 Output에 기록됐습니다")
+		summary:log(client.Replica.revision)
+	end
+end
+
+local function refresh()
+	renderChecklist()
+	maybeLogPass()
+end
+
+local function pass(id: string, detail: string?)
+	summary:pass(id, detail)
+	refresh()
+end
+
+local function fail(id: string, detail: string?)
+	summary:fail(id, detail)
+	refresh()
+end
 
 client.Command.remotes.receipt.OnClientEvent:Connect(function(message)
 	if
@@ -185,13 +270,6 @@ client.Command.remotes.receipt.OnClientEvent:Connect(function(message)
 		terminalResults[message.commandId] = message.result
 	end
 end)
-
-local function setOperation(message: string, failed: boolean?)
-	operation.Text = message
-	operation.TextColor3 = if failed == true
-		then Color3.fromRGB(232, 126, 126)
-		else Color3.fromRGB(166, 173, 184)
-end
 
 local function waitForTerminal(commandId: string): any
 	local deadline = os.clock() + COMMAND_TIMEOUT_SECONDS
@@ -219,15 +297,40 @@ local function submit(commandType: string, payload: { [string]: unknown }): any
 		local commandId = client.Command:submit(commandType, payload)
 		local result = waitForTerminal(commandId)
 		if result == nil then
+			print(
+				string.format(
+					"[RVTT Batch Command] event=timeout type=%s commandId=%s attempt=%d",
+					commandType,
+					commandId,
+					attempt
+				)
+			)
 			return nil
 		end
-		if result.ok == true then
-			if type(result.value) == "table" and type(result.value.revision) == "number" then
-				waitForRevision(result.value.revision)
+		local ok = type(result) == "table" and result.ok == true
+		local code = if type(result) == "table" and type(result.error) == "table"
+			then result.error.code
+			else nil
+		local revision = if type(result) == "table" and type(result.value) == "table"
+			then result.value.revision
+			else nil
+		print(
+			string.format(
+				"[RVTT Batch Command] event=terminal type=%s commandId=%s ok=%s code=%s revision=%s attempt=%d",
+				commandType,
+				commandId,
+				tostring(ok),
+				tostring(code),
+				tostring(revision),
+				attempt
+			)
+		)
+		if ok then
+			if type(revision) == "number" then
+				waitForRevision(revision)
 			end
 			return result
 		end
-		local code = if type(result.error) == "table" then result.error.code else nil
 		if code ~= "STALE_REVISION" and code ~= "STALE_EPOCH" then
 			return result
 		end
@@ -312,7 +415,7 @@ local function actorPosition(state: any): Vector3?
 	return Vector3.new(position.x, position.y, position.z)
 end
 
-local function render()
+local function renderState()
 	local state = currentState()
 	local selected = worldTokens.Renderer:getSelectedActorId()
 	local position = actorPosition(state)
@@ -322,19 +425,22 @@ local function render()
 	lastProjectedPosition = if position ~= nil
 		then string.format("(%.2f, %.2f, %.2f)", position.X, position.Y, position.Z)
 		else "none"
-	status.Text = string.format(
-		"revision=%d  role=%s\ncharacter=%s  scene=%s\ntoken3D=%s  selected=%s\nposition=%s",
+	stateLabel.Text = string.format(
+		"revision=%d role=%s character=%s scene=%s\ntoken3D=%s selected=%s pick=%s destination=%s\nposition=%s command=%s",
 		client.Replica.revision,
 		if type(state.membership) == "table" then tostring(state.membership.role) else "none",
 		tostring(state.characterId),
 		tostring(state.scene.activeSceneId),
 		if tokenModel ~= nil then "PASS" else "WAIT",
 		tostring(selected),
-		lastProjectedPosition
+		lastPickMethod,
+		tostring(worldTokens.Renderer:getDestinationStatus()),
+		lastProjectedPosition,
+		lastCommandId
 	)
 	prepareButton.Active = not busy
-	frameButton.Active = not busy and position ~= nil
-	verifyButton.Active = not busy
+	frameButton.Active = not busy and tokenModel ~= nil
+	summaryButton.Active = true
 end
 
 local function ensureSuccess(result: any, commandType: string): any
@@ -342,6 +448,28 @@ local function ensureSuccess(result: any, commandType: string): any
 		error(commandType .. " failed")
 	end
 	return result
+end
+
+local function markStateChecks(state: any)
+	if type(state.membership) == "table" and state.membership.role == "dm" then
+		pass("dm-role", "role=dm")
+	end
+	if type(state.characterId) == "string" and state.selectedId == state.characterId then
+		pass("character", state.characterId)
+	end
+	if
+		state.session.phase == "active"
+		and state.scene.activeSceneId == SCENE_ID
+		and type(state.actor) == "table"
+	then
+		pass("scene", SCENE_ID)
+	end
+	if
+		type(state.characterId) == "string"
+		and worldTokens.Renderer:getTokenModel(state.characterId) ~= nil
+	then
+		pass("token-projection", state.characterId)
+	end
 end
 
 local function prepareScene()
@@ -387,7 +515,61 @@ local function prepareScene()
 			"scene.enter"
 		)
 	end
-	setOperation("Scene·3D Token 준비 PASS · Token을 클릭하세요")
+
+	local deadline = os.clock() + COMMAND_TIMEOUT_SECONDS
+	repeat
+		state = currentState()
+		markStateChecks(state)
+		if
+			type(state.characterId) == "string"
+			and worldTokens.Renderer:getTokenModel(state.characterId) ~= nil
+		then
+			break
+		end
+		task.wait(0.05)
+	until os.clock() >= deadline
+
+	markStateChecks(state)
+	setOperation("자동 준비 PASS · 3D Token을 클릭하고 바닥으로 이동하세요")
+end
+
+local function runCameraSelfCheck()
+	local currentCamera = Workspace.CurrentCamera
+	if currentCamera == nil then
+		fail("camera-frame", "CurrentCamera missing")
+		fail("camera-pan", "CurrentCamera missing")
+		fail("camera-zoom", "CurrentCamera missing")
+		return
+	end
+
+	if worldTokens.Camera:frameAll() then
+		pass("camera-frame", "frameAll")
+	else
+		fail("camera-frame", "frameAll returned false")
+	end
+	local beforePan = currentCamera.CFrame
+	if worldTokens.Camera:panPixels(Vector2.new(28, -14)) then
+		local moved = (currentCamera.CFrame.Position - beforePan.Position).Magnitude > 0.001
+		if moved then
+			pass("camera-pan", "middle-drag path")
+		else
+			fail("camera-pan", "camera position unchanged")
+		end
+	else
+		fail("camera-pan", "pan returned false")
+	end
+	local beforeZoom = currentCamera.CFrame
+	if worldTokens.Camera:zoomBy(-1) then
+		local moved = (currentCamera.CFrame.Position - beforeZoom.Position).Magnitude > 0.001
+		if moved then
+			pass("camera-zoom", "wheel path")
+		else
+			fail("camera-zoom", "camera position unchanged")
+		end
+	else
+		fail("camera-zoom", "zoom returned false")
+	end
+	worldTokens.Camera:frameAll()
 end
 
 local function run(action: () -> ())
@@ -395,72 +577,202 @@ local function run(action: () -> ())
 		return
 	end
 	busy = true
-	render()
-	local succeeded = xpcall(action, debug.traceback)
+	renderState()
+	local succeeded, errorMessage = xpcall(action, debug.traceback)
 	busy = false
 	if not succeeded then
-		setOperation("Acceptance 작업 실행 실패 · Output을 확인하세요", true)
+		setOperation("Batch 작업 실패 · Output의 첫 오류를 확인하세요", true)
+		warn("[RVTT Batch] event=action-failed error=" .. tostring(errorMessage))
 	end
-	render()
+	renderState()
+	refresh()
+end
+
+local function detectInitialRestore()
+	local deadline = os.clock() + INITIAL_RESTORE_WAIT_SECONDS
+	repeat
+		local state = currentState()
+		local position = actorPosition(state)
+		local model = if type(state.characterId) == "string"
+			then worldTokens.Renderer:getTokenModel(state.characterId)
+			else nil
+		if
+			client.Replica.revision >= 0
+			and type(state.characterId) == "string"
+			and state.selectedId == state.characterId
+			and state.session.phase == "active"
+			and state.scene.activeSceneId == SCENE_ID
+			and position ~= nil
+			and model ~= nil
+		then
+			pass(
+				"state-restore",
+				string.format("revision=%d position=(%.2f,%.2f,%.2f)", client.Replica.revision, position.X, position.Y, position.Z)
+			)
+			return
+		end
+		task.wait(0.05)
+	until os.clock() >= deadline
+	summary:pending("state-restore", "first run: save then Stop·Play")
+	refresh()
 end
 
 prepareButton.Activated:Connect(function()
 	task.spawn(function()
-		run(prepareScene)
+		run(function()
+			prepareScene()
+			runCameraSelfCheck()
+		end)
 	end)
 end)
 
 frameButton.Activated:Connect(function()
-	local position = actorPosition(currentState())
-	local currentCamera = Workspace.CurrentCamera
-	if position ~= nil and currentCamera ~= nil then
-		currentCamera.CameraType = Enum.CameraType.Scriptable
-		currentCamera.CFrame =
-			CFrame.lookAt(position + Vector3.new(22, 19, 22), position + Vector3.new(0, 1.2, 0))
-		setOperation("3D Token 카메라 정렬")
+	if worldTokens.Camera:frameSelected() then
+		pass("camera-frame", "selected token")
+		setOperation("선택 Token Frame")
 	end
+	renderState()
 end)
 
-verifyButton.Activated:Connect(function()
-	local state = currentState()
-	local position = actorPosition(state)
-	local model = if type(state.characterId) == "string"
-		then worldTokens.Renderer:getTokenModel(state.characterId)
-		else nil
-	local passed = type(state.characterId) == "string"
-		and state.selectedId == state.characterId
-		and state.session.phase == "active"
-		and state.scene.activeSceneId == SCENE_ID
-		and position ~= nil
-		and model ~= nil
-		and player.Character == nil
-	if passed then
-		setOperation("3D Token·Scene·Position·Avatar Suppression 복구 PASS")
-		print("[RVTT WorldToken] reconnect recovery PASS position=" .. lastProjectedPosition)
+summaryButton.Activated:Connect(function()
+	summary:log(client.Replica.revision)
+	setOperation("현재 Final Summary를 Output에 기록했습니다")
+end)
+
+worldTokens.PickResolved:Connect(function(actorId, method, selected, hitName)
+	lastPickMethod = tostring(method)
+	if selected then
+		pass("token-pick", string.format("method=%s hit=%s", tostring(method), tostring(hitName)))
+		if worldTokens.Renderer:isSelectedHighlighted(actorId) then
+			pass("selection-highlight", actorId)
+		else
+			fail("selection-highlight", "selection without Highlight")
+		end
+		setOperation("Token 선택 PASS · 바닥의 다른 위치를 클릭하세요")
 	else
-		setOperation("복구 미충족 · status와 Output을 확인하세요", true)
+		fail("token-pick", string.format("method=%s actor=%s", tostring(method), tostring(actorId)))
 	end
+	renderState()
 end)
 
-worldTokens.SelectionChanged:Connect(function(actorId)
-	setOperation("3D Token 선택 actor=" .. tostring(actorId))
-	render()
+worldTokens.MoveRequested:Connect(function(actorId, destination, commandId, baseRevision)
+	lastCommandId = tostring(commandId)
+	moveStartPosition = actorPosition(currentState())
+	pass(
+		"move-command",
+		string.format("actor=%s baseRevision=%s", tostring(actorId), tostring(baseRevision))
+	)
+	if worldTokens.Renderer:getDestinationStatus() == "pending" then
+		pass(
+			"destination-marker",
+			string.format("(%.2f,%.2f,%.2f)", destination.x, destination.y, destination.z)
+		)
+	else
+		fail("destination-marker", "pending marker missing")
+	end
+	setOperation("movement.commit 제출 · 서버 Receipt와 Projection 대기")
+	renderState()
 end)
-worldTokens.MoveRequested:Connect(function(actorId, destination, commandId)
-	setOperation("서버 권위 이동 요청 · " .. tostring(commandId))
+
+worldTokens.MoveResolved:Connect(function(
+	actorId,
+	destination,
+	commandId,
+	ok,
+	code,
+	revision,
+	baseRevision
+)
+	if ok then
+		pass(
+			"command-accepted",
+			string.format(
+				"commandId=%s revision=%s base=%s",
+				tostring(commandId),
+				tostring(revision),
+				tostring(baseRevision)
+			)
+		)
+	else
+		fail(
+			"command-accepted",
+			string.format("actor=%s code=%s", tostring(actorId), tostring(code))
+		)
+	end
 	print(
 		string.format(
-			"[RVTT WorldToken] acceptance move actor=%s destination=(%.2f, %.2f, %.2f)",
-			actorId,
+			"[RVTT Batch Move] event=terminal actor=%s commandId=%s ok=%s code=%s revision=%s destination=(%.2f,%.2f,%.2f)",
+			tostring(actorId),
+			tostring(commandId),
+			tostring(ok),
+			tostring(code),
+			tostring(revision),
 			destination.x,
 			destination.y,
 			destination.z
 		)
 	)
-end)
-client.Replica.Changed:Connect(function()
-	render()
+	renderState()
 end)
 
-render()
-print("[RVTT WorldToken] acceptance ready")
+worldTokens.DestinationChanged:Connect(function(destination)
+	if type(destination) == "table" and destination.status == "projected" then
+		local currentPosition = actorPosition(currentState())
+		local moved = currentPosition ~= nil
+			and (
+				moveStartPosition == nil
+				or (currentPosition - moveStartPosition).Magnitude > 0.001
+			)
+		if moved and currentPosition ~= nil then
+			pass(
+				"projection-move",
+				string.format(
+					"revision=%s position=(%.2f,%.2f,%.2f)",
+					tostring(destination.revision),
+					currentPosition.X,
+					currentPosition.Y,
+					currentPosition.Z
+				)
+			)
+			setOperation("서버 Projection 이동 PASS · 저장 후 재실행 복구 상태도 Summary에 포함됩니다")
+		else
+			fail("projection-move", "Projection reached unchanged position")
+		end
+	end
+	renderState()
+end)
+
+worldTokens.Reconciled:Connect(function()
+	markStateChecks(currentState())
+	renderState()
+end)
+
+client.Replica.Changed:Connect(function()
+	markStateChecks(currentState())
+	renderState()
+end)
+
+pass("boot", "ClientRuntime ready")
+if player.Character == nil then
+	pass("avatar-suppression", "Player.Character=nil")
+else
+	fail("avatar-suppression", "Roblox Character exists")
+end
+renderState()
+refresh()
+
+print(
+	string.format(
+		"[RVTT Batch] event=ready batch=%s revision=%d mode=acceptance",
+		BATCH_NAME,
+		client.Replica.revision
+	)
+)
+
+task.spawn(function()
+	detectInitialRestore()
+	run(function()
+		prepareScene()
+		runCameraSelfCheck()
+	end)
+end)

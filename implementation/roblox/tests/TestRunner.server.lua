@@ -26,6 +26,14 @@ local specs: { Spec } = {
 		runner = require(script.Parent.Unit["WorldTokenContract.spec"]) :: any,
 	},
 	{
+		name = "WorldInteractionMath.spec",
+		runner = require(script.Parent.Unit["WorldInteractionMath.spec"]) :: any,
+	},
+	{
+		name = "BatchSummary.spec",
+		runner = require(script.Parent.Unit["BatchSummary.spec"]) :: any,
+	},
+	{
 		name = "RemoteBootstrap.spec",
 		runner = require(script.Parent.Unit["RemoteBootstrap.spec"]) :: any,
 	},
