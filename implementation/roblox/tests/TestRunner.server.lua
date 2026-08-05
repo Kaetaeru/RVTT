@@ -5,6 +5,7 @@ local harness = Harness.new()
 local specs = {
 	script.Parent.Unit["Core.spec"],
 	script.Parent.Unit["Envelope.spec"],
+	script.Parent.Unit["Persistence.spec"],
 	script.Parent.Integration["DomainRegistration.spec"],
 	script.Parent.Integration["AuthorityFlow.spec"],
 	script.Parent.Integration["SecurityBoundary.spec"],
