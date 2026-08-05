@@ -35,8 +35,8 @@
       "StarterPlayerScripts": {
         "RVTT": {"$path": "src/StarterPlayer/StarterPlayerScripts/RVTT"},
         "RVTTUI": {"$path": "src/StarterGui/RVTT"},
-        "RVTTSlice01Acceptance": {
-          "$path": "tests/Slice01Acceptance/Slice01Acceptance.client.lua"
+        "RVTTWorldTokenAcceptance": {
+          "$path": "tests/WorldTokenAcceptance/WorldTokenAcceptance.client.lua"
         }
       }
     }
