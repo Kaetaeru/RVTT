@@ -67,32 +67,15 @@ return function(harness)
 	local dmJoin = execute(contexts.dm, "multi:join:dm", "session.join", {}, 0)
 	harness:expect(dmJoin.ok, "DM joins at the initial revision")
 
-	local stalePlayerJoin = execute(
-		contexts.player,
-		"multi:join:player:stale",
-		"session.join",
-		{},
-		0
-	)
+	local stalePlayerJoin =
+		execute(contexts.player, "multi:join:player:stale", "session.join", {}, 0)
 	harness:expect(
 		not stalePlayerJoin.ok and stalePlayerJoin.error.code == "STALE_REVISION",
 		"concurrent player join detects a stale revision"
 	)
 
-	local playerJoin = execute(
-		contexts.player,
-		"multi:join:player",
-		"session.join",
-		{},
-		1
-	)
-	local observerJoin = execute(
-		contexts.observer,
-		"multi:join:observer",
-		"session.join",
-		{},
-		2
-	)
+	local playerJoin = execute(contexts.player, "multi:join:player", "session.join", {}, 1)
+	local observerJoin = execute(contexts.observer, "multi:join:observer", "session.join", {}, 2)
 	harness:expect(playerJoin.ok, "player retries join after resync")
 	harness:expect(observerJoin.ok, "observer joins the shared session")
 	harness:equal(Runtime:snapshot().revision, 3, "three memberships commit exactly once")
@@ -124,13 +107,8 @@ return function(harness)
 	)
 	harness:expect(dmCommand.ok, "DM command commits")
 
-	local dmDraft = execute(
-		contexts.dm,
-		"multi:draft:dm",
-		"character.create_draft",
-		{ name = "DM Draft" },
-		4
-	)
+	local dmDraft =
+		execute(contexts.dm, "multi:draft:dm", "character.create_draft", { name = "DM Draft" }, 4)
 	local stalePlayerDraft = execute(
 		contexts.player,
 		"multi:draft:player:stale",
