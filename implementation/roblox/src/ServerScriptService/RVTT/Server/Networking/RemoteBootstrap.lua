@@ -76,7 +76,12 @@ function RemoteBootstrap.create()
 		end
 		folder.Name = RemoteNames.FOLDER
 		folder.Parent = ReplicatedStorage
-		print(string.format("[RVTT Networking] published canonical remote set replaced=%d", #candidates))
+		print(
+			string.format(
+				"[RVTT Networking] published canonical remote set replaced=%d",
+				#candidates
+			)
+		)
 	end
 
 	return {
