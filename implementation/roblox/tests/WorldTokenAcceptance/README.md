@@ -12,6 +12,10 @@ This test-only client drives the production World Token runtime against the exis
 6. Wait for the persistence save log, Stop, and Play again.
 7. Press **복구 검증** and confirm the same Character, Scene, Position, 3D Token, and avatar suppression.
 
+## Authority boundary
+
+The client raycast only chooses an actor and proposes a destination. It does not pivot the token optimistically. The model transform changes only when a newer server Projection contains the committed actor position.
+
 ## Asset contract
 
 The runtime checks `ReplicatedStorage.RVTT.TokenAssets` in this order:
