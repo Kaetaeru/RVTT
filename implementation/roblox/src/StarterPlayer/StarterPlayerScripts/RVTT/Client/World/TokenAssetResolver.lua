@@ -159,6 +159,27 @@ local function addCandidateVisual(wrapper: Model, actor: any, actorId: string): 
 	return true
 end
 
+local function addSelectionHitbox(model: Model, actorId: string)
+	local boundsCFrame, boundsSize = model:GetBoundingBox()
+	local minimum = Style.SelectionHitboxMinimum
+	local padding = Style.SelectionHitboxPadding
+	local size = Vector3.new(
+		math.max(boundsSize.X + padding.X, minimum.X),
+		math.max(boundsSize.Y + padding.Y, minimum.Y),
+		math.max(boundsSize.Z + padding.Z, minimum.Z)
+	)
+	local hitbox = Instance.new("Part")
+	hitbox.Name = "SelectionHitbox"
+	hitbox.Size = size
+	hitbox.CFrame = boundsCFrame
+	hitbox.Transparency = 1
+	hitbox.CastShadow = false
+	hitbox:SetAttribute("RVTTTokenHitbox", true)
+	configurePart(hitbox, actorId, true)
+	hitbox.CastShadow = false
+	hitbox.Parent = model
+end
+
 function Resolver.new(): Resolver
 	return setmetatable({}, Resolver) :: any
 end
@@ -183,6 +204,7 @@ function Resolver.resolve(_self: Resolver, actor: any): Model
 	if not addCandidateVisual(model, actor, actorId) then
 		createFallbackVisual(model, actorId)
 	end
+	addSelectionHitbox(model, actorId)
 
 	return model
 end
