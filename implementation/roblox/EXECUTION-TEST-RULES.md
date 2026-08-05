@@ -93,8 +93,8 @@ Acceptance Harness는 다음 기능을 제공한다.
 모든 수동 Batch는 다음 스크립트로 실행한다.
 
 ```powershell
-.\implementation\roblox\tooling\run-studio-acceptance-batch.ps1 \
-    -ExpectedHead <검증된 Head> \
+& .\implementation\roblox\tooling\run-studio-acceptance-batch.ps1 `
+    -ExpectedHead <검증된 Head> `
     -Project slice01-acceptance.project.json
 ```
 
