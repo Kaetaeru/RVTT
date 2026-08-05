@@ -62,18 +62,20 @@ return function(harness)
 	local Builder = require(Server.Projection.ProjectionBuilder).new()
 	local firstProjection = Builder:build(Runtime:snapshot(), 101, "player")
 	local firstByUser = firstProjection.payload.domains.ui_preferences.byUser
+	local firstPreferences: any = firstByUser["101"]
 	harness:equal(
-		firstByUser["101"][AccentPreference.KEY],
+		firstPreferences[AccentPreference.KEY],
 		"azure",
 		"viewer receives the authoritative accent"
 	)
-	harness:equal(firstByUser["101"].uiScale, 1.2, "viewer receives existing UI preferences")
+	harness:equal(firstPreferences.uiScale, 1.2, "viewer receives existing UI preferences")
 	harness:expect(firstByUser["202"] == nil, "viewer does not receive another user's preferences")
 
 	local secondProjection = Builder:build(Runtime:snapshot(), 202, "player")
 	local secondByUser = secondProjection.payload.domains.ui_preferences.byUser
+	local secondPreferences: any = secondByUser["202"]
 	harness:equal(
-		secondByUser["202"][AccentPreference.KEY],
+		secondPreferences[AccentPreference.KEY],
 		"emerald",
 		"second viewer receives only its own accent"
 	)

@@ -14,9 +14,10 @@ return function(harness)
 		"unknown accent falls back to gold"
 	)
 
-	local ids = AccentPreference.list()
+	local ids: { string } = AccentPreference.list()
 	harness:equal(#ids, 6, "six reviewed accent palettes are available")
-	for _, id in ids do
+	for index = 1, #ids do
+		local id: string = ids[index]
 		harness:expect(AccentPreference.isValid(id), id .. " is an allowed accent")
 		local palette = AccentPalette.resolve(id)
 		harness:equal(palette.id, id, id .. " resolves to the matching palette")

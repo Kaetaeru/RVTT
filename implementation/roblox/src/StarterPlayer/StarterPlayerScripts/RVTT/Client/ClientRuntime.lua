@@ -4,7 +4,13 @@ export type Disconnectable = { Disconnect: (self: Disconnectable) -> () }
 export type ChangedSignal = {
 	Connect: (self: ChangedSignal, callback: (...any) -> ()) -> Disconnectable,
 }
-export type ProjectionReplica = { Changed: ChangedSignal }
+export type ProjectionReplica = {
+	epoch: string?,
+	revision: number,
+	sequence: number,
+	payload: { [string]: unknown },
+	Changed: ChangedSignal,
+}
 export type InputContextStack = {
 	push: (
 		self: InputContextStack,
@@ -12,6 +18,7 @@ export type InputContextStack = {
 		priority: number,
 		handlers: { [string]: (...any) -> boolean }
 	) -> (),
+	remove: (self: InputContextStack, name: string) -> (),
 }
 export type Runtime = { Replica: ProjectionReplica, Command: any, Input: InputContextStack }
 
