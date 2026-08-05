@@ -15,6 +15,7 @@ function PersistenceCoordinator.new(store, key: string, diagnostics)
 		dirty = nil,
 		scheduled = false,
 		flushing = false,
+		flushCompleted = Instance.new("BindableEvent"),
 	}, PersistenceCoordinator)
 end
 
@@ -35,9 +36,13 @@ function PersistenceCoordinator:markDirty(state)
 end
 
 function PersistenceCoordinator:flush()
-	if self.flushing or self.dirty == nil then
+	while self.flushing do
+		self.flushCompleted.Event:Wait()
+	end
+	if self.dirty == nil then
 		return Result.ok(false)
 	end
+
 	self.flushing = true
 	local snapshot = self.dirty
 	local result = self.store:save(self.key, snapshot)
@@ -47,7 +52,18 @@ function PersistenceCoordinator:flush()
 		self.diagnostics:increment("persistence.flush_failed")
 	end
 	self.flushing = false
+	self.flushCompleted:Fire()
 	return result
+end
+
+function PersistenceCoordinator:flushUntilClean()
+	while self.dirty ~= nil or self.flushing do
+		local result = self:flush()
+		if not result.ok then
+			return result
+		end
+	end
+	return Result.ok(true)
 end
 
 return PersistenceCoordinator
