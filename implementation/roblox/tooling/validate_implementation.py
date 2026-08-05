@@ -19,6 +19,31 @@ for project in (
     except Exception as exc:
         errors.append(f"{project}: {exc}")
 
+acceptance_manifest_path = ROOT / "acceptance-batch.json"
+try:
+    acceptance_manifest = json.loads(acceptance_manifest_path.read_text(encoding="utf-8"))
+    for field in ("schemaVersion", "repository", "branch", "verifiedHead", "project", "rojo"):
+        if field not in acceptance_manifest:
+            errors.append(f"acceptance-batch.json: missing {field}")
+    if acceptance_manifest.get("schemaVersion") != 1:
+        errors.append("acceptance-batch.json: schemaVersion must be 1")
+    verified_head = acceptance_manifest.get("verifiedHead", "")
+    if not re.fullmatch(r"[0-9a-f]{40}", verified_head):
+        errors.append("acceptance-batch.json: verifiedHead must be a full lowercase commit SHA")
+    if acceptance_manifest.get("project") != "slice01-acceptance.project.json":
+        errors.append("acceptance-batch.json: unexpected default project")
+    rojo = acceptance_manifest.get("rojo", {})
+    if rojo.get("version") != "7.7.0":
+        errors.append("acceptance-batch.json: Rojo version must match CI pin 7.7.0")
+    for key in ("windowsX64", "windowsArm64"):
+        asset = rojo.get("assets", {}).get(key, {})
+        if not asset.get("url", "").startswith("https://github.com/rojo-rbx/rojo/releases/download/v7.7.0/"):
+            errors.append(f"acceptance-batch.json: invalid {key} Rojo URL")
+        if not re.fullmatch(r"[0-9a-f]{64}", asset.get("sha256", "")):
+            errors.append(f"acceptance-batch.json: invalid {key} SHA256")
+except Exception as exc:
+    errors.append(f"acceptance-batch.json: {exc}")
+
 luau = list((ROOT / "src").rglob("*.lua")) + list((ROOT / "tests").rglob("*.lua"))
 if len(luau) < 70:
     errors.append(f"expected at least 70 Luau files, found {len(luau)}")
@@ -52,6 +77,7 @@ for forbidden in ("payload.attackBonus", "payload.armorClass", "payload.damage",
 
 required = [
     "EXECUTION-TEST-RULES.md",
+    "acceptance-batch.json",
     "src/ReplicatedStorage/RVTT/Shared/Core/ValueGuard.lua",
     "src/ReplicatedStorage/RVTT/Shared/Diagnostics/BatchSummary.lua",
     "src/ReplicatedStorage/RVTT/Shared/World/WorldTokenContract.lua",
@@ -92,6 +118,7 @@ if execution_rules_path.exists():
     for required_phrase in (
         "Batch Acceptance Gate",
         "단일 실행 스크립트",
+        "Invoke-RestMethod",
         "WT-PICK-01",
         "Batch Summary",
     ):
@@ -104,9 +131,14 @@ if batch_runner_path.exists():
     for required_phrase in (
         "Dirty Worktree",
         "ExpectedHead",
+        "acceptance-batch.json",
+        "Offline cache",
+        "Expand-Archive",
+        "Get-FileHash",
         "validate_implementation.py",
         "rojo build",
         "manifest.txt",
+        "SelfTest",
     ):
         if required_phrase not in batch_runner:
             errors.append(f"run-studio-acceptance-batch.ps1: missing contract {required_phrase}")
