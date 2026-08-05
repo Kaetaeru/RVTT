@@ -50,7 +50,9 @@ function PersistenceCoordinator:markDirty(state)
 		return false
 	end
 	local dirtyRevision = revisionOf(self.dirty)
-	if revision <= self.lastSavedRevision or (dirtyRevision ~= nil and revision <= dirtyRevision) then
+	if
+		revision <= self.lastSavedRevision or (dirtyRevision ~= nil and revision <= dirtyRevision)
+	then
 		return false
 	end
 
