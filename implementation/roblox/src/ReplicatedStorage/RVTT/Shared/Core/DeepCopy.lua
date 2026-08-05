@@ -1,20 +1,25 @@
 --!strict
 
-local function deepCopy(value: unknown, seen: { [table]: table }?): unknown
+type AnyTable = { [any]: any }
+
+local function deepCopy<T>(value: T, seen: { [AnyTable]: AnyTable }?): T
 	if type(value) ~= "table" then
 		return value
 	end
+
 	local visited = seen or {}
-	local source = value :: table
-	if visited[source] ~= nil then
-		return visited[source]
+	local source = value :: AnyTable
+	local previous = visited[source]
+	if previous ~= nil then
+		return previous :: any
 	end
-	local target = {}
+
+	local target: AnyTable = {}
 	visited[source] = target
 	for key, child in source do
 		target[deepCopy(key, visited)] = deepCopy(child, visited)
 	end
-	return target
+	return target :: any
 end
 
 return deepCopy
