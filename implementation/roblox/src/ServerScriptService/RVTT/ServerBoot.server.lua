@@ -2,7 +2,12 @@
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerScriptService = game:GetService("ServerScriptService")
 local ServerStorage = game:GetService("ServerStorage")
+
+if ServerScriptService:FindFirstChild("RVTTTests") ~= nil then
+	return
+end
 
 local Version = require(ReplicatedStorage.RVTT.Shared.Core.Version)
 local Server = script.Parent.Server
