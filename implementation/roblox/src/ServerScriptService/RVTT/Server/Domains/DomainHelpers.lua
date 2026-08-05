@@ -110,7 +110,12 @@ function DomainHelpers.validateAbilityScores(value: unknown): boolean
     local scores = value :: { [string]: unknown }
     for _, ability in { "strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma" } do
         local score = scores[ability]
-        if not ValueGuard.isFiniteNumber(score) or score :: number < 3 or score :: number > 20 or (score :: number) % 1 ~= 0 then
+        if not ValueGuard.isFiniteNumber(score) then
+            return false
+        end
+
+        local numericScore = score :: number
+        if numericScore < 3 or numericScore > 20 or numericScore % 1 ~= 0 then
             return false
         end
     end
