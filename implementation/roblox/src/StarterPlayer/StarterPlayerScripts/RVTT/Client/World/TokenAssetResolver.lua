@@ -130,11 +130,7 @@ end
 local function normalizeModelVisual(visual: Model)
 	local boundsCFrame, boundsSize = visual:GetBoundingBox()
 	local minimumY = boundsCFrame.Position.Y - boundsSize.Y * 0.5
-	local delta = CFrame.new(
-		-boundsCFrame.Position.X,
-		-minimumY,
-		-boundsCFrame.Position.Z
-	)
+	local delta = CFrame.new(-boundsCFrame.Position.X, -minimumY, -boundsCFrame.Position.Z)
 	visual:PivotTo(delta * visual:GetPivot())
 end
 

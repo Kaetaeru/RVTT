@@ -114,7 +114,8 @@ function Controller.start(self: Controller)
 		if processed then
 			return
 		end
-		if input.UserInputType == Enum.UserInputType.MouseButton1
+		if
+			input.UserInputType == Enum.UserInputType.MouseButton1
 			or input.UserInputType == Enum.UserInputType.Touch
 		then
 			self:_handlePrimary(input)

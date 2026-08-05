@@ -113,7 +113,8 @@ instructions.Position = UDim2.fromOffset(16, 44)
 instructions.Size = UDim2.new(1, -32, 0, 56)
 instructions.BackgroundTransparency = 1
 instructions.Font = Enum.Font.Gotham
-instructions.Text = "1) Scene 준비  2) 월드의 3D Token 클릭  3) 바닥 클릭으로 서버 권위 이동  4) 저장 후 Stop·Play 복구"
+instructions.Text =
+	"1) Scene 준비  2) 월드의 3D Token 클릭  3) 바닥 클릭으로 서버 권위 이동  4) 저장 후 Stop·Play 복구"
 instructions.TextColor3 = Color3.fromRGB(184, 191, 202)
 instructions.TextSize = 12
 instructions.TextWrapped = true
@@ -176,7 +177,11 @@ local busy = false
 local lastProjectedPosition = "none"
 
 client.Command.remotes.receipt.OnClientEvent:Connect(function(message)
-	if type(message) == "table" and message.phase == "terminal" and type(message.commandId) == "string" then
+	if
+		type(message) == "table"
+		and message.phase == "terminal"
+		and type(message.commandId) == "string"
+	then
 		terminalResults[message.commandId] = message.result
 	end
 end)
@@ -280,7 +285,9 @@ local function currentState(): any
 		session = session,
 		character = character,
 		scene = scene,
-		membership = if type(session.memberships) == "table" then session.memberships[userKey] else nil,
+		membership = if type(session.memberships) == "table"
+			then session.memberships[userKey]
+			else nil,
 		selectedId = selectedId,
 		ready = type(session.ready) == "table" and session.ready[userKey] == true,
 		characterId = characterId,
@@ -295,7 +302,11 @@ local function actorPosition(state: any): Vector3?
 		return nil
 	end
 	local position = state.actor.position
-	if type(position.x) ~= "number" or type(position.y) ~= "number" or type(position.z) ~= "number" then
+	if
+		type(position.x) ~= "number"
+		or type(position.y) ~= "number"
+		or type(position.z) ~= "number"
+	then
 		return nil
 	end
 	return Vector3.new(position.x, position.y, position.z)
@@ -404,10 +415,8 @@ frameButton.Activated:Connect(function()
 	local currentCamera = Workspace.CurrentCamera
 	if position ~= nil and currentCamera ~= nil then
 		currentCamera.CameraType = Enum.CameraType.Scriptable
-		currentCamera.CFrame = CFrame.lookAt(
-			position + Vector3.new(22, 19, 22),
-			position + Vector3.new(0, 1.2, 0)
-		)
+		currentCamera.CFrame =
+			CFrame.lookAt(position + Vector3.new(22, 19, 22), position + Vector3.new(0, 1.2, 0))
 		setOperation("3D Token 카메라 정렬")
 	end
 end)
@@ -427,9 +436,7 @@ verifyButton.Activated:Connect(function()
 		and player.Character == nil
 	if passed then
 		setOperation("3D Token·Scene·Position·Avatar Suppression 복구 PASS")
-		print(
-			"[RVTT WorldToken] reconnect recovery PASS position=" .. lastProjectedPosition
-		)
+		print("[RVTT WorldToken] reconnect recovery PASS position=" .. lastProjectedPosition)
 	else
 		setOperation("복구 미충족 · status와 Output을 확인하세요", true)
 	end

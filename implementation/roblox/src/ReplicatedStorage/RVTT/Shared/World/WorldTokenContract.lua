@@ -73,7 +73,11 @@ function Contract.displayName(payload: any, actor: any): string
 			and type(characterDomain.characters) == "table"
 		then
 			local character = characterDomain.characters[actor.sourceCharacterId]
-			if type(character) == "table" and type(character.name) == "string" and #character.name > 0 then
+			if
+				type(character) == "table"
+				and type(character.name) == "string"
+				and #character.name > 0
+			then
 				return character.name
 			end
 		end

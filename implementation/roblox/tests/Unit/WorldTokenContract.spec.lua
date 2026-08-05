@@ -34,10 +34,17 @@ return function(harness)
 	}
 	local actor = Contract.actor(payload, "actor:hero")
 	harness:expect(actor ~= nil, "world token contract resolves a projected actor")
-	harness:equal(Contract.displayName(payload, actor), "Acceptance Hero", "character name labels the token")
+	harness:equal(
+		Contract.displayName(payload, actor),
+		"Acceptance Hero",
+		"character name labels the token"
+	)
 	harness:expect(Contract.canControl(payload, actor, 101), "owner controls the projected actor")
 	harness:expect(Contract.canControl(payload, actor, 202), "DM controls the projected actor")
-	harness:expect(not Contract.canControl(payload, actor, 303), "unrelated player cannot control the actor")
+	harness:expect(
+		not Contract.canControl(payload, actor, 303),
+		"unrelated player cannot control the actor"
+	)
 
 	local position = Contract.toVector3(actor.position)
 	harness:expect(position ~= nil, "finite projection position converts to Vector3")
@@ -63,6 +70,9 @@ return function(harness)
 	surface:SetAttribute("RVTTMoveSurface", true)
 	local child = Instance.new("Attachment")
 	child.Parent = surface
-	harness:expect(Contract.isMoveSurface(child), "move surface attribute is inherited from ancestors")
+	harness:expect(
+		Contract.isMoveSurface(child),
+		"move surface attribute is inherited from ancestors"
+	)
 	surface:Destroy()
 end
