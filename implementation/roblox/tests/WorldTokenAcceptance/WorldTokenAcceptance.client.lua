@@ -540,7 +540,7 @@ local function prepareScene()
 end
 
 local function initializeCameraChecks()
-	local requirements = {
+	local requirements: { [string]: string } = {
 		["camera-frame"] = "press F or Token Frame",
 		["camera-pan"] = "middle-click drag",
 		["camera-zoom"] = "mouse wheel",
