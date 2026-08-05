@@ -13,7 +13,7 @@ local remotes = {
 	clientReady = remoteFolder:WaitForChild(Names.CLIENT_READY) :: RemoteEvent,
 }
 
-local clientModules = script.Client
+local clientModules = script.Parent.Client
 local ProjectionReplica = require(clientModules.ProjectionReplica)
 local CommandClient = require(clientModules.CommandClient)
 local InputContextStack = require(clientModules.InputContextStack)
