@@ -1,0 +1,65 @@
+name: Fix world interaction types
+
+on:
+  push:
+    branches:
+      - planning/rvtt-remake
+    paths:
+      - .github/workflows/fix-world-interaction-types.yml
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: planning/rvtt-remake
+          fetch-depth: 0
+      - name: Apply narrow type fixes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          camera = Path("implementation/roblox/src/StarterPlayer/StarterPlayerScripts/RVTT/Client/World/WorldCameraController.lua")
+          camera_text = camera.read_text(encoding="utf-8")
+          old_camera = 'function Controller:_apply(event: string): boolean'
+          new_camera = 'function Controller._apply(self: Controller, event: string): boolean'
+          if camera_text.count(old_camera) != 1:
+              raise SystemExit("camera type boundary not found exactly once")
+          camera.write_text(camera_text.replace(old_camera, new_camera), encoding="utf-8")
+
+          harness = Path("implementation/roblox/tests/WorldTokenAcceptance/WorldTokenAcceptance.client.lua")
+          harness_text = harness.read_text(encoding="utf-8")
+          old_harness = '''\tlocal succeeded, errorMessage = xpcall(action, debug.traceback)
+          \tbusy = false
+          \tif not succeeded then
+          \t\tsetOperation("Batch 작업 실패 · Output의 첫 오류를 확인하세요", true)
+          \t\twarn("[RVTT Batch] event=action-failed error=" .. tostring(errorMessage))
+          \tend'''
+          new_harness = '''\tlocal errorMessage: any = nil
+          \tlocal succeeded = xpcall(action, function(errorValue)
+          \t\terrorMessage = debug.traceback(tostring(errorValue))
+          \tend)
+          \tbusy = false
+          \tif not succeeded then
+          \t\tsetOperation("Batch 작업 실패 · Output의 첫 오류를 확인하세요", true)
+          \t\twarn("[RVTT Batch] event=action-failed error=" .. tostring(errorMessage))
+          \tend'''
+          if harness_text.count(old_harness) != 1:
+              raise SystemExit("harness xpcall boundary not found exactly once")
+          harness.write_text(harness_text.replace(old_harness, new_harness), encoding="utf-8")
+          PY
+          cd implementation/roblox
+          stylua src tests || true
+          cd ../..
+          rm -f .github/workflows/fix-world-interaction-types.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "fix: type world interaction batch boundaries"
+          git push origin HEAD:planning/rvtt-remake
