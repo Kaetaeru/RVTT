@@ -114,11 +114,13 @@ local CommandClient = require(clientModules.CommandClient)
 local InputContextStack = require(clientModules.InputContextStack)
 local SemanticInputRouter = require(clientModules.SemanticInputRouter)
 local ClientRuntime = require(clientModules.ClientRuntime)
+local WorldTokenRuntime = require(clientModules.World.WorldTokenRuntime)
 
 local replica = ProjectionReplica.new()
 local command = CommandClient.new(remotes, replica)
 local inputStack = InputContextStack.new()
 local inputRouter = SemanticInputRouter.new(inputStack)
+local worldTokens = WorldTokenRuntime.new(replica, command)
 local syncInFlight = false
 
 local function fullResync()
@@ -157,7 +159,13 @@ remotes.projection.OnClientEvent:Connect(function(envelope)
 end)
 
 inputRouter:start()
-ClientRuntime.set({ Replica = replica, Command = command, Input = inputStack })
+worldTokens:start()
+ClientRuntime.set({
+	Replica = replica,
+	Command = command,
+	Input = inputStack,
+	WorldTokens = worldTokens,
+})
 
 local loadingGui = playerGui:FindFirstChild("RVTT_Loading")
 if loadingGui ~= nil then
