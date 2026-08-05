@@ -187,10 +187,7 @@ return function(harness)
 	harness:expect(disconnected.ok and reconnected.ok, "connection transitions commit")
 	local connections = Runtime:snapshot().domains.session.connections
 	local connection = lookup(connections, "202")
-	harness:expect(
-		tostring(connection) == "connected",
-		"reconnection restores connected status"
-	)
+	harness:expect(tostring(connection) == "connected", "reconnection restores connected status")
 
 	local dmProjectionAgain = Builder:build(Runtime:snapshot(), 101, "dm")
 	harness:expect(
