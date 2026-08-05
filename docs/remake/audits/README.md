@@ -2,9 +2,8 @@
 
 - 상태: ACTIVE
 - 문서 종류: Audit Index
-- 현재 단계: `IMPLEMENTATION WORKSPACE·SCRIPT MANIFEST`
+- 현재 단계: `SLICE 01 STUDIO ACCEPTANCE`
 - 상위 작업 순서: [`CURRENT-WORK-ORDER`](../CURRENT-WORK-ORDER.md)
-- Spec 인계 상태: [`CURRENT-SPEC-WORK-ORDER`](../specs/CURRENT-SPEC-WORK-ORDER.md)
 - Production Work Order: [`implementation/roblox/CURRENT-WORK-ORDER`](../../../implementation/roblox/CURRENT-WORK-ORDER.md)
 - 전체 Slice Roadmap: [`SLICE-ROADMAP`](../specs/SLICE-ROADMAP.md)
 
@@ -12,78 +11,48 @@ Audit은 제품 동작을 새로 정의하지 않는다. 권위 문서·사용�
 
 ## 현재 핵심 감사
 
-1. [`Implementation Workspace Bootstrap Audit`](implementation-workspace-bootstrap-audit.md)
-   - `implementation/roblox/` Greenfield Production Root와 Roblox Service Folder 생성
-   - Script-by-Script Work Order·Manifest Gate 확정
-   - Production Luau Script `NOT STARTED`
-2. [`UI·UX Global Policy Completion Audit`](ui-ux-policy-completion-audit.md)
+1. [`Roblox Studio Runtime Baseline Validation Audit`](roblox-studio-runtime-baseline-validation-audit.md)
+   - Unit·Integration `108/0`
+   - Live DataStore `10/0`
+   - 3-client MultiClient `56/0`, `staleRetries=3`
+   - 현재 다음 Gate: Slice 01 Studio Acceptance
+2. [`All-slice Script Transfer Audit`](all-slice-script-transfer-audit.md)
+   - 16개 Slice 계약의 Script·Test baseline 인계
+3. [`Implementation Workspace Bootstrap Audit`](implementation-workspace-bootstrap-audit.md)
+   - Greenfield Production Root와 Roblox Service 구조 생성 시점 감사
+4. [`UI·UX Global Policy Completion Audit`](ui-ux-policy-completion-audit.md)
    - Visual·Interaction·Information·Feedback·Recovery·Accessibility Policy 완료
-   - UI·UX Review Checklist와 Production UI Gate 확정
-3. [`All-slice Specification Checkpoint Completion Audit`](all-slice-specification-checkpoint-completion-audit.md)
-   - 16개 Work Order·Integration Contract·Slice Audit과 4개 Cross-Slice Checkpoint 완료
-   - 통합 명세 범위 `COMPLETE`
-4. [`Slice Roadmap 완전성 감사`](implementation-slice-roadmap-completeness-audit.md)
-   - 16개 Slice에 Quick Flow·12개 Main Guide·Content·Release 범위 배정
-5. [`Shared Spec 001·002 재검토 감사`](shared-spec-001-002-revalidation-audit.md)
-   - 둘 다 `UPDATE_REQUIRED`, Slice 02 구현 전 갱신 필요
-6. [`구현 명세 전 최종 문서 연결 감사`](pre-implementation-document-linkage-audit.md)
-   - Root→User Flow→Guide→Authority→Spec 연결 완료
+5. [`All-slice Specification Checkpoint Completion Audit`](all-slice-specification-checkpoint-completion-audit.md)
+   - 16개 Package·Audit와 4개 Recovery Checkpoint 완료
 
 ## 현재 감사 흐름
 
 ```text
-UI·UX Policy Completion Audit
-→ Implementation Workspace Bootstrap Audit
-→ Slice 01 Script Manifest
-→ Script 단위 Test·Review
-→ Slice 01 Roblox Integration
+All-slice Contract→Script Transfer
+→ Static·Toolchain Validation
+→ Roblox Studio Runtime Baseline Validation
+→ Slice 01 Studio Acceptance
 → Slice 01 Production Build Acceptance Audit
+→ Slices 02–16 Acceptance
+→ Release Hardening
 ```
+
+## 현재 구현 감사 대상
+
+Slice 01 Studio Acceptance에서 다음을 확인한다.
+
+- Join→Select→Ready→Scene→Move→Reconnect 사용자 흐름
+- Client Intent와 Server Authority 결과 일치
+- Player·DM·Observer Projection 분리
+- Unauthorized·Stale·Disconnect 실패 처리
+- Revision·AuthorityEpoch·Projection Sequence
+- 재접속 후 중복 Membership·Command 없음
+- UI·UX Review Checklist
 
 ## Slice 감사
 
 - [`16개 Slice Checkpoint Audit Index`](slices/README.md)
 - [`4개 Cross-Slice Checkpoint와 Recovery Branch`](slice-checkpoints/README.md)
-
-```text
-Slice Contract
-→ Slice Specification Checkpoint Audit
-→ 4-Slice Cross Checkpoint
-→ All-slice Completion Audit
-→ Script Manifest·Implementation
-→ Production Build Acceptance Audit
-```
-
-## Cross-Slice Checkpoint
-
-| Checkpoint | 범위 | 결과 | Recovery Branch |
-|---|---|---|---|
-| A | 01–04 | PASS | `checkpoint/specs-slices-01-04-2026-08-05` |
-| B | 05–08 | PASS | `checkpoint/specs-slices-05-08-2026-08-05` |
-| C | 09–12 | PASS | `checkpoint/specs-slices-09-12-2026-08-05` |
-| D | 13–16 | PASS | `checkpoint/specs-slices-13-16-2026-08-05` |
-
-## 현재 구현 감사 대상
-
-Slice 01 Script Manifest에서 다음을 확인한다.
-
-- Roblox Service별 실제 Script 경로
-- Shared·Server·Client·UI 단일 책임
-- Public API·Stable Error·Registry
-- Unit·Integration·Roblox Test 연결
-- Schema·Migration·Version 영향
-- UI·UX Policy·Checklist 적용 대상
-- Rojo·Type Check·Test Runner·Studio Sync Toolchain
-
-Manifest와 실제 Script가 통합 계약과 충돌하면 관련 Authority·Guide·Slice Contract·Audit을 `UPDATE_REQUIRED`로 되돌린다.
-
-## 선행 완료 감사
-
-- [`User Guide Quick Flow와 Flowchart 보완 감사`](user-guide-quick-flow-and-flowchart-audit.md)
-- [`Player·DM User Guide 완료 감사`](player-and-dm-user-guide-completion-audit.md)
-- [`Main System Guide 일관성과 문서 허브 완료 감사`](main-system-guide-consistency-and-document-hub-completion-audit.md)
-- [`Runtime Architecture Completion과 Main System Guide 준비도 감사`](runtime-architecture-completion-and-main-guide-readiness-audit.md)
-- [`Document Migration Validation`](document-migration-validation.md)
 
 ## 문서 수명주기
 
