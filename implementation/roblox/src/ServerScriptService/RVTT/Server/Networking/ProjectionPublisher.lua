@@ -5,16 +5,26 @@ local Players = game:GetService("Players")
 local ProjectionPublisher = {}
 ProjectionPublisher.__index = ProjectionPublisher
 
-function ProjectionPublisher.new(runtime, builder, remotes, roleResolver)
-	return setmetatable(
-		{ runtime = runtime, builder = builder, remotes = remotes, roleResolver = roleResolver },
-		ProjectionPublisher
-	)
+local function defaultViewerIdResolver(player: Player): number
+	return player.UserId
+end
+
+function ProjectionPublisher.new(runtime, builder, remotes, roleResolver, viewerIdResolver)
+	return setmetatable({
+		runtime = runtime,
+		builder = builder,
+		remotes = remotes,
+		roleResolver = roleResolver,
+		viewerIdResolver = viewerIdResolver or defaultViewerIdResolver,
+	}, ProjectionPublisher)
 end
 
 function ProjectionPublisher:publish(player: Player)
-	local projection =
-		self.builder:build(self.runtime:snapshot(), player.UserId, self.roleResolver(player))
+	local projection = self.builder:build(
+		self.runtime:snapshot(),
+		self.viewerIdResolver(player),
+		self.roleResolver(player)
+	)
 	self.remotes.projection:FireClient(player, projection)
 end
 
@@ -26,7 +36,11 @@ end
 
 function ProjectionPublisher:start()
 	self.remotes.sync.OnServerInvoke = function(player)
-		return self.builder:build(self.runtime:snapshot(), player.UserId, self.roleResolver(player))
+		return self.builder:build(
+			self.runtime:snapshot(),
+			self.viewerIdResolver(player),
+			self.roleResolver(player)
+		)
 	end
 	Players.PlayerAdded:Connect(function(player)
 		task.defer(function()
