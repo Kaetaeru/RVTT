@@ -17,9 +17,23 @@ This test-only client validates the production World Token runtime against the s
 - loaded Character, Scene, Position, and Token restore
 - structured Final Batch Summary
 
+## One-command launch
+
+Paste this single command into Windows PowerShell or Windows Terminal from any directory:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-Expression (Invoke-RestMethod 'https://raw.githubusercontent.com/Kaetaeru/RVTT/planning/rvtt-remake/implementation/roblox/tooling/run-studio-acceptance-batch.ps1')"
+```
+
+No arguments are required. The bootstrap reads the machine-readable `acceptance-batch.json`, downloads the verified source into an isolated cache, installs the pinned Rojo build when necessary, validates, builds, closes any existing Studio process, and opens the generated Place.
+
+The bootstrap does not require the current directory to be a repository and does not modify a local Dirty Worktree. Git is not required. Python is optional because the bootstrap contains a fallback validator. After the first successful online run, the same verified Head can be rebuilt from the Offline cache.
+
+Unavoidable prerequisites are Windows and Roblox Studio. The first uncached run also requires internet access.
+
 ## Interaction
 
-1. Run `tooling/run-studio-acceptance-batch.ps1` with the CI-verified Head.
+1. Run the one-command bootstrap above.
 2. Publish the generated Place to the designated persistence test Place once.
 3. Play. Session and Scene preparation run automatically.
 4. Click the visible 3D Token.
