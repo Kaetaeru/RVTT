@@ -1,0 +1,1 @@
+Temporary validation trigger for the post-remediation Luau typecheck. Remove after the type gate is stable.
