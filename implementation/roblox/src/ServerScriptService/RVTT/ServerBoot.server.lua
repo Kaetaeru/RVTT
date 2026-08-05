@@ -73,15 +73,30 @@ remotes.clientReady.OnServerEvent:Connect(function(player)
 	publisher:publish(player)
 end)
 
-local studioPersistenceEnabled = game:GetAttribute("RVTT_EnableStudioPersistence") == true
+local function projectPersistenceEnabled(): boolean
+	local flag = ServerStorage.RVTT:FindFirstChild("EnableStudioPersistence")
+	return flag ~= nil and flag:IsA("BoolValue") and flag.Value
+end
+
+local persistenceAttributeEnabled = game:GetAttribute("RVTT_EnableStudioPersistence") == true
+local persistenceProjectEnabled = projectPersistenceEnabled()
+local studioPersistenceEnabled = persistenceAttributeEnabled or persistenceProjectEnabled
+local persistenceActivationSource = "disabled"
+if persistenceAttributeEnabled then
+	persistenceActivationSource = "attribute"
+elseif persistenceProjectEnabled then
+	persistenceActivationSource = "project-config"
+end
+
 local persistenceEnabled = not RunService:IsStudio() or studioPersistenceEnabled
 if persistenceEnabled then
 	print(
 		string.format(
-			"[RVTT Persistence] enabled gameId=%d placeId=%d studio=%s",
+			"[RVTT Persistence] enabled gameId=%d placeId=%d studio=%s source=%s",
 			game.GameId,
 			game.PlaceId,
-			tostring(RunService:IsStudio())
+			tostring(RunService:IsStudio()),
+			persistenceActivationSource
 		)
 	)
 	local migrations = MigrationRegistry.new(Version.SCHEMA)
@@ -117,7 +132,7 @@ if persistenceEnabled then
 else
 	diagnostics:record("info", "STUDIO_PERSISTENCE_DISABLED", {})
 	print(
-		"[RVTT Boot] Studio persistence disabled; use live-datastore.project.json or set RVTT_EnableStudioPersistence=true"
+		"[RVTT Boot] Studio persistence disabled; build persistence-acceptance.project.json or set RVTT_EnableStudioPersistence=true"
 	)
 end
 
@@ -150,6 +165,7 @@ diagnostics:record(
 	{
 		commandCount = #registry:list(),
 		persistenceEnabled = persistenceEnabled,
+		persistenceActivationSource = persistenceActivationSource,
 		robloxCharacterAutoLoads = Players.CharacterAutoLoads,
 	} :: { [string]: unknown }
 )
