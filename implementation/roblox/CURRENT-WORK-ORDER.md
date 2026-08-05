@@ -34,13 +34,10 @@ Slice 01 Authority·Persistence·Reconnect
 → VERIFIED IN STUDIO
 
 Slice 01 World Interaction Batch
-→ VERIFIED IN STUDIO · 16/16 PASS
-
-실행 테스트 방식
-→ BATCH ACCEPTANCE RULE ACTIVE
+→ PARTIAL STUDIO PASS · 14/16 USER-OBSERVED
 
 현재 작업
-→ Slice 01 Production Build Acceptance Audit
+→ Slice 01 Camera Input Correction Acceptance
 ```
 
 기존 Studio Evidence:
@@ -62,23 +59,23 @@ Character·Scene·Position Recovery
 → PASS
 ```
 
-2026-08-06 Slice 01 World Interaction Evidence:
+2026-08-06 Slice 01 사용자 관측 Evidence:
 
 ```text
-[RVTT Batch Summary] batch=slice01-world-interaction result=PASS passed=16 failed=0 pending=0 revision=73
+Token Pick·Highlight·Destination·Movement·Server Acceptance·Projection
+→ PASS
 
-Token Pick
-→ PASS · method=screen · world ray hit=Workspace.RVTT_AcceptanceBoard.MoveSurface
+Camera Zoom via Mouse Wheel
+→ PASS
 
-State Restore
-→ PASS · revision=72 · position=(-22.94,0.00,-57.40)
+Camera Pan via Middle-button Drag
+→ FAIL
 
-Movement Command
-→ PASS · baseRevision=72 · acceptedRevision=73
-
-Projection Move
-→ PASS · revision=73 · position=(-15.34,0.00,-56.93)
+Camera Frame via F / Token Frame
+→ FAIL
 ```
+
+기존 Final Summary의 `passed=16 failed=0`은 Camera Harness가 실제 입력이 아니라 `frameAll()`, `panPixels()`, `zoomBy()` 메서드를 직접 호출해 생성한 허위 양성 결과였다. 따라서 해당 Summary를 전체 사용자 흐름 PASS 근거로 사용하지 않는다.
 
 ## 2. 실행 테스트 원칙
 
@@ -93,7 +90,7 @@ Studio 수동 검사는 개별 수정마다 요청하지 않는다.
 → 전체 Batch 검증 1회
 ```
 
-단일 Raycast 수정, 로그 추가, 문구 변경, 타입 오류 수정은 별도의 수동 게시 Gate가 아니다. 자동 Gate가 실패한 상태에서도 사용자 검사를 요청하지 않는다.
+Acceptance Check는 함수 호출 가능 여부가 아니라 실제 사용자 입력과 관측 가능한 상태 변화로 판정해야 한다. 카메라 입력은 실제 `F`, 중클릭 드래그, 휠 이벤트가 Controller까지 도달하고 Camera CFrame에 반영됐을 때만 PASS다.
 
 사용자에게 전달하는 Build 명령은 저장소에서 바로 실행 가능한 전체 Windows PowerShell 블록으로 제공한다.
 
@@ -109,9 +106,9 @@ Studio 수동 검사는 개별 수정마다 요청하지 않는다.
 | 6 | DONE | Accent Theme·Avatar·Persistence | Visual·Input·Save·Reload·Character Suppression 확인 |
 | 7 | DONE | Slice 01 Authority Acceptance | Join→Select→Ready→Scene→Move→Reconnect 상태 복구 |
 | 8 | DONE | Slice 01 3D World Token Baseline | Projection Renderer·Asset Resolver·월드 입력 연결 |
-| 9 | DONE | Slice 01 World Interaction Batch | Picking·Selection·Destination·Camera·Move·Diagnostics·Recovery와 Final Summary 구현·CI PASS |
-| 10 | DONE | Slice 01 Batch Studio Acceptance | Final Summary `passed=16 failed=0 pending=0` 및 revision 72→73 확인 |
-| 11 | IN_PROGRESS | Slice 01 Production Build Acceptance Audit | Production Project의 권위·보안·복구·Acceptance 전용 코드 격리 판정 |
+| 9 | DONE | Slice 01 World Interaction Implementation | Picking·Selection·Destination·Camera·Move·Diagnostics·Recovery 구현·CI PASS |
+| 10 | IN_PROGRESS | Slice 01 Camera Input Correction Acceptance | 실제 F·중클릭 드래그·휠 입력으로 Camera Check 판정 |
+| 11 | BLOCKED | Slice 01 Production Build Acceptance Audit | Camera Input Gate 완료 후 Production 경계 판정 |
 | 12 | QUEUED | Slice 02 Rules·D20 Batch | 판정·Attack·Damage·Projection·복구를 한 묶음으로 구현·검증 |
 | 13 | QUEUED | Slices 03–16 Batch Acceptance | 관련 Slice를 Milestone 단위로 묶어 검증 |
 | 14 | QUEUED | DataStore·Restart Recovery Batch | Restart·Lease·Migration·Conflict 검증 |
@@ -119,15 +116,38 @@ Studio 수동 검사는 개별 수정마다 요청하지 않는다.
 | 16 | QUEUED | UI Accessibility QA | Keyboard·Focus·Contrast·User Test |
 | 17 | QUEUED | Performance·Fault·Soak | 측정 Evidence와 Release Gate |
 
-## 4. Slice 01 World Interaction Batch 판정
+## 4. Camera Input Correction
 
-최종 상태:
+현재 Delta:
 
 ```text
-SLICE_01_WORLD_INTERACTION_BATCH_STUDIO_VERIFIED
+SLICE_01_WORLD_INTERACTION_BATCH_CAMERA_INPUT_PENDING
 ```
 
-검증된 범위:
+원인:
+
+```text
+Acceptance Harness
+→ Camera 메서드 직접 호출
+→ 실제 F·중클릭 입력 미검증
+→ camera-frame·camera-pan 허위 PASS
+
+WorldCameraController
+→ gameProcessedEvent=true 입력 조기 반환
+→ Roblox 기본 입력이 소비한 F·중클릭 경로 무시
+```
+
+수정:
+
+- `F`와 중클릭을 `ContextActionService` 고우선순위 Action으로 수신
+- MouseMovement는 `gameProcessedEvent`와 무관하게 활성 Drag 동안 처리
+- 실제 입력마다 `[RVTT WorldCamera Input]` 로그 출력
+- `InputResolved` Signal에 action·source·applied·changed·processed 전달
+- Acceptance Camera Check를 실제 입력 전까지 `pending`으로 유지
+- 실제 입력과 Camera 변화가 확인될 때만 PASS
+- `Token Frame` 버튼도 동일한 실제 입력 판정 경로 사용
+
+## 5. 사용자 관측상 검증된 범위
 
 ```text
 3D Token Projection
@@ -136,10 +156,7 @@ SLICE_01_WORLD_INTERACTION_BATCH_STUDIO_VERIFIED
 Raycast 실패 시 Screen-space Picking Fallback
 → PASS
 
-선택 Highlight와 선택 상태
-→ PASS
-
-Board Destination Marker
+Selection Highlight·Destination Marker
 → PASS
 
 movement.commit 서버 권위 이동
@@ -148,93 +165,22 @@ movement.commit 서버 권위 이동
 Command Receipt·Revision·Projection
 → PASS
 
-3D Camera Pan·Zoom·Frame
-→ PASS
-
 Persistence Save·Reconnect Restore
 → PASS
 
 Roblox Avatar Suppression
 → PASS
 
-Final Batch Summary
-→ passed=16 failed=0 pending=0
+Camera Zoom via Wheel
+→ PASS
+
+Camera Frame·Pan
+→ RETEST REQUIRED
 ```
 
-기존 결함 `WT-PICK-01` 판정:
+`WT-PICK-01`은 해결 상태를 유지한다. World Raycast가 `Workspace.RVTT_AcceptanceBoard.MoveSurface`를 반환했지만 Screen-space Token Bounds가 Actor를 선택했고 서버 승인 revision 73과 Projection 이동이 확인됐다.
 
-```text
-RESOLVED
-```
-
-World Raycast는 `Workspace.RVTT_AcceptanceBoard.MoveSurface`를 반환했지만 Screen-space Token Bounds가 동일 입력에서 Actor를 선택했다. 이후 Highlight, Destination Marker, `movement.commit`, 서버 승인 revision 73, Projection 위치 갱신까지 연결됐다.
-
-## 5. Slice 01 3D World Token 구조
-
-Production Client Boot는 Scene Projection을 `WorldTokenRuntime`에 전달한다.
-
-```text
-Scene Projection
-→ WorldTokenContract
-→ TokenAssetResolver
-→ WorldTokenRenderer
-→ Workspace 3D Model
-```
-
-입력과 이동 경계:
-
-```text
-3D Token 선택
-→ Actor ID 해석
-→ 소유자·Controller·DM 권한 확인
-
-이동 바닥 선택
-→ 목적지 제안
-→ movement.commit
-→ 서버 Validation·Commit
-→ 신규 Projection
-→ 3D Model Pivot 갱신
-```
-
-클라이언트는 입력 직후 Token을 임의 이동하지 않는다. 서버가 승인한 새 Projection 위치만 Renderer가 적용한다.
-
-## 6. 3D Token Asset 계약
-
-`ReplicatedStorage.RVTT.TokenAssets`에서 다음 순서로 `Model` 또는 `MeshPart`를 찾는다.
-
-```text
-sourceCharacterId
-→ sourceNpcId
-→ actorId
-→ Default
-```
-
-로드된 Token은 다음 계약을 따른다.
-
-- Roblox `Player.Character`·`Humanoid`를 사용하지 않는다.
-- 실행 가능한 Script descendant를 제거한다.
-- 모든 시각 Part를 Anchored·비충돌 상태로 사용한다.
-- Actor ID·소유자·Controller 메타데이터를 Attribute로 유지한다.
-- Model 외형과 Actor·Scene 상태를 분리한다.
-- 등록된 에셋이 없을 때만 리그 없는 3D 임시 미니어처를 생성한다.
-
-임시 미니어처와 Acceptance Panel은 최종 시각 디자인 후보가 아니다.
-
-## 7. Production Build Acceptance Audit 범위
-
-다음 Gate는 추가 기능 구현이나 개별 Studio 재검사가 아니라 Production Project 판정이다.
-
-- `default.project.json`에 Acceptance 전용 DM Override·Board·Panel이 포함되지 않는지 확인
-- Production Client가 서버 Projection으로만 Token Transform을 갱신하는지 확인
-- `movement.commit` 권한·Revision·Validation이 서버 경계를 유지하는지 확인
-- 공개되지 않은 Actor가 Viewer Projection과 Workspace에 생성되지 않는지 확인
-- Roblox Avatar Suppression이 Production Boot에서도 유지되는지 확인
-- Persistence Restore가 Acceptance Harness 없이 Production Runtime 계약으로 연결되는지 확인
-- Placeholder Visual을 Production Ready Art로 오인하지 않도록 Gate를 분리하는지 확인
-
-Audit 결과가 PASS일 때 Slice 01 Production Build Acceptance를 닫고 Slice 02 Rules·D20 Batch로 이동한다.
-
-## 8. UI 디자인 해석
+## 6. UI 디자인 해석
 
 현재 Production UI와 Acceptance Panel은 기능 검증용 Placeholder다.
 
@@ -245,39 +191,17 @@ Audit 결과가 PASS일 때 Slice 01 Production Build Acceptance를 닫고 Slice
 - 전면 수정은 별도 `UI Visual Redesign` Batch에서 일괄 수행한다.
 - 기능 테스트는 상태·입력·서버 권위·Persistence 계약을 기준으로 유지한다.
 
-## 9. 현재 상태 해석
-
-Accent Delta:
+## 7. 다음 Gate
 
 ```text
-ACCENT_THEME_PERSISTENCE_VERIFIED
-```
+Camera Input Correction 구현·자동 Gate
+→ IN PROGRESS
 
-Slice 01 Delta:
-
-```text
-SLICE_01_WORLD_INTERACTION_BATCH_STUDIO_VERIFIED
-```
-
-다음을 의미하지 않는다.
-
-- 실제 최종 OBJ·MeshPart Art Pack 승인 완료
-- Slice 02–16 Acceptance 완료
-- Cross-server 복구 완료
-- UI 최종 디자인 완료
-- Production Ready 또는 Release Ready
-
-## 10. 다음 Gate
-
-```text
-Slice 01 World Interaction Batch Implementation·자동 Gate
-→ PASS
-
-단일 Slice 01 Batch Studio Acceptance
-→ PASS · 16/16
+실제 F·중클릭 드래그·휠 Acceptance
+→ PENDING
 
 Slice 01 Production Build Acceptance Audit
-→ IN PROGRESS
+→ BLOCKED
 
 Slice 02 Rules·D20 Batch
 → QUEUED
