@@ -97,7 +97,7 @@ jobs:
           rojo --version
           stylua --version
           selene --version
-          luau-lsp --help | head -n 1
+          timeout 10s luau-lsp analyze --help >/dev/null
 
       - name: Check Luau formatting
         working-directory: implementation/roblox
