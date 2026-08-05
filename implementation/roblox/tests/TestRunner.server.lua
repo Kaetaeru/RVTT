@@ -22,6 +22,10 @@ local specs: { Spec } = {
 	},
 	{ name = "Envelope.spec", runner = require(script.Parent.Unit["Envelope.spec"]) :: any },
 	{
+		name = "WorldTokenContract.spec",
+		runner = require(script.Parent.Unit["WorldTokenContract.spec"]) :: any,
+	},
+	{
 		name = "RemoteBootstrap.spec",
 		runner = require(script.Parent.Unit["RemoteBootstrap.spec"]) :: any,
 	},
