@@ -134,11 +134,21 @@ function DomainHelpers.validateAbilityScores(value: unknown): boolean
 end
 
 function DomainHelpers.notFound(kind: string, id: string)
-	return Result.err("NOT_FOUND", "error.common.not_found", false, { kind = kind, id = id })
+	return Result.err(
+		"NOT_FOUND",
+		"error.common.not_found",
+		false,
+		{ kind = kind, id = id } :: { [string]: unknown }
+	)
 end
 
 function DomainHelpers.conflict(reason: string)
-	return Result.err("CONFLICT", "error.common.conflict", false, { reason = reason })
+	return Result.err(
+		"CONFLICT",
+		"error.common.conflict",
+		false,
+		{ reason = reason } :: { [string]: unknown }
+	)
 end
 
 return table.freeze(DomainHelpers)

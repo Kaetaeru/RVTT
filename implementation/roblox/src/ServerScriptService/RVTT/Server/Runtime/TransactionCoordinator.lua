@@ -6,11 +6,15 @@ local Result = require(game:GetService("ReplicatedStorage").RVTT.Shared.Core.Res
 local TransactionCoordinator = {}
 TransactionCoordinator.__index = TransactionCoordinator
 
-function TransactionCoordinator.new(diagnostics)
+function TransactionCoordinator.new(diagnostics: any): any
 	return setmetatable({ diagnostics = diagnostics }, TransactionCoordinator)
 end
 
-function TransactionCoordinator:execute(authorityState: { [string]: unknown }, operation)
+function TransactionCoordinator.execute(
+	self: any,
+	authorityState: { [string]: unknown },
+	operation: (draft: any) -> any
+): any
 	local draft = DeepCopy(authorityState) :: { [string]: unknown }
 	local ok, outcome = xpcall(function()
 		return operation(draft)

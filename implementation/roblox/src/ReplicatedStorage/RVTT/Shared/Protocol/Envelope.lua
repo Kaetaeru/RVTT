@@ -52,7 +52,7 @@ function Envelope.validateCommand(value: unknown)
 		end
 	end
 
-	return Result.ok(envelope :: CommandEnvelope)
+	return Result.ok((envelope :: any) :: CommandEnvelope)
 end
 
 return table.freeze(Envelope)

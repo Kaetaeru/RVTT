@@ -6,7 +6,7 @@ local Dice = {}
 
 function Dice.rollDie(sides: number, randomSource: RandomSource?): number
 	assert(sides >= 2 and sides % 1 == 0, "sides must be an integer >= 2")
-	local source = randomSource or Random.new()
+	local source: RandomSource = (randomSource or Random.new()) :: RandomSource
 	return source:NextInteger(1, sides)
 end
 

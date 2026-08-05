@@ -12,7 +12,7 @@ function Domain.initialState()
 	return { objectStates = {}, knowledge = {}, fog = {}, searches = {} }
 end
 
-local function interactionAllowed(object, interactionId: string): boolean
+local function interactionAllowed(object: any, interactionId: string): boolean
 	for _, allowed in object.interactionIds or {} do
 		if allowed == interactionId then
 			return true
@@ -21,19 +21,19 @@ local function interactionAllowed(object, interactionId: string): boolean
 	return interactionId == "inspect"
 end
 
-function Domain.register(registry)
+function Domain.register(registry: any)
 	registry:register({
 		commandType = "exploration.interact",
 		domainId = Domain.id,
-		authorize = function(context, domains, payload)
+		authorize = function(context: any, domains: any, payload: any)
 			return Helpers.controlsActor(context, domains, payload.actorId)
 		end,
-		validate = function(payload)
+		validate = function(payload: any)
 			return Helpers.hasString(payload, "actorId")
 				and Helpers.hasString(payload, "objectId")
 				and Helpers.hasString(payload, "interactionId")
 		end,
-		execute = function(context, state, payload, domains)
+		execute = function(context: any, state: any, payload: any, domains: any)
 			local object = domains.scene.objects[payload.objectId]
 			if object == nil or (object.hidden == true and context.role ~= "dm") then
 				return Helpers.notFound("scene_object", payload.objectId)
@@ -69,13 +69,13 @@ function Domain.register(registry)
 	registry:register({
 		commandType = "exploration.search",
 		domainId = Domain.id,
-		authorize = function(context, domains, payload)
+		authorize = function(context: any, domains: any, payload: any)
 			return Helpers.controlsActor(context, domains, payload.actorId)
 		end,
-		validate = function(payload)
+		validate = function(payload: any)
 			return Helpers.hasString(payload, "actorId") and Helpers.hasString(payload, "objectId")
 		end,
-		execute = function(context, state, payload, domains)
+		execute = function(context: any, state: any, payload: any, domains: any)
 			local object = domains.scene.objects[payload.objectId]
 			if object == nil then
 				return Helpers.notFound("scene_object", payload.objectId)
@@ -110,13 +110,13 @@ function Domain.register(registry)
 	registry:register({
 		commandType = "exploration.set_fog",
 		domainId = Domain.id,
-		authorize = function(context)
+		authorize = function(context: any)
 			return Helpers.requireRole(context, { "dm" })
 		end,
-		validate = function(payload)
+		validate = function(payload: any)
 			return Helpers.hasString(payload, "regionId") and type(payload.hidden) == "boolean"
 		end,
-		execute = function(_, state, payload)
+		execute = function(_: any, state: any, payload: any)
 			local previous = state.fog[payload.regionId]
 			state.fog[payload.regionId] = {
 				hidden = payload.hidden,

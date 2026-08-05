@@ -13,13 +13,13 @@ local AuthorityRuntime = {}
 AuthorityRuntime.__index = AuthorityRuntime
 
 function AuthorityRuntime.new(
-	registry,
-	transactionCoordinator,
-	outbox,
-	diagnostics,
-	snapshotJournal
-)
-	local self = setmetatable({}, AuthorityRuntime)
+	registry: any,
+	transactionCoordinator: any,
+	outbox: any,
+	diagnostics: any,
+	snapshotJournal: any
+): any
+	local self: any = setmetatable({}, AuthorityRuntime)
 	self.registry = registry
 	self.transactionCoordinator = transactionCoordinator
 	self.outbox = outbox
@@ -38,7 +38,7 @@ function AuthorityRuntime.new(
 	return self
 end
 
-function AuthorityRuntime:installDomain(domain)
+function AuthorityRuntime.installDomain(self: any, domain: any)
 	assert(self.state.domains[domain.id] == nil, "duplicate domain: " .. domain.id)
 	assert(type(domain.initialState) == "function", "domain initialState required: " .. domain.id)
 	self.domainInitializers[domain.id] = domain.initialState
@@ -46,11 +46,11 @@ function AuthorityRuntime:installDomain(domain)
 	domain.register(self.registry)
 end
 
-function AuthorityRuntime:onCommitted(callback)
+function AuthorityRuntime.onCommitted(self: any, callback: any)
 	table.insert(self.commitListeners, callback)
 end
 
-function AuthorityRuntime:_remember(commandId: string, terminalResult)
+function AuthorityRuntime._remember(self: any, commandId: string, terminalResult: any)
 	self.processedCommands[commandId] = terminalResult
 	table.insert(self.processedOrder, commandId)
 	if #self.processedOrder > MAX_IDEMPOTENCY_RECORDS then
@@ -59,7 +59,7 @@ function AuthorityRuntime:_remember(commandId: string, terminalResult)
 	end
 end
 
-function AuthorityRuntime:execute(context, envelope)
+function AuthorityRuntime.execute(self: any, context: any, envelope: any): any
 	local previous = self.processedCommands[envelope.commandId]
 	if previous ~= nil then
 		return previous
@@ -72,7 +72,7 @@ function AuthorityRuntime:execute(context, envelope)
 			"STALE_REVISION",
 			"error.authority.stale_revision",
 			true,
-			{ revision = self.state.revision }
+			{ revision = self.state.revision } :: { [string]: unknown }
 		)
 	end
 
@@ -143,7 +143,11 @@ function AuthorityRuntime:execute(context, envelope)
 	return terminalResult
 end
 
-function AuthorityRuntime:executeSystem(commandType: string, payload: { [string]: unknown })
+function AuthorityRuntime.executeSystem(
+	self: any,
+	commandType: string,
+	payload: { [string]: unknown }
+): any
 	local commandId = Identity.new("system_command")
 	return self:execute({
 		player = nil,
@@ -163,7 +167,7 @@ function AuthorityRuntime:executeSystem(commandType: string, payload: { [string]
 	})
 end
 
-function AuthorityRuntime:restore(document)
+function AuthorityRuntime.restore(self: any, document: any): any
 	if
 		type(document) ~= "table"
 		or document.schemaVersion ~= Version.SCHEMA
@@ -201,7 +205,7 @@ function AuthorityRuntime:restore(document)
 	return Result.ok(true)
 end
 
-function AuthorityRuntime:snapshot()
+function AuthorityRuntime.snapshot(self: any): any
 	return self.state
 end
 

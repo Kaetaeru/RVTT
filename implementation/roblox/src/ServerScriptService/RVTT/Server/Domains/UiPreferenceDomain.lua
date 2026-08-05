@@ -28,18 +28,18 @@ function Domain.initialState()
 	return { byUser = {} }
 end
 
-function Domain.register(registry)
+function Domain.register(registry: any)
 	registry:register({
 		commandType = "ui.set_preference",
 		domainId = Domain.id,
-		authorize = function(context)
+		authorize = function(context: any)
 			return Helpers.authenticated(context)
 		end,
-		validate = function(payload)
+		validate = function(payload: any)
 			local validator = if type(payload.key) == "string" then allowed[payload.key] else nil
 			return validator ~= nil and validator(payload.value)
 		end,
-		execute = function(context, state, payload)
+		execute = function(context: any, state: any, payload: any)
 			local key = tostring(context.playerId)
 			state.byUser[key] = state.byUser[key] or {}
 			state.byUser[key][payload.key] = payload.value

@@ -10,21 +10,21 @@ function Domain.initialState()
 	return { executions = {}, checkpoints = {} }
 end
 
-local function distanceBetween(left, right): number
+local function distanceBetween(left: any, right: any): number
 	return math.sqrt((right.x - left.x) ^ 2 + (right.y - left.y) ^ 2 + (right.z - left.z) ^ 2)
 end
 
-function Domain.register(registry)
+function Domain.register(registry: any)
 	registry:register({
 		commandType = "movement.commit",
 		domainId = Domain.id,
-		authorize = function(context, domains, payload)
+		authorize = function(context: any, domains: any, payload: any)
 			return Helpers.controlsActor(context, domains, payload.actorId)
 		end,
-		validate = function(payload)
+		validate = function(payload: any)
 			return Helpers.hasString(payload, "actorId") and Helpers.isVector(payload.destination)
 		end,
-		execute = function(context, state, payload, domains)
+		execute = function(context: any, state: any, payload: any, domains: any)
 			local actor = domains.scene.actors[payload.actorId]
 			if actor == nil then
 				return Helpers.notFound("actor", payload.actorId)

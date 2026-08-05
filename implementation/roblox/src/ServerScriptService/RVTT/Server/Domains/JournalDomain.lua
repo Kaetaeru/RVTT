@@ -10,14 +10,14 @@ function Domain.initialState()
 	return { documents = {}, pings = {} }
 end
 
-function Domain.register(registry)
+function Domain.register(registry: any)
 	registry:register({
 		commandType = "journal.create",
 		domainId = Domain.id,
-		authorize = function(context)
+		authorize = function(context: any)
 			return Helpers.authenticated(context)
 		end,
-		validate = function(payload)
+		validate = function(payload: any)
 			return (
 				payload.title == nil or (type(payload.title) == "string" and #payload.title <= 160)
 			)
@@ -26,7 +26,7 @@ function Domain.register(registry)
 					or (type(payload.body) == "string" and #payload.body <= 20000)
 				)
 		end,
-		execute = function(context, state, payload)
+		execute = function(context: any, state: any, payload: any)
 			local documentId = Identity.new("journal")
 			state.documents[documentId] = {
 				id = documentId,
@@ -44,12 +44,12 @@ function Domain.register(registry)
 	registry:register({
 		commandType = "journal.edit",
 		domainId = Domain.id,
-		authorize = function(context, domains, payload)
+		authorize = function(context: any, domains: any, payload: any)
 			local document = domains.journal.documents[payload.documentId]
 			return document ~= nil
 				and (document.ownerUserId == context.playerId or context.role == "dm")
 		end,
-		validate = function(payload)
+		validate = function(payload: any)
 			return Helpers.hasString(payload, "documentId")
 				and (payload.title == nil or (type(payload.title) == "string" and #payload.title <= 160))
 				and (
@@ -57,7 +57,7 @@ function Domain.register(registry)
 					or (type(payload.body) == "string" and #payload.body <= 20000)
 				)
 		end,
-		execute = function(_, state, payload)
+		execute = function(_: any, state: any, payload: any)
 			local document = state.documents[payload.documentId]
 			if document == nil then
 				return Helpers.notFound("journal_document", payload.documentId)
@@ -79,17 +79,17 @@ function Domain.register(registry)
 	registry:register({
 		commandType = "journal.ping",
 		domainId = Domain.id,
-		authorize = function(context)
+		authorize = function(context: any)
 			return Helpers.authenticated(context)
 		end,
-		validate = function(payload)
+		validate = function(payload: any)
 			return Helpers.isVector(payload.position)
 				and (
 					payload.label == nil
 					or (type(payload.label) == "string" and #payload.label <= 80)
 				)
 		end,
-		execute = function(context, state, payload)
+		execute = function(context: any, state: any, payload: any)
 			local pingId = Identity.new("ping")
 			state.pings[pingId] = {
 				id = pingId,

@@ -17,7 +17,7 @@ function Domain.initialState()
 	}
 end
 
-local function ensureActorState(state, actorId: string, domains)
+local function ensureActorState(state: any, actorId: string, domains: any)
 	local existing = state.actorStates[actorId]
 	if existing ~= nil then
 		return existing
@@ -36,7 +36,7 @@ local function ensureActorState(state, actorId: string, domains)
 	return actorState
 end
 
-local function record(state, context, kind: string, data)
+local function record(state: any, context: any, kind: string, data: any)
 	local id = Identity.new("roll")
 	state.rollRecords[id] = {
 		id = id,
@@ -49,20 +49,20 @@ local function record(state, context, kind: string, data)
 	return state.rollRecords[id]
 end
 
-function Domain.register(registry)
+function Domain.register(registry: any)
 	registry:register({
 		commandType = "rules.create_challenge",
 		domainId = Domain.id,
-		authorize = function(context)
+		authorize = function(context: any)
 			return Helpers.requireRole(context, { "dm" })
 		end,
-		validate = function(payload)
+		validate = function(payload: any)
 			return Helpers.hasString(payload, "ability")
 				and Helpers.hasNumber(payload, "difficultyClass")
 				and payload.difficultyClass >= 1
 				and payload.difficultyClass <= 40
 		end,
-		execute = function(_, state, payload)
+		execute = function(_: any, state: any, payload: any)
 			local challengeId = Identity.new("challenge")
 			state.challenges[challengeId] = {
 				id = challengeId,
@@ -79,14 +79,14 @@ function Domain.register(registry)
 	registry:register({
 		commandType = "rules.ability_check",
 		domainId = Domain.id,
-		authorize = function(context, domains, payload)
+		authorize = function(context: any, domains: any, payload: any)
 			return Helpers.controlsActor(context, domains, payload.actorId)
 		end,
-		validate = function(payload)
+		validate = function(payload: any)
 			return Helpers.hasString(payload, "actorId")
 				and Helpers.hasString(payload, "challengeId")
 		end,
-		execute = function(context, state, payload, domains)
+		execute = function(context: any, state: any, payload: any, domains: any)
 			local challenge = state.challenges[payload.challengeId]
 			if challenge == nil or challenge.status ~= "open" then
 				return Helpers.notFound("challenge", payload.challengeId)
@@ -111,14 +111,14 @@ function Domain.register(registry)
 	registry:register({
 		commandType = "rules.saving_throw",
 		domainId = Domain.id,
-		authorize = function(context, domains, payload)
+		authorize = function(context: any, domains: any, payload: any)
 			return Helpers.controlsActor(context, domains, payload.actorId)
 		end,
-		validate = function(payload)
+		validate = function(payload: any)
 			return Helpers.hasString(payload, "actorId")
 				and Helpers.hasString(payload, "challengeId")
 		end,
-		execute = function(context, state, payload, domains)
+		execute = function(context: any, state: any, payload: any, domains: any)
 			local challenge = state.challenges[payload.challengeId]
 			if challenge == nil or challenge.status ~= "open" then
 				return Helpers.notFound("challenge", payload.challengeId)
@@ -143,15 +143,15 @@ function Domain.register(registry)
 	registry:register({
 		commandType = "rules.attack",
 		domainId = Domain.id,
-		authorize = function(context, domains, payload)
+		authorize = function(context: any, domains: any, payload: any)
 			return Helpers.controlsActor(context, domains, payload.attackerId)
 		end,
-		validate = function(payload)
+		validate = function(payload: any)
 			return Helpers.hasString(payload, "attackerId")
 				and Helpers.hasString(payload, "targetId")
 				and Helpers.hasString(payload, "profileId")
 		end,
-		execute = function(context, state, payload, domains)
+		execute = function(context: any, state: any, payload: any, domains: any)
 			local attackerProfile = ActorProfileResolver.resolve(payload.attackerId, domains)
 			local targetProfile = ActorProfileResolver.resolve(payload.targetId, domains)
 			if attackerProfile == nil then
@@ -208,15 +208,15 @@ function Domain.register(registry)
 	registry:register({
 		commandType = "rules.set_actor_state",
 		domainId = Domain.id,
-		authorize = function(context)
+		authorize = function(context: any)
 			return Helpers.requireRole(context, { "dm" })
 		end,
-		validate = function(payload)
+		validate = function(payload: any)
 			return Helpers.hasString(payload, "actorId")
 				and Helpers.hasNumber(payload, "currentHitPoints")
 				and Helpers.hasNumber(payload, "maximumHitPoints")
 		end,
-		execute = function(_, state, payload, domains)
+		execute = function(_: any, state: any, payload: any, domains: any)
 			if ActorProfileResolver.resolve(payload.actorId, domains) == nil then
 				return Helpers.notFound("actor", payload.actorId)
 			end

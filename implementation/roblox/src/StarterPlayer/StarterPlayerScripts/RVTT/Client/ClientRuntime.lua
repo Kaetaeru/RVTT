@@ -2,7 +2,7 @@
 
 export type Disconnectable = { Disconnect: (self: Disconnectable) -> () }
 export type ChangedSignal = {
-	Connect: (self: ChangedSignal, callback: (payload: any, envelope: any) -> ()) -> Disconnectable,
+	Connect: (self: ChangedSignal, callback: (...any) -> ()) -> Disconnectable,
 }
 export type ProjectionReplica = { Changed: ChangedSignal }
 export type InputContextStack = {

@@ -3,19 +3,29 @@
 local HttpService = game:GetService("HttpService")
 local Version = require(game:GetService("ReplicatedStorage").RVTT.Shared.Core.Version)
 
+export type ReceiptCallback = (message: any) -> ()
+export type CommandClient = {
+	remotes: any,
+	replica: any,
+	pending: { [string]: any },
+	receiptCallback: ReceiptCallback?,
+	start: (self: CommandClient, callback: ReceiptCallback?) -> (),
+	submit: (self: CommandClient, commandType: string, payload: { [string]: unknown }) -> string,
+}
+
 local CommandClient = {}
 CommandClient.__index = CommandClient
 
-function CommandClient.new(remotes, replica)
+function CommandClient.new(remotes: any, replica: any): CommandClient
 	return setmetatable({
 		remotes = remotes,
 		replica = replica,
 		pending = {},
 		receiptCallback = nil,
-	}, CommandClient)
+	}, CommandClient) :: any
 end
 
-function CommandClient:start(callback)
+function CommandClient.start(self: CommandClient, callback: ReceiptCallback?)
 	self.receiptCallback = callback
 	self.remotes.receipt.OnClientEvent:Connect(function(message)
 		if type(message) ~= "table" then
@@ -31,7 +41,11 @@ function CommandClient:start(callback)
 	end)
 end
 
-function CommandClient:submit(commandType: string, payload: { [string]: unknown }): string
+function CommandClient.submit(
+	self: CommandClient,
+	commandType: string,
+	payload: { [string]: unknown }
+): string
 	local commandId = HttpService:GenerateGUID(false)
 	self.pending[commandId] = {
 		commandType = commandType,

@@ -12,7 +12,7 @@ function Domain.initialState()
 	return { active = nil, checkpoints = {}, history = {} }
 end
 
-local function currentActor(state)
+local function currentActor(state: any)
 	if state.active == nil then
 		return nil
 	end
@@ -20,11 +20,11 @@ local function currentActor(state)
 	return entry and entry.actorId or nil
 end
 
-local function controllerOrDm(context, domains, actorId): boolean
+local function controllerOrDm(context: any, domains: any, actorId: any): boolean
 	return context.role == "dm" or Helpers.controlsActor(context, domains, actorId)
 end
 
-local function checkpoint(state)
+local function checkpoint(state: any)
 	table.insert(state.checkpoints, {
 		round = state.active.round,
 		cursor = state.active.cursor,
@@ -32,7 +32,7 @@ local function checkpoint(state)
 	})
 end
 
-local function resetTurnBudget(active, domains)
+local function resetTurnBudget(active: any, domains: any)
 	local actorId = currentActor({ active = active })
 	local profile = actorId and ActorProfileResolver.resolve(actorId, domains)
 	active.movementRemaining = if profile ~= nil then profile.speedStuds else 0
@@ -40,17 +40,17 @@ local function resetTurnBudget(active, domains)
 		{ action = true, bonusAction = true, reaction = true, interaction = true }
 end
 
-function Domain.register(registry)
+function Domain.register(registry: any)
 	registry:register({
 		commandType = "encounter.start",
 		domainId = Domain.id,
-		authorize = function(context)
+		authorize = function(context: any)
 			return Helpers.requireRole(context, { "dm" })
 		end,
-		validate = function(payload)
+		validate = function(payload: any)
 			return type(payload.participants) == "table" and #payload.participants > 0
 		end,
-		execute = function(context, state, payload, domains)
+		execute = function(context: any, state: any, payload: any, domains: any)
 			if state.active ~= nil then
 				return Helpers.conflict("encounter is already active")
 			end
@@ -93,7 +93,7 @@ function Domain.register(registry)
 	registry:register({
 		commandType = "encounter.end_turn",
 		domainId = Domain.id,
-		authorize = function(context, domains)
+		authorize = function(context: any, domains: any)
 			local active = domains.encounter.active
 			if active == nil then
 				return false
@@ -101,7 +101,7 @@ function Domain.register(registry)
 			local actorId = currentActor(domains.encounter)
 			return actorId ~= nil and controllerOrDm(context, domains, actorId)
 		end,
-		execute = function(_, state, _, domains)
+		execute = function(_: any, state: any, _: any, domains: any)
 			if state.active == nil then
 				return Helpers.conflict("encounter required")
 			end
@@ -126,10 +126,10 @@ function Domain.register(registry)
 	registry:register({
 		commandType = "encounter.end",
 		domainId = Domain.id,
-		authorize = function(context)
+		authorize = function(context: any)
 			return Helpers.requireRole(context, { "dm" })
 		end,
-		execute = function(_, state, payload)
+		execute = function(_: any, state: any, payload: any)
 			if state.active == nil then
 				return Helpers.conflict("encounter required")
 			end
@@ -145,13 +145,13 @@ function Domain.register(registry)
 		commandType = "encounter.rollback",
 		domainId = Domain.id,
 		refreshAuthorityEpoch = true,
-		authorize = function(context)
+		authorize = function(context: any)
 			return Helpers.requireRole(context, { "dm" })
 		end,
-		validate = function(payload)
+		validate = function(payload: any)
 			return Helpers.hasNumber(payload, "checkpointIndex")
 		end,
-		execute = function(_, state, payload)
+		execute = function(_: any, state: any, payload: any)
 			local checkpointRecord = state.checkpoints[math.floor(payload.checkpointIndex)]
 			if checkpointRecord == nil then
 				return Helpers.notFound("encounter_checkpoint", tostring(payload.checkpointIndex))

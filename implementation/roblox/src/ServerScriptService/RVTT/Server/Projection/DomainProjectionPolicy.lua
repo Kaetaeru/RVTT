@@ -5,7 +5,7 @@ local DeepCopy = require(ReplicatedStorage.RVTT.Shared.Core.DeepCopy)
 
 local DomainProjectionPolicy = {}
 
-local function publicActor(actor)
+local function publicActor(actor: any): any
 	return {
 		id = actor.id,
 		sourceCharacterId = actor.sourceCharacterId,
@@ -17,7 +17,7 @@ local function publicActor(actor)
 	}
 end
 
-local function projectSession(state, viewer)
+local function projectSession(state: any, viewer: any): any
 	return {
 		campaignId = state.campaignId,
 		phase = state.phase,
@@ -33,8 +33,8 @@ local function projectSession(state, viewer)
 	}
 end
 
-local function projectScene(state, viewer)
-	local actors = {}
+local function projectScene(state: any, viewer: any): any
+	local actors: { [string]: any } = {}
 	for actorId, actor in state.actors do
 		if
 			viewer.role == "dm"
@@ -45,7 +45,7 @@ local function projectScene(state, viewer)
 			actors[actorId] = publicActor(actor)
 		end
 	end
-	local objects = {}
+	local objects: { [string]: any } = {}
 	for objectId, object in state.objects do
 		if viewer.role == "dm" or object.hidden ~= true then
 			objects[objectId] = {
@@ -67,12 +67,12 @@ local function projectScene(state, viewer)
 	}
 end
 
-local function projectCharacter(state, viewer)
+local function projectCharacter(state: any, viewer: any): any
 	if viewer.role == "dm" then
 		return DeepCopy(state)
 	end
-	local drafts = {}
-	local characters = {}
+	local drafts: { [string]: any } = {}
+	local characters: { [string]: any } = {}
 	for id, draft in state.drafts do
 		if draft.ownerUserId == viewer.userId then
 			drafts[id] = DeepCopy(draft)
@@ -94,12 +94,12 @@ local function projectCharacter(state, viewer)
 	return { drafts = drafts, characters = characters }
 end
 
-local function projectInventory(state, viewer, domains)
+local function projectInventory(state: any, viewer: any, domains: any): any
 	if viewer.role == "dm" then
 		return DeepCopy(state)
 	end
-	local items = {}
-	local locations = {}
+	local items: { [string]: any } = {}
+	local locations: { [string]: any } = {}
 	for itemId, location in state.locations do
 		local visible = location.kind == "ground" or location.ownerUserId == viewer.userId
 		if not visible and location.characterId ~= nil then
@@ -114,18 +114,18 @@ local function projectInventory(state, viewer, domains)
 	return { items = items, locations = locations }
 end
 
-local function projectExploration(state, viewer)
+local function projectExploration(state: any, viewer: any): any
 	if viewer.role == "dm" then
 		return DeepCopy(state)
 	end
-	local knowledge = {}
+	local knowledge: { [string]: any } = {}
 	local prefix = tostring(viewer.userId) .. ":"
 	for key, value in state.knowledge do
 		if string.sub(key, 1, #prefix) == prefix then
 			knowledge[key] = value
 		end
 	end
-	local searches = {}
+	local searches: { [string]: any } = {}
 	for id, search in state.searches do
 		if search.observerUserId == viewer.userId then
 			searches[id] = DeepCopy(search)
@@ -139,8 +139,8 @@ local function projectExploration(state, viewer)
 	}
 end
 
-local function projectRules(state, viewer)
-	local challenges = {}
+local function projectRules(state: any, viewer: any): any
+	local challenges: { [string]: any } = {}
 	for challengeId, challenge in state.challenges do
 		challenges[challengeId] = {
 			id = challenge.id,
@@ -161,8 +161,8 @@ local function projectRules(state, viewer)
 	}
 end
 
-local function projectJournal(state, viewer)
-	local documents = {}
+local function projectJournal(state: any, viewer: any): any
+	local documents: { [string]: any } = {}
 	for id, document in state.documents do
 		if
 			viewer.role == "dm"
@@ -174,7 +174,7 @@ local function projectJournal(state, viewer)
 		end
 	end
 	local now = os.time()
-	local pings = {}
+	local pings: { [string]: any } = {}
 	for id, ping in state.pings do
 		if ping.expiresAt > now then
 			pings[id] = DeepCopy(ping)
@@ -183,7 +183,12 @@ local function projectJournal(state, viewer)
 	return { documents = documents, pings = pings }
 end
 
-function DomainProjectionPolicy.project(domainId: string, state, viewer, domains)
+function DomainProjectionPolicy.project(
+	domainId: string,
+	state: any,
+	viewer: any,
+	domains: any
+): any
 	if domainId == "session" then
 		return projectSession(state, viewer)
 	end

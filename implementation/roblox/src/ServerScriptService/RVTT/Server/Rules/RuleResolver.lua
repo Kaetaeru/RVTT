@@ -4,20 +4,34 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Ability = require(ReplicatedStorage.RVTT.Shared.Rules.Ability)
 local Dice = require(ReplicatedStorage.RVTT.Shared.Rules.Dice)
 
+type Profile = {
+	abilities: { [string]: number },
+	proficiencyBonus: number,
+}
+
+type AttackProfile = {
+	ability: string?,
+	proficient: boolean?,
+	count: number?,
+	sides: number?,
+	attackModifier: number?,
+	damageModifier: number?,
+}
+
 local RuleResolver = {}
 
-function RuleResolver.abilityModifier(profile, ability: string): number
+function RuleResolver.abilityModifier(profile: Profile, ability: string): number
 	local score = profile.abilities[ability] or 10
 	return Ability.modifier(score)
 end
 
 function RuleResolver.rollCheck(
-	profile,
+	profile: Profile,
 	ability: string,
 	proficient: boolean,
 	difficultyClass: number,
 	mode: string?
-)
+): any
 	local natural, rolls = Dice.rollD20(mode)
 	local modifier = RuleResolver.abilityModifier(profile, ability)
 	if proficient then
@@ -34,11 +48,16 @@ function RuleResolver.rollCheck(
 	}
 end
 
-function RuleResolver.rollInitiative(profile)
+function RuleResolver.rollInitiative(profile: Profile): any
 	return RuleResolver.rollCheck(profile, "dexterity", false, 0, nil)
 end
 
-function RuleResolver.rollAttack(profile, attackProfile, armorClass: number, mode: string?)
+function RuleResolver.rollAttack(
+	profile: Profile,
+	attackProfile: AttackProfile,
+	armorClass: number,
+	mode: string?
+): any
 	local natural, rolls = Dice.rollD20(mode)
 	local attackModifier =
 		RuleResolver.abilityModifier(profile, attackProfile.ability or "strength")

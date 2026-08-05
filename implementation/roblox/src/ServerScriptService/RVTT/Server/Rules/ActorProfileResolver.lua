@@ -3,9 +3,28 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Ability = require(ReplicatedStorage.RVTT.Shared.Rules.Ability)
 
+export type AbilityScores = { [string]: number }
+export type AttackProfile = {
+	ability: string?,
+	proficient: boolean?,
+	count: number?,
+	sides: number?,
+	attackModifier: number?,
+	damageModifier: number?,
+}
+export type ActorProfile = {
+	source: string,
+	abilities: AbilityScores,
+	proficiencyBonus: number,
+	armorClass: number,
+	maximumHitPoints: number,
+	speedStuds: number,
+	attacks: { [string]: AttackProfile },
+}
+
 local ActorProfileResolver = {}
 
-local DEFAULT_ABILITIES = {
+local DEFAULT_ABILITIES: AbilityScores = {
 	strength = 10,
 	dexterity = 10,
 	constitution = 10,
@@ -14,11 +33,11 @@ local DEFAULT_ABILITIES = {
 	charisma = 10,
 }
 
-local function abilitiesOrDefault(value)
-	local result = table.clone(DEFAULT_ABILITIES)
+local function abilitiesOrDefault(value: unknown): AbilityScores
+	local result: AbilityScores = table.clone(DEFAULT_ABILITIES)
 	if type(value) == "table" then
-		for ability, score in value do
-			if result[ability] ~= nil and type(score) == "number" then
+		for ability, score in value :: { [any]: any } do
+			if type(ability) == "string" and result[ability] ~= nil and type(score) == "number" then
 				result[ability] = score
 			end
 		end
@@ -26,7 +45,7 @@ local function abilitiesOrDefault(value)
 	return result
 end
 
-local function profileFromCharacter(character)
+local function profileFromCharacter(character: any): ActorProfile
 	local abilities = abilitiesOrDefault(character.abilities)
 	local level = math.clamp(character.level or 1, 1, 20)
 	local constitutionModifier = Ability.modifier(abilities.constitution)
@@ -52,7 +71,7 @@ local function profileFromCharacter(character)
 	}
 end
 
-local function profileFromNpc(instance)
+local function profileFromNpc(instance: any): ActorProfile
 	local runtime = instance.runtime or {}
 	local abilities = abilitiesOrDefault(runtime.abilities)
 	return {
@@ -66,7 +85,7 @@ local function profileFromNpc(instance)
 	}
 end
 
-function ActorProfileResolver.resolve(actorId: string, domains)
+function ActorProfileResolver.resolve(actorId: string, domains: any): ActorProfile?
 	local scene = domains.scene
 	local actor = scene and scene.actors[actorId]
 	if actor == nil then

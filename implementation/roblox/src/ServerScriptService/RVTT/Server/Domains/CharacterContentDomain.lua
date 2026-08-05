@@ -8,19 +8,19 @@ function Domain.initialState()
 	return { catalogs = {}, coverage = {}, rightsStatus = "blocked_until_review" }
 end
 
-function Domain.register(registry)
+function Domain.register(registry: any)
 	registry:register({
 		commandType = "character_content.register_catalog",
 		domainId = Domain.id,
-		authorize = function(context)
+		authorize = function(context: any)
 			return Helpers.requireRole(context, { "dm" })
 		end,
-		validate = function(payload)
+		validate = function(payload: any)
 			return Helpers.hasString(payload, "catalogId")
 				and type(payload.entries) == "table"
 				and (payload.rightsStatus == "approved" or payload.rightsStatus == "original")
 		end,
-		execute = function(_, state, payload)
+		execute = function(_: any, state: any, payload: any)
 			if state.catalogs[payload.catalogId] ~= nil then
 				return Helpers.conflict("catalog already registered")
 			end

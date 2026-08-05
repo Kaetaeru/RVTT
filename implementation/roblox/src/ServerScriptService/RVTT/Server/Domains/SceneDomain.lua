@@ -10,11 +10,11 @@ function Domain.initialState()
 	return { activeSceneId = nil, actors = {}, objects = {}, sceneRevision = 0 }
 end
 
-function Domain.register(registry)
+function Domain.register(registry: any)
 	registry:register({
 		commandType = "scene.enter",
 		domainId = Domain.id,
-		authorize = function(context, domains, payload)
+		authorize = function(context: any, domains: any, payload: any)
 			if not Helpers.membership(context, domains) then
 				return false
 			end
@@ -22,10 +22,10 @@ function Domain.register(registry)
 			return selected == payload.actorId
 				and Helpers.ownsCharacter(context, domains, payload.actorId)
 		end,
-		validate = function(payload)
+		validate = function(payload: any)
 			return Helpers.hasString(payload, "sceneId") and Helpers.hasString(payload, "actorId")
 		end,
-		execute = function(context, state, payload, domains)
+		execute = function(context: any, state: any, payload: any, domains: any)
 			if domains.session.phase ~= "active" or domains.session.sceneId ~= payload.sceneId then
 				return Helpers.conflict("session scene is not active")
 			end
@@ -57,13 +57,13 @@ function Domain.register(registry)
 	registry:register({
 		commandType = "scene.spawn_actor",
 		domainId = Domain.id,
-		authorize = function(context)
+		authorize = function(context: any)
 			return Helpers.requireRole(context, { "dm" })
 		end,
-		validate = function(payload)
+		validate = function(payload: any)
 			return payload.position == nil or Helpers.isVector(payload.position)
 		end,
-		execute = function(_, state, payload)
+		execute = function(_: any, state: any, payload: any)
 			local actorId = Identity.new("actor")
 			state.actors[actorId] = {
 				id = actorId,
@@ -82,14 +82,14 @@ function Domain.register(registry)
 	registry:register({
 		commandType = "scene.spawn_object",
 		domainId = Domain.id,
-		authorize = function(context)
+		authorize = function(context: any)
 			return Helpers.requireRole(context, { "dm" })
 		end,
-		validate = function(payload)
+		validate = function(payload: any)
 			return Helpers.hasString(payload, "kind")
 				and (payload.position == nil or Helpers.isVector(payload.position))
 		end,
-		execute = function(_, state, payload)
+		execute = function(_: any, state: any, payload: any)
 			local objectId = Identity.new("object")
 			state.objects[objectId] = {
 				id = objectId,

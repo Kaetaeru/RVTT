@@ -10,21 +10,21 @@ function Domain.initialState()
 	return { definitions = {}, instances = {} }
 end
 
-local function dm(context): boolean
+local function dm(context: any): boolean
 	return Helpers.requireRole(context, { "dm" })
 end
 
-function Domain.register(registry)
+function Domain.register(registry: any)
 	registry:register({
 		commandType = "npc.register_definition",
 		domainId = Domain.id,
 		authorize = dm,
-		validate = function(payload)
+		validate = function(payload: any)
 			return Helpers.hasString(payload, "definitionId")
 				and type(payload.definition) == "table"
 				and (payload.rightsStatus == "approved" or payload.rightsStatus == "original")
 		end,
-		execute = function(_, state, payload)
+		execute = function(_: any, state: any, payload: any)
 			if state.definitions[payload.definitionId] ~= nil then
 				return Helpers.conflict("npc definition already registered")
 			end
@@ -37,11 +37,11 @@ function Domain.register(registry)
 		commandType = "npc.spawn",
 		domainId = Domain.id,
 		authorize = dm,
-		validate = function(payload)
+		validate = function(payload: any)
 			return Helpers.hasString(payload, "definitionId")
 				and (payload.position == nil or Helpers.isVector(payload.position))
 		end,
-		execute = function(_, state, payload, domains)
+		execute = function(_: any, state: any, payload: any, domains: any)
 			local definition = state.definitions[payload.definitionId]
 			if definition == nil then
 				return Helpers.notFound("npc_definition", payload.definitionId)

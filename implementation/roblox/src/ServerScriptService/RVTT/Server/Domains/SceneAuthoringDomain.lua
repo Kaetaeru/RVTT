@@ -11,11 +11,11 @@ function Domain.initialState()
 	return { sources = {}, candidates = {}, published = {} }
 end
 
-local function dm(context): boolean
+local function dm(context: any): boolean
 	return Helpers.requireRole(context, { "dm" })
 end
 
-local function validateSource(source): (boolean, { string })
+local function validateSource(source: any): (boolean, { string })
 	local errors = {}
 	for objectId, object in source.objects do
 		if
@@ -31,15 +31,15 @@ local function validateSource(source): (boolean, { string })
 	return #errors == 0, errors
 end
 
-function Domain.register(registry)
+function Domain.register(registry: any)
 	registry:register({
 		commandType = "authoring.create_scene",
 		domainId = Domain.id,
 		authorize = dm,
-		validate = function(payload)
+		validate = function(payload: any)
 			return payload.name == nil or (type(payload.name) == "string" and #payload.name <= 120)
 		end,
-		execute = function(_, state, payload)
+		execute = function(_: any, state: any, payload: any)
 			local sceneId = Identity.new("scene")
 			state.sources[sceneId] = {
 				id = sceneId,
@@ -55,13 +55,13 @@ function Domain.register(registry)
 		commandType = "authoring.upsert_object",
 		domainId = Domain.id,
 		authorize = dm,
-		validate = function(payload)
+		validate = function(payload: any)
 			return Helpers.hasString(payload, "sceneId")
 				and type(payload.object) == "table"
 				and Helpers.hasString(payload.object, "kind")
 				and (payload.object.position == nil or Helpers.isVector(payload.object.position))
 		end,
-		execute = function(_, state, payload)
+		execute = function(_: any, state: any, payload: any)
 			local source = state.sources[payload.sceneId]
 			if source == nil then
 				return Helpers.notFound("scene_source", payload.sceneId)
@@ -80,10 +80,10 @@ function Domain.register(registry)
 		commandType = "authoring.compile",
 		domainId = Domain.id,
 		authorize = dm,
-		validate = function(payload)
+		validate = function(payload: any)
 			return Helpers.hasString(payload, "sceneId")
 		end,
-		execute = function(_, state, payload)
+		execute = function(_: any, state: any, payload: any)
 			local source = state.sources[payload.sceneId]
 			if source == nil then
 				return Helpers.notFound("scene_source", payload.sceneId)
@@ -104,10 +104,10 @@ function Domain.register(registry)
 		commandType = "authoring.publish",
 		domainId = Domain.id,
 		authorize = dm,
-		validate = function(payload)
+		validate = function(payload: any)
 			return Helpers.hasString(payload, "sceneId")
 		end,
-		execute = function(_, state, payload)
+		execute = function(_: any, state: any, payload: any)
 			local source = state.sources[payload.sceneId]
 			local candidate = state.candidates[payload.sceneId]
 			if

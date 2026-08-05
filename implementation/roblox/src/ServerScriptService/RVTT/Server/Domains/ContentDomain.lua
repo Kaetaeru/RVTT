@@ -8,11 +8,11 @@ function Domain.initialState()
 	return { packs = {}, active = {}, localization = {} }
 end
 
-local function dm(context): boolean
+local function dm(context: any): boolean
 	return Helpers.requireRole(context, { "dm" })
 end
 
-local function validManifest(manifest): boolean
+local function validManifest(manifest: any): boolean
 	return type(manifest) == "table"
 		and Helpers.hasString(manifest, "packId", 128)
 		and Helpers.hasString(manifest, "version", 64)
@@ -20,15 +20,15 @@ local function validManifest(manifest): boolean
 		and (manifest.dependencies == nil or type(manifest.dependencies) == "table")
 end
 
-function Domain.register(registry)
+function Domain.register(registry: any)
 	registry:register({
 		commandType = "content.register_pack",
 		domainId = Domain.id,
 		authorize = dm,
-		validate = function(payload)
+		validate = function(payload: any)
 			return validManifest(payload.manifest)
 		end,
-		execute = function(_, state, payload)
+		execute = function(_: any, state: any, payload: any)
 			local manifest = payload.manifest
 			if state.packs[manifest.packId] ~= nil then
 				return Helpers.conflict("pack already registered")
@@ -42,10 +42,10 @@ function Domain.register(registry)
 		commandType = "content.activate_pack",
 		domainId = Domain.id,
 		authorize = dm,
-		validate = function(payload)
+		validate = function(payload: any)
 			return Helpers.hasString(payload, "packId")
 		end,
-		execute = function(_, state, payload)
+		execute = function(_: any, state: any, payload: any)
 			local pack = state.packs[payload.packId]
 			if pack == nil then
 				return Helpers.notFound("content_pack", payload.packId)
@@ -67,10 +67,10 @@ function Domain.register(registry)
 		commandType = "content.localization",
 		domainId = Domain.id,
 		authorize = dm,
-		validate = function(payload)
+		validate = function(payload: any)
 			return Helpers.hasString(payload, "locale", 32) and type(payload.entries) == "table"
 		end,
-		execute = function(_, state, payload)
+		execute = function(_: any, state: any, payload: any)
 			state.localization[payload.locale] = payload.entries
 			local count = 0
 			for _ in payload.entries do

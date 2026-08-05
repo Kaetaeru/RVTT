@@ -8,7 +8,7 @@ local ValueGuard = require(ReplicatedStorage.RVTT.Shared.Core.ValueGuard)
 local ProfileStore = {}
 ProfileStore.__index = ProfileStore
 
-local function revisionOf(value): number?
+local function revisionOf(value: any): number?
 	if type(value) ~= "table" or not ValueGuard.isFiniteNumber(value.revision) then
 		return nil
 	end
@@ -19,7 +19,7 @@ local function revisionOf(value): number?
 	return revision
 end
 
-function ProfileStore.new(storeName: string, migrationRegistry, diagnostics)
+function ProfileStore.new(storeName: string, migrationRegistry: any, diagnostics: any): any
 	return setmetatable({
 		store = DataStoreService:GetDataStore(storeName),
 		migrations = migrationRegistry,
@@ -27,7 +27,7 @@ function ProfileStore.new(storeName: string, migrationRegistry, diagnostics)
 	}, ProfileStore)
 end
 
-function ProfileStore:load(key: string)
+function ProfileStore.load(self: any, key: string): any
 	local ok, value = pcall(function()
 		return self.store:GetAsync(key)
 	end)
@@ -41,7 +41,7 @@ function ProfileStore:load(key: string)
 	return self.migrations:apply(value)
 end
 
-function ProfileStore:save(key: string, value)
+function ProfileStore.save(self: any, key: string, value: any): any
 	local candidateRevision = revisionOf(value)
 	if candidateRevision == nil then
 		return Result.err("PERSISTENCE_INVALID", "error.persistence.invalid", false)
@@ -49,7 +49,7 @@ function ProfileStore:save(key: string, value)
 
 	local conflict = false
 	local ok = pcall(function()
-		self.store:UpdateAsync(key, function(current)
+		self.store:UpdateAsync(key, function(current: any): any
 			local currentRevision = revisionOf(current)
 			if currentRevision ~= nil then
 				local currentEpoch = current.authorityEpoch

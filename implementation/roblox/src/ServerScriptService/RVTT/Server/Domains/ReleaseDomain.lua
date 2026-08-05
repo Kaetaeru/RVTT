@@ -14,7 +14,7 @@ function Domain.initialState()
 	return { evidence = {}, gate = { status = "blocked", missing = required } }
 end
 
-local function evaluate(state)
+local function evaluate(state: any)
 	local missing = {}
 	for _, kind in required do
 		local evidence = state.evidence[kind]
@@ -30,20 +30,20 @@ local function evaluate(state)
 	return state.gate
 end
 
-function Domain.register(registry)
+function Domain.register(registry: any)
 	registry:register({
 		commandType = "release.record_evidence",
 		domainId = Domain.id,
-		authorize = function(context)
+		authorize = function(context: any)
 			return Helpers.requireRole(context, { "dm" })
 		end,
-		validate = function(payload)
+		validate = function(payload: any)
 			return Helpers.hasString(payload, "kind")
 				and allowedKinds[payload.kind] == true
 				and (payload.status == "pass" or payload.status == "fail")
 				and Helpers.hasString(payload, "reference", 512)
 		end,
-		execute = function(_, state, payload)
+		execute = function(_: any, state: any, payload: any)
 			state.evidence[payload.kind] = {
 				status = payload.status,
 				reference = payload.reference,
@@ -56,10 +56,10 @@ function Domain.register(registry)
 	registry:register({
 		commandType = "release.evaluate",
 		domainId = Domain.id,
-		authorize = function(context)
+		authorize = function(context: any)
 			return Helpers.requireRole(context, { "dm" })
 		end,
-		execute = function(_, state)
+		execute = function(_: any, state: any)
 			return evaluate(state)
 		end,
 	})

@@ -9,20 +9,20 @@ function Domain.initialState()
 	return { spells = {}, equipment = {}, conditions = {}, rightsStatus = "blocked_until_review" }
 end
 
-function Domain.register(registry)
+function Domain.register(registry: any)
 	registry:register({
 		commandType = "rules_content.register",
 		domainId = Domain.id,
-		authorize = function(context)
+		authorize = function(context: any)
 			return Helpers.requireRole(context, { "dm" })
 		end,
-		validate = function(payload)
+		validate = function(payload: any)
 			return Helpers.hasString(payload, "kind")
 				and supported[payload.kind] == true
 				and type(payload.entries) == "table"
 				and (payload.rightsStatus == "approved" or payload.rightsStatus == "original")
 		end,
-		execute = function(_, state, payload)
+		execute = function(_: any, state: any, payload: any)
 			local destination = state[payload.kind]
 			local count = 0
 			for id, entry in payload.entries do

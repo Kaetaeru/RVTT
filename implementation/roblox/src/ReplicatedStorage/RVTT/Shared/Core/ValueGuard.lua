@@ -21,7 +21,7 @@ local function inspect(
 	limits: Limits,
 	depth: number,
 	counter: { count: number },
-	seen: { [table]: boolean }
+	seen: { [any]: boolean }
 ): boolean
 	counter.count += 1
 	if counter.count > limits.maxNodes or depth > limits.maxDepth then
@@ -43,7 +43,7 @@ local function inspect(
 		return false
 	end
 
-	local tableValue = value :: table
+	local tableValue = value :: { [any]: any }
 	if seen[tableValue] then
 		return false
 	end

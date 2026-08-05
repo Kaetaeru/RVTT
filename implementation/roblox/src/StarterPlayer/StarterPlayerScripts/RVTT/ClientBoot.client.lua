@@ -30,7 +30,7 @@ local function fullResync()
 		return remotes.sync:InvokeServer()
 	end)
 	if succeeded and snapshot ~= nil then
-		replica:apply(snapshot, true)
+		replica:apply(snapshot :: any, true)
 	end
 end
 
@@ -50,7 +50,7 @@ replica.GapDetected:Connect(function()
 	fullResync()
 end)
 remotes.projection.OnClientEvent:Connect(function(envelope)
-	replica:apply(envelope, false)
+	replica:apply(envelope :: any, false)
 end)
 
 fullResync()

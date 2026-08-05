@@ -14,19 +14,21 @@ local function isVersion(value: unknown): boolean
 		and (value :: number) % 1 == 0
 end
 
-local function failed(reason: string, version: unknown)
-	return Result.err("MIGRATION_FAILED", "error.persistence.migration_failed", false, {
-		reason = reason,
-		version = version,
-	})
+local function failed(reason: string, version: unknown): any
+	return Result.err(
+		"MIGRATION_FAILED",
+		"error.persistence.migration_failed",
+		false,
+		{ reason = reason, version = version } :: { [string]: unknown }
+	)
 end
 
-function MigrationRegistry.new(currentVersion: number)
+function MigrationRegistry.new(currentVersion: number): any
 	assert(isVersion(currentVersion), "currentVersion must be a non-negative integer")
 	return setmetatable({ currentVersion = currentVersion, migrations = {} }, MigrationRegistry)
 end
 
-function MigrationRegistry:register(fromVersion: number, migrate)
+function MigrationRegistry.register(self: any, fromVersion: number, migrate: any)
 	assert(isVersion(fromVersion), "fromVersion must be a non-negative integer")
 	assert(fromVersion < self.currentVersion, "migration must target a newer supported version")
 	assert(type(migrate) == "function", "migration function required")
@@ -34,13 +36,13 @@ function MigrationRegistry:register(fromVersion: number, migrate)
 	self.migrations[fromVersion] = migrate
 end
 
-function MigrationRegistry:apply(document)
+function MigrationRegistry.apply(self: any, document: any): any
 	if type(document) ~= "table" then
 		return failed("document_not_table", nil)
 	end
 
-	local working = DeepCopy(document)
-	local version = working.schemaVersion or 0
+	local working: any = DeepCopy(document)
+	local version: any = working.schemaVersion or 0
 	if not isVersion(version) then
 		return failed("invalid_schema_version", version)
 	end

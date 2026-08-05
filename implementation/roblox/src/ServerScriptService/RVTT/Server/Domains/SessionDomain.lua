@@ -18,14 +18,14 @@ function Domain.initialState()
 	}
 end
 
-function Domain.register(registry)
+function Domain.register(registry: any)
 	registry:register({
 		commandType = "session.join",
 		domainId = Domain.id,
-		authorize = function(context)
+		authorize = function(context: any)
 			return Helpers.authenticated(context)
 		end,
-		execute = function(context, state)
+		execute = function(context: any, state: any)
 			local player = context.player
 			local key = tostring(context.playerId)
 			state.memberships[key] = {
@@ -44,14 +44,14 @@ function Domain.register(registry)
 	registry:register({
 		commandType = "session.select_character",
 		domainId = Domain.id,
-		authorize = function(context, domains, payload)
+		authorize = function(context: any, domains: any, payload: any)
 			return Helpers.membership(context, domains)
 				and Helpers.ownsCharacter(context, domains, payload.characterId)
 		end,
-		validate = function(payload)
+		validate = function(payload: any)
 			return Helpers.hasString(payload, "characterId")
 		end,
-		execute = function(context, state, payload, domains)
+		execute = function(context: any, state: any, payload: any, domains: any)
 			local character = domains.character.characters[payload.characterId]
 			if character == nil or character.status ~= "active" then
 				return Helpers.conflict("active character required")
@@ -66,13 +66,13 @@ function Domain.register(registry)
 	registry:register({
 		commandType = "session.ready",
 		domainId = Domain.id,
-		authorize = function(context, domains)
+		authorize = function(context: any, domains: any)
 			return Helpers.membership(context, domains)
 		end,
-		validate = function(payload)
+		validate = function(payload: any)
 			return type(payload.ready) == "boolean"
 		end,
-		execute = function(context, state, payload)
+		execute = function(context: any, state: any, payload: any)
 			local key = tostring(context.playerId)
 			if state.selectedCharacter[key] == nil then
 				return Helpers.conflict("character selection required")
@@ -85,13 +85,13 @@ function Domain.register(registry)
 	registry:register({
 		commandType = "session.start",
 		domainId = Domain.id,
-		authorize = function(context)
+		authorize = function(context: any)
 			return Helpers.requireRole(context, { "dm" })
 		end,
-		validate = function(payload)
+		validate = function(payload: any)
 			return Helpers.hasString(payload, "sceneId")
 		end,
-		execute = function(_, state, payload)
+		execute = function(_: any, state: any, payload: any)
 			for userId, membership in state.memberships do
 				if membership.role == "player" and state.connections[userId] == "connected" then
 					if state.selectedCharacter[userId] == nil or state.ready[userId] ~= true then
@@ -111,14 +111,14 @@ function Domain.register(registry)
 		commandType = "session.connection",
 		domainId = Domain.id,
 		remoteAllowed = false,
-		authorize = function(context)
+		authorize = function(context: any)
 			return Helpers.system(context)
 		end,
-		validate = function(payload)
+		validate = function(payload: any)
 			return type(payload.userId) == "number"
 				and (payload.status == "connected" or payload.status == "disconnected")
 		end,
-		execute = function(_, state, payload)
+		execute = function(_: any, state: any, payload: any)
 			state.connections[tostring(payload.userId)] = payload.status
 			return { userId = payload.userId, status = payload.status }
 		end,

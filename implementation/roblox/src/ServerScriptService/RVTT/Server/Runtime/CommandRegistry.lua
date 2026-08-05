@@ -23,14 +23,22 @@ export type Descriptor = {
 	refreshAuthorityEpoch: boolean?,
 }
 
+export type Registry = {
+	_descriptors: { [string]: Descriptor },
+	register: (self: Registry, descriptor: Descriptor) -> (),
+	get: (self: Registry, commandType: string) -> any,
+	list: (self: Registry) -> { string },
+	all: (self: Registry) -> { [string]: Descriptor },
+}
+
 local CommandRegistry = {}
 CommandRegistry.__index = CommandRegistry
 
-function CommandRegistry.new()
-	return setmetatable({ _descriptors = {} }, CommandRegistry)
+function CommandRegistry.new(): Registry
+	return setmetatable({ _descriptors = {} }, CommandRegistry) :: any
 end
 
-function CommandRegistry:register(descriptor: Descriptor)
+function CommandRegistry.register(self: Registry, descriptor: Descriptor)
 	assert(
 		type(descriptor.commandType) == "string" and #descriptor.commandType > 0,
 		"commandType required"
@@ -48,21 +56,21 @@ function CommandRegistry:register(descriptor: Descriptor)
 	self._descriptors[descriptor.commandType] = table.freeze(descriptor)
 end
 
-function CommandRegistry:get(commandType: string)
+function CommandRegistry.get(self: Registry, commandType: string): any
 	local descriptor = self._descriptors[commandType]
 	if descriptor == nil then
 		return Result.err(
 			"UNKNOWN_COMMAND",
 			"error.command.unknown",
 			false,
-			{ commandType = commandType }
+			{ commandType = commandType } :: { [string]: unknown }
 		)
 	end
 	return Result.ok(descriptor)
 end
 
-function CommandRegistry:list(): { string }
-	local values = {}
+function CommandRegistry.list(self: Registry): { string }
+	local values: { string } = {}
 	for commandType in self._descriptors do
 		table.insert(values, commandType)
 	end
@@ -70,7 +78,7 @@ function CommandRegistry:list(): { string }
 	return values
 end
 
-function CommandRegistry:all()
+function CommandRegistry.all(self: Registry): { [string]: Descriptor }
 	return self._descriptors
 end
 

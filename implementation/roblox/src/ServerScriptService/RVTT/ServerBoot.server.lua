@@ -5,7 +5,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 
 local Version = require(ReplicatedStorage.RVTT.Shared.Core.Version)
-local Server = script.Server
+local Server = script.Parent.Server
 local CommandRegistry = require(Server.Runtime.CommandRegistry)
 local Diagnostics = require(Server.Runtime.Diagnostics)
 local EventOutbox = require(Server.Runtime.EventOutbox)

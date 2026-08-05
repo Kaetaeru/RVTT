@@ -10,7 +10,7 @@ function Domain.initialState()
 	return { items = {}, locations = {} }
 end
 
-local function validLocation(location): boolean
+local function validLocation(location: any): boolean
 	if type(location) ~= "table" or type(location.kind) ~= "string" then
 		return false
 	end
@@ -26,32 +26,32 @@ local function validLocation(location): boolean
 	return false
 end
 
-local function canReceive(context, domains, location): boolean
+local function canReceive(context: any, domains: any, location: any): boolean
 	if context.role == "dm" or location.kind == "ground" then
 		return true
 	end
 	return Helpers.ownsCharacter(context, domains, location.characterId)
 end
 
-local function move(state, itemId: string, location)
+local function move(state: any, itemId: string, location: any)
 	state.locations[itemId] = location
 	state.items[itemId].revision += 1
 	return { item = state.items[itemId], location = location }
 end
 
-function Domain.register(registry)
+function Domain.register(registry: any)
 	registry:register({
 		commandType = "inventory.create_item",
 		domainId = Domain.id,
-		authorize = function(context)
+		authorize = function(context: any)
 			return Helpers.requireRole(context, { "dm" })
 		end,
-		validate = function(payload)
+		validate = function(payload: any)
 			return Helpers.hasString(payload, "definitionId")
 				and payload.location ~= nil
 				and validLocation(payload.location)
 		end,
-		execute = function(_, state, payload)
+		execute = function(_: any, state: any, payload: any)
 			local itemId = Identity.new("item")
 			state.items[itemId] = {
 				id = itemId,
@@ -67,15 +67,15 @@ function Domain.register(registry)
 	registry:register({
 		commandType = "inventory.move_item",
 		domainId = Domain.id,
-		authorize = function(context, domains, payload)
+		authorize = function(context: any, domains: any, payload: any)
 			return Helpers.ownsItem(context, domains, payload.itemId)
 				and validLocation(payload.location)
 				and canReceive(context, domains, payload.location)
 		end,
-		validate = function(payload)
+		validate = function(payload: any)
 			return Helpers.hasString(payload, "itemId") and validLocation(payload.location)
 		end,
-		execute = function(_, state, payload)
+		execute = function(_: any, state: any, payload: any)
 			if state.items[payload.itemId] == nil then
 				return Helpers.notFound("item", payload.itemId)
 			end
@@ -86,16 +86,16 @@ function Domain.register(registry)
 	registry:register({
 		commandType = "inventory.equip",
 		domainId = Domain.id,
-		authorize = function(context, domains, payload)
+		authorize = function(context: any, domains: any, payload: any)
 			return Helpers.ownsItem(context, domains, payload.itemId)
 				and Helpers.ownsCharacter(context, domains, payload.characterId)
 		end,
-		validate = function(payload)
+		validate = function(payload: any)
 			return Helpers.hasString(payload, "itemId")
 				and Helpers.hasString(payload, "characterId")
 				and Helpers.hasString(payload, "slot", 64)
 		end,
-		execute = function(_, state, payload)
+		execute = function(_: any, state: any, payload: any)
 			if state.items[payload.itemId] == nil then
 				return Helpers.notFound("item", payload.itemId)
 			end

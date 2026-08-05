@@ -19,21 +19,21 @@ function Domain.initialState()
 	return { drafts = {}, characters = {} }
 end
 
-local function ownsDraft(context, domains, payload)
+local function ownsDraft(context: any, domains: any, payload: any)
 	return Helpers.ownsCharacter(context, domains, payload.characterId)
 end
 
-function Domain.register(registry)
+function Domain.register(registry: any)
 	registry:register({
 		commandType = "character.create_draft",
 		domainId = Domain.id,
-		authorize = function(context)
+		authorize = function(context: any)
 			return Helpers.authenticated(context)
 		end,
-		validate = function(payload)
+		validate = function(payload: any)
 			return payload.name == nil or type(payload.name) == "string"
 		end,
-		execute = function(context, state, payload)
+		execute = function(context: any, state: any, payload: any)
 			local id = Identity.new("character")
 			state.drafts[id] = {
 				id = id,
@@ -60,10 +60,10 @@ function Domain.register(registry)
 		commandType = "character.update_draft",
 		domainId = Domain.id,
 		authorize = ownsDraft,
-		validate = function(payload)
+		validate = function(payload: any)
 			return Helpers.hasString(payload, "characterId") and type(payload.patch) == "table"
 		end,
-		execute = function(_, state, payload)
+		execute = function(_: any, state: any, payload: any)
 			local draft = state.drafts[payload.characterId]
 			if draft == nil then
 				return Helpers.notFound("character_draft", payload.characterId)
@@ -89,10 +89,10 @@ function Domain.register(registry)
 		commandType = "character.activate",
 		domainId = Domain.id,
 		authorize = ownsDraft,
-		validate = function(payload)
+		validate = function(payload: any)
 			return Helpers.hasString(payload, "characterId")
 		end,
-		execute = function(_, state, payload)
+		execute = function(_: any, state: any, payload: any)
 			local draft = state.drafts[payload.characterId]
 			if draft == nil then
 				return Helpers.notFound("character_draft", payload.characterId)
@@ -111,13 +111,13 @@ function Domain.register(registry)
 	registry:register({
 		commandType = "character.level_up",
 		domainId = Domain.id,
-		authorize = function(context, domains, payload)
+		authorize = function(context: any, domains: any, payload: any)
 			return Helpers.ownsCharacter(context, domains, payload.characterId)
 		end,
-		validate = function(payload)
+		validate = function(payload: any)
 			return Helpers.hasString(payload, "characterId") and Helpers.hasNumber(payload, "level")
 		end,
-		execute = function(_, state, payload)
+		execute = function(_: any, state: any, payload: any)
 			local character = state.characters[payload.characterId]
 			if character == nil then
 				return Helpers.notFound("character", payload.characterId)

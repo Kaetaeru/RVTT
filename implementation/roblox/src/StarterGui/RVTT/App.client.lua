@@ -4,7 +4,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local player = Players.LocalPlayer
 local Tokens = require(ReplicatedStorage.RVTT.Shared.UI.DesignTokens)
-local components = script.UI.Components
+local components = script.Parent.UI.Components
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "RVTT_App"

@@ -2,6 +2,17 @@
 
 local ContextActionService = game:GetService("ContextActionService")
 
+type StackLike = {
+	dispatch: (self: StackLike, action: string, payload: any) -> boolean,
+}
+
+type RouterInstance = {
+	stack: StackLike,
+	started: boolean,
+	start: (self: RouterInstance) -> (),
+	destroy: (self: RouterInstance) -> (),
+}
+
 local Router = {}
 Router.__index = Router
 
@@ -15,11 +26,11 @@ local bindings: { [string]: { Enum.KeyCode } } = {
 	PrimaryAction5 = { Enum.KeyCode.Five },
 }
 
-function Router.new(stack)
-	return setmetatable({ stack = stack, started = false }, Router)
+function Router.new(stack: StackLike): RouterInstance
+	return setmetatable({ stack = stack, started = false }, Router) :: any
 end
 
-function Router:start()
+function Router.start(self: RouterInstance)
 	if self.started then
 		return
 	end
@@ -37,7 +48,7 @@ function Router:start()
 	end
 end
 
-function Router:destroy()
+function Router.destroy(self: RouterInstance)
 	if not self.started then
 		return
 	end

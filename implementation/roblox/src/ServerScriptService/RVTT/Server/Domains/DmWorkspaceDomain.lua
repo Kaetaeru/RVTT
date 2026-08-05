@@ -8,20 +8,20 @@ function Domain.initialState()
 	return { control = {}, quickActions = {}, runtimePatches = {}, recoveryRequests = {} }
 end
 
-local function dm(context): boolean
+local function dm(context: any): boolean
 	return Helpers.requireRole(context, { "dm" })
 end
 
-function Domain.register(registry)
+function Domain.register(registry: any)
 	registry:register({
 		commandType = "dm.assign_control",
 		domainId = Domain.id,
 		authorize = dm,
-		validate = function(payload)
+		validate = function(payload: any)
 			return Helpers.hasString(payload, "actorId")
 				and type(payload.controllerUserId) == "number"
 		end,
-		execute = function(_, state, payload, domains)
+		execute = function(_: any, state: any, payload: any, domains: any)
 			local actor = domains.scene.actors[payload.actorId]
 			if actor == nil then
 				return Helpers.notFound("actor", payload.actorId)
@@ -36,10 +36,10 @@ function Domain.register(registry)
 		commandType = "dm.quick_action",
 		domainId = Domain.id,
 		authorize = dm,
-		validate = function(payload)
+		validate = function(payload: any)
 			return Helpers.hasString(payload, "actionId")
 		end,
-		execute = function(context, state, payload)
+		execute = function(context: any, state: any, payload: any)
 			local record = {
 				actionId = payload.actionId,
 				payload = payload.payload or {},
@@ -55,10 +55,10 @@ function Domain.register(registry)
 		commandType = "dm.runtime_patch",
 		domainId = Domain.id,
 		authorize = dm,
-		validate = function(payload)
+		validate = function(payload: any)
 			return Helpers.hasString(payload, "targetId") and type(payload.patch) == "table"
 		end,
-		execute = function(_, state, payload)
+		execute = function(_: any, state: any, payload: any)
 			local previous = state.runtimePatches[payload.targetId]
 			state.runtimePatches[payload.targetId] = {
 				patch = payload.patch,
@@ -73,10 +73,10 @@ function Domain.register(registry)
 		commandType = "dm.request_recovery",
 		domainId = Domain.id,
 		authorize = dm,
-		validate = function(payload)
+		validate = function(payload: any)
 			return Helpers.hasString(payload, "target", 128)
 		end,
-		execute = function(context, state, payload)
+		execute = function(context: any, state: any, payload: any)
 			local requestId = "recovery:" .. context.commandId
 			state.recoveryRequests[requestId] = {
 				id = requestId,

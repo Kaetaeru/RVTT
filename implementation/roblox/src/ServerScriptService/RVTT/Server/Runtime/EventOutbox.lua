@@ -47,8 +47,11 @@ function EventOutbox.append(
 		payload = payload,
 	}
 	table.insert(self.events, event)
-	for _, callback in self.subscribers[eventType] or {} do
-		task.spawn(callback, event)
+	local subscribers = self.subscribers[eventType]
+	if subscribers ~= nil then
+		for _, callback in subscribers do
+			task.spawn(callback, event)
+		end
 	end
 	return event
 end

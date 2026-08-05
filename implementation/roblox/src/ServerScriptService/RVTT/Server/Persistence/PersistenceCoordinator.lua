@@ -8,7 +8,7 @@ local ValueGuard = require(ReplicatedStorage.RVTT.Shared.Core.ValueGuard)
 local PersistenceCoordinator = {}
 PersistenceCoordinator.__index = PersistenceCoordinator
 
-local function revisionOf(state): number?
+local function revisionOf(state: any): number?
 	if type(state) ~= "table" or not ValueGuard.isFiniteNumber(state.revision) then
 		return nil
 	end
@@ -19,7 +19,7 @@ local function revisionOf(state): number?
 	return revision
 end
 
-function PersistenceCoordinator.new(store, key: string, diagnostics)
+function PersistenceCoordinator.new(store: any, key: string, diagnostics: any): any
 	return setmetatable({
 		store = store,
 		key = key,
@@ -32,7 +32,7 @@ function PersistenceCoordinator.new(store, key: string, diagnostics)
 	}, PersistenceCoordinator)
 end
 
-function PersistenceCoordinator:load()
+function PersistenceCoordinator.load(self: any): any
 	local result = self.store:load(self.key)
 	if result.ok and result.value ~= nil then
 		local revision = revisionOf(result.value)
@@ -43,7 +43,7 @@ function PersistenceCoordinator:load()
 	return result
 end
 
-function PersistenceCoordinator:markDirty(state)
+function PersistenceCoordinator.markDirty(self: any, state: any): boolean
 	local revision = revisionOf(state)
 	if revision == nil then
 		self.diagnostics:increment("persistence.invalid_dirty_state")
@@ -68,7 +68,7 @@ function PersistenceCoordinator:markDirty(state)
 	return true
 end
 
-function PersistenceCoordinator:flush()
+function PersistenceCoordinator.flush(self: any): any
 	while self.flushing do
 		self.flushCompleted.Event:Wait()
 	end
@@ -95,7 +95,7 @@ function PersistenceCoordinator:flush()
 	return result
 end
 
-function PersistenceCoordinator:flushUntilClean()
+function PersistenceCoordinator.flushUntilClean(self: any): any
 	while self.dirty ~= nil or self.flushing do
 		local result = self:flush()
 		if not result.ok then
