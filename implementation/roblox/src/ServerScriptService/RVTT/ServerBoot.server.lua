@@ -71,8 +71,8 @@ local function roleResolver(player: Player): string
 end
 
 local builder = ProjectionBuilder.new()
-local publisher = ProjectionPublisher.new(runtime, builder, remotes, roleResolver)
-local router = CommandRouter.new(
+local publisher: any = ProjectionPublisher.new(runtime, builder, remotes, roleResolver)
+local router: any = CommandRouter.new(
 	runtime,
 	remotes,
 	RateLimiter.new(1, 30),
@@ -95,4 +95,8 @@ remotes.clientReady.OnServerEvent:Connect(function(player)
 	publisher:publish(player)
 end)
 
-diagnostics:record("info", "SERVER_BOOTED", { commandCount = #registry:list() })
+diagnostics:record(
+	"info",
+	"SERVER_BOOTED",
+	{ commandCount = #registry:list() } :: { [string]: unknown }
+)
