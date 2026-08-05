@@ -44,8 +44,21 @@ for _, domain in ServiceGraph.domainModules() do
 	runtime:installDomain(domain)
 end
 
+local function projectBoolFlag(name: string): boolean
+	local flag = ServerStorage.RVTT:FindFirstChild(name)
+	return flag ~= nil and flag:IsA("BoolValue") and flag.Value
+end
+
+local slice01AcceptanceMode = projectBoolFlag("Slice01AcceptanceMode")
+if slice01AcceptanceMode then
+	print("[RVTT Slice01] acceptance role override enabled")
+end
+
 local remotes = RemoteBootstrap.create()
 local function roleResolver(player: Player): string
+	if slice01AcceptanceMode then
+		return "dm"
+	end
 	if game.PrivateServerOwnerId ~= 0 and player.UserId == game.PrivateServerOwnerId then
 		return "dm"
 	end
@@ -73,13 +86,8 @@ remotes.clientReady.OnServerEvent:Connect(function(player)
 	publisher:publish(player)
 end)
 
-local function projectPersistenceEnabled(): boolean
-	local flag = ServerStorage.RVTT:FindFirstChild("EnableStudioPersistence")
-	return flag ~= nil and flag:IsA("BoolValue") and flag.Value
-end
-
 local persistenceAttributeEnabled = game:GetAttribute("RVTT_EnableStudioPersistence") == true
-local persistenceProjectEnabled = projectPersistenceEnabled()
+local persistenceProjectEnabled = projectBoolFlag("EnableStudioPersistence")
 local studioPersistenceEnabled = persistenceAttributeEnabled or persistenceProjectEnabled
 local persistenceActivationSource = "disabled"
 if persistenceAttributeEnabled then
@@ -167,5 +175,6 @@ diagnostics:record(
 		persistenceEnabled = persistenceEnabled,
 		persistenceActivationSource = persistenceActivationSource,
 		robloxCharacterAutoLoads = Players.CharacterAutoLoads,
+		slice01AcceptanceMode = slice01AcceptanceMode,
 	} :: { [string]: unknown }
 )
