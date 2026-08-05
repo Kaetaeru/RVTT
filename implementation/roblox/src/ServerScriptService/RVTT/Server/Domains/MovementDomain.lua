@@ -37,7 +37,7 @@ function Domain.register(registry: any)
 					"VALIDATION_FAILED",
 					"error.validation.failed",
 					false,
-					{ reason = "movement safety bound" }
+					{ reason = "movement safety bound" } :: { [string]: unknown }
 				)
 			end
 
