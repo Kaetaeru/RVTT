@@ -7,6 +7,8 @@ local Result = require(ReplicatedStorage.RVTT.Shared.Core.Result)
 local CommandRouter = {}
 CommandRouter.__index = CommandRouter
 
+type PlayerIdResolver = (Player) -> number
+
 local function defaultPlayerIdResolver(player: Player): number
 	return player.UserId
 end
@@ -18,7 +20,7 @@ function CommandRouter.new(
 	roleResolver,
 	projectionPublisher,
 	diagnostics,
-	playerIdResolver
+	playerIdResolver: PlayerIdResolver?
 )
 	return setmetatable({
 		runtime = runtime,
