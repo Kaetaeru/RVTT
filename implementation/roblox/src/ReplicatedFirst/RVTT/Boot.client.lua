@@ -2,6 +2,11 @@
 
 local Players = game:GetService("Players")
 local ReplicatedFirst = game:GetService("ReplicatedFirst")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+if ReplicatedStorage:FindFirstChild("RVTT_TestMode") ~= nil then
+	return
+end
 
 ReplicatedFirst:RemoveDefaultLoadingScreen()
 local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
