@@ -52,7 +52,10 @@ runtime:onCommitted(function(state)
 end)
 
 game:BindToClose(function()
-	persistence:flush()
+	local result = persistence:flushUntilClean()
+	if not result.ok then
+		diagnostics:record("error", "PERSISTENCE_SHUTDOWN_FLUSH_FAILED", {})
+	end
 end)
 
 local remotes = RemoteBootstrap.create()
