@@ -27,4 +27,6 @@ The second flag grants the single Studio tester the DM role only in this accepta
 10. Stop and Play again.
 11. Verify character, scene, actor position, connection, avatar suppression, and Accent recovery.
 
+The harness resolves `ClientRuntime` dynamically because it is mounted only by the acceptance project. That test-only require boundary is explicitly typed as `any`; production runtime modules remain strictly typed.
+
 The screen is an acceptance instrument, not a production visual design candidate. Production UI styling remains deferred to the separate UI Visual Redesign Gate.
