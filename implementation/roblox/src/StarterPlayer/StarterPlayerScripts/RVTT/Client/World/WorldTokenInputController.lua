@@ -23,16 +23,34 @@ export type Controller = {
 local Controller = {}
 Controller.__index = Controller
 
-local function viewportPosition(input: InputObject): Vector2
+local rvtt = ReplicatedStorage:WaitForChild("RVTT")
+local acceptanceMode = rvtt:FindFirstChild("Slice01AcceptanceMode")
+local DEBUG_CLICKS = acceptanceMode ~= nil
+	and acceptanceMode:IsA("BoolValue")
+	and acceptanceMode.Value
+
+local function debugClick(message: string)
+	if DEBUG_CLICKS then
+		print("[RVTT WorldToken Input] " .. message)
+	end
+end
+
+local function screenPosition(input: InputObject): Vector2
+	if
+		input.UserInputType == Enum.UserInputType.MouseButton1
+		or input.UserInputType == Enum.UserInputType.MouseButton2
+	then
+		return UserInputService:GetMouseLocation()
+	end
 	return Vector2.new(input.Position.X, input.Position.Y)
 end
 
-local function raycastFromViewport(position: Vector2): RaycastResult?
+local function raycastFromScreen(position: Vector2): RaycastResult?
 	local camera = Workspace.CurrentCamera
 	if camera == nil then
 		return nil
 	end
-	local ray = camera:ViewportPointToRay(position.X, position.Y)
+	local ray = camera:ScreenPointToRay(position.X, position.Y)
 	local params = RaycastParams.new()
 	params.FilterType = Enum.RaycastFilterType.Exclude
 	local excluded: { Instance } = {}
@@ -58,6 +76,7 @@ end
 function Controller:_selectActor(actorId: string): boolean
 	local actor = Contract.actor(self.replica.payload, actorId)
 	if not Contract.canControl(self.replica.payload, actor, Players.LocalPlayer.UserId) then
+		debugClick("selection denied actor=" .. actorId)
 		return false
 	end
 	return self.renderer:setSelected(actorId)
@@ -92,18 +111,24 @@ function Controller:_moveSelected(hit: RaycastResult): boolean
 end
 
 function Controller:_handlePrimary(input: InputObject)
-	local hit = raycastFromViewport(viewportPosition(input))
+	local position = screenPosition(input)
+	local hit = raycastFromScreen(position)
 	if hit == nil then
+		debugClick(string.format("miss screen=(%.1f, %.1f)", position.X, position.Y))
 		return
 	end
 	local actorId = self.renderer:actorIdFromInstance(hit.Instance)
 	if actorId ~= nil then
+		debugClick("hit token instance=" .. hit.Instance:GetFullName() .. " actor=" .. actorId)
 		if self:_selectActor(actorId) then
 			print("[RVTT WorldToken] selected actor=" .. actorId)
 		end
 		return
 	end
-	self:_moveSelected(hit)
+	if self:_moveSelected(hit) then
+		return
+	end
+	debugClick("hit non-token instance=" .. hit.Instance:GetFullName())
 end
 
 function Controller.start(self: Controller)
