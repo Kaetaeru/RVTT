@@ -10,13 +10,6 @@ function Domain.initialState()
 	return { documents = {}, pings = {} }
 end
 
-local function mayRead(context, document): boolean
-	return context.role == "dm"
-		or document.ownerUserId == context.playerId
-		or document.visibility == "party"
-		or document.visibility == "public"
-end
-
 function Domain.register(registry)
 	registry:register({
 		commandType = "journal.create",
