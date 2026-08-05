@@ -2,25 +2,31 @@
 
 local Harness = require(script.Parent.TestHarness)
 local harness = Harness.new()
-local specs = {
-	{ name = "Core.spec", runner = require(script.Parent.Unit["Core.spec"]) },
-	{ name = "Envelope.spec", runner = require(script.Parent.Unit["Envelope.spec"]) },
-	{ name = "Persistence.spec", runner = require(script.Parent.Unit["Persistence.spec"]) },
+
+type Spec = {
+	name: string,
+	runner: (any) -> (),
+}
+
+local specs: { Spec } = {
+	{ name = "Core.spec", runner = require(script.Parent.Unit["Core.spec"]) :: any },
+	{ name = "Envelope.spec", runner = require(script.Parent.Unit["Envelope.spec"]) :: any },
+	{ name = "Persistence.spec", runner = require(script.Parent.Unit["Persistence.spec"]) :: any },
 	{
 		name = "DomainRegistration.spec",
-		runner = require(script.Parent.Integration["DomainRegistration.spec"]),
+		runner = require(script.Parent.Integration["DomainRegistration.spec"]) :: any,
 	},
 	{
 		name = "AuthorityFlow.spec",
-		runner = require(script.Parent.Integration["AuthorityFlow.spec"]),
+		runner = require(script.Parent.Integration["AuthorityFlow.spec"]) :: any,
 	},
 	{
 		name = "SecurityBoundary.spec",
-		runner = require(script.Parent.Integration["SecurityBoundary.spec"]),
+		runner = require(script.Parent.Integration["SecurityBoundary.spec"]) :: any,
 	},
 	{
 		name = "ProjectionDisclosure.spec",
-		runner = require(script.Parent.Integration["ProjectionDisclosure.spec"]),
+		runner = require(script.Parent.Integration["ProjectionDisclosure.spec"]) :: any,
 	},
 }
 
