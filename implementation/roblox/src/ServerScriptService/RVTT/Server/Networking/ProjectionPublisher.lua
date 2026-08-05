@@ -5,11 +5,19 @@ local Players = game:GetService("Players")
 local ProjectionPublisher = {}
 ProjectionPublisher.__index = ProjectionPublisher
 
+type ViewerIdResolver = (Player) -> number
+
 local function defaultViewerIdResolver(player: Player): number
 	return player.UserId
 end
 
-function ProjectionPublisher.new(runtime, builder, remotes, roleResolver, viewerIdResolver)
+function ProjectionPublisher.new(
+	runtime,
+	builder,
+	remotes,
+	roleResolver,
+	viewerIdResolver: ViewerIdResolver?
+)
 	return setmetatable({
 		runtime = runtime,
 		builder = builder,
