@@ -80,7 +80,7 @@ return function(harness)
 	harness:expect(observerJoin.ok, "observer joins the shared session")
 	harness:equal(Runtime:snapshot().revision, 3, "three memberships commit exactly once")
 
-	local memberships = Runtime:snapshot().domains.session.memberships
+	local memberships: any = Runtime:snapshot().domains.session.memberships
 	harness:equal(memberships["101"].role, "dm", "DM membership retains its role")
 	harness:equal(memberships["202"].role, "player", "player membership retains its role")
 	harness:equal(memberships["303"].role, "observer", "observer membership retains its role")
@@ -172,11 +172,8 @@ return function(harness)
 		status = "connected",
 	})
 	harness:expect(disconnected.ok and reconnected.ok, "connection transitions commit")
-	harness:equal(
-		Runtime:snapshot().domains.session.connections["202"],
-		"connected",
-		"reconnection restores connected status"
-	)
+	local connections: any = Runtime:snapshot().domains.session.connections
+	harness:equal(connections["202"], "connected", "reconnection restores connected status")
 
 	local dmProjectionAgain = Builder:build(Runtime:snapshot(), 101, "dm")
 	harness:expect(
