@@ -25,7 +25,6 @@ env:
   STYLUA_VERSION: "2.5.2"
   SELENE_VERSION: "0.31.0"
   LUAU_LSP_VERSION: "1.69.0"
-  TOOL_CACHE_KEY: rvtt-tools-v5-${{ runner.os }}-rojo-7.6.1-stylua-2.5.2-selene-0.31.0-luau-lsp-1.69.0
 
 jobs:
   structure-and-policy:
@@ -65,7 +64,7 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             ~/.local/bin/luau-lsp
-          key: ${{ env.TOOL_CACHE_KEY }}
+          key: rvtt-tools-v5-${{ runner.os }}-rojo-${{ env.ROJO_VERSION }}-stylua-${{ env.STYLUA_VERSION }}-selene-${{ env.SELENE_VERSION }}-luau-lsp-${{ env.LUAU_LSP_VERSION }}
           restore-keys: |
             rvtt-tools-v4-${{ runner.os }}-rojo-${{ env.ROJO_VERSION }}-stylua-${{ env.STYLUA_VERSION }}-selene-${{ env.SELENE_VERSION }}-luau-lsp-${{ env.LUAU_LSP_VERSION }}
             rvtt-tools-v3-${{ runner.os }}-rojo-${{ env.ROJO_VERSION }}-stylua-${{ env.STYLUA_VERSION }}-selene-${{ env.SELENE_VERSION }}-luau-lsp-${{ env.LUAU_LSP_VERSION }}
@@ -120,7 +119,7 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             ~/.local/bin/luau-lsp
-          key: ${{ env.TOOL_CACHE_KEY }}
+          key: rvtt-tools-v5-${{ runner.os }}-rojo-${{ env.ROJO_VERSION }}-stylua-${{ env.STYLUA_VERSION }}-selene-${{ env.SELENE_VERSION }}-luau-lsp-${{ env.LUAU_LSP_VERSION }}
 
       - name: Verify pinned toolchain
         run: |
