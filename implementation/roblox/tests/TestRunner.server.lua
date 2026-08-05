@@ -54,6 +54,10 @@ local specs: { Spec } = {
 		name = "MultiViewerFlow.spec",
 		runner = require(script.Parent.Integration["MultiViewerFlow.spec"]) :: any,
 	},
+	{
+		name = "Slice01Flow.spec",
+		runner = require(script.Parent.Integration["Slice01Flow.spec"]) :: any,
+	},
 }
 
 for _, spec in specs do
