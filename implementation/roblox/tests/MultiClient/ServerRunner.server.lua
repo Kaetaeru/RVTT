@@ -111,13 +111,8 @@ end
 
 local remotes = RemoteBootstrap.create()
 local builder = ProjectionBuilder.new()
-local publisher: any = ProjectionPublisher.new(
-	runtime,
-	builder,
-	remotes,
-	roleResolver,
-	playerIdResolver
-)
+local publisher: any =
+	ProjectionPublisher.new(runtime, builder, remotes, roleResolver, playerIdResolver)
 local router: any = CommandRouter.new(
 	runtime,
 	remotes,
