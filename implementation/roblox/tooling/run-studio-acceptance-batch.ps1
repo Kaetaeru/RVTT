@@ -14,6 +14,7 @@ $ProgressPreference = "SilentlyContinue"
 
 $Repository = "Kaetaeru/RVTT"
 $Branch = "planning/rvtt-remake"
+$PreferredRepo = "C:\Users\somsn\RVTT"
 $ManifestUrl = "https://raw.githubusercontent.com/$Repository/$Branch/implementation/roblox/acceptance-batch.json"
 $CacheRoot = if ($env:LOCALAPPDATA) { Join-Path $env:LOCALAPPDATA "RVTT\AcceptanceBootstrap" } else { Join-Path ([IO.Path]::GetTempPath()) "RVTT-AcceptanceBootstrap" }
 
@@ -56,6 +57,13 @@ function Manifest() {
         Move-Item -Force $candidate $cached
         return $value
     } catch {
+        $localManifest = Join-Path $PreferredRepo "implementation\roblox\acceptance-batch.json"
+        if (Test-Path $localManifest) {
+            Write-Warning "network unavailable; using manifest from $PreferredRepo"
+            $value = Json $localManifest
+            ValidateManifest $value
+            return $value
+        }
         if ($PSScriptRoot) {
             $local = Join-Path (Split-Path -Parent $PSScriptRoot) "acceptance-batch.json"
             if (Test-Path $local) {
@@ -109,11 +117,68 @@ function Rojo($Manifest) {
     Remove-Item $extract -Recurse -Force
     return $exe
 }
+function FindLocalRepo() {
+    $candidates = @($PreferredRepo)
+    if ($HOME) {
+        $homeRepo = Join-Path $HOME "RVTT"
+        if ($homeRepo -ne $PreferredRepo) { $candidates += $homeRepo }
+    }
+    $current = (Get-Location).Path
+    if ($current -notin $candidates) { $candidates += $current }
+    foreach ($candidate in $candidates) {
+        if ((Test-Path (Join-Path $candidate ".git")) -and (Test-Path (Join-Path $candidate "implementation\roblox"))) {
+            return [IO.Path]::GetFullPath($candidate)
+        }
+    }
+    return $null
+}
+function SourceFromLocalRepo([string]$Head, [string]$RepoRoot, [string]$Destination) {
+    $git = Get-Command git -ErrorAction SilentlyContinue
+    if (-not $git) { return $false }
+
+    Step "using local repository $RepoRoot"
+    Set-Location $RepoRoot
+
+    & $git.Source -C $RepoRoot cat-file -e "${Head}^{commit}" 2>$null
+    if ($LASTEXITCODE -ne 0) {
+        Step "fetching verified commit into local repository"
+        & $git.Source -C $RepoRoot fetch origin $Branch --prune
+        if ($LASTEXITCODE -ne 0) {
+            Write-Warning "branch fetch failed; trying exact verified Head"
+            & $git.Source -C $RepoRoot fetch origin $Head
+        }
+        & $git.Source -C $RepoRoot cat-file -e "${Head}^{commit}" 2>$null
+        if ($LASTEXITCODE -ne 0) { return $false }
+    }
+
+    $zip = Join-Path $CacheRoot "downloads\RVTT-local-$Head.zip"
+    Remove-Item $zip -Force -ErrorAction SilentlyContinue
+    New-Item -ItemType Directory -Force (Split-Path -Parent $zip) | Out-Null
+    & $git.Source -C $RepoRoot archive --format=zip --output=$zip $Head
+    if ($LASTEXITCODE -ne 0 -or -not (Test-Path $zip)) { return $false }
+
+    Remove-Item $Destination -Recurse -Force -ErrorAction SilentlyContinue
+    New-Item -ItemType Directory -Force $Destination | Out-Null
+    Expand-Archive $zip $Destination -Force
+    if (-not (Test-Path (Join-Path $Destination "implementation\roblox"))) {
+        Remove-Item $Destination -Recurse -Force -ErrorAction SilentlyContinue
+        return $false
+    }
+    Set-Content -Encoding ASCII (Join-Path $Destination ".rvtt-source-ready") $Head
+    return $true
+}
 function Source([string]$Head) {
     $root = Join-Path $CacheRoot "sources\$Head"
     $ready = Join-Path $root ".rvtt-source-ready"
     if ($Refresh) { Remove-Item $root -Recurse -Force -ErrorAction SilentlyContinue }
     if ((Test-Path $ready) -and (Test-Path (Join-Path $root "implementation\roblox"))) { return $root }
+
+    $localRepo = FindLocalRepo
+    if ($localRepo) {
+        if (SourceFromLocalRepo $Head $localRepo $root) { return $root }
+        Write-Warning "local repository could not provide verified Head; falling back to remote archive"
+    }
+
     Step "downloading isolated verified source $Head"
     $zip = Join-Path $CacheRoot "downloads\RVTT-$Head.zip"
     Download "https://github.com/$Repository/archive/$Head.zip" $zip
@@ -129,13 +194,25 @@ function Source([string]$Head) {
     Remove-Item $extract -Recurse -Force -ErrorAction SilentlyContinue
     return $root
 }
+function TryPythonValidator([string]$Executable, [string[]]$Arguments) {
+    try {
+        $global:LASTEXITCODE = 0
+        & $Executable @Arguments
+        if ($LASTEXITCODE -eq 0) { return $true }
+        Write-Warning "Python validator unavailable or failed · executable=$Executable exitCode=$LASTEXITCODE"
+    } catch {
+        Write-Warning "Python validator could not start · executable=$Executable error=$($_.Exception.Message)"
+    }
+    return $false
+}
 function Validate([string]$RobloxRoot, [string]$ProjectName) {
     $validator = Join-Path $RobloxRoot "tooling\validate_implementation.py"
     $python = Get-Command python -ErrorAction SilentlyContinue
     $py = Get-Command py -ErrorAction SilentlyContinue
-    if ($python) { & $python.Source $validator; Native "validate_implementation.py"; return }
-    if ($py) { & $py.Source -3 $validator; Native "validate_implementation.py"; return }
-    Step "Python unavailable; using built-in validator"
+    if ($python -and (TryPythonValidator $python.Source @($validator))) { return }
+    if ($py -and (TryPythonValidator $py.Source @("-3", $validator))) { return }
+
+    Step "Python unavailable or unusable; using built-in validator"
     Get-Content -Raw -Encoding UTF8 (Join-Path $RobloxRoot $ProjectName) | ConvertFrom-Json | Out-Null
     foreach ($path in @("src\ServerScriptService\RVTT\ServerBoot.server.lua", "src\StarterPlayer\StarterPlayerScripts\RVTT\ClientBoot.client.lua", "tests\WorldTokenAcceptance\WorldTokenAcceptance.client.lua")) {
         if (-not (Test-Path (Join-Path $RobloxRoot $path))) { throw "fallback validator missing $path" }
@@ -160,6 +237,7 @@ function RunSelfTest() {
     foreach ($key in @("windowsX64", "windowsArm64")) {
         if ([string]$value.rojo.assets.$key.sha256 -notmatch "^[0-9a-f]{64}$") { throw "invalid $key Rojo hash" }
     }
+    if ($PreferredRepo -ne "C:\Users\somsn\RVTT") { throw "preferred repository path contract changed" }
     Write-Host "RVTT acceptance bootstrap SelfTest passed" -ForegroundColor Green
 }
 
@@ -196,8 +274,9 @@ Verified Head: $head
 Project: $Project
 Place: $output
 Source Cache: $sourceRoot
+Preferred Repository: $PreferredRepo
 
-Bootstrap: current-directory independent; Git not required; Python optional; pinned Rojo SHA256 verified; Dirty Worktree isolated; Offline cache enabled.
+Bootstrap: starts from C:\Users\somsn\RVTT when available; verified Git archive isolates Dirty Worktree; Python failure falls back to built-in validation; pinned Rojo SHA256 verified; Offline cache enabled.
 "@ | Set-Content -Encoding UTF8 $report
 Write-Host "RVTT Acceptance Batch ready`n  Head: $head`n  Place: $output`n  Manifest: $report" -ForegroundColor Green
 if (-not $NoOpen) {
