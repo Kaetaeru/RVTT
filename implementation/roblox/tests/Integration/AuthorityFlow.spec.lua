@@ -19,7 +19,7 @@ return function(harness)
 	end
 
 	local context = {
-		player = nil,
+		player = { DisplayName = "Test Player" },
 		playerId = 101,
 		role = "player",
 		origin = "remote",
