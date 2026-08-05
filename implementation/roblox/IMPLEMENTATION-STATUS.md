@@ -4,7 +4,7 @@
 - 작성일: 2026-08-05
 - 최종 갱신일: 2026-08-05
 - 범위: 16개 Slice 계약의 Greenfield Runtime·Domain·Client·UI·Test baseline
-- 최신 구현 Head: `a23baf9815b2b52cafb0e2c7530c4131546d2fce`
+- 최신 Runtime Head: `cf66ee90b015948bddc36079315c0bb52b0692a7`
 - Studio 검증 근거: [`Roblox Studio Runtime Baseline Validation Audit`](../../docs/remake/audits/roblox-studio-runtime-baseline-validation-audit.md)
 
 ## 구현된 공통 계약
@@ -40,7 +40,7 @@ Visual·Input Studio Acceptance
 → PASSED
 
 Persistence Studio Acceptance
-→ PENDING
+→ PASSED
 ```
 
 구현 범위:
@@ -63,9 +63,9 @@ Persistence Studio Acceptance
 [RVTT Live DataStore] passed=10 failed=0
 ```
 
-`173/0`은 깨끗하게 새로 Build한 Test Place에서도 재현된 현재 기준값이다.
+`173/0`은 깨끗하게 새로 Build한 Test Place에서도 재현된 기준값이다.
 
-2026-08-05 18:31 KST Studio Visual·Input Acceptance:
+2026-08-05 18:31 KST Visual·Input Acceptance:
 
 - Loading 화면 종료와 RVTT App 표시
 - 기본 Gold 표시
@@ -76,44 +76,74 @@ Persistence Studio Acceptance
 - 다시 열었을 때 선택값 유지
 - 관련 Output 오류 없음
 
-## Studio Boot 동기화 교착 수정
+2026-08-05 20:08 KST Persistence Acceptance:
 
-원인:
+- 게시된 테스트 Experience와 Studio API Services 접근 사용
+- `persistence-acceptance.project.json`의 Project Config로 Studio Persistence 활성화
+- 기존 Authority 문서 Load 성공
+- Accent 변경 후 신규 Revision Save 성공
+- Play 종료 후 재실행 시 신규 Revision Load 성공
+- 마지막 Accent와 선택 표시 화면 복구 성공
+- `ClientBoot runtime ready` 확인
 
-- Server가 Remote 생성 전에 기본 캠페인 DataStore Load를 동기식으로 기다렸다.
-- Client가 최초 Full Resync 이후에만 `ClientRuntime`을 공개했다.
+최종 판정:
 
-수정:
+```text
+ACCENT_THEME_PERSISTENCE_VERIFIED
+```
+
+## Studio Boot과 Remote Bootstrap 보강
+
+초기 동기화 교착 수정:
 
 - Remote·Projection Publisher를 Persistence Load보다 먼저 시작
 - 기본 Studio Play Live Persistence 비활성화
-- `RVTT_EnableStudioPersistence=true`에서만 Studio Live Persistence 활성화
 - Client Runtime 조기 공개
 - `clientReady` 우선 Projection과 비동기 Full Resync Fallback
-- Remote 대기 10초 제한과 진단 메시지
+- Remote 대기 제한과 진단 메시지
 
-수정 후 실제 Studio에서 Loading 종료와 App 표시를 확인했다.
+Remote 세트 복구:
+
+- Command·Receipt·Projection·Sync·ClientReady 전체 세트를 비공개 상태에서 완성한 뒤 게시
+- 오래된 부분 Remote 폴더, 잘못된 형식, 동명 중복 폴더 제거
+- 클라이언트는 전체 Remote가 완비된 Canonical Folder만 선택
+- 실패 시 후보 폴더와 자식 형식을 진단 로그로 출력
+- 중복·부분 폴더 복구 Unit Test 추가
+
+수정 후 실제 Studio에서 Persistence Load·Save와 `ClientBoot runtime ready`를 동시에 확인했다.
 
 ## Roblox 기본 캐릭터 비활성화
 
 제품 계약상 플레이어 표현은 Roblox 아바타가 아니라 RVTT의 리그 없는 OBJ·MeshPart Token이다.
 
-구현:
+구현과 Studio Acceptance:
 
-- `default.project.json`의 `Players.CharacterAutoLoads=false`
-- `ServerBoot.server.lua`에서 `Players.CharacterAutoLoads=false` 재강제
+- `Players.CharacterAutoLoads=false`
 - 이미 생성된 `Player.Character`가 있으면 접속 처리 시 제거
-- RVTT Character·Actor·Token 도메인 상태에는 영향 없음
+- RVTT UI를 `StarterPlayerScripts`에서 실행해 Character 생성과 분리
+- Roblox 기본 Character Model 비생성
+- `Player.Character == nil`
+- Humanoid·HumanoidRootPart 비생성
+- RVTT UI·Settings·Accent 정상 작동
+- RVTT Character·Actor·Token Domain 상태에는 영향 없음
 
-구현 Head `a23baf9`에서 다음 GitHub Actions가 모두 통과했다.
+## Persistence 진단과 검증 보강
 
-- Structure·Security·Policy Validator
-- StyLua Format
-- Selene Lint
-- Production·Test·Multi-client Rojo Build
-- Production·Test Luau Type Analysis
+- DataStore Load·Save 예외 원문과 Revision을 Output에 표시
+- 실제 저장 문서의 비직렬화 Roblox 값, 비유한 수, 잘못된 UTF-8, 순환 참조, 혼합·희소 키를 저장 전에 경로와 함께 차단
+- 실제 18개 Domain Authority 스냅샷과 Accent 값을 저장·재로드하는 Live DataStore 검증 추가
+- `persistence-acceptance.project.json`은 `ServerStorage.RVTT.EnableStudioPersistence=true`를 빌드에 포함
 
-실제 Studio에서 기본 Roblox 아바타가 생성되지 않는지는 다음 Acceptance Gate에서 확인한다.
+실제 게시된 테스트 Experience Evidence:
+
+```text
+[RVTT Persistence] enabled gameId=10633802552 placeId=139617657977397 studio=true source=project-config
+[RVTT Persistence] loaded key=campaign:default revision=5
+[RVTT Persistence] saved key=campaign:default revision=6
+[RVTT ClientBoot] runtime ready
+```
+
+이후 재실행과 화면 확인에서 마지막 Accent 복구가 통과했다.
 
 ## UI 시각 디자인 상태
 
@@ -129,56 +159,54 @@ Persistence Studio Acceptance
 
 부분적인 화면별 미화는 보류하고 별도 `UI Visual Redesign Gate`에서 일괄 교체한다.
 
-## 기존 Roblox Studio Baseline
-
-2026-08-05 15:42 KST:
-
-```text
-[RVTT Tests] passed=108 failed=0
-[RVTT Live DataStore] passed=10 failed=0
-[RVTT MultiClient] passed=56 failed=0 clients=3 staleRetries=3
-```
-
 ## 상태 해석
 
-현재 Accent Theme Delta 상태:
+현재 완료된 사용자 설정 범위:
 
 ```text
-ACCENT_THEME_VISUAL_INPUT_VERIFIED_PERSISTENCE_PENDING
+Accent Implementation
+→ VERIFIED
+
+Visual·Input Behavior
+→ VERIFIED
+
+Server Validation·Projection
+→ VERIFIED
+
+DataStore Save·Reload·UI Restore
+→ VERIFIED
 ```
 
 다음을 의미하지 않는다.
 
-- Live Persistence 상태의 Accent 재접속 복구 완료
-- Roblox 기본 아바타 비생성 Studio 확인 완료
 - Slice 01 전체 사용자 흐름 Acceptance 완료
 - Slices 02–16 Acceptance 완료
-- 서버 종료·재시작과 Cross-server 저장 복구 완료
+- Cross-server Lease·Migration·Conflict Recovery 완료
 - UI 최종 시각 품질·접근성 완료
 - 성능·장시간 Soak 완료
 - Production Ready 또는 Release Ready
 
-## Studio Persistence 주의
+## 다음 Gate
 
-기본 `default.project.json` Studio Play는 UI 검수를 막지 않도록 Live Persistence를 사용하지 않는다.
+Slice 01 Studio Acceptance:
 
 ```text
-Default Studio Play
-→ Session 내 UI 검수
-
-Live Persistence 검수
-→ live-datastore.project.json
-또는
-→ DataModel Attribute RVTT_EnableStudioPersistence=true
+Join
+→ Character Select
+→ Ready
+→ Scene Projection
+→ Token Select
+→ Server-authoritative Move
+→ Disconnect
+→ Reconnect
+→ Character·Scene·Position Recovery
 ```
 
 ## 아직 미검증
 
-- 기본 Roblox 아바타가 생성되지 않는지 실제 Studio 확인
-- Live Persistence 활성화 상태의 Accent Preference 복구
 - Slice 01 `Join → Select → Ready → Scene → Move → Reconnect`
 - Slices 02–16 사용자·보안·복구 Scenario
-- DataStore server restart·Cross-server Lease·Migration Recovery
+- DataStore server restart·Cross-server Lease·Migration·Conflict Recovery
 - Navigation·Physics·Streaming·Large Scene
 - 전면 UI Visual Redesign와 Accessibility User Test
 - Performance·Memory·Network·Fault·Soak Evidence
