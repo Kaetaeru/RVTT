@@ -1,1 +1,3 @@
-Temporary validation trigger for the post-remediation Luau typecheck. Remove after the type gate is stable.
+Temporary validation trigger for the post-remediation Luau typecheck.
+Current validation target: 777d801513fed73d0f893052bb13405287aa9288.
+Remove after the type gate is stable.
