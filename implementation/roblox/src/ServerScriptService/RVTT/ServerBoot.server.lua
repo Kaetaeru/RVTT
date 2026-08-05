@@ -5,7 +5,10 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 local ServerStorage = game:GetService("ServerStorage")
 
-if ServerScriptService:FindFirstChild("RVTTTests") ~= nil then
+if
+	ReplicatedStorage:FindFirstChild("RVTT_TestMode") ~= nil
+	or ServerScriptService:FindFirstChild("RVTTTests") ~= nil
+then
 	return
 end
 
