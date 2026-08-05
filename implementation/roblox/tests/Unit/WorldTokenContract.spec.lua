@@ -49,12 +49,12 @@ return function(harness)
 	local position = Contract.toVector3(actor.position)
 	harness:expect(position ~= nil, "finite projection position converts to Vector3")
 	if position ~= nil then
-		harness:equal(position.X, 12, "projected X is preserved")
-		harness:equal(position.Y, 0, "projected Y is preserved")
-		harness:equal(position.Z, 8, "projected Z is preserved")
+		harness:expect(position.X == 12, "projected X is preserved")
+		harness:expect(position.Y == 0, "projected Y is preserved")
+		harness:expect(position.Z == 8, "projected Z is preserved")
 		local destination = Contract.toDestination(position)
-		harness:equal(destination.x, 12, "destination X is plain data")
-		harness:equal(destination.z, 8, "destination Z is plain data")
+		harness:expect(destination.x == 12, "destination X is plain data")
+		harness:expect(destination.z == 8, "destination Z is plain data")
 	end
 
 	harness:expect(
