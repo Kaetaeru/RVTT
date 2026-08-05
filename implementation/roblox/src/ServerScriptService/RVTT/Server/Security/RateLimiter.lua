@@ -1,16 +1,30 @@
 --!strict
 
+export type Bucket = {
+	startedAt: number,
+	count: number,
+}
+
+export type RateLimiter = {
+	windowSeconds: number,
+	maximum: number,
+	buckets: { [string]: Bucket },
+	allow: (self: RateLimiter, key: string) -> boolean,
+	clear: (self: RateLimiter, key: string) -> (),
+}
+
 local RateLimiter = {}
 RateLimiter.__index = RateLimiter
 
-function RateLimiter.new(windowSeconds: number, maximum: number)
-	return setmetatable(
-		{ windowSeconds = windowSeconds, maximum = maximum, buckets = {} },
-		RateLimiter
-	)
+function RateLimiter.new(windowSeconds: number, maximum: number): RateLimiter
+	return setmetatable({
+		windowSeconds = windowSeconds,
+		maximum = maximum,
+		buckets = {},
+	}, RateLimiter) :: any
 end
 
-function RateLimiter:allow(key: string): boolean
+function RateLimiter.allow(self: RateLimiter, key: string): boolean
 	local now = os.clock()
 	local bucket = self.buckets[key]
 	if bucket == nil or now - bucket.startedAt >= self.windowSeconds then
@@ -24,7 +38,7 @@ function RateLimiter:allow(key: string): boolean
 	return true
 end
 
-function RateLimiter:clear(key: string)
+function RateLimiter.clear(self: RateLimiter, key: string)
 	self.buckets[key] = nil
 end
 
