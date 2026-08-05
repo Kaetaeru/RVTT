@@ -135,7 +135,7 @@ return function(harness)
 			revision = 5,
 			authorityEpoch = "epoch:other",
 		},
-		false,
+		false :: any,
 	}
 	local retryRecovered = store:save("profile", {
 		schemaVersion = 1,
