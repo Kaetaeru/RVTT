@@ -4,7 +4,7 @@
 - 작성일: 2026-08-05
 - 최종 갱신일: 2026-08-05
 - 범위: 16개 Slice 계약의 Greenfield Runtime·Domain·Client·UI·Test baseline
-- Slice 01 Harness 정적 검증 Head: `71b5ca383a9d688885f9ebdb533da8450f656e9c`
+- 3D World Token 정적 검증 Implementation Head: `f011991828c417cb9d98819e2eb6c77dc9667971`
 - Studio 검증 근거: [`Roblox Studio Runtime Baseline Validation Audit`](../../docs/remake/audits/roblox-studio-runtime-baseline-validation-audit.md)
 
 ## 구현된 공통 계약
@@ -22,288 +22,215 @@
 - 16개 Slice Domain Command baseline
 - Unit·Integration·Security·Disclosure Test Source
 
-## 사용자 Accent Theme
+## 검증된 Studio Baseline
 
-상태:
-
-```text
-Implementation
-→ DONE
-
-Static·Toolchain CI
-→ PASSED
-
-Automated Studio Tests
-→ PASSED
-
-Visual·Input Studio Acceptance
-→ PASSED
-
-Persistence Studio Acceptance
-→ PASSED
-```
-
-구현 범위:
-
-- 기본 Accent `gold`
-- 검수된 Palette `gold·azure·emerald·amethyst·teal·silver`
-- Shared `AccentPreference` 계약과 안전한 Gold Fallback
-- Palette별 Primary·Hover·Pressed·Soft·On·Focus·Glow Token
-- 기존 `ui.set_preference`를 이용한 Server Validation과 저장 상태 변경
-- Viewer별 `ui_preferences` Projection을 통한 사용자 설정 격리
-- Settings Modal과 즉시 미리보기
-- Q 입력을 이용한 Settings Context 종료
-- Server Projection 도착 후 권위값 Reconciliation
-- 일반 Accent와 Role·Success·Warning·Danger 의미색 분리
-
-2026-08-05 18:04 KST Studio 자동 테스트:
+2026-08-05에 다음 항목을 확인했다.
 
 ```text
-[RVTT Tests] passed=173 failed=0
-[RVTT Live DataStore] passed=10 failed=0
+Unit·Integration
+→ passed=173 failed=0
+
+Live DataStore
+→ passed=10 failed=0
+
+3-client MultiClient
+→ passed=56 failed=0 clients=3 staleRetries=3
+
+Roblox Player.Character 비생성
+→ PASS
+
+Accent Visual·Input·Persistence
+→ PASS
+
+Canonical Remote Bootstrap
+→ PASS
+
+Character·Scene·Position Reconnect Recovery
+→ PASS
 ```
 
-`173/0`은 깨끗하게 새로 Build한 Test Place에서도 재현된 기준값이다.
-
-2026-08-05 18:31 KST Visual·Input Acceptance:
-
-- Loading 화면 종료와 RVTT App 표시
-- 기본 Gold 표시
-- 6개 Palette 전환
-- 선택됨 Label·Stroke 이동
-- 3초 후 선택 Accent 유지
-- Q로 Settings 닫기
-- 다시 열었을 때 선택값 유지
-- 관련 Output 오류 없음
-
-2026-08-05 20:08 KST Persistence Acceptance:
-
-- 게시된 테스트 Experience와 Studio API Services 접근 사용
-- `persistence-acceptance.project.json`의 Project Config로 Studio Persistence 활성화
-- 기존 Authority 문서 Load 성공
-- Accent 변경 후 신규 Revision Save 성공
-- Play 종료 후 재실행 시 신규 Revision Load 성공
-- 마지막 Accent와 선택 표시 화면 복구 성공
-- `ClientBoot runtime ready` 확인
-
-최종 판정:
+Accent 상태:
 
 ```text
 ACCENT_THEME_PERSISTENCE_VERIFIED
 ```
 
-## Slice 01 Acceptance Harness
+## Slice 01 3D World Token
 
 상태:
 
 ```text
-Production Domain·Command Contract
+Authority·Scene·Movement Contract
 → IMPLEMENTED
 
-Automated Authority·Recovery Test
+Projection-driven 3D Renderer
 → IMPLEMENTED
 
-Dedicated Studio Acceptance Place
+Model·MeshPart Asset Resolver
+→ IMPLEMENTED
+
+World Selection·Destination Input
+→ IMPLEMENTED
+
+Persistence·Reconnect Acceptance Place
 → IMPLEMENTED
 
 Structure·Format·Lint·Rojo Build·Type Analysis
 → PASSED
 
-Studio End-to-End Acceptance
+Studio 3D End-to-End Acceptance
 → PENDING
 ```
 
-Production UI는 현재 Placeholder Shell이며 Slice 01 조작면을 제공하지 않는다. 화면별 임시 기능을 Production UI에 누적하지 않고, 제거 가능한 전용 Harness를 사용한다.
-
-전용 프로젝트:
+현재 Delta:
 
 ```text
-slice01-acceptance.project.json
+SLICE_01_3D_WORLD_TOKEN_IMPLEMENTED_STUDIO_PENDING
 ```
 
-이 프로젝트는 다음을 사용한다.
+### Projection Renderer
 
-- 실제 Production Server·Client·Networking·Projection Source
-- 실제 `ProfileStore`·`PersistenceCoordinator`
-- 실제 `CommandClient`와 Receipt·Projection Remote
-- `Players.CharacterAutoLoads=false`
-- Studio Persistence 활성화 Project Flag
-- Acceptance Place에만 존재하는 DM 역할 Override Flag
-- 테스트 전용 Scene Canvas와 단계별 조작 UI
+`WorldTokenRuntime`은 Client Runtime의 `ProjectionReplica.Changed`를 구독한다.
 
-Harness가 실행하는 실제 명령:
+- 활성 Scene의 공개 Actor만 Workspace에 렌더링
+- Actor ID·incarnation·source identity로 시각 Model 수명 관리
+- 서버 Projection의 Position으로만 `Model:PivotTo`
+- Projection에서 사라진 Actor의 Model 제거
+- Viewer에게 공개되지 않은 Actor는 생성하지 않음
+- 재접속 후 Projection을 기준으로 Token 재생성
+
+### Asset Resolver
+
+`ReplicatedStorage.RVTT.TokenAssets`에서 다음 이름을 순서대로 탐색한다.
+
+1. `sourceCharacterId`
+2. `sourceNpcId`
+3. `actorId`
+4. `Default`
+
+지원 형식:
+
+- `Model`
+- `MeshPart`를 포함한 `BasePart`
+
+안전 계약:
+
+- Script·LocalScript·ModuleScript descendant 제거
+- Anchored 사용
+- 충돌·Touch 비활성화
+- `Humanoid`·Roblox Character Model 비사용
+- Model visual을 Actor Authority 상태와 분리
+- 등록된 에셋이 없을 때만 primitive 3D miniature fallback 생성
+
+### World Input과 서버 권위
 
 ```text
-session.join
-→ character.create_draft
-→ character.activate
-→ session.select_character
-→ session.ready
-→ session.start
-→ scene.enter
-→ movement.commit
+Token 클릭
+→ actorId 해석
+→ owner·controller·DM control 확인
+→ 선택 Highlight
+
+Move Surface 클릭
+→ Raycast destination 생성
+→ movement.commit 제출
+→ 서버 Validation·Commit
+→ 새 Projection 수신
+→ 3D Token 위치 갱신
 ```
 
-자동 `Slice01Flow.spec.lua`는 위 명령을 실행하고 Authority Snapshot을 새 Runtime에 복구한 뒤 다음을 검증한다.
+클라이언트는 클릭 직후 Token을 임의로 이동하지 않는다. 신규 Projection Revision이 도착하기 전에는 Model Transform을 바꾸지 않는다.
 
-- Session Membership
-- 선택 Character
-- Ready 상태
-- 활성 Scene
-- Scene Actor
-- 서버 권위 Position
-- Reconnect Connection 상태
+### 자동 검증
 
-Studio Harness는 다음 수동 Evidence를 수집한다.
+`WorldTokenContract.spec.lua`가 다음을 검사한다.
+
+- 공개 Actor 조회
+- Character 이름 Label
+- Owner·DM Control과 비소유자 거부
+- 유한 3D Position 변환
+- 비유한 값 거부
+- plain destination payload
+- Actor identity fingerprint
+- 이동 Surface ancestor 계약
+
+기존 `Slice01Flow.spec.lua`는 실제 명령 Sequence와 Authority Snapshot 복구를 계속 검증한다.
+
+## Slice 01 3D Acceptance Place
+
+`slice01-acceptance.project.json`은 기존 2D 원형 계측 Token 대신 실제 Workspace 3D Token Acceptance를 실행한다.
+
+사용 범위:
+
+- Production Server·Client·Networking·Projection Source
+- Production `movement.commit`
+- Production Persistence
+- Acceptance 전용 DM Override
+- Acceptance 전용 이동 Board와 Scriptable Camera
+- 3D Token 선택·이동·재접속 복구 Panel
+
+수동 Gate:
 
 ```text
-Join·DM Membership
-→ Character 생성·활성화·선택
-→ Ready Projection
-→ Scene 활성화
-→ Actor·Token Projection
-→ Token 직접 선택
-→ Server-authoritative Move
+Scene 준비·재개
+→ 3D Token 생성
+→ Token 클릭 선택
+→ Board 클릭 이동 요청
+→ Projection Revision 증가
+→ 3D Token 서버 위치 반영
 → Persistence Save
 → Stop·Play
-→ Character·Scene·Position Recovery
+→ Character·Scene·Position·3D Token 복구
 ```
 
-Acceptance 전용 역할 Override는 `slice01-acceptance.project.json`에만 존재하며 `default.project.json`의 Production Authorization에는 영향을 주지 않는다.
-
-현재 Slice 01 상태:
-
-```text
-SLICE_01_ACCEPTANCE_HARNESS_READY_STUDIO_PENDING
-```
-
-## Studio Boot과 Remote Bootstrap 보강
-
-초기 동기화 교착 수정:
-
-- Remote·Projection Publisher를 Persistence Load보다 먼저 시작
-- 기본 Studio Play Live Persistence 비활성화
-- Client Runtime 조기 공개
-- `clientReady` 우선 Projection과 비동기 Full Resync Fallback
-- Remote 대기 제한과 진단 메시지
-
-Remote 세트 복구:
-
-- Command·Receipt·Projection·Sync·ClientReady 전체 세트를 비공개 상태에서 완성한 뒤 게시
-- 오래된 부분 Remote 폴더, 잘못된 형식, 동명 중복 폴더 제거
-- 클라이언트는 전체 Remote가 완비된 Canonical Folder만 선택
-- 실패 시 후보 폴더와 자식 형식을 진단 로그로 출력
-- 중복·부분 폴더 복구 Unit Test 추가
-
-수정 후 실제 Studio에서 Persistence Load·Save와 `ClientBoot runtime ready`를 동시에 확인했다.
+최종 3D Studio Evidence는 아직 기록하지 않았다.
 
 ## Roblox 기본 캐릭터 비활성화
 
-제품 계약상 플레이어 표현은 Roblox 아바타가 아니라 RVTT의 리그 없는 OBJ·MeshPart Token이다.
-
-구현과 Studio Acceptance:
+제품 내 플레이어 표현은 Roblox 아바타가 아니라 RVTT의 리그 없는 OBJ·MeshPart Token이다.
 
 - `Players.CharacterAutoLoads=false`
-- 이미 생성된 `Player.Character`가 있으면 접속 처리 시 제거
-- RVTT UI를 `StarterPlayerScripts`에서 실행해 Character 생성과 분리
-- Roblox 기본 Character Model 비생성
+- 이미 생성된 `Player.Character` 제거
+- UI와 World Token Runtime은 Character 생성과 독립 부팅
 - `Player.Character == nil`
 - Humanoid·HumanoidRootPart 비생성
-- RVTT UI·Settings·Accent 정상 작동
-- RVTT Character·Actor·Token Domain 상태에는 영향 없음
-
-## Persistence 진단과 검증 보강
-
-- DataStore Load·Save 예외 원문과 Revision을 Output에 표시
-- 실제 저장 문서의 비직렬화 Roblox 값, 비유한 수, 잘못된 UTF-8, 순환 참조, 혼합·희소 키를 저장 전에 경로와 함께 차단
-- 실제 18개 Domain Authority 스냅샷과 Accent 값을 저장·재로드하는 Live DataStore 검증 추가
-- `persistence-acceptance.project.json`은 `ServerStorage.RVTT.EnableStudioPersistence=true`를 빌드에 포함
-
-실제 게시된 테스트 Experience Evidence:
-
-```text
-[RVTT Persistence] enabled gameId=10633802552 placeId=139617657977397 studio=true source=project-config
-[RVTT Persistence] loaded key=campaign:default revision=5
-[RVTT Persistence] saved key=campaign:default revision=6
-[RVTT ClientBoot] runtime ready
-```
-
-이후 재실행과 화면 확인에서 마지막 Accent 복구가 통과했다.
+- RVTT Character·Actor·Token Domain에는 영향 없음
 
 ## UI 시각 디자인 상태
 
-현재 Production UI와 Slice 01 Harness는 기능·입력 검증용 Placeholder다. 최종 시각 디자인으로 간주하지 않는다.
-
-추후 전면 개편 시 일관성을 유지하기 위해 다음 구조를 보존한다.
+현재 Production UI, Acceptance Panel, primitive fallback miniature는 기능 검증용 Placeholder다. 최종 시각 디자인으로 간주하지 않는다.
 
 - 화면 로직과 시각 표현 분리
-- 색상·간격·Typography·Radius의 Token 관리
-- 공통 Button·Panel·Modal·Banner 컴포넌트 사용
-- Accent와 Semantic Status Color 계약 유지
-- 기능 테스트를 외형이 아닌 상태·입력·권위 동기화 기준으로 유지
-- Acceptance Harness를 Production UI 디자인 후보로 취급하지 않음
+- 공통 색상·간격·Typography Token 유지
+- 기능 테스트를 상태·입력·서버 권위·Persistence 기준으로 유지
+- Acceptance 화면을 Production UI 후보로 취급하지 않음
+- 전면 수정은 별도 `UI Visual Redesign Gate`에서 일괄 수행
 
-부분적인 화면별 미화는 보류하고 별도 `UI Visual Redesign Gate`에서 일괄 교체한다.
+## 정적 검증 결과
 
-## 상태 해석
+Implementation Head `f011991828c417cb9d98819e2eb6c77dc9667971`:
 
-현재 완료된 사용자 설정 범위:
-
-```text
-Accent Implementation
-→ VERIFIED
-
-Visual·Input Behavior
-→ VERIFIED
-
-Server Validation·Projection
-→ VERIFIED
-
-DataStore Save·Reload·UI Restore
-→ VERIFIED
-```
-
-현재 준비된 Slice 01 범위:
-
-```text
-Command·Authority·Projection Contract
-→ READY
-
-Persistence·Reconnect Test Harness
-→ READY
-
-Studio Acceptance Evidence
-→ NOT YET RECORDED
-```
-
-다음을 의미하지 않는다.
-
-- Slice 01 전체 사용자 흐름 Acceptance 완료
-- Slices 02–16 Acceptance 완료
-- Cross-server Lease·Migration·Conflict Recovery 완료
-- UI 최종 시각 품질·접근성 완료
-- 성능·장시간 Soak 완료
-- Production Ready 또는 Release Ready
+- Structure·Security·Policy Validator: PASS
+- StyLua: PASS
+- Selene: PASS
+- Production Rojo Build: PASS
+- Unit Test Place Rojo Build: PASS
+- Multi-client Place Rojo Build: PASS
+- Persistence Acceptance Place Rojo Build: PASS
+- Slice 01 3D Acceptance Place Rojo Build: PASS
+- Production·Test Luau Type Analysis: PASS
 
 ## 다음 Gate
 
-Slice 01 Studio Acceptance:
-
 ```text
-Join
-→ Character Select
-→ Ready
-→ Scene Projection
-→ Token Select
-→ Server-authoritative Move
-→ Disconnect
-→ Reconnect
-→ Character·Scene·Position Recovery
+Slice 01 3D World Token Studio Acceptance
+→ Slice 01 Production Build Acceptance Audit
+→ Slice 02 Rules·D20 Acceptance
 ```
 
 ## 아직 미검증
 
-- Slice 01 `Join → Select → Ready → Scene → Move → Reconnect`
+- 실제 Studio에서 3D Token 생성·선택·서버 이동·복구
+- 최종 OBJ·MeshPart Art Pack과 Asset QA
 - Slice 01 Production Build Acceptance Audit
 - Slices 02–16 사용자·보안·복구 Scenario
 - DataStore server restart·Cross-server Lease·Migration·Conflict Recovery
