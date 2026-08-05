@@ -189,7 +189,7 @@ SLICE_01_ACCEPTANCE_HARNESS_READY_STUDIO_PENDING
 최종 정적 Gate Head:
 
 ```text
-0dae097891c28172792eb2326bce636b0d31e0a2
+bd061a911ac747ab6d9dc3cc097d7a8f71bb3a32
 ```
 
 - Structure·Policy Validator: PASS
