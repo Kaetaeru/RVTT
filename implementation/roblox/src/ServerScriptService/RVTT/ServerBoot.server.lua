@@ -30,7 +30,7 @@ local transactions = TransactionCoordinator.new(diagnostics)
 local runtime = AuthorityRuntime.new(registry, transactions, outbox, diagnostics, journal)
 
 for _, domain in ServiceGraph.domainModules() do
-    runtime:installDomain(domain)
+	runtime:installDomain(domain)
 end
 
 local migrations = MigrationRegistry.new(Version.SCHEMA)
@@ -40,54 +40,56 @@ local store = ProfileStore.new("RVTT_Authority_v1", migrations, diagnostics)
 local persistence = PersistenceCoordinator.new(store, "campaign:default", diagnostics)
 local loadResult = persistence:load()
 if loadResult.ok and loadResult.value ~= nil then
-    local restoreResult = runtime:restore(loadResult.value)
-    if not restoreResult.ok then
-        diagnostics:record("error", "AUTHORITY_RESTORE_FAILED", {})
-    end
+	local restoreResult = runtime:restore(loadResult.value)
+	if not restoreResult.ok then
+		diagnostics:record("error", "AUTHORITY_RESTORE_FAILED", {})
+	end
 elseif not loadResult.ok then
-    diagnostics:record("warning", "PERSISTENCE_DEGRADED", {})
+	diagnostics:record("warning", "PERSISTENCE_DEGRADED", {})
 end
 runtime:onCommitted(function(state)
-    persistence:markDirty(state)
+	persistence:markDirty(state)
 end)
 
 game:BindToClose(function()
-    persistence:flush()
+	persistence:flush()
 end)
 
 local remotes = RemoteBootstrap.create()
 local function roleResolver(player: Player): string
-    if game.PrivateServerOwnerId ~= 0 and player.UserId == game.PrivateServerOwnerId then
-        return "dm"
-    end
-    local role = player:GetAttribute("RVTT_Role")
-    if role == "dm" or role == "observer" then return role end
-    return "player"
+	if game.PrivateServerOwnerId ~= 0 and player.UserId == game.PrivateServerOwnerId then
+		return "dm"
+	end
+	local role = player:GetAttribute("RVTT_Role")
+	if role == "dm" or role == "observer" then
+		return role
+	end
+	return "player"
 end
 
 local builder = ProjectionBuilder.new()
 local publisher = ProjectionPublisher.new(runtime, builder, remotes, roleResolver)
 local router = CommandRouter.new(
-    runtime,
-    remotes,
-    RateLimiter.new(1, 30),
-    roleResolver,
-    publisher,
-    diagnostics
+	runtime,
+	remotes,
+	RateLimiter.new(1, 30),
+	roleResolver,
+	publisher,
+	diagnostics
 )
 
 publisher:start()
 router:start()
 
 Players.PlayerAdded:Connect(function(player)
-    runtime:executeSystem("session.connection", { userId = player.UserId, status = "connected" })
+	runtime:executeSystem("session.connection", { userId = player.UserId, status = "connected" })
 end)
 Players.PlayerRemoving:Connect(function(player)
-    runtime:executeSystem("session.connection", { userId = player.UserId, status = "disconnected" })
+	runtime:executeSystem("session.connection", { userId = player.UserId, status = "disconnected" })
 end)
 
 remotes.clientReady.OnServerEvent:Connect(function(player)
-    publisher:publish(player)
+	publisher:publish(player)
 end)
 
 diagnostics:record("info", "SERVER_BOOTED", { commandCount = #registry:list() })

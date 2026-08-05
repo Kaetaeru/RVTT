@@ -4,7 +4,10 @@ local RateLimiter = {}
 RateLimiter.__index = RateLimiter
 
 function RateLimiter.new(windowSeconds: number, maximum: number)
-	return setmetatable({ windowSeconds = windowSeconds, maximum = maximum, buckets = {} }, RateLimiter)
+	return setmetatable(
+		{ windowSeconds = windowSeconds, maximum = maximum, buckets = {} },
+		RateLimiter
+	)
 end
 
 function RateLimiter:allow(key: string): boolean

@@ -11,7 +11,11 @@ export type ProjectionEnvelope = {
 
 local ProjectionContract = {}
 
-function ProjectionContract.isNewer(currentEpoch: string?, currentRevision: number, envelope: ProjectionEnvelope): boolean
+function ProjectionContract.isNewer(
+	currentEpoch: string?,
+	currentRevision: number,
+	envelope: ProjectionEnvelope
+): boolean
 	if currentEpoch == nil or currentEpoch ~= envelope.authorityEpoch then
 		return true
 	end

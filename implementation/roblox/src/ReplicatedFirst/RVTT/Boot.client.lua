@@ -6,7 +6,9 @@ local ReplicatedFirst = game:GetService("ReplicatedFirst")
 ReplicatedFirst:RemoveDefaultLoadingScreen()
 local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
 local previous = playerGui:FindFirstChild("RVTT_Loading")
-if previous ~= nil then previous:Destroy() end
+if previous ~= nil then
+	previous:Destroy()
+end
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "RVTT_Loading"
@@ -24,7 +26,7 @@ label.Parent = gui
 gui.Parent = playerGui
 
 task.delay(15, function()
-    if gui.Parent ~= nil then
-        label.Text = "연결이 지연되고 있습니다. 다시 동기화합니다."
-    end
+	if gui.Parent ~= nil then
+		label.Text = "연결이 지연되고 있습니다. 다시 동기화합니다."
+	end
 end)

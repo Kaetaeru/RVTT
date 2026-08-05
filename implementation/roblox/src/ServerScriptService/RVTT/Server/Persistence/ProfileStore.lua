@@ -7,7 +7,14 @@ local ProfileStore = {}
 ProfileStore.__index = ProfileStore
 
 function ProfileStore.new(storeName: string, migrationRegistry, diagnostics)
-	return setmetatable({ store = DataStoreService:GetDataStore(storeName), migrations = migrationRegistry, diagnostics = diagnostics }, ProfileStore)
+	return setmetatable(
+		{
+			store = DataStoreService:GetDataStore(storeName),
+			migrations = migrationRegistry,
+			diagnostics = diagnostics,
+		},
+		ProfileStore
+	)
 end
 
 function ProfileStore:load(key: string)

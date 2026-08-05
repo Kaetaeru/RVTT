@@ -7,9 +7,7 @@ export type Failure = {
 	details: { [string]: unknown }?,
 }
 
-export type Result<T> =
-	{ ok: true, value: T }
-	| { ok: false, error: Failure }
+export type Result<T> = { ok: true, value: T } | { ok: false, error: Failure }
 
 local Result = {}
 
@@ -17,7 +15,12 @@ function Result.ok<T>(value: T): Result<T>
 	return { ok = true, value = value }
 end
 
-function Result.err<T>(code: string, messageKey: string, retryable: boolean, details: { [string]: unknown }?): Result<T>
+function Result.err<T>(
+	code: string,
+	messageKey: string,
+	retryable: boolean,
+	details: { [string]: unknown }?
+): Result<T>
 	return {
 		ok = false,
 		error = {

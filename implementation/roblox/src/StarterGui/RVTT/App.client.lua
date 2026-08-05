@@ -24,13 +24,17 @@ local ClientRuntime = require(clientFolder:WaitForChild("ClientRuntime"))
 local client = ClientRuntime.await()
 
 client.Replica.Changed:Connect(function(payload, envelope)
-    local domains = payload.domains
-    local session = if domains ~= nil then domains.session else nil
-    local phase = if session ~= nil then session.phase else "loading"
-    banner.Text = string.format("RVTT · %s · revision %d", phase, envelope.revision)
+	local domains = payload.domains
+	local session = if domains ~= nil then domains.session else nil
+	local phase = if session ~= nil then session.phase else "loading"
+	banner.Text = string.format("RVTT · %s · revision %d", phase, envelope.revision)
 end)
 
 client.Input:push("base_hud", 10, {
-    Cancel = function() return false end,
-    Confirm = function() return false end,
+	Cancel = function()
+		return false
+	end,
+	Confirm = function()
+		return false
+	end,
 })

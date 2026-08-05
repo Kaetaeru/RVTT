@@ -19,7 +19,12 @@ function MigrationRegistry:apply(document)
 	while version < self.currentVersion do
 		local migration = self.migrations[version]
 		if migration == nil then
-			return Result.err("MIGRATION_FAILED", "error.persistence.migration_failed", false, { version = version })
+			return Result.err(
+				"MIGRATION_FAILED",
+				"error.persistence.migration_failed",
+				false,
+				{ version = version }
+			)
 		end
 		document = migration(document)
 		version = document.schemaVersion

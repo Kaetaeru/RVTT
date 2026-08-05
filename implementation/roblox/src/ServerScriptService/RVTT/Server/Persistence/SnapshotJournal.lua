@@ -6,7 +6,10 @@ local SnapshotJournal = {}
 SnapshotJournal.__index = SnapshotJournal
 
 function SnapshotJournal.new(maxEntries: number)
-	return setmetatable({ maxEntries = maxEntries, entries = {}, latestSnapshot = nil }, SnapshotJournal)
+	return setmetatable(
+		{ maxEntries = maxEntries, entries = {}, latestSnapshot = nil },
+		SnapshotJournal
+	)
 end
 
 function SnapshotJournal:record(state, event)

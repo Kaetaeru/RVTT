@@ -22,7 +22,12 @@ function Dice.rollD20(mode: string?, randomSource: RandomSource?): (number, { nu
 	return first, { first }
 end
 
-function Dice.rollFormula(count: number, sides: number, modifier: number, randomSource: RandomSource?): (number, { number })
+function Dice.rollFormula(
+	count: number,
+	sides: number,
+	modifier: number,
+	randomSource: RandomSource?
+): (number, { number })
 	assert(count >= 0 and count <= 100, "invalid dice count")
 	local rolls = {}
 	local total = modifier
