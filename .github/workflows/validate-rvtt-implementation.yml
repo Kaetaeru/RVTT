@@ -52,7 +52,8 @@ jobs:
             ~/.cargo/bin/selene
             ~/.cargo/registry
             ~/.cargo/git
-          key: rvtt-rust-tools-${{ runner.os }}-rojo-${{ env.ROJO_VERSION }}-stylua-${{ env.STYLUA_VERSION }}-selene-${{ env.SELENE_VERSION }}
+          key: rvtt-rust-tools-v2-${{ runner.os }}-rojo-${{ env.ROJO_VERSION }}-stylua-${{ env.STYLUA_VERSION }}-selene-${{ env.SELENE_VERSION }}
+          save-always: true
 
       - name: Install pinned Roblox toolchain
         shell: bash
