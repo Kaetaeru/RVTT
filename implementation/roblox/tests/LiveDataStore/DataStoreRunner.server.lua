@@ -7,6 +7,15 @@ local RunService = game:GetService("RunService")
 local ServerScriptService = game:GetService("ServerScriptService")
 local ServerStorage = game:GetService("ServerStorage")
 
+local testMode = ReplicatedStorage:FindFirstChild("RVTT_TestMode")
+if
+	testMode == nil
+	or not testMode:IsA("StringValue")
+	or testMode.Value ~= "live-datastore"
+then
+	return
+end
+
 if not RunService:IsStudio() then
 	warn("[RVTT Live DataStore] skipped outside Studio")
 	return
