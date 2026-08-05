@@ -4,10 +4,27 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Signal = require(ReplicatedStorage.RVTT.Shared.Core.Signal)
 local Contract = require(ReplicatedStorage.RVTT.Shared.Protocol.ProjectionContract)
 
+export type ProjectionEnvelope = {
+	authorityEpoch: string,
+	revision: number,
+	projectionSequence: number,
+	payload: any,
+}
+
+export type Replica = {
+	epoch: string?,
+	revision: number,
+	sequence: number,
+	payload: any,
+	Changed: any,
+	GapDetected: any,
+	apply: (self: Replica, envelope: ProjectionEnvelope, force: boolean?) -> boolean,
+}
+
 local Replica = {}
 Replica.__index = Replica
 
-function Replica.new()
+function Replica.new(): Replica
 	return setmetatable({
 		epoch = nil,
 		revision = -1,
@@ -15,10 +32,10 @@ function Replica.new()
 		payload = {},
 		Changed = Signal.new(),
 		GapDetected = Signal.new(),
-	}, Replica)
+	}, Replica) :: any
 end
 
-function Replica:apply(envelope, force: boolean?): boolean
+function Replica.apply(self: Replica, envelope: ProjectionEnvelope, force: boolean?): boolean
 	if type(envelope) ~= "table" or type(envelope.authorityEpoch) ~= "string" then
 		return false
 	end
