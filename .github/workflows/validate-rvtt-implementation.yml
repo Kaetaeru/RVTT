@@ -25,6 +25,7 @@ env:
   STYLUA_VERSION: "2.5.2"
   SELENE_VERSION: "0.31.0"
   LUAU_LSP_VERSION: "1.69.0"
+  TOOL_CACHE_KEY: rvtt-tools-v5-${{ runner.os }}-rojo-7.6.1-stylua-2.5.2-selene-0.31.0-luau-lsp-1.69.0
 
 jobs:
   structure-and-policy:
@@ -53,8 +54,9 @@ jobs:
           mkdir -p "${HOME}/.local/bin"
           echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
 
-      - name: Cache pinned Roblox tools
-        uses: actions/cache@v4
+      - name: Restore pinned Roblox tools
+        id: tool-cache
+        uses: actions/cache/restore@v4
         with:
           path: |
             ~/.cargo/bin/rojo
@@ -63,8 +65,9 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             ~/.local/bin/luau-lsp
-          key: rvtt-tools-v4-${{ runner.os }}-rojo-${{ env.ROJO_VERSION }}-stylua-${{ env.STYLUA_VERSION }}-selene-${{ env.SELENE_VERSION }}-luau-lsp-${{ env.LUAU_LSP_VERSION }}
+          key: ${{ env.TOOL_CACHE_KEY }}
           restore-keys: |
+            rvtt-tools-v4-${{ runner.os }}-rojo-${{ env.ROJO_VERSION }}-stylua-${{ env.STYLUA_VERSION }}-selene-${{ env.SELENE_VERSION }}-luau-lsp-${{ env.LUAU_LSP_VERSION }}
             rvtt-tools-v3-${{ runner.os }}-rojo-${{ env.ROJO_VERSION }}-stylua-${{ env.STYLUA_VERSION }}-selene-${{ env.SELENE_VERSION }}-luau-lsp-${{ env.LUAU_LSP_VERSION }}
             rvtt-rust-tools-v2-${{ runner.os }}-rojo-${{ env.ROJO_VERSION }}-stylua-${{ env.STYLUA_VERSION }}-selene-${{ env.SELENE_VERSION }}
 
@@ -105,6 +108,19 @@ jobs:
           binary="$(find /tmp/luau-lsp -type f -name luau-lsp | head -n 1)"
           test -n "${binary}"
           install -m 755 "${binary}" "${HOME}/.local/bin/luau-lsp"
+
+      - name: Save pinned Roblox tools
+        if: steps.tool-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.cargo/bin/rojo
+            ~/.cargo/bin/stylua
+            ~/.cargo/bin/selene
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.local/bin/luau-lsp
+          key: ${{ env.TOOL_CACHE_KEY }}
 
       - name: Verify pinned toolchain
         run: |
