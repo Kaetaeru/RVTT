@@ -2,7 +2,7 @@
 
 - 상태: `IMPLEMENTED_STUDIO_BASELINE_VERIFIED`
 - 작성일: 2026-08-05
-- 최종 갱신일: 2026-08-05
+- 최종 갱신일: 2026-08-06
 - 범위: 16개 Slice 계약의 Greenfield Runtime·Domain·Client·UI·Test baseline
 - 실행 테스트 규칙: [`EXECUTION-TEST-RULES.md`](EXECUTION-TEST-RULES.md)
 - Studio 검증 근거: [`Roblox Studio Runtime Baseline Validation Audit`](../../docs/remake/audits/roblox-studio-runtime-baseline-validation-audit.md)
@@ -23,8 +23,6 @@
 - Unit·Integration·Security·Disclosure Test Source
 
 ## 검증된 Studio Baseline
-
-2026-08-05에 다음 항목을 확인했다.
 
 ```text
 Unit·Integration
@@ -75,72 +73,92 @@ BATCH_ACCEPTANCE_RULE_ACTIVE
 → Batch 전체 수동 검증 1회
 ```
 
-수동 Gate 이전에는 다음 조건을 모두 충족해야 한다.
+사용자에게 전달하는 실행 방법은 저장소에서 직접 실행 가능한 전체 Windows PowerShell Build 블록으로 제공한다.
 
-- 관련 사용자 흐름 구현 완료
-- 정상·거부·저장·복구 자동 테스트 추가
-- Input·Command·Projection·Persistence 진단 추가
-- 최종 PASS·FAIL Summary 제공
-- `tooling/run-studio-acceptance-batch.ps1`로 한 번에 Build 가능
-- Implementation·Documentation CI PASS
-
-정확한 검증 Head는 장기 상태 문서에 매 커밋마다 기록하지 않는다. 최종 Batch Gate에서 Runner가 생성하는 Manifest와 Draft PR에 고정한다.
-
-## 현재 Slice 01 World Interaction Batch
+## Slice 01 World Interaction Batch
 
 현재 Delta:
 
 ```text
-SLICE_01_WORLD_INTERACTION_BATCH_IMPLEMENTED_STUDIO_PENDING
+SLICE_01_WORLD_INTERACTION_BATCH_STUDIO_VERIFIED
 ```
 
-이번 Batch 범위:
+2026-08-06 Studio Evidence:
 
 ```text
-3D Token Projection 안정화
-→ 화면·월드 좌표 Token Picking
-→ Raycast 실패 시 Screen-space Picking Fallback
-→ 선택 Highlight·선택 상태 표시
-→ Board Destination Marker
-→ 서버 권위 movement.commit
-→ Command Receipt·Revision 진단
-→ 3D Camera Pan·Zoom·Frame
-→ Persistence Save·Reconnect Restore
-→ Final Batch Summary
+[RVTT Batch Summary] batch=slice01-world-interaction result=PASS passed=16 failed=0 pending=0 revision=73
 ```
 
-현재 관측된 결함:
+검증된 Check:
 
 ```text
-WT-PICK-01
-보이는 3D Token을 클릭했지만 Raycast가
-Workspace.RVTT_AcceptanceBoard.MoveSurface를 반환함
+boot                  PASS
+acceptance dm-role    PASS
+active character      PASS
+active scene·actor    PASS
+3D token projection   PASS
+state restore         PASS · revision=72 position=(-22.94,0.00,-57.40)
+avatar suppression    PASS · Player.Character=nil
+camera frame          PASS
+camera pan            PASS
+camera zoom           PASS
+token pick            PASS · method=screen
+selection highlight   PASS
+destination marker    PASS · (-15.34,0.00,-56.93)
+movement.commit       PASS · baseRevision=72
+server acceptance     PASS · revision=73 base=72
+projection move       PASS · revision=73 position=(-15.34,0.00,-56.93)
 ```
 
-Raycast와 Screen-space Bounds를 결합한 이중 Picking, 확대 Hitbox, Camera, Selection Feedback, Movement Diagnostics를 구현했다. 실제 Roblox Engine 입력 결과는 한 번의 Batch Acceptance에서 확인한다.
+### WT-PICK-01 판정
 
-## Slice 01 3D World Token Baseline
+```text
+RESOLVED
+```
 
-구현 상태:
+World Raycast는 `Workspace.RVTT_AcceptanceBoard.MoveSurface`를 반환했지만 Screen-space projected bounds fallback이 보이는 Token을 선택했다. 같은 흐름에서 Selection Highlight, Destination Marker, 서버 Command 승인, revision 증가, Projection 기반 위치 갱신이 모두 확인됐다.
+
+### 서버 권위 이동 판정
+
+```text
+선택 입력
+→ Actor ID 해석
+→ movement.commit baseRevision=72
+→ Server Command Acceptance revision=73
+→ Projection Position Update revision=73
+```
+
+클라이언트 입력 직후 임의 Transform 변경이 아니라 서버 Projection 결과로 최종 위치 `(-15.34,0.00,-56.93)`가 적용됐다.
+
+## Slice 01 3D World Token 구현 상태
 
 ```text
 Authority·Scene·Movement Contract
-→ IMPLEMENTED
+→ IMPLEMENTED · VERIFIED
 
 Projection-driven 3D Renderer
-→ IMPLEMENTED
+→ IMPLEMENTED · VERIFIED
 
 Model·MeshPart Asset Resolver
 → IMPLEMENTED
 
-World Input Baseline
+World Raycast Picking
 → IMPLEMENTED
 
-Persistence·Reconnect Acceptance Place
-→ IMPLEMENTED
+Screen-space Picking Fallback
+→ IMPLEMENTED · VERIFIED
 
-Studio World Interaction Batch
-→ IMPLEMENTED · STUDIO PENDING
+Selection Highlight·Destination Marker
+→ IMPLEMENTED · VERIFIED
+
+Camera Frame·Pan·Zoom
+→ IMPLEMENTED · VERIFIED
+
+Persistence·Reconnect Restore
+→ IMPLEMENTED · VERIFIED
+
+Roblox Avatar Suppression
+→ IMPLEMENTED · VERIFIED
 ```
 
 ### Projection Renderer
@@ -177,57 +195,20 @@ Studio World Interaction Batch
 - Model visual을 Actor Authority 상태와 분리
 - 등록된 에셋이 없을 때만 primitive 3D miniature fallback 생성
 
-### World Input과 서버 권위
-
-```text
-Token 선택
-→ actorId 해석
-→ owner·controller·DM control 확인
-→ 선택 상태 표시
-
-Move Surface 선택
-→ destination 생성
-→ movement.commit 제출
-→ 서버 Validation·Commit
-→ 새 Projection 수신
-→ 3D Token 위치 갱신
-```
-
-클라이언트는 입력 직후 Token을 임의로 이동하지 않는다. 신규 Projection Revision이 도착하기 전에는 Model Transform을 바꾸지 않는다.
-
 ## Acceptance Harness와 Diagnostics
 
-`slice01-acceptance.project.json`은 실제 Production Server·Client·Networking·Projection·Persistence를 사용한다.
+`slice01-acceptance.project.json`은 실제 Production Server·Client·Networking·Projection·Persistence 경로를 사용한다.
 
 Batch Harness는 다음을 제공한다.
 
 - 저장 상태 자동 재개
 - 준비 단계 자동화
-- 전체 Batch 상태를 한 화면에 표시
-- 안정된 `[RVTT <Subsystem>] event=...` 형식의 로그
-- 반복 입력 로그 집계
+- 전체 Batch 상태 표시
+- Input·Command·Projection·Persistence 구조화 로그
 - Command ID·Actor ID·Revision·Result 표시
 - 최종 Batch Summary
 
-정상일 때 사용자는 Final Summary만 확인한다. 실패하면 Final Summary와 첫 번째 관련 오류 로그만 공유한다.
-
-## 재사용 Batch Runner
-
-```text
-tooling/run-studio-acceptance-batch.ps1
-```
-
-Runner는 다음을 한 번에 수행한다.
-
-- Dirty Worktree 차단
-- Branch Fetch·Fast-forward Pull
-- 검증 Head 확인
-- Implementation Validator 실행
-- Acceptance Place Build
-- Batch Manifest 생성
-- Roblox Studio Place 열기
-
-Experience 게시 자체는 Batch당 한 번만 사용자가 수행한다.
+정상일 때 사용자는 Final Summary만 확인하고, 실패할 때만 Summary와 최초 관련 오류를 공유한다.
 
 ## Roblox 기본 캐릭터 비활성화
 
@@ -250,20 +231,33 @@ Experience 게시 자체는 Batch당 한 번만 사용자가 수행한다.
 - Acceptance 화면을 Production UI 후보로 취급하지 않음
 - 전면 수정은 별도 `UI Visual Redesign Batch`에서 일괄 수행
 
-## 다음 Gate
+## 현재 Gate
 
 ```text
 Slice 01 World Interaction Batch Implementation·자동 Gate
 → PASS
 
-단일 Slice 01 Batch Studio Acceptance
-→ Slice 01 Production Build Acceptance Audit
-→ Slice 02 Rules·D20 Batch
+Slice 01 World Interaction Studio Acceptance
+→ PASS · 16/16 · revision=73
+
+Slice 01 Production Build Acceptance Audit
+→ IN PROGRESS
+
+Slice 02 Rules·D20 Batch
+→ QUEUED
 ```
+
+Production Build Acceptance Audit는 다음을 판정한다.
+
+- Acceptance 전용 DM Override·Board·Panel이 `default.project.json`에 포함되지 않음
+- Production Token 이동이 서버 Projection 경계를 유지함
+- Actor visibility와 Negative Disclosure가 Workspace 생성에도 적용됨
+- Production Boot에서 Avatar Suppression 유지
+- Persistence Restore가 Acceptance Harness에 종속되지 않음
+- Placeholder Asset과 최종 Art 승인 Gate가 분리됨
 
 ## 아직 미검증
 
-- Slice 01 World Interaction Batch 최종 Studio Acceptance
 - 최종 OBJ·MeshPart Art Pack과 Asset QA
 - Slice 01 Production Build Acceptance Audit
 - Slices 02–16 사용자·보안·복구 Scenario
