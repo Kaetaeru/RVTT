@@ -19,7 +19,7 @@ function Harness.new(): Harness
 	}, Harness) :: any
 end
 
-function Harness:expect(condition: boolean, message: string)
+function Harness.expect(self: Harness, condition: boolean, message: string)
 	if condition then
 		self.passed += 1
 	else
@@ -28,7 +28,7 @@ function Harness:expect(condition: boolean, message: string)
 	end
 end
 
-function Harness:equal(actual: any, expected: any, message: string?)
+function Harness.equal(self: Harness, actual: any, expected: any, message: string?)
 	self:expect(
 		actual == expected,
 		(message or "values differ")
