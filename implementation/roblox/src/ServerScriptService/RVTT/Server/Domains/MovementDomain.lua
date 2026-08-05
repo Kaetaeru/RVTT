@@ -24,7 +24,7 @@ function Domain.register(registry: any)
 		validate = function(payload: any)
 			return Helpers.hasString(payload, "actorId") and Helpers.isVector(payload.destination)
 		end,
-		execute = function(context: any, state: any, payload: any, domains: any)
+		execute = function(context: any, state: any, payload: any, domains: any): any
 			local actor = domains.scene.actors[payload.actorId]
 			if actor == nil then
 				return Helpers.notFound("actor", payload.actorId)
