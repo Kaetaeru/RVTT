@@ -37,16 +37,16 @@ Renderer.__index = Renderer
 
 local function ensureFolder(parent: Instance): Folder
 	local existing = parent:FindFirstChild(Style.FolderName)
-	if existing ~= nil and not existing:IsA("Folder") then
+	if existing ~= nil and existing:IsA("Folder") then
+		return existing
+	end
+	if existing ~= nil then
 		existing:Destroy()
-		existing = nil
 	end
-	if existing == nil then
-		existing = Instance.new("Folder")
-		existing.Name = Style.FolderName
-		existing.Parent = parent
-	end
-	return existing :: Folder
+	local folder = Instance.new("Folder")
+	folder.Name = Style.FolderName
+	folder.Parent = parent
+	return folder
 end
 
 local function createHighlight(model: Model): Highlight
