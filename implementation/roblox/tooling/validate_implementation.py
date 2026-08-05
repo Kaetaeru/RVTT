@@ -88,7 +88,7 @@ if execution_rules_path.exists():
         "Batch Acceptance Gate",
         "단일 실행 스크립트",
         "WT-PICK-01",
-        "Final Batch Summary",
+        "Batch Summary",
     ):
         if required_phrase not in execution_rules:
             errors.append(f"EXECUTION-TEST-RULES.md: missing policy phrase {required_phrase}")
