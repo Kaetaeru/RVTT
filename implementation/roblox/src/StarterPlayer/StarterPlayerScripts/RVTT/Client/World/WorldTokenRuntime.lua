@@ -79,7 +79,8 @@ function Runtime.start(self: Runtime)
 	self.started = true
 	logProjection(self.Renderer:reconcile(self.Replica.payload, self.Replica.revision))
 	self.connection = self.Replica.Changed:Connect(function(payload, envelope)
-		local revision = if type(envelope) == "table" and type(envelope.revision) == "number"
+		local revision = if type(envelope) == "table"
+				and type(envelope.revision) == "number"
 			then envelope.revision
 			else self.Replica.revision
 		logProjection(self.Renderer:reconcile(payload, revision))

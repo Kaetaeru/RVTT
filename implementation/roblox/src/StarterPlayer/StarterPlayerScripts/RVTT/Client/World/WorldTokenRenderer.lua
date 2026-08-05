@@ -155,7 +155,8 @@ local function createDestinationMarker(position: Vector3): Part
 	local marker = Instance.new("Part")
 	marker.Name = "RVTTDestinationMarker"
 	marker.Shape = Enum.PartType.Cylinder
-	marker.Size = Vector3.new(0.12, Style.DestinationMarkerDiameter, Style.DestinationMarkerDiameter)
+	marker.Size =
+		Vector3.new(0.12, Style.DestinationMarkerDiameter, Style.DestinationMarkerDiameter)
 	marker.CFrame = CFrame.new(position + Vector3.new(0, 0.07, 0))
 		* CFrame.Angles(0, 0, math.rad(90))
 	marker.Anchored = true
@@ -197,14 +198,10 @@ local function projectedCandidate(
 		local projected = camera:WorldToViewportPoint(corner)
 		if projected.Z > 0 then
 			projectedCount += 1
-			minimum = Vector2.new(
-				math.min(minimum.X, projected.X),
-				math.min(minimum.Y, projected.Y)
-			)
-			maximum = Vector2.new(
-				math.max(maximum.X, projected.X),
-				math.max(maximum.Y, projected.Y)
-			)
+			minimum =
+				Vector2.new(math.min(minimum.X, projected.X), math.min(minimum.Y, projected.Y))
+			maximum =
+				Vector2.new(math.max(maximum.X, projected.X), math.max(maximum.Y, projected.Y))
 			minimumDepth = math.min(minimumDepth, projected.Z)
 		end
 	end
@@ -306,12 +303,7 @@ function Renderer.reconcile(self: Renderer, payload: any, revision: number?): Re
 					and (position - destination.position).Magnitude
 						<= Style.DestinationProjectionTolerance
 				then
-					self:resolveDestination(
-						destination.commandId,
-						"projected",
-						revision,
-						nil
-					)
+					self:resolveDestination(destination.commandId, "projected", revision, nil)
 				end
 			end
 		end

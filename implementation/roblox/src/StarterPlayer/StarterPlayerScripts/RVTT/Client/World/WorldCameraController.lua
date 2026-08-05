@@ -75,11 +75,7 @@ function Controller:_apply(event: string): boolean
 	return true
 end
 
-function Controller.framePosition(
-	self: Controller,
-	position: Vector3,
-	distance: number?
-): boolean
+function Controller.framePosition(self: Controller, position: Vector3, distance: number?): boolean
 	self.target = position + Vector3.new(0, 1.2, 0)
 	if distance ~= nil then
 		self.distance = math.clamp(distance, 12, 120)
@@ -173,10 +169,7 @@ function Controller.start(self: Controller)
 			end
 			if input.UserInputType == Enum.UserInputType.MouseWheel then
 				self:zoomBy(-input.Position.Z)
-			elseif
-				self.dragging
-				and input.UserInputType == Enum.UserInputType.MouseMovement
-			then
+			elseif self.dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
 				self:panPixels(Vector2.new(input.Delta.X, input.Delta.Y))
 			end
 		end)

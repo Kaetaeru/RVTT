@@ -13,11 +13,7 @@ function Math.screenToViewport(screenPosition: Vector2, guiInset: Vector2): Vect
 	return Vector2.new(screenPosition.X - guiInset.X, screenPosition.Y - guiInset.Y)
 end
 
-function Math.pointToRectDistanceSquared(
-	point: Vector2,
-	minimum: Vector2,
-	maximum: Vector2
-): number
+function Math.pointToRectDistanceSquared(point: Vector2, minimum: Vector2, maximum: Vector2): number
 	local dx = math.max(minimum.X - point.X, 0, point.X - maximum.X)
 	local dy = math.max(minimum.Y - point.Y, 0, point.Y - maximum.Y)
 	return dx * dx + dy * dy
@@ -35,19 +31,13 @@ function Math.chooseScreenCandidate(
 
 	for _, candidate in candidates do
 		if candidate.depth > 0 then
-			local distanceSquared = Math.pointToRectDistanceSquared(
-				point,
-				candidate.minimum,
-				candidate.maximum
-			)
+			local distanceSquared =
+				Math.pointToRectDistanceSquared(point, candidate.minimum, candidate.maximum)
 			if
 				distanceSquared <= maximumDistanceSquared
 				and (
 					distanceSquared < bestDistanceSquared
-					or (
-						distanceSquared == bestDistanceSquared
-						and candidate.depth < bestDepth
-					)
+					or (distanceSquared == bestDistanceSquared and candidate.depth < bestDepth)
 				)
 			then
 				bestActorId = candidate.actorId

@@ -129,7 +129,8 @@ instructions.Position = UDim2.fromOffset(16, 44)
 instructions.Size = UDim2.new(1, -32, 0, 58)
 instructions.BackgroundTransparency = 1
 instructions.Font = Enum.Font.Gotham
-instructions.Text = "자동 준비 후 3D Token을 클릭하고, 다른 바닥 위치를 클릭하세요. 중클릭 드래그=Pan · Wheel=Zoom · F=Frame"
+instructions.Text =
+	"자동 준비 후 3D Token을 클릭하고, 다른 바닥 위치를 클릭하세요. 중클릭 드래그=Pan · Wheel=Zoom · F=Frame"
 instructions.TextColor3 = Color3.fromRGB(184, 191, 202)
 instructions.TextSize = 12
 instructions.TextWrapped = true
@@ -233,7 +234,10 @@ local function renderChecklist()
 	local lines = {}
 	for _, id in summary.order do
 		local record = summary.checks[id]
-		table.insert(lines, string.format("[%s] %-20s %s", statusToken(record.status), id, record.detail))
+		table.insert(
+			lines,
+			string.format("[%s] %-20s %s", statusToken(record.status), id, record.detail)
+		)
 	end
 	checklist.Text = table.concat(lines, "\n")
 end
@@ -241,7 +245,9 @@ end
 local function maybeLogPass()
 	if summary:result() == "PASS" and not passSummaryLogged then
 		passSummaryLogged = true
-		setOperation("World Interaction Batch PASS · Final Summary가 Output에 기록됐습니다")
+		setOperation(
+			"World Interaction Batch PASS · Final Summary가 Output에 기록됐습니다"
+		)
 		summary:log(client.Replica.revision)
 	end
 end
@@ -607,7 +613,13 @@ local function detectInitialRestore()
 		then
 			pass(
 				"state-restore",
-				string.format("revision=%d position=(%.2f,%.2f,%.2f)", client.Replica.revision, position.X, position.Y, position.Z)
+				string.format(
+					"revision=%d position=(%.2f,%.2f,%.2f)",
+					client.Replica.revision,
+					position.X,
+					position.Y,
+					position.Z
+				)
 			)
 			return
 		end
@@ -674,46 +686,40 @@ worldTokens.MoveRequested:Connect(function(actorId, destination, commandId, base
 	renderState()
 end)
 
-worldTokens.MoveResolved:Connect(function(
-	actorId,
-	destination,
-	commandId,
-	ok,
-	code,
-	revision,
-	baseRevision
-)
-	if ok then
-		pass(
-			"command-accepted",
+worldTokens.MoveResolved:Connect(
+	function(actorId, destination, commandId, ok, code, revision, baseRevision)
+		if ok then
+			pass(
+				"command-accepted",
+				string.format(
+					"commandId=%s revision=%s base=%s",
+					tostring(commandId),
+					tostring(revision),
+					tostring(baseRevision)
+				)
+			)
+		else
+			fail(
+				"command-accepted",
+				string.format("actor=%s code=%s", tostring(actorId), tostring(code))
+			)
+		end
+		print(
 			string.format(
-				"commandId=%s revision=%s base=%s",
+				"[RVTT Batch Move] event=terminal actor=%s commandId=%s ok=%s code=%s revision=%s destination=(%.2f,%.2f,%.2f)",
+				tostring(actorId),
 				tostring(commandId),
+				tostring(ok),
+				tostring(code),
 				tostring(revision),
-				tostring(baseRevision)
+				destination.x,
+				destination.y,
+				destination.z
 			)
 		)
-	else
-		fail(
-			"command-accepted",
-			string.format("actor=%s code=%s", tostring(actorId), tostring(code))
-		)
+		renderState()
 	end
-	print(
-		string.format(
-			"[RVTT Batch Move] event=terminal actor=%s commandId=%s ok=%s code=%s revision=%s destination=(%.2f,%.2f,%.2f)",
-			tostring(actorId),
-			tostring(commandId),
-			tostring(ok),
-			tostring(code),
-			tostring(revision),
-			destination.x,
-			destination.y,
-			destination.z
-		)
-	)
-	renderState()
-end)
+)
 
 worldTokens.DestinationChanged:Connect(function(destination)
 	if type(destination) == "table" and destination.status == "projected" then
@@ -734,7 +740,9 @@ worldTokens.DestinationChanged:Connect(function(destination)
 					currentPosition.Z
 				)
 			)
-			setOperation("서버 Projection 이동 PASS · 저장 후 재실행 복구 상태도 Summary에 포함됩니다")
+			setOperation(
+				"서버 Projection 이동 PASS · 저장 후 재실행 복구 상태도 Summary에 포함됩니다"
+			)
 		else
 			fail("projection-move", "Projection reached unchanged position")
 		end

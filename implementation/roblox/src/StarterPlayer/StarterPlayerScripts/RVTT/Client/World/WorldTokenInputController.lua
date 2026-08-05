@@ -118,12 +118,7 @@ function Controller:_selectActor(actorId: string, method: string, hitName: strin
 	if not Contract.canControl(self.replica.payload, actor, Players.LocalPlayer.UserId) then
 		diagnostic(
 			"pick",
-			string.format(
-				"result=denied method=%s actor=%s hit=%s",
-				method,
-				actorId,
-				hitName
-			)
+			string.format("result=denied method=%s actor=%s hit=%s", method, actorId, hitName)
 		)
 		self.PickResolved:Fire(actorId, method, false, hitName)
 		return false
@@ -290,11 +285,7 @@ function Controller.start(self: Controller)
 				local screen = screenPosition(input)
 				diagnostic(
 					"ignored",
-					string.format(
-						"reason=processed screen=(%.1f,%.1f)",
-						screen.X,
-						screen.Y
-					)
+					string.format("reason=processed screen=(%.1f,%.1f)", screen.X, screen.Y)
 				)
 			end
 			return
