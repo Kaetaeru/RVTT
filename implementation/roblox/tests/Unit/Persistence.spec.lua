@@ -59,7 +59,10 @@ return function(harness)
 	})
 	harness:expect(restored.ok, "valid authority document restores")
 	harness:equal(Runtime:snapshot().revision, 5, "restored revision is retained")
-	harness:expect(Runtime:snapshot().domains.session ~= nil, "missing session domain is reconstructed")
+	harness:expect(
+		Runtime:snapshot().domains.session ~= nil,
+		"missing session domain is reconstructed"
+	)
 	harness:expect(Runtime:snapshot().domains.rules ~= nil, "missing rules domain is reconstructed")
 
 	local invalidRevision = Runtime:restore({
