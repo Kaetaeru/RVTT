@@ -17,7 +17,9 @@ export type Diagnostics = {
 		code: string,
 		context: { [string]: unknown }?
 	) -> (),
-	snapshot: (self: Diagnostics) -> {
+	snapshot: (
+		self: Diagnostics
+	) -> {
 		counters: { [string]: number },
 		incidentCount: number,
 	},
