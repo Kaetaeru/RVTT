@@ -145,9 +145,13 @@ jobs:
         working-directory: implementation/roblox
         run: rojo build test.project.json --output /tmp/RVTT-tests.rbxlx
 
-      - name: Generate Rojo sourcemap
+      - name: Generate production Rojo sourcemap
         working-directory: implementation/roblox
         run: rojo sourcemap default.project.json --output sourcemap.json
+
+      - name: Generate test Rojo sourcemap
+        working-directory: implementation/roblox
+        run: rojo sourcemap test.project.json --output test-sourcemap.json
 
       - name: Download pinned Roblox type definitions
         working-directory: implementation/roblox
@@ -161,13 +165,25 @@ jobs:
         shell: bash
         run: |
           set +e
+          : > typecheck.log
           luau-lsp analyze \
             --platform=roblox \
             --defs=globalTypes.d.luau \
             --sourcemap=sourcemap.json \
             --no-strict-dm-types \
-            src tests 2>&1 | tee typecheck.log
-          status=${PIPESTATUS[0]}
+            src 2>&1 | tee -a typecheck.log
+          production_status=${PIPESTATUS[0]}
+          luau-lsp analyze \
+            --platform=roblox \
+            --defs=globalTypes.d.luau \
+            --sourcemap=test-sourcemap.json \
+            --no-strict-dm-types \
+            tests 2>&1 | tee -a typecheck.log
+          test_status=${PIPESTATUS[0]}
+          status=0
+          if [ "${production_status}" -ne 0 ] || [ "${test_status}" -ne 0 ]; then
+            status=1
+          fi
           export TYPECHECK_STATUS="${status}"
           python - <<'PY'
           import os
@@ -187,7 +203,11 @@ jobs:
               match = next((candidate.match(raw) for candidate in patterns if candidate.match(raw)), None)
               if match is None:
                   continue
-              path = match.group("path").removeprefix("./")
+              path = match.group("path").split(" [", 1)[0].replace("\\", "/")
+              marker = "/implementation/roblox/"
+              if marker in path:
+                  path = path.split(marker, 1)[1]
+              path = path.removeprefix("./")
               line = match.group("line")
               column = match.group("column")
               message = escape(match.group("message"))
