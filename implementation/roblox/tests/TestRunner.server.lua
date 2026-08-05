@@ -38,6 +38,10 @@ local specs: { Spec } = {
 		name = "ProjectionDisclosure.spec",
 		runner = require(script.Parent.Integration["ProjectionDisclosure.spec"]) :: any,
 	},
+	{
+		name = "MultiViewerFlow.spec",
+		runner = require(script.Parent.Integration["MultiViewerFlow.spec"]) :: any,
+	},
 }
 
 for _, spec in specs do
