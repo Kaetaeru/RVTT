@@ -2,7 +2,13 @@
   "name": "RVTTLiveDataStoreTest",
   "tree": {
     "$className": "DataModel",
-    "ReplicatedStorage": {"RVTT": {"$path": "src/ReplicatedStorage/RVTT"}},
+    "ReplicatedStorage": {
+      "RVTT": {"$path": "src/ReplicatedStorage/RVTT"},
+      "RVTT_TestMode": {
+        "$className": "StringValue",
+        "$properties": {"Value": "live-datastore"}
+      }
+    },
     "ServerScriptService": {
       "RVTT": {
         "$className": "Folder",
