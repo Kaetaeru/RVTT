@@ -14,10 +14,12 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 env:
+  ROJO_VERSION: "7.6.1"
   STYLUA_VERSION: "2.5.2"
+  SELENE_VERSION: "0.31.0"
 
 jobs:
   structure-and-policy:
@@ -34,18 +36,14 @@ jobs:
       - name: Validate implementation structure and policies
         run: python implementation/roblox/tooling/validate_implementation.py
 
-  format-source:
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+  toolchain:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
     steps:
-      - name: Check out planning branch
+      - name: Check out repository
         uses: actions/checkout@v4
-        with:
-          ref: planning/rvtt-remake
-          fetch-depth: 0
 
-      - name: Restore pinned Roblox tool cache
+      - name: Cache pinned Rust tools
         uses: actions/cache@v4
         with:
           path: |
@@ -54,31 +52,37 @@ jobs:
             ~/.cargo/bin/selene
             ~/.cargo/registry
             ~/.cargo/git
-          key: rvtt-rust-tools-${{ runner.os }}-rojo-7.6.1-stylua-${{ env.STYLUA_VERSION }}-selene-0.31.0
+          key: rvtt-rust-tools-${{ runner.os }}-rojo-${{ env.ROJO_VERSION }}-stylua-${{ env.STYLUA_VERSION }}-selene-${{ env.SELENE_VERSION }}
 
-      - name: Install pinned StyLua when missing
+      - name: Install pinned Roblox toolchain
         shell: bash
         run: |
           set -euo pipefail
+          if ! command -v rojo >/dev/null 2>&1; then
+            cargo install rojo --version "${ROJO_VERSION}" --locked
+          fi
           if ! command -v stylua >/dev/null 2>&1; then
             cargo install stylua --version "${STYLUA_VERSION}" --features luau --locked
           fi
-          stylua --version
-
-      - name: Format Luau source
-        working-directory: implementation/roblox
-        run: stylua src tests
-
-      - name: Commit formatted source
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add implementation/roblox/src implementation/roblox/tests
-          if git diff --cached --quiet; then
-            echo "Luau source already matches StyLua."
-            exit 0
+          if ! command -v selene >/dev/null 2>&1; then
+            cargo install selene --version "${SELENE_VERSION}" --locked
           fi
-          git commit -m "style: format RVTT Luau source"
-          git push origin HEAD:planning/rvtt-remake
+          rojo --version
+          stylua --version
+          selene --version
+
+      - name: Check Luau formatting
+        working-directory: implementation/roblox
+        run: stylua --check src tests
+
+      - name: Lint Luau source
+        working-directory: implementation/roblox
+        run: selene src tests
+
+      - name: Build production place with Rojo
+        working-directory: implementation/roblox
+        run: rojo build default.project.json --output /tmp/RVTT.rbxlx
+
+      - name: Build test place with Rojo
+        working-directory: implementation/roblox
+        run: rojo build test.project.json --output /tmp/RVTT-tests.rbxlx
