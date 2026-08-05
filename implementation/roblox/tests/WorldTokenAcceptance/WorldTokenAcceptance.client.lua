@@ -629,10 +629,8 @@ end)
 worldTokens.Camera.InputResolved:Connect(function(action, source, applied, changed, processed)
 	local id = if action == "frame"
 		then "camera-frame"
-		elseif action == "pan"
-		then "camera-pan"
-		elseif action == "zoom"
-		then "camera-zoom"
+		elseif action == "pan" then "camera-pan"
+		elseif action == "zoom" then "camera-zoom"
 		else nil
 	if id == nil then
 		return
@@ -650,7 +648,12 @@ worldTokens.Camera.InputResolved:Connect(function(action, source, applied, chang
 	else
 		fail(id, detail)
 	end
-	setOperation(if passed then "카메라 실제 입력 PASS · " .. action else "카메라 입력 실패 · " .. action, not passed)
+	setOperation(
+		if passed
+			then "카메라 실제 입력 PASS · " .. action
+			else "카메라 입력 실패 · " .. action,
+		not passed
+	)
 	print(
 		string.format(
 			"[RVTT Batch Camera] action=%s source=%s result=%s applied=%s changed=%s processed=%s",
