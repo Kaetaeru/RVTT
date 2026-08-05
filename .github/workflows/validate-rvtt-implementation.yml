@@ -141,6 +141,7 @@ jobs:
         working-directory: implementation/roblox
         run: >-
           luau-lsp analyze
+          --platform=roblox
           --defs=globalTypes.d.luau
           --sourcemap=sourcemap.json
           --no-strict-dm-types
