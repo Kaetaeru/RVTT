@@ -1,0 +1,28 @@
+{
+  "name": "RVTTMultiClientTest",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "RVTT": {"$path": "src/ReplicatedStorage/RVTT"},
+      "RVTT_TestMode": {
+        "$className": "StringValue",
+        "$properties": {"Value": "multi-client"}
+      }
+    },
+    "ServerScriptService": {
+      "RVTT": {
+        "$className": "Folder",
+        "Server": {"$path": "src/ServerScriptService/RVTT/Server"}
+      },
+      "RVTTMultiClientTests": {
+        "$className": "Folder",
+        "ServerRunner": {"$path": "tests/MultiClient/ServerRunner.server.lua"}
+      }
+    },
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "RVTTMultiClientClient": {"$path": "tests/MultiClient/ClientRunner.client.lua"}
+      }
+    }
+  }
+}
