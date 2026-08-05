@@ -4,7 +4,7 @@
 - 작성일: 2026-08-05
 - 최종 갱신일: 2026-08-05
 - 범위: 16개 Slice 계약의 Greenfield Runtime·Domain·Client·UI·Test baseline
-- 최신 Runtime Head: `cf66ee90b015948bddc36079315c0bb52b0692a7`
+- Slice 01 Harness 정적 검증 Head: `71b5ca383a9d688885f9ebdb533da8450f656e9c`
 - Studio 검증 근거: [`Roblox Studio Runtime Baseline Validation Audit`](../../docs/remake/audits/roblox-studio-runtime-baseline-validation-audit.md)
 
 ## 구현된 공통 계약
@@ -92,6 +92,91 @@ Persistence Studio Acceptance
 ACCENT_THEME_PERSISTENCE_VERIFIED
 ```
 
+## Slice 01 Acceptance Harness
+
+상태:
+
+```text
+Production Domain·Command Contract
+→ IMPLEMENTED
+
+Automated Authority·Recovery Test
+→ IMPLEMENTED
+
+Dedicated Studio Acceptance Place
+→ IMPLEMENTED
+
+Structure·Format·Lint·Rojo Build·Type Analysis
+→ PASSED
+
+Studio End-to-End Acceptance
+→ PENDING
+```
+
+Production UI는 현재 Placeholder Shell이며 Slice 01 조작면을 제공하지 않는다. 화면별 임시 기능을 Production UI에 누적하지 않고, 제거 가능한 전용 Harness를 사용한다.
+
+전용 프로젝트:
+
+```text
+slice01-acceptance.project.json
+```
+
+이 프로젝트는 다음을 사용한다.
+
+- 실제 Production Server·Client·Networking·Projection Source
+- 실제 `ProfileStore`·`PersistenceCoordinator`
+- 실제 `CommandClient`와 Receipt·Projection Remote
+- `Players.CharacterAutoLoads=false`
+- Studio Persistence 활성화 Project Flag
+- Acceptance Place에만 존재하는 DM 역할 Override Flag
+- 테스트 전용 Scene Canvas와 단계별 조작 UI
+
+Harness가 실행하는 실제 명령:
+
+```text
+session.join
+→ character.create_draft
+→ character.activate
+→ session.select_character
+→ session.ready
+→ session.start
+→ scene.enter
+→ movement.commit
+```
+
+자동 `Slice01Flow.spec.lua`는 위 명령을 실행하고 Authority Snapshot을 새 Runtime에 복구한 뒤 다음을 검증한다.
+
+- Session Membership
+- 선택 Character
+- Ready 상태
+- 활성 Scene
+- Scene Actor
+- 서버 권위 Position
+- Reconnect Connection 상태
+
+Studio Harness는 다음 수동 Evidence를 수집한다.
+
+```text
+Join·DM Membership
+→ Character 생성·활성화·선택
+→ Ready Projection
+→ Scene 활성화
+→ Actor·Token Projection
+→ Token 직접 선택
+→ Server-authoritative Move
+→ Persistence Save
+→ Stop·Play
+→ Character·Scene·Position Recovery
+```
+
+Acceptance 전용 역할 Override는 `slice01-acceptance.project.json`에만 존재하며 `default.project.json`의 Production Authorization에는 영향을 주지 않는다.
+
+현재 Slice 01 상태:
+
+```text
+SLICE_01_ACCEPTANCE_HARNESS_READY_STUDIO_PENDING
+```
+
 ## Studio Boot과 Remote Bootstrap 보강
 
 초기 동기화 교착 수정:
@@ -147,7 +232,7 @@ Remote 세트 복구:
 
 ## UI 시각 디자인 상태
 
-현재 UI는 기능·입력 검증용 Placeholder Shell이다. 최종 시각 디자인으로 간주하지 않는다.
+현재 Production UI와 Slice 01 Harness는 기능·입력 검증용 Placeholder다. 최종 시각 디자인으로 간주하지 않는다.
 
 추후 전면 개편 시 일관성을 유지하기 위해 다음 구조를 보존한다.
 
@@ -156,6 +241,7 @@ Remote 세트 복구:
 - 공통 Button·Panel·Modal·Banner 컴포넌트 사용
 - Accent와 Semantic Status Color 계약 유지
 - 기능 테스트를 외형이 아닌 상태·입력·권위 동기화 기준으로 유지
+- Acceptance Harness를 Production UI 디자인 후보로 취급하지 않음
 
 부분적인 화면별 미화는 보류하고 별도 `UI Visual Redesign Gate`에서 일괄 교체한다.
 
@@ -175,6 +261,19 @@ Server Validation·Projection
 
 DataStore Save·Reload·UI Restore
 → VERIFIED
+```
+
+현재 준비된 Slice 01 범위:
+
+```text
+Command·Authority·Projection Contract
+→ READY
+
+Persistence·Reconnect Test Harness
+→ READY
+
+Studio Acceptance Evidence
+→ NOT YET RECORDED
 ```
 
 다음을 의미하지 않는다.
@@ -205,6 +304,7 @@ Join
 ## 아직 미검증
 
 - Slice 01 `Join → Select → Ready → Scene → Move → Reconnect`
+- Slice 01 Production Build Acceptance Audit
 - Slices 02–16 사용자·보안·복구 Scenario
 - DataStore server restart·Cross-server Lease·Migration·Conflict Recovery
 - Navigation·Physics·Streaming·Large Scene
