@@ -50,6 +50,7 @@
 - Production·Test·Multi-client·Persistence·Acceptance Rojo Build
 - Production·Test Luau Type Analysis
 - Unit·Integration·Security·Recovery Test
+- Windows PowerShell Parser와 Acceptance Bootstrap SelfTest
 
 자동 Gate가 실패한 상태에서는 사용자에게 Studio 게시를 요청하지 않는다.
 
@@ -88,28 +89,38 @@ Acceptance Harness는 다음 기능을 제공한다.
 
 사용자는 정상적인 경우 최종 Summary만 확인한다. 실패한 경우에는 최종 Summary와 첫 번째 관련 오류 로그만 공유한다.
 
-## 6. 단일 실행 스크립트
+## 6. 무인 단일 실행 스크립트
 
-모든 수동 Batch는 다음 스크립트로 실행한다.
+사용자는 저장소 위치, 현재 디렉터리, Git 상태, Python 또는 Rojo 설치 여부를 신경 쓰지 않고 다음 한 줄만 Windows PowerShell 또는 Windows Terminal에 입력한다.
 
 ```powershell
-& .\implementation\roblox\tooling\run-studio-acceptance-batch.ps1 `
-    -ExpectedHead <검증된 Head> `
-    -Project slice01-acceptance.project.json
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-Expression (Invoke-RestMethod 'https://raw.githubusercontent.com/Kaetaeru/RVTT/planning/rvtt-remake/implementation/roblox/tooling/run-studio-acceptance-batch.ps1')"
 ```
 
-스크립트 책임:
+Runner는 인수를 요구하지 않고 `acceptance-batch.json`의 검증 Head와 기본 Project를 사용한다.
 
-- 기존 Roblox Studio 종료
-- 지정 Branch Fetch·Fast-forward Pull
-- Dirty Worktree 차단
-- 검증된 Head 확인
-- Implementation 구조 Validator 실행
-- Acceptance Place 한 번 Build
-- 실행 Manifest 생성
-- Build된 Place 열기
+자동 책임:
 
-Roblox Studio의 Experience 게시 자체는 사용자가 Batch당 한 번 수행한다.
+- 실행 위치와 무관하게 공개 GitHub Archive에서 검증된 Head 준비
+- 현재 저장소와 Dirty Worktree를 수정하지 않는 격리 Source Cache
+- Git 미설치 환경 지원
+- Python 사용 가능 시 정식 `validate_implementation.py` 실행
+- Python 미설치 시 내장 PowerShell Validator 실행
+- 고정 Rojo 버전 자동 다운로드와 SHA256 검증
+- 최초 성공 이후 Offline cache 재사용
+- 기존 Roblox Studio 프로세스 종료
+- Acceptance Place Build와 Manifest 생성
+- 설치된 최신 Roblox Studio 탐색 후 Place 열기
+
+물리적으로 자동 복구할 수 없는 필수 조건은 Windows, Roblox Studio 설치, 최초 실행 시 인터넷 연결이다. 최초 실행이 성공한 뒤에는 동일 검증 Head를 Offline cache로 다시 실행할 수 있다.
+
+로컬 저장소 안에서 직접 실행하는 기존 방식도 인수 없이 지원한다.
+
+```powershell
+& .\implementation\roblox\tooling\run-studio-acceptance-batch.ps1
+```
+
+Roblox Studio의 Experience 게시 자체는 사용자의 로그인 세션과 대상 Place 권한을 사용하므로 Batch당 한 번 사용자가 수행한다.
 
 ## 7. 예외 Gate
 
