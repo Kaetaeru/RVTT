@@ -133,7 +133,12 @@ function AuthorityRuntime:execute(context, envelope)
 	self:_remember(envelope.commandId, terminalResult)
 
 	for _, callback in self.commitListeners do
-		task.spawn(callback, self.state, event)
+		local ok, failure = xpcall(function()
+			callback(self.state, event)
+		end, debug.traceback)
+		if not ok then
+			self.diagnostics:record("error", "COMMIT_LISTENER_FAILED", { trace = failure })
+		end
 	end
 	return terminalResult
 end
