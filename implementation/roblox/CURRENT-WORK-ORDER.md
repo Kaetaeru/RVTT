@@ -35,10 +35,16 @@ Accent Visual·Input Acceptance
 → VERIFIED
 
 Roblox Avatar Auto-Spawn Disable
-→ IMPLEMENTED · CI PASSED
+→ VERIFIED IN STUDIO
+
+Accent Persistence Acceptance
+→ VERIFIED IN STUDIO
+
+Remote Bootstrap Studio Recheck
+→ VERIFIED IN STUDIO
 
 현재 작업
-→ Roblox Avatar Suppression Studio Recheck
+→ Slice 01 Studio Acceptance
 ```
 
 Studio 실행 Evidence:
@@ -47,11 +53,14 @@ Studio 실행 Evidence:
 Unit·Integration
 → passed=173 failed=0
 
-Live DataStore
+Live DataStore baseline
 → passed=10 failed=0
 
 3-client MultiClient
 → passed=56 failed=0 clients=3 staleRetries=3
+
+Persistence Acceptance
+→ enabled · loaded · saved · runtime ready · Accent restored
 ```
 
 2026-08-05 18:31 KST Accent Visual·Input 결과:
@@ -76,6 +85,28 @@ Output 오류 없음
 → PASS
 ```
 
+2026-08-05 20:08 KST Persistence 최종 결과:
+
+```text
+Project Config Persistence 활성화
+→ PASS
+
+기존 Authority Revision Load
+→ PASS
+
+Accent 변경 후 Save
+→ PASS
+
+ClientBoot runtime ready
+→ PASS
+
+재실행 후 신규 Revision Load
+→ PASS
+
+마지막 Accent 화면 복구
+→ PASS
+```
+
 ## 2. 현재 작업 순서
 
 | 순서 | 상태 | 작업 | 완료 조건 |
@@ -86,19 +117,20 @@ Output 오류 없음
 | 4 | DONE | Luau·Rojo Toolchain 검증 | Build·Type Check·Formatter·Linter 성공 |
 | 5 | DONE | Roblox Studio Runtime Baseline | Unit·Integration·Live DataStore·3-client 성공 |
 | 6 | DONE | User Accent Theme Implementation | Gold·6 Palette·Settings·Server Validation·Projection |
-| 7 | DONE | Accent Automated Studio Tests | Unit·Integration `173/0`, Live DataStore `10/0` |
+| 7 | DONE | Accent Automated Studio Tests | Unit·Integration `173/0`, Live DataStore baseline |
 | 8 | DONE | Boot Fix Studio Recheck | Loading 종료와 App 표시 |
 | 9 | DONE | Accent Visual·Input Acceptance | 6 Palette·Q 종료·Reconciliation·선택 유지 |
 | 10 | DONE | Roblox Avatar Auto-Spawn Disable Implementation | CharacterAutoLoads 차단과 기존 Character 제거 |
-| 11 | IN_PROGRESS | Avatar Suppression Studio Recheck | Play 시 Roblox 기본 아바타·Humanoid 비생성 |
-| 12 | QUEUED | Accent Persistence Acceptance | Live Persistence 상태에서 재접속 복구 |
-| 13 | QUEUED | Slice 01 Studio Acceptance | Join→Select→Ready→Scene→Move→Reconnect |
-| 14 | QUEUED | Slice 01 Build Acceptance Audit | 실행 Evidence와 UI·UX Checklist 판정 |
-| 15 | QUEUED | Slices 02–16 Studio Acceptance | Slice별 사용자·보안·복구 Scenario 통과 |
-| 16 | QUEUED | DataStore·Restart Recovery | Restart·Lease·Migration·Conflict 검증 |
-| 17 | QUEUED | UI Visual Redesign | 전체 화면을 Token·공통 Component 기준으로 일괄 개편 |
-| 18 | QUEUED | UI Accessibility QA | Keyboard·Focus·Contrast·User Test |
-| 19 | QUEUED | Performance·Fault·Soak | 측정 Evidence와 Release Gate |
+| 11 | DONE | Avatar Suppression Studio Recheck | 기본 아바타·Humanoid 비생성, UI 정상 |
+| 12 | DONE | Accent Persistence Acceptance | Save·Reload·UI Restore 성공 |
+| 13 | DONE | Remote Bootstrap Studio Recheck | Canonical Remote 세트와 Client runtime ready |
+| 14 | IN_PROGRESS | Slice 01 Studio Acceptance | Join→Select→Ready→Scene→Move→Reconnect |
+| 15 | QUEUED | Slice 01 Build Acceptance Audit | 실행 Evidence와 UI·UX Checklist 판정 |
+| 16 | QUEUED | Slices 02–16 Studio Acceptance | Slice별 사용자·보안·복구 Scenario 통과 |
+| 17 | QUEUED | DataStore·Restart Recovery | Restart·Lease·Migration·Conflict 검증 |
+| 18 | QUEUED | UI Visual Redesign | 전체 화면을 Token·공통 Component 기준으로 일괄 개편 |
+| 19 | QUEUED | UI Accessibility QA | Keyboard·Focus·Contrast·User Test |
+| 20 | QUEUED | Performance·Fault·Soak | 측정 Evidence와 Release Gate |
 
 ## 3. Roblox 기본 캐릭터 비활성화 계약
 
@@ -114,16 +146,55 @@ ServerBoot CharacterAutoLoads 재강제
 기존 Player.Character 제거
 → DONE
 
+Studio Avatar Suppression
+→ PASS
+
 RVTT Character·Actor·Token Domain
 → 변경 없음
-
-Static·Toolchain CI
-→ PASSED
 ```
 
 이 정책은 Roblox `Player.Character`만 차단한다. RVTT의 캐릭터 데이터, 토큰 선택, 권위 이동에는 영향을 주지 않는다.
 
-## 4. 현재 UI 디자인 해석
+## 4. Accent Persistence 계약
+
+기본 Studio Play는 Session 내 UI 검수용이며 Live Persistence는 끈다.
+
+Persistence Acceptance는 다음 전용 프로젝트로 수행한다.
+
+```text
+persistence-acceptance.project.json
+→ ServerStorage.RVTT.EnableStudioPersistence=true
+```
+
+게시된 테스트 Experience에서 확인된 흐름:
+
+```text
+Persistence enabled
+→ Authority Load
+→ Accent 변경
+→ Revision Save
+→ Play 종료
+→ 재실행
+→ Revision Load
+→ 마지막 Accent 화면 복구
+```
+
+최종 상태:
+
+```text
+ACCENT_THEME_PERSISTENCE_VERIFIED
+```
+
+## 5. Remote Bootstrap 계약
+
+- 서버는 Command·Receipt·Projection·Sync·ClientReady가 모두 준비된 폴더만 공개한다.
+- 오래된 부분 폴더, 잘못된 형식, 동명 중복 폴더를 제거한다.
+- 클라이언트는 완전한 Canonical Remote 세트만 선택한다.
+- 실패 시 후보 폴더와 자식 형식을 Output에 표시한다.
+
+실제 Persistence 실행에서 `ClientBoot runtime ready`를 확인했다.
+
+## 6. 현재 UI 디자인 해석
 
 현재 UI는 기능 검증용 Placeholder Shell이다.
 
@@ -133,68 +204,41 @@ Static·Toolchain CI
 - 전면 수정은 별도 `UI Visual Redesign` 작업에서 일관되게 수행한다.
 - 기능 테스트는 상태·입력·서버 권위 계약을 기준으로 유지한다.
 
-## 5. 현재 상태 해석
+## 7. 현재 실행 Gate: Slice 01
 
-Accent Delta:
-
-```text
-ACCENT_THEME_VISUAL_INPUT_VERIFIED_PERSISTENCE_PENDING
-```
-
-다음을 의미하지 않는다.
-
-- Accent 재접속 영구 복구 완료
-- Roblox 아바타 비생성 Studio 확인 완료
-- Slice 01 End-to-End Acceptance 완료
-- Slices 02–16 Acceptance 완료
-- UI 최종 디자인 완료
-- Production Ready 또는 Release Ready
-
-## 6. 현재 실행 Gate: Avatar Suppression
-
-최신 `default.project.json`을 새 Place로 Build한 뒤 Play한다.
+목표 흐름:
 
 ```text
-Play
-→ Loading 종료
-→ RVTT App 표시
-→ Workspace에 Roblox 기본 캐릭터 Model 없음
-→ Player.Character == nil
-→ Humanoid·HumanoidRootPart 없음
-→ RVTT UI와 Accent 기능 정상
+Join
+→ Character Select
+→ Ready
+→ Scene Projection
+→ Token Select
+→ Server-authoritative Move
+→ Disconnect
+→ Reconnect
+→ Character·Scene·Position Recovery
 ```
 
 통과 기준:
 
-- 플레이어 이름의 Roblox Character Model이 생성되지 않는다.
-- Reset Character를 눌러도 자동 재생성되지 않는다.
-- RVTT App과 Settings는 계속 작동한다.
-- Output에 Character 관련 오류가 없다.
-
-## 7. Persistence 별도 Gate
-
-기본 Studio Play는 Session 내 UI 검수용이다. Play 종료 후 복구는 다음 중 하나로 별도 검증한다.
-
-```text
-live-datastore.project.json
-또는
-DataModel Attribute RVTT_EnableStudioPersistence=true
-```
-
-Live Persistence를 활성화한 뒤:
-
-```text
-Accent 선택
-→ 저장 Flush 대기
-→ 재접속
-→ 마지막 Accent 복구
-```
+- Join 후 플레이어 Session이 서버 권위 상태에 등록된다.
+- Character 선택과 Ready 상태가 Projection에 반영된다.
+- Scene과 Token이 Viewer에게 올바르게 표시된다.
+- Token 이동은 서버 Command 결과로 확정된다.
+- Disconnect 후 Reconnect 시 Character·Scene·Position이 복구된다.
+- Roblox 기본 아바타는 생성되지 않는다.
+- Accent Preference도 유지된다.
+- 관련 Output 오류가 없다.
 
 ## 8. 다음 Gate
 
 ```text
-Avatar Suppression Studio Recheck
-→ Accent Persistence Acceptance
-→ Slice 01 Join·Select·Ready·Scene·Move·Reconnect
+Slice 01 Studio Acceptance
 → Slice 01 Production Build Acceptance Audit
+→ Slices 02–16 Studio Acceptance
+→ DataStore·Restart Recovery
+→ UI Visual Redesign
 ```
+
+현재 상태는 Production Ready 또는 Release Ready를 의미하지 않는다.
