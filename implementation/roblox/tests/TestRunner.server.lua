@@ -16,6 +16,10 @@ type Spec = {
 
 local specs: { Spec } = {
 	{ name = "Core.spec", runner = require(script.Parent.Unit["Core.spec"]) :: any },
+	{
+		name = "AccentTheme.spec",
+		runner = require(script.Parent.Unit["AccentTheme.spec"]) :: any,
+	},
 	{ name = "Envelope.spec", runner = require(script.Parent.Unit["Envelope.spec"]) :: any },
 	{ name = "Persistence.spec", runner = require(script.Parent.Unit["Persistence.spec"]) :: any },
 	{
@@ -37,6 +41,10 @@ local specs: { Spec } = {
 	{
 		name = "ProjectionDisclosure.spec",
 		runner = require(script.Parent.Integration["ProjectionDisclosure.spec"]) :: any,
+	},
+	{
+		name = "UiPreferenceFlow.spec",
+		runner = require(script.Parent.Integration["UiPreferenceFlow.spec"]) :: any,
 	},
 	{
 		name = "MultiViewerFlow.spec",

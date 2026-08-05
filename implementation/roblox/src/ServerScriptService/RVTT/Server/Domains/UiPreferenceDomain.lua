@@ -1,5 +1,7 @@
 --!strict
 
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local AccentPreference = require(ReplicatedStorage.RVTT.Shared.UI.AccentPreference)
 local Helpers = require(script.Parent.DomainHelpers)
 
 local Domain = { id = "ui_preferences", slice = 8 }
@@ -21,6 +23,9 @@ local allowed = {
 	end,
 	layout = function(value)
 		return type(value) == "string" and #value <= 64
+	end,
+	[AccentPreference.KEY] = function(value)
+		return AccentPreference.isValid(value)
 	end,
 }
 
