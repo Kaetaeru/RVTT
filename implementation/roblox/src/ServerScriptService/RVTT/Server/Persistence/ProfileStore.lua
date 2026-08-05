@@ -19,9 +19,18 @@ local function revisionOf(value: any): number?
 	return revision
 end
 
-function ProfileStore.new(storeName: string, migrationRegistry: any, diagnostics: any): any
+function ProfileStore.new(
+	storeName: string,
+	migrationRegistry: any,
+	diagnostics: any,
+	dataStoreOverride: any?
+): any
+	local store = dataStoreOverride
+	if store == nil then
+		store = DataStoreService:GetDataStore(storeName)
+	end
 	return setmetatable({
-		store = DataStoreService:GetDataStore(storeName),
+		store = store,
 		migrations = migrationRegistry,
 		diagnostics = diagnostics,
 	}, ProfileStore)
@@ -50,6 +59,7 @@ function ProfileStore.save(self: any, key: string, value: any): any
 	local conflict = false
 	local ok = pcall(function()
 		self.store:UpdateAsync(key, function(current: any): any
+			conflict = false
 			local currentRevision = revisionOf(current)
 			if currentRevision ~= nil then
 				local currentEpoch = current.authorityEpoch
