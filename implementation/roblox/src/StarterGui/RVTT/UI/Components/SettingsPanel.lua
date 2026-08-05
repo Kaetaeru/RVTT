@@ -92,7 +92,7 @@ function SettingsPanel.new(onSelect: (string) -> (), onClose: () -> ()): any
 	topBar.Parent = panel
 	corner(topBar, Tokens.Radius.LG)
 
-	label(
+	local title = label(
 		panel,
 		"Title",
 		"인터페이스 설정",
@@ -100,9 +100,10 @@ function SettingsPanel.new(onSelect: (string) -> (), onClose: () -> ()): any
 		UDim2.fromOffset(28, 24),
 		Tokens.TextSize.Title,
 		"textPrimary"
-	).ZIndex = Tokens.Layer.Modal + 2
+	)
+	title.ZIndex = Tokens.Layer.Modal + 2
 
-	label(
+	local subtitle = label(
 		panel,
 		"Subtitle",
 		"선호 강조색을 선택하세요. 기본값은 황금색입니다.",
@@ -110,7 +111,8 @@ function SettingsPanel.new(onSelect: (string) -> (), onClose: () -> ()): any
 		UDim2.fromOffset(28, 67),
 		Tokens.TextSize.Body,
 		"textSecondary"
-	).ZIndex = Tokens.Layer.Modal + 2
+	)
+	subtitle.ZIndex = Tokens.Layer.Modal + 2
 
 	local closeButton = Instance.new("TextButton")
 	closeButton.Name = "CloseButton"
@@ -180,7 +182,7 @@ function SettingsPanel.new(onSelect: (string) -> (), onClose: () -> ()): any
 		corner(swatch, UDim.new(1, 0))
 		stroke(swatch, "textPrimary", 1)
 
-		label(
+		local displayName = label(
 			button,
 			"DisplayName",
 			palette.displayName,
@@ -188,9 +190,10 @@ function SettingsPanel.new(onSelect: (string) -> (), onClose: () -> ()): any
 			UDim2.fromOffset(62, 11),
 			Tokens.TextSize.Label,
 			"textPrimary"
-		).ZIndex = Tokens.Layer.Modal + 3
+		)
+		displayName.ZIndex = Tokens.Layer.Modal + 3
 
-		label(
+		local paletteId = label(
 			button,
 			"PaletteId",
 			palette.id,
@@ -198,7 +201,8 @@ function SettingsPanel.new(onSelect: (string) -> (), onClose: () -> ()): any
 			UDim2.fromOffset(62, 37),
 			Tokens.TextSize.Caption,
 			"textMuted"
-		).ZIndex = Tokens.Layer.Modal + 3
+		)
+		paletteId.ZIndex = Tokens.Layer.Modal + 3
 
 		local check = label(
 			button,

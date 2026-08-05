@@ -77,5 +77,8 @@ return function(harness)
 		"emerald",
 		"second viewer receives only its own accent"
 	)
-	harness:expect(secondByUser["101"] == nil, "second viewer cannot inspect first viewer preferences")
+	harness:expect(
+		secondByUser["101"] == nil,
+		"second viewer cannot inspect first viewer preferences"
+	)
 end
