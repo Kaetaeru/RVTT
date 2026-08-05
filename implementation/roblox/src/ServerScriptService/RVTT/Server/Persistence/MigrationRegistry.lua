@@ -9,7 +9,9 @@ local MigrationRegistry = {}
 MigrationRegistry.__index = MigrationRegistry
 
 local function isVersion(value: unknown): boolean
-	return ValueGuard.isFiniteNumber(value) and (value :: number) >= 0 and (value :: number) % 1 == 0
+	return ValueGuard.isFiniteNumber(value)
+		and (value :: number) >= 0
+		and (value :: number) % 1 == 0
 end
 
 local function failed(reason: string, version: unknown)
