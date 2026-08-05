@@ -2,6 +2,11 @@
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+if ReplicatedStorage:FindFirstChild("RVTT_TestMode") ~= nil then
+	return
+end
+
 local Names = require(ReplicatedStorage.RVTT.Shared.Protocol.RemoteNames)
 
 local remoteFolder = ReplicatedStorage:WaitForChild(Names.FOLDER)
