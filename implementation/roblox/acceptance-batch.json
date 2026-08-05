@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "repository": "Kaetaeru/RVTT",
   "branch": "planning/rvtt-remake",
-  "verifiedHead": "8a460e193ba6d6884ab328337db93e9f5f655e22",
+  "verifiedHead": "857950cb0e6f73629e894a7c6e208291f1ace3dd",
   "project": "slice01-acceptance.project.json",
   "rojo": {
     "version": "7.7.0",
