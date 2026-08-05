@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "repository": "Kaetaeru/RVTT",
+  "branch": "planning/rvtt-remake",
+  "verifiedHead": "8a460e193ba6d6884ab328337db93e9f5f655e22",
+  "project": "slice01-acceptance.project.json",
+  "rojo": {
+    "version": "7.7.0",
+    "assets": {
+      "windowsX64": {
+        "url": "https://github.com/rojo-rbx/rojo/releases/download/v7.7.0/rojo-7.7.0-windows-x86_64.zip",
+        "sha256": "2179c44862a10ecbd725bdfeb4abc64e16dc4aad9b6c8f3e1a7c46a87280b949"
+      },
+      "windowsArm64": {
+        "url": "https://github.com/rojo-rbx/rojo/releases/download/v7.7.0/rojo-7.7.0-windows-aarch64.zip",
+        "sha256": "f500d23ff2c3baa0cfc5a9a8c6456e49958b7123916f9e20df731c0e562b877f"
+      }
+    }
+  }
+}
