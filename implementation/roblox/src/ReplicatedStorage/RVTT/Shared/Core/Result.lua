@@ -21,15 +21,17 @@ function Result.err<T>(
 	retryable: boolean,
 	details: { [string]: unknown }?
 ): Result<T>
-	return ({
-		ok = false,
-		error = {
-			code = code,
-			messageKey = messageKey,
-			retryable = retryable,
-			details = details,
-		},
-	} :: any) :: Result<T>
+	return (
+		{
+			ok = false,
+			error = {
+				code = code,
+				messageKey = messageKey,
+				retryable = retryable,
+				details = details,
+			},
+		} :: any
+	) :: Result<T>
 end
 
 function Result.map<T, U>(result: Result<T>, transform: (T) -> U): Result<U>
