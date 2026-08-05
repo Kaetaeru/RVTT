@@ -12,7 +12,7 @@ end
 local player = Players.LocalPlayer
 local playerScripts = player:WaitForChild("PlayerScripts")
 local clientFolder = playerScripts:WaitForChild("RVTT"):WaitForChild("Client")
-local ClientRuntime = require(clientFolder:WaitForChild("ClientRuntime"))
+local ClientRuntime = (require :: any)(clientFolder:WaitForChild("ClientRuntime"))
 local client = ClientRuntime.await()
 
 local SCENE_ID = "scene:slice-01-acceptance"
@@ -370,10 +370,10 @@ local function runAction(action: () -> ())
 	end
 	busy = true
 	render()
-	local succeeded, failure = xpcall(action, debug.traceback)
+	local succeeded = xpcall(action, debug.traceback)
 	busy = false
 	if not succeeded then
-		setOperation("Harness 오류: " .. tostring(failure), true)
+		setOperation("Harness 작업 실행 실패", true)
 	end
 	render()
 end
