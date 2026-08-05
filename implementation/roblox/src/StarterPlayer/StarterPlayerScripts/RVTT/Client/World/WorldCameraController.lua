@@ -219,7 +219,10 @@ function Controller.start(self: Controller)
 			if inputState == Enum.UserInputState.Begin then
 				self.dragging = true
 				print("[RVTT WorldCamera Input] action=pan-start source=mouse-middle")
-			elseif inputState == Enum.UserInputState.End or inputState == Enum.UserInputState.Cancel then
+			elseif
+				inputState == Enum.UserInputState.End
+				or inputState == Enum.UserInputState.Cancel
+			then
 				self.dragging = false
 				print("[RVTT WorldCamera Input] action=pan-end source=mouse-middle")
 			end
