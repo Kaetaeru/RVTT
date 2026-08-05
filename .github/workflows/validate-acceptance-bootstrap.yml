@@ -1,0 +1,54 @@
+name: Validate acceptance bootstrap
+
+concurrency:
+  group: rvtt-acceptance-bootstrap-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+    paths:
+      - "implementation/roblox/acceptance-batch.json"
+      - "implementation/roblox/tooling/run-studio-acceptance-batch.ps1"
+      - "implementation/roblox/tooling/validate_implementation.py"
+      - ".github/workflows/validate-acceptance-bootstrap.yml"
+  push:
+    branches:
+      - planning/rvtt-remake
+    paths:
+      - "implementation/roblox/acceptance-batch.json"
+      - "implementation/roblox/tooling/run-studio-acceptance-batch.ps1"
+      - "implementation/roblox/tooling/validate_implementation.py"
+      - ".github/workflows/validate-acceptance-bootstrap.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-bootstrap:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Parse PowerShell runner
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          $path = Resolve-Path "implementation/roblox/tooling/run-studio-acceptance-batch.ps1"
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            $path,
+            [ref]$tokens,
+            [ref]$errors
+          ) | Out-Null
+          if ($errors.Count -gt 0) {
+            $errors | ForEach-Object { Write-Error $_.Message }
+            exit 1
+          }
+
+      - name: Run bootstrap SelfTest
+        shell: pwsh
+        run: |
+          & ./implementation/roblox/tooling/run-studio-acceptance-batch.ps1 -SelfTest -NoOpen
