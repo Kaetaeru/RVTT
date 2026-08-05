@@ -158,10 +158,52 @@ jobs:
 
       - name: Analyze Luau types
         working-directory: implementation/roblox
-        run: >-
-          luau-lsp analyze
-          --platform=roblox
-          --defs=globalTypes.d.luau
-          --sourcemap=sourcemap.json
-          --no-strict-dm-types
-          src tests
+        shell: bash
+        run: |
+          set +e
+          luau-lsp analyze \
+            --platform=roblox \
+            --defs=globalTypes.d.luau \
+            --sourcemap=sourcemap.json \
+            --no-strict-dm-types \
+            src tests 2>&1 | tee typecheck.log
+          status=${PIPESTATUS[0]}
+          export TYPECHECK_STATUS="${status}"
+          python - <<'PY'
+          import os
+          import re
+          from pathlib import Path
+
+          def escape(value: str) -> str:
+              return value.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+
+          patterns = (
+              re.compile(r"^(?P<path>.+?)\((?P<line>\d+),(?P<column>\d+)\):\s*(?P<message>.+)$"),
+              re.compile(r"^(?P<path>.+?):(?P<line>\d+):(?P<column>\d+):\s*(?P<message>.+)$"),
+          )
+          lines = Path("typecheck.log").read_text(encoding="utf-8", errors="replace").splitlines()
+          emitted = 0
+          for raw in lines:
+              match = next((candidate.match(raw) for candidate in patterns if candidate.match(raw)), None)
+              if match is None:
+                  continue
+              path = match.group("path").removeprefix("./")
+              line = match.group("line")
+              column = match.group("column")
+              message = escape(match.group("message"))
+              print(f"::error file=implementation/roblox/{path},line={line},col={column}::{message}")
+              emitted += 1
+          if int(os.environ["TYPECHECK_STATUS"]) != 0 and emitted == 0:
+              tail = escape(" | ".join(lines[-20:])[:4000] or "luau-lsp failed without diagnostic output")
+              print(f"::error file=.github/workflows/validate-rvtt-implementation.yml::{tail}")
+          PY
+          exit "${status}"
+
+      - name: Upload Luau type analysis output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: luau-type-analysis-${{ github.run_id }}
+          path: implementation/roblox/typecheck.log
+          if-no-files-found: error
+          retention-days: 7
