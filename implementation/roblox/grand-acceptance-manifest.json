@@ -29,7 +29,7 @@
     {
       "order": 10,
       "id": "unit-integration-baseline",
-      "name": "Unit integration and Slices 02-12 automated baseline",
+      "name": "Unit integration, Slices 02-12 and deterministic fault baseline",
       "status": "ready",
       "execution": "studio-single-client",
       "runId": "grand-single-client",
@@ -39,7 +39,8 @@
       "summaryToken": "[RVTT Tests]",
       "evidenceTokens": [
         "[RVTT Spec Summary]",
-        "[RVTT Spec Failure]"
+        "[RVTT Spec Failure]",
+        "[RVTT Fault Host]"
       ],
       "passRegex": "\\[RVTT Tests\\].*failed=0"
     },
@@ -259,7 +260,7 @@
       "execution": "automated-and-studio",
       "group": "quality",
       "persistence": true,
-      "blocker": "Network and storage fault injection host is not implemented"
+      "blocker": "Deterministic in-process network drop, duplicate, reorder, delayed epoch, receipt loss, storage failure, acknowledgement loss and revision conflict baseline is included in grand-single-client; real Roblox transport throttling, disconnect, reconnect, server restart and DataStore outage host remains"
     },
     {
       "order": 260,
