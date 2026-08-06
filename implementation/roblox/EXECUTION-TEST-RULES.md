@@ -258,3 +258,66 @@ Implementation·Documentation CI PASS
 ```
 
 Persistence Batch는 별도 Gate와 별도 Summary로 판정한다.
+
+## 11. Grand Acceptance Campaign
+
+개별 Batch 실행은 Grand Campaign Phase로 흡수한다.
+
+```text
+여러 Slice·복구·보안 변경 축적
+→ Grand Manifest에 Phase 등록
+→ 자동 Gate 전체 PASS
+→ PowerShell 실행 1회
+→ 여러 Studio Phase 순차 실행
+→ 모든 실패 수집
+→ JSON·Markdown 통합 Report
+```
+
+Grand Campaign은 하나의 Studio Play 세션이 아니다. 하나의 PowerShell Process가 필요한 Place를 모두 Build하고 Studio Phase를 순서대로 시작한다. 사용자가 각 Phase를 끝내고 Studio를 닫으면 다음 Phase가 자동으로 시작된다.
+
+핵심 규칙:
+
+- 첫 실패에서 Campaign을 중단하지 않는다.
+- Summary가 없는 Phase는 PASS가 아니라 `incomplete`다.
+- 아직 구현되지 않은 Phase는 `blocked`다.
+- `blocked` Phase가 존재하면 전체 결과는 `PARTIAL`이며 Release PASS가 아니다.
+- 일반 기능과 Persistence 결과는 같은 Report에서 별도 Phase로 보존한다.
+- Persistence는 관련 변경을 축적한 Milestone에서만 `-IncludePersistence`로 포함한다.
+- 공식 데이터·권리·Asset 승인이 필요한 Phase는 승인 전까지 실행하지 않는다.
+- 결함은 Phase별 Micro-fix가 아니라 동일 Root Cause별 수정 Batch로 처리한다.
+- 수정 후 선택 Phase만 재실행하지 않고 Grand Campaign 전체를 다시 실행한다.
+
+Grand Campaign 사용자 실행 형식도 완전한 다중 행 Windows PowerShell 블록이어야 한다.
+
+```powershell
+$ErrorActionPreference = "Stop"
+
+Get-Process RobloxStudioBeta -ErrorAction SilentlyContinue |
+    Stop-Process -Force
+
+$repo = Join-Path $HOME "RVTT"
+$runner = Join-Path $repo "implementation\roblox\tooling\run-grand-acceptance.ps1"
+
+Set-Location $repo
+
+git fetch origin
+git switch planning/rvtt-remake
+git pull --ff-only origin planning/rvtt-remake
+
+$head = (git rev-parse --short HEAD).Trim()
+Write-Host "현재 Head: $head"
+
+if ($head -ne "<EXPECTED-HEAD>") {
+    throw "예상 Head는 <EXPECTED-HEAD>이지만 현재 Head는 $head입니다."
+}
+
+& $runner -ExpectedHead $head
+```
+
+DataStore Grand Milestone에서만 마지막 줄을 다음처럼 변경한다.
+
+```powershell
+& $runner -ExpectedHead $head -IncludePersistence
+```
+
+Grand Campaign Runner만 한 줄로 보내지 않는다. 저장소 Update, Branch 이동, 정확한 Head 검사와 Runner 실행이 모두 포함된 전체 블록을 제공한다.
