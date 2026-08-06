@@ -106,7 +106,7 @@ function ScenarioRuntime.restore(self: any, document: any): any
 	return result
 end
 
-function ScenarioRuntime.expectOutcome(self: any, harness: any, result: any, label: string): any
+function ScenarioRuntime.expectOutcome(_self: any, harness: any, result: any, label: string): any
 	harness:expect(result.ok, label)
 	if not result.ok then
 		return nil
