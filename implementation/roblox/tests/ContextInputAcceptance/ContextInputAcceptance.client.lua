@@ -79,10 +79,7 @@ local function ensureSuccess(result: any, commandType: string): any
 end
 
 local function outcome(result: any): any
-	return type(result) == "table"
-		and type(result.value) == "table"
-		and result.value.outcome
-		or nil
+	return type(result) == "table" and type(result.value) == "table" and result.value.outcome or nil
 end
 
 local gui = Instance.new("ScreenGui")
@@ -199,7 +196,10 @@ local function renderChecklist()
 	local lines = {}
 	for _, id in summary.order do
 		local record = summary.checks[id]
-		table.insert(lines, string.format("[%s] %-18s %s", statusToken(record.status), id, record.detail))
+		table.insert(
+			lines,
+			string.format("[%s] %-18s %s", statusToken(record.status), id, record.detail)
+		)
 	end
 	checklist.Text = table.concat(lines, "\n")
 end
@@ -296,14 +296,17 @@ local function prepareTargets()
 	local ok, errorMessage = xpcall(function()
 		heroActorId = waitForHero()
 
-		local objectResult = ensureSuccess(submit("scene.spawn_object", {
-			kind = "acceptance-console",
-			position = { x = OBJECT_POSITION.X, y = 0, z = OBJECT_POSITION.Z },
-			state = { state = "closed", locked = false },
-			interactionIds = { "open", "close", "activate", "deactivate", "inspect" },
-			searchDc = 1,
-			knowledgeIds = {},
-		}), "scene.spawn_object")
+		local objectResult = ensureSuccess(
+			submit("scene.spawn_object", {
+				kind = "acceptance-console",
+				position = { x = OBJECT_POSITION.X, y = 0, z = OBJECT_POSITION.Z },
+				state = { state = "closed", locked = false },
+				interactionIds = { "open", "close", "activate", "deactivate", "inspect" },
+				searchDc = 1,
+				knowledgeIds = {},
+			}),
+			"scene.spawn_object"
+		)
 		local objectOutcome = outcome(objectResult)
 		objectId = type(objectOutcome) == "table" and objectOutcome.id or nil
 		if objectId == nil then
@@ -312,24 +315,30 @@ local function prepareTargets()
 		createObjectVisual(objectId)
 		pass("setup-object", objectId)
 
-		ensureSuccess(submit("npc.register_definition", {
-			definitionId = DEFINITION_ID,
-			rightsStatus = "original",
-			definition = {
-				runtime = {
-					armorClass = 8,
-					maximumHitPoints = 40,
-					speedStuds = 0,
-					attacks = {},
+		ensureSuccess(
+			submit("npc.register_definition", {
+				definitionId = DEFINITION_ID,
+				rightsStatus = "original",
+				definition = {
+					runtime = {
+						armorClass = 8,
+						maximumHitPoints = 40,
+						speedStuds = 0,
+						attacks = {},
+					},
 				},
-			},
-		}), "npc.register_definition")
-		local npcResult = ensureSuccess(submit("npc.spawn", {
-			definitionId = DEFINITION_ID,
-			sceneId = "scene:slice-01-acceptance",
-			position = { x = DUMMY_POSITION.X, y = DUMMY_POSITION.Y, z = DUMMY_POSITION.Z },
-			hidden = false,
-		}), "npc.spawn")
+			}),
+			"npc.register_definition"
+		)
+		local npcResult = ensureSuccess(
+			submit("npc.spawn", {
+				definitionId = DEFINITION_ID,
+				sceneId = "scene:slice-01-acceptance",
+				position = { x = DUMMY_POSITION.X, y = DUMMY_POSITION.Y, z = DUMMY_POSITION.Z },
+				hidden = false,
+			}),
+			"npc.spawn"
+		)
 		local npcOutcome = outcome(npcResult)
 		dummyActorId = type(npcOutcome) == "table" and npcOutcome.id or nil
 		if dummyActorId == nil then
@@ -346,7 +355,8 @@ local function prepareTargets()
 			error("training dummy token was not projected")
 		end
 		pass("setup-dummy", dummyActorId)
-		operation.Text = "대상 준비 PASS · 안내 순서대로 실제 입력을 수행하세요"
+		operation.Text =
+			"대상 준비 PASS · 안내 순서대로 실제 입력을 수행하세요"
 	end, function(errorValue)
 		return debug.traceback(tostring(errorValue))
 	end)
@@ -453,9 +463,4 @@ end)
 renderChecklist()
 task.spawn(prepareTargets)
 
-print(
-	string.format(
-		"[RVTT Context Input] event=ready batch=%s persistence=disabled",
-		BATCH_NAME
-	)
-)
+print(string.format("[RVTT Context Input] event=ready batch=%s persistence=disabled", BATCH_NAME))
