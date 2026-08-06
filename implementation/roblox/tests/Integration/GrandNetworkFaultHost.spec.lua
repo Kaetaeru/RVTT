@@ -10,7 +10,7 @@ local function newSynchronousSignal(): any
 		local listenerId = nextId
 		listeners[listenerId] = callback
 		local connection = {}
-		function connection:Disconnect()
+		connection.Disconnect = function(_connection: any)
 			listeners[listenerId] = nil
 		end
 		return connection
