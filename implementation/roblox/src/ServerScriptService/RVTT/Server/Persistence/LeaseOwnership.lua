@@ -23,7 +23,7 @@ local function nonNegative(value: number?, fallback: number): number
 end
 
 function LeaseOwnership.new(coordinator: any, diagnostics: any, options: Options?): any
-	local resolved = if options ~= nil then options else {}
+	local resolved: Options = if options ~= nil then options else {}
 	return setmetatable({
 		coordinator = coordinator,
 		diagnostics = diagnostics,
