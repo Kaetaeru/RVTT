@@ -2,7 +2,14 @@
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local testMode = ReplicatedStorage:FindFirstChild("RVTT_TestMode")
-if testMode == nil or not testMode:IsA("StringValue") or testMode.Value ~= "unit" then
+local grandMode = ReplicatedStorage:FindFirstChild("RVTT_GrandMode")
+local unitModeEnabled = testMode ~= nil
+	and testMode:IsA("StringValue")
+	and testMode.Value == "unit"
+local grandModeEnabled = grandMode ~= nil
+	and grandMode:IsA("StringValue")
+	and grandMode.Value == "single-client"
+if not unitModeEnabled and not grandModeEnabled then
 	return
 end
 
