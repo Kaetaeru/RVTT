@@ -3,8 +3,9 @@
 - 상태: `CURRENT · HIGH_FIDELITY_PRODUCTION_TARGET`
 - 최종 갱신일: 2026-08-06
 - 실행 파일: [`index.html`](index.html)
-- Style Tokens: [`rvtt-ui.css`](rvtt-ui.css)
-- Screen·State Definitions: [`rvtt-ui.js`](rvtt-ui.js)
+- Loader·Screen Definitions: [`rvtt-ui.js`](rvtt-ui.js)
+- Loading Fallback Style: [`rvtt-ui.css`](rvtt-ui.css)
+- 압축 제작 자산: [`assets/`](assets/)
 - 상위 결정: [`ADR-0089`](../../decisions/ADR-0089-observer-first-session-and-ui-surface-realignment.md)
 - 직접 플레이 입력: [`ADR-0088`](../../decisions/ADR-0088-direct-play-pointer-grammar-and-feedback.md)
 - 구현 직전 명세: [`implementation-ready-ui-ux-and-settings-spec.md`](../../ui/shared/implementation-ready-ui-ux-and-settings-spec.md)
@@ -16,6 +17,8 @@ High-Fidelity HTML Production Target
 ```
 
 이 HTML은 단순 화면 배치 예시가 아니다. Roblox `ScreenGui`, `Frame`, `UIGridLayout`, `UIListLayout`, `UIScale`, `UIStroke`, `UICorner`와 Input Context를 구현할 때 사용하는 시각·상태 기준서다.
+
+`index.html`은 `rvtt-ui.js` Loader를 통해 압축된 전체 Style·Renderer를 불러온다. HTTP 환경에서는 상대 `assets/` 경로를 사용하고, 로컬 `file://` 환경에서 상대 Fetch가 차단되면 현재 GitHub Branch의 Raw Asset을 사용한다. 따라서 로컬에서 열 때도 인터넷 연결이 필요할 수 있다.
 
 ## 제작 기준
 
@@ -159,7 +162,7 @@ AnchorPoint
 ## 정적 검증
 
 - HTML parse: PASS
-- Local CSS·JS reference: PASS
+- Local Shell CSS·JS reference: PASS
 - JavaScript syntax: PASS
 - 28개 Renderer smoke test: PASS
 - Screen ID unique: PASS
