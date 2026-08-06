@@ -104,7 +104,7 @@ for phrase in ("executeAtAuthority", "expectedRevision", "authorityEpoch"):
         errors.append(f"ScenarioRuntime.lua: missing fault contract {phrase}")
 
 capacity_text = (ROOT / "tests" / "Integration" / "GrandCapacitySample.spec.lua").read_text(encoding="utf-8")
-for phrase in ("[RVTT Capacity Sample]", "elapsedMs", "restoreMs"):
+for phrase in ("[RVTT Spec Summary] id=grand-capacity-sample sample=capacity", "elapsedMs", "restoreMs"):
     if phrase not in capacity_text:
         errors.append(f"GrandCapacitySample.spec.lua: missing measurement {phrase}")
 
