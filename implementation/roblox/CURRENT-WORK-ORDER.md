@@ -1,6 +1,6 @@
 # RVTT Roblox Implementation 현재 작업 순서
 
-- 상태: `GRAND_ACCEPTANCE_FOUNDATION_VALIDATED`
+- 상태: `GRAND_SLICES_02_12_AUTOMATED_BASELINE_STATIC_VERIFIED`
 - 문서 종류: Production Implementation Work Order
 - 최종 갱신일: 2026-08-06
 - Grand Campaign: [`GRAND-ACCEPTANCE-CAMPAIGN.md`](GRAND-ACCEPTANCE-CAMPAIGN.md)
@@ -21,19 +21,25 @@ Structure·Policy·Toolchain CI
 → PASSED
 
 Roblox Studio Runtime Baseline
-→ VERIFIED
+→ VERIFIED · HISTORICAL EVIDENCE
 
 Slice 01 Token Pick·Move·Projection
 → VERIFIED IN STUDIO
 
 WASD·Middle-button·Frame Camera Correction
-→ IMPLEMENTED · STUDIO PENDING
+→ IMPLEMENTED · LATEST STUDIO PENDING
 
-Grand Acceptance Manifest·Runner·Report
-→ FOUNDATION VALIDATED
+Grand Manifest·Runner·Grouped Studio Runs·Report
+→ IMPLEMENTED · STATIC VERIFIED
+
+Slices 02–12 Automated Authority Baseline
+→ IMPLEMENTED · STATIC VERIFIED · STUDIO NOT EXECUTED
+
+Grand Cross-slice Session·Authority Fault·Capacity Sample
+→ IMPLEMENTED · STATIC VERIFIED · STUDIO NOT EXECUTED
 
 현재 작업
-→ Grand Campaign Phase Harness 확장
+→ Full Grand Campaign에 남은 Persistence·Human UI·Fault Host·Soak Gate 연결
 ```
 
 ## 2. 테스트 운영 방식
@@ -43,115 +49,181 @@ Grand Acceptance Manifest·Runner·Report
 ```text
 관련 기능 구현
 → 자동 회귀 테스트·정적 CI
-→ 해당 기능을 Grand Phase에 등록
-→ 여러 Slice와 복구·보안 변경 축적
+→ Grand Run에 Scenario 등록
+→ 여러 Slice·복구·보안·성능 변경 축적
 → Grand Acceptance Campaign 한 번 실행
-→ 전체 실패 수집
+→ 모든 실패 수집
 → Root Cause별 수정 Batch
 → Grand Campaign 전체 재실행
 ```
 
-사용자는 하나의 완전한 Windows PowerShell 블록을 한 번 실행한다. Runner는 여러 Place를 Build하고 Studio Phase를 순서대로 열며, Studio를 닫으면 다음 Phase로 진행한다.
+사용자는 하나의 완전한 Windows PowerShell 블록을 한 번 실행한다. Runner는 같은 `runId`와 Project를 사용하는 Phase를 하나의 Studio 실행으로 묶고, Studio 종료 후 다음 실행 그룹으로 진행한다.
 
-## 3. Grand Campaign 현재 실행 범위
+## 3. 현재 Grand 실행 그룹
 
-| 순서 | 상태 | Phase | 완료 조건 |
-|---:|---|---|---|
-| 1 | READY | Static Build | 등록된 모든 Rojo Project Build 성공 |
-| 2 | READY | Unit·Integration Baseline | `[RVTT Tests] ... failed=0` 수집 |
-| 3 | READY | Slice 01 World Interaction | 실제 입력 기반 16개 Check PASS |
-| 4 | READY | Multi-client Authority | DM·Player·Observer Summary `failed=0` |
-| 5 | DEFERRED | Live DataStore Baseline | Grand Persistence Milestone에서 실행 |
-| 6 | DEFERRED | Persistence·Restart Recovery | Load·Save·Restart·Migration·Conflict 일괄 PASS |
-| 7 | PLANNED | Slices 02–12 | Slice별 Harness·Summary 연결 |
-| 8 | BLOCKED | Slices 13–15 Content | 공식 데이터·권리·Asset 승인 필요 |
-| 9 | PLANNED | UI·Accessibility | Human Review 결과 구조화 수집 |
-| 10 | PLANNED | Fault·Performance·Soak | 실제 Host와 측정 Evidence 필요 |
-| 11 | PLANNED | Slice 16 Full Session | 전체 Phase와 Release Gate PASS |
+### `grand-single-client`
 
-아직 구현되지 않은 Phase는 Grand Report에서 `blocked`로 표시한다. 현재 실행 가능한 Phase가 PASS하더라도 전체 Campaign 결과는 Blocked Phase가 남아 있으면 `PARTIAL`이다.
+한 번의 로컬 Studio Play에서 다음을 함께 실행한다.
 
-## 4. 현재 구현 작업 순서
+- 기존 Unit·Integration·Security·Disclosure Source
+- Slice 01 실제 WASD·중클릭·F·휠·Token 이동 Acceptance
+- Slices 02–12 서버 권위 자동 Scenario
+- Cross-slice Full-session 자동 Scenario
+- Stale Revision·Stale Epoch·Duplicate·Invalid Payload·Corrupt Restore Scenario
+- Capacity Sample: Scene Object 32, Item 32, Journal Document 16
+- `[RVTT Spec Summary]`, `[RVTT Spec Failure]`, `[RVTT Tests]`, Slice 01 Batch Summary
+- Capacity `elapsedMs`·`restoreMs` 측정값
 
-| 순서 | 상태 | 작업 | 완료 조건 |
-|---:|---|---|---|
-| 1 | DONE | Grand Manifest와 상태 모델 | READY·DEFERRED·PLANNED·BLOCKED Phase 등록 |
-| 2 | DONE | Windows Grand Runner Foundation | Build·Studio 순차 실행·Log 수집·통합 Report |
-| 3 | DONE | Runner Parser·SelfTest CI | Windows Parser와 Manifest SelfTest 성공 |
-| 4 | IN_PROGRESS | Slice 01 Grand Phase 안정화 | WASD·중클릭·F·휠 실제 입력 Summary 수집 |
-| 5 | QUEUED | Slice 02 Rules·D20 Harness | Check·Attack·Save·Damage·Healing·Disclosure |
-| 6 | QUEUED | Slice 03–12 Harness | 각 Slice 사용자·거부·복구 Scenario 연결 |
-| 7 | DEFERRED | Persistence Grand Phase | DataStore 변경 축적 후 한 번에 구현·실행 |
-| 8 | BLOCKED | Slices 13–15 Content Harness | Rights·Source Version·Distribution 승인 |
-| 9 | QUEUED | UI·Accessibility Evidence | Checklist 결과와 Screenshot Reference 수집 |
-| 10 | QUEUED | Fault·Performance Host | Drop·Duplicate·Restart·Soak·Capacity 측정 |
-| 11 | QUEUED | Slice 16 Release Campaign | Full Session·Migration·Runbook Release Gate |
+### `grand-multi-client`
 
-## 5. Studio 실행 규칙
+별도 Studio Server·3 Clients 실행에서 다음을 확인한다.
 
-- 자동 Gate가 실패한 상태에서는 Grand Campaign을 실행하지 않는다.
-- Grand Campaign은 첫 실패에서 중단하지 않는다.
-- 각 Studio Phase는 최종 Summary를 출력한 뒤 Studio를 닫는다.
-- Runner가 최근 Roblox Log에서 Phase Summary를 수집한다.
-- Summary 미발견은 PASS가 아니라 `incomplete`다.
-- 일반 기능과 Persistence는 같은 보고서 안에서도 별도 Phase로 기록한다.
-- Persistence는 `-IncludePersistence`가 명시된 Grand Milestone에서만 실행한다.
-- 사용자에게는 저장소 Update·정확한 Head 검사·Runner 실행이 포함된 전체 PowerShell 블록만 제공한다.
+- DM·Player·Observer Authority
+- Viewer별 Projection과 Negative Disclosure
+- Stale Revision Recovery
+- Disconnect·Reconnect·Full Resync
+
+### Grand Persistence
+
+`-IncludePersistence`가 명시된 전용 Milestone에서만 실행한다.
+
+- Live DataStore Baseline
+- Load·Save·Dirty·Flush
+- Stop·Play·Server Restart Restore
+- Migration·Lease·Conflict·Failure Recovery
+
+## 4. Slices 02–12 자동 baseline 범위
+
+| Slice | 구현된 자동 Scenario | 전체 Slice에서 아직 남은 범위 |
+|---:|---|---|
+| 02 | Ability Check·Save·Attack·HP·Authorization·Idempotency | 사용자 Flow·Roll Disclosure·Pending Recovery·Content Coverage |
+| 03 | Interaction·Locked/Hidden Object·Search·Knowledge·Fog·Restore | 실제 WASD Navigation·Input Context·Projection Disclosure |
+| 04 | Lifecycle·Initiative·Turn·Action·Rollback·End·Restore | Reaction·Objective·Death·Restart |
+| 05 | Draft Validation·Ownership·Activation·Level Up·Restore | Compiler·Review·Sheet·Actor Binding·Migration |
+| 06 | Item Create·Quantity Clamp·Ownership·Move·Equip·Drop·Restore | Stack·Slot Conflict·Streaming·World Presence·UI |
+| 07 | Clock·Schedule·Activity·Ownership·Completion·Restore | Rest·Resource·Crafting·Travel·Restart |
+| 08 | Preference Validation·User Isolation·Restore | Replica·Semantic Input·Reconciliation·Presentation·Human Accessibility |
+| 09 | Document Ownership·Edit·Structured Link·Ping·Restore | Markdown·ACL Search·Backlink·Safe Navigation |
+| 10 | Source·Stable Object·Candidate Invalidation·Compile·Publish·Restore | Editor Tool·Diagnostic·Test Play·Large Scene |
+| 11 | Control·Quick Action·Runtime Patch·Recovery Request·Restore | Player View·Pause·Transition·Live Patch·Operator Recovery |
+| 12 | Pack Rights·Dependency·Activation·Localization·Restore | Signing·Trust Host·Budget·Migration·Removal·Catalog Load |
+
+자동 baseline은 전체 Slice 완료 판정이 아니다. 각 Slice Phase는 Manifest에서 계속 `planned`로 유지하며 남은 Gate를 `blocker`에 명시한다.
+
+## 5. Cross-slice·Fault·Capacity 계약
+
+### Cross-slice Session
+
+```text
+Character·Session·Scene
+→ UI Preference
+→ Original Content Pack
+→ Scene Authoring·Compile·Publish
+→ Journal
+→ Loot·Equip
+→ Exploration Interaction
+→ Rules Check
+→ Encounter Start·End
+→ Time Activity
+→ DM Quick Action
+→ Snapshot·Restore
+```
+
+모든 Domain이 하나의 Revision Stream과 AuthorityEpoch를 공유하고 복구 후에도 Domain별 상태가 유지되는지 검사한다.
+
+### Authority Fault
+
+- Stale Revision 거부와 현재 Revision 반환
+- Stale AuthorityEpoch 거부
+- Invalid Payload 거부
+- 동일 Command ID Replay의 멱등성
+- Corrupt Snapshot Migration 실패와 현재 Runtime 보존
+- Restore 후 AuthorityEpoch 갱신
+- 이전 Epoch Command 폐기
+
+### Capacity Sample
+
+임의 성능 PASS 기준은 아직 두지 않는다. 다음 구조적 정합성과 실제 측정값만 수집한다.
+
+- Scene Object 32개
+- Item 32개
+- Journal Document 16개
+- Snapshot Revision
+- Scenario 전체 `elapsedMs`
+- Restore `restoreMs`
+- Snapshot·Restore 후 개수 보존
 
 ## 6. 현재 Studio Evidence
 
 ```text
 Unit·Integration
-→ passed=173 failed=0
+→ passed=173 failed=0 · HISTORICAL
 
 Live DataStore
-→ passed=10 failed=0
+→ passed=10 failed=0 · HISTORICAL
 
 3-client MultiClient
-→ passed=56 failed=0 clients=3 staleRetries=3
+→ passed=56 failed=0 clients=3 staleRetries=3 · HISTORICAL
 
 Slice 01 Token Pick·Move·Projection
-→ PASS
+→ USER VERIFIED
 
 Camera Zoom
-→ PASS
+→ USER VERIFIED
 
 Camera WASD·Middle-button·Frame
-→ 최신 Correction Studio 재검증 전
+→ LATEST CORRECTION STUDIO RETEST PENDING
+
+Slices 02–12·Cross-slice·Fault·Capacity
+→ NEW STUDIO EVIDENCE NONE
 ```
 
-기존 Camera 메서드 직접 호출로 생성된 Slice 01 `16/16 PASS`는 전체 사용자 흐름 Evidence로 사용하지 않는다.
+기존 Camera 메서드 직접 호출로 생성된 Slice 01 `16/16 PASS`는 실제 입력 Evidence로 사용하지 않는다.
 
 ## 7. 자동 Gate 결과
 
-Grand Foundation 최신 검증 범위:
+현재 Grand Harness 정적 검증:
 
+- Grand Contract Validator: PASS
+- Structure·Security·Policy Validator: PASS
 - Windows PowerShell Parser: PASS
 - Grand Manifest SelfTest: PASS
-- Structure·Security·Policy Validator: PASS
-- Grand Manifest Schema·Phase Registry Validator: PASS
-- StyLua·Selene: PASS
-- Production·Test·Multi-client·Persistence·Slice01 Rojo Build: PASS
+- StyLua: PASS
+- Selene: PASS
+- Production·Test·Grand Single-client·Multi-client·Persistence·Slice01 Rojo Build: PASS
 - Production·Test Luau Type Analysis: PASS
 - Documentation Validation: PASS
 
-위 결과는 Runner Foundation과 정적 Build Evidence이며 실제 사용자 PC Grand Campaign 실행을 대신하지 않는다.
+위 결과는 Source·Build·Type Evidence이며 실제 Studio Runtime PASS를 대신하지 않는다.
 
-## 8. 다음 Gate
+## 8. 다음 구현 순서
+
+| 순서 | 상태 | 작업 | 완료 조건 |
+|---:|---|---|---|
+| 1 | DONE | Grand Runner Foundation | Grouped Studio Run·Log Collection·JSON/Markdown Report |
+| 2 | DONE | Slices 02–12 Automated Baseline | 11개 Slice Scenario와 Spec별 Summary 등록 |
+| 3 | DONE | Cross-slice Authority Scenario | Full-session State 연결과 Restore 검사 |
+| 4 | DONE | Authority Fault Baseline | Stale·Duplicate·Epoch·Corrupt Restore 검사 |
+| 5 | DONE | Capacity Measurement Sample | 구조적 개수와 시간 Evidence 출력 |
+| 6 | IN_PROGRESS | Full Fault Host | Network Drop·Delay·Reorder·Storage Failure Injection |
+| 7 | QUEUED | Persistence Grand Phase | DataStore 변경 축적 후 일괄 Harness·Summary |
+| 8 | QUEUED | UI·Accessibility Evidence | Human Checklist와 Screenshot Reference 수집 |
+| 9 | BLOCKED | Slices 13–15 Content | Source Version·Rights·Distribution·Asset 승인 |
+| 10 | QUEUED | Performance·Soak Host | 측정 Budget·다중 Client·장시간 Session |
+| 11 | QUEUED | Slice 16 Release Campaign | 전체 Phase·Migration·Runbook Gate |
+
+## 9. 다음 Gate
 
 ```text
-Grand Acceptance Foundation 자동 Gate
+Grand Harness 자동 Gate
 → PASS
 
-현재 READY Phase Grand Runtime
+현재 Grand Runtime
 → 사용자 실행 보류
 
-Slices 02–12 Harness 연결
+Persistence·Human UI·Full Fault·Soak Phase
 → 구현 진행
 
-Persistence Grand Phase
-→ 충분한 변경 축적 전까지 DEFERRED
-
 Full Grand Campaign
-→ 모든 Phase가 READY가 된 Milestone에서 한 번 실행
+→ 실행할 모든 대상 Phase가 READY인 Milestone에서 한 번 실행
 ```
