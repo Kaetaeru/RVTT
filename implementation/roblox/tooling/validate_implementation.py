@@ -9,6 +9,7 @@ errors: list[str] = []
 for project in (
     "default.project.json",
     "test.project.json",
+    "grand-single-client.project.json",
     "live-datastore.project.json",
     "multi-client.project.json",
     "persistence-acceptance.project.json",
@@ -26,6 +27,19 @@ try:
         errors.append("slice01-acceptance.project.json: regular acceptance must disable Studio persistence")
 except Exception as exc:
     errors.append(f"slice01-acceptance.project.json persistence contract: {exc}")
+
+try:
+    grand_project = json.loads((ROOT / "grand-single-client.project.json").read_text(encoding="utf-8"))
+    grand_persistence_flag = grand_project["tree"]["ServerStorage"]["RVTT"]["EnableStudioPersistence"]["$properties"]["Value"]
+    if grand_persistence_flag is not False:
+        errors.append("grand-single-client.project.json: single-client grand run must disable Studio persistence")
+    grand_mode = grand_project["tree"]["ReplicatedStorage"]["RVTT_GrandMode"]["$properties"]["Value"]
+    if grand_mode != "single-client":
+        errors.append("grand-single-client.project.json: RVTT_GrandMode must be single-client")
+    if "RVTTGrandTests" not in grand_project["tree"]["ServerScriptService"]:
+        errors.append("grand-single-client.project.json: RVTTGrandTests mapping is required")
+except Exception as exc:
+    errors.append(f"grand-single-client.project.json contract: {exc}")
 
 acceptance_manifest_path = ROOT / "acceptance-batch.json"
 try:
@@ -76,15 +90,37 @@ try:
     for project in static_projects:
         if not (ROOT / project).exists():
             errors.append(f"grand-acceptance-manifest.json: missing static project {project}")
+    if "grand-single-client.project.json" not in static_projects:
+        errors.append("grand-acceptance-manifest.json: grand single-client project is not registered")
 
+    run_contracts: dict[str, tuple[str, str]] = {}
     for phase in phases:
         status = phase.get("status")
         if status not in {"ready", "deferred", "planned", "blocked"}:
             errors.append(f"grand-acceptance-manifest.json: invalid status for {phase.get('id')}")
         if status == "ready" and phase.get("execution") != "automated":
-            for field in ("project", "summaryToken", "passRegex"):
+            for field in ("project", "summaryToken", "passRegex", "runId"):
                 if not phase.get(field):
                     errors.append(f"grand-acceptance-manifest.json: {phase.get('id')} missing {field}")
+            run_id = phase.get("runId")
+            contract = (phase.get("project"), phase.get("execution"))
+            if run_id:
+                previous = run_contracts.get(run_id)
+                if previous is not None and previous != contract:
+                    errors.append(f"grand-acceptance-manifest.json: runId contract mismatch for {run_id}")
+                run_contracts[run_id] = contract
+
+    single_client_phases = {
+        phase.get("id"): phase
+        for phase in phases
+        if phase.get("runId") == "grand-single-client"
+    }
+    for phase_id in ("unit-integration-baseline", "slice01-world-interaction"):
+        phase = single_client_phases.get(phase_id)
+        if phase is None:
+            errors.append(f"grand-acceptance-manifest.json: {phase_id} is not in grand-single-client")
+        elif phase.get("project") != "grand-single-client.project.json":
+            errors.append(f"grand-acceptance-manifest.json: {phase_id} uses the wrong shared project")
 except Exception as exc:
     errors.append(f"grand-acceptance-manifest.json: {exc}")
 
@@ -101,7 +137,9 @@ for path in luau:
         errors.append(f"{relative}: missing --!strict")
     if re.search(r"\bwhile\s+true\s+do\b", text):
         errors.append(f"{relative}: unbounded loop")
-    if "_G" in text or "shared." in text:
+    uses_global_g = re.search(r"(?<![A-Za-z0-9_])_G(?![A-Za-z0-9_])", text) is not None
+    uses_shared_global = re.search(r"(?<![A-Za-z0-9_])shared\.", text) is not None
+    if uses_global_g or uses_shared_global:
         errors.append(f"{relative}: hidden global state")
     if path.is_relative_to(ROOT / "src" / "StarterGui") and ("FireServer" in text or "InvokeServer" in text):
         errors.append(f"{relative}: UI component calls remote directly")
@@ -124,6 +162,7 @@ required = [
     "GRAND-ACCEPTANCE-CAMPAIGN.md",
     "acceptance-batch.json",
     "grand-acceptance-manifest.json",
+    "grand-single-client.project.json",
     "src/ReplicatedStorage/RVTT/Shared/Core/ValueGuard.lua",
     "src/ReplicatedStorage/RVTT/Shared/Diagnostics/BatchSummary.lua",
     "src/ReplicatedStorage/RVTT/Shared/World/WorldTokenContract.lua",
@@ -141,8 +180,13 @@ required = [
     "src/StarterPlayer/StarterPlayerScripts/RVTT/Client/World/WorldTokenInputController.lua",
     "src/StarterPlayer/StarterPlayerScripts/RVTT/Client/World/WorldTokenRuntime.lua",
     "src/StarterGui/RVTT/App.client.lua",
+    "tests/TestRunner.server.lua",
+    "tests/Integration/ScenarioRuntime.lua",
     "tests/Integration/MultiViewerFlow.spec.lua",
     "tests/Integration/Slice01Flow.spec.lua",
+    "tests/Integration/Slice02CoreRules.spec.lua",
+    "tests/Integration/Slice03Exploration.spec.lua",
+    "tests/Integration/Slice04Encounter.spec.lua",
     "tests/Unit/BatchSummary.spec.lua",
     "tests/Unit/WorldInteractionMath.spec.lua",
     "tests/Unit/WorldTokenContract.spec.lua",
@@ -206,6 +250,19 @@ if world_acceptance_path.exists():
         if forbidden_phrase in world_acceptance:
             errors.append(f"WorldTokenAcceptance.client.lua: regular acceptance contains {forbidden_phrase}")
 
+test_runner_path = ROOT / "tests/TestRunner.server.lua"
+if test_runner_path.exists():
+    test_runner = test_runner_path.read_text(encoding="utf-8")
+    for required_phrase in (
+        "RVTT_GrandMode",
+        "[RVTT Spec Summary]",
+        'id = "slice02-core-rules"',
+        'id = "slice03-exploration"',
+        'id = "slice04-encounter"',
+    ):
+        if required_phrase not in test_runner:
+            errors.append(f"TestRunner.server.lua: missing grand test contract {required_phrase}")
+
 batch_runner_path = ROOT / "tooling/run-studio-acceptance-batch.ps1"
 if batch_runner_path.exists():
     batch_runner = batch_runner_path.read_text(encoding="utf-8")
@@ -231,9 +288,13 @@ if grand_runner_path.exists():
         "grand-acceptance-manifest.json",
         "IncludePersistence",
         "Get-RecentStudioLines",
+        "Get-PhaseTokens",
+        "runId",
+        "grand-single-client",
         "Wait-ForStudioExit",
         "RVTT Grand Summary",
         "RVTT-grand-acceptance-report.json",
+        "RVTT-grand-acceptance-report.md",
         "SelfTest",
     ):
         if required_phrase not in grand_runner:
