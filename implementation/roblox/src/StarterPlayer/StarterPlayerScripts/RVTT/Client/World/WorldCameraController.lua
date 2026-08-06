@@ -1,438 +1,341 @@
 --!strict
 
-local ContextActionService = game:GetService("ContextActionService")
+local GuiService = game:GetService("GuiService")
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
 local Signal = require(ReplicatedStorage.RVTT.Shared.Core.Signal)
-local WorldInteractionMath = require(ReplicatedStorage.RVTT.Shared.World.WorldInteractionMath)
 
-local FRAME_ACTION = "RVTTWorldCameraFrame"
-local PAN_ACTION = "RVTTWorldCameraPan"
-local WASD_ACTION = "RVTTWorldCameraWASD"
-local INPUT_PRIORITY = Enum.ContextActionPriority.High.Value
-local MIN_POINTER_DELTA = 0.01
-
-type CameraKeys = {
-	W: boolean,
-	A: boolean,
-	S: boolean,
-	D: boolean,
-}
-
-export type Controller = {
-	renderer: any,
-	enabled: boolean,
-	target: Vector3,
-	distance: number,
-	yaw: number,
-	elevation: number,
-	dragging: boolean,
-	lastPointerPosition: Vector2?,
-	movementModeActive: boolean,
-	keyboard: CameraKeys,
-	keyboardPanReported: boolean,
-	pointerPanReported: boolean,
-	connections: { RBXScriptConnection },
-	previousType: Enum.CameraType?,
-	previousCFrame: CFrame?,
-	Changed: any,
-	InputResolved: any,
-	_apply: (self: Controller, event: string) -> boolean,
-	_reportInput: (
-		self: Controller,
-		action: string,
-		source: string,
-		processed: boolean,
-		before: CFrame?,
-		applied: boolean
-	) -> (),
-	setMovementModeActive: (self: Controller, active: boolean) -> (),
-	framePosition: (self: Controller, position: Vector3, distance: number?) -> boolean,
-	frameSelected: (self: Controller) -> boolean,
-	requestFrame: (self: Controller, source: string, processed: boolean?) -> boolean,
-	frameAll: (self: Controller) -> boolean,
-	panPixels: (self: Controller, delta: Vector2) -> boolean,
-	panKeyboard: (self: Controller, axis: Vector2, deltaTime: number) -> boolean,
-	zoomBy: (self: Controller, steps: number) -> boolean,
-	start: (self: Controller) -> (),
-	destroy: (self: Controller) -> (),
-}
+local BASE_YAW = math.rad(180)
+local DEFAULT_PITCH = math.rad(45)
+local MIN_PITCH = math.rad(-85)
+local MAX_PITCH = math.rad(85)
+local DEFAULT_DISTANCE = 65
+local MIN_DISTANCE = 20
+local MAX_DISTANCE = 130
+local ROTATE_SENSITIVITY = 0.004
+local ZOOM_STEP = 5
+local VERTICAL_MOVE_STEP = 5
+local SMOOTH_SPEED = 14
+local CAMERA_MOVE_SPEED = 55
+local FIELD_OF_VIEW = 50
 
 local Controller = {}
 Controller.__index = Controller
 
-local function camera(): Camera?
-	return Workspace.CurrentCamera
+local function clamp(value: number, minimum: number, maximum: number): number
+	return math.max(minimum, math.min(maximum, value))
 end
 
-local function flatUnit(vector: Vector3, fallback: Vector3): Vector3
-	local flat = Vector3.new(vector.X, 0, vector.Z)
-	return if flat.Magnitude > 0.001 then flat.Unit else fallback
-end
-
-local function cframeChanged(before: CFrame?, after: CFrame?): boolean
-	if before == nil or after == nil then
+local function isPointerOverVisibleUi(): boolean
+	local playerGui = Players.LocalPlayer:FindFirstChildOfClass("PlayerGui")
+	if playerGui == nil then
 		return false
 	end
-	if (after.Position - before.Position).Magnitude > 0.001 then
+
+	local function contains(position: Vector2, ignoreInset: boolean): boolean
+		for _, guiObject in playerGui:GetGuiObjectsAtPosition(position.X, position.Y) do
+			local screenGui = guiObject:FindFirstAncestorOfClass("ScreenGui")
+			if screenGui ~= nil and screenGui.Enabled and screenGui.IgnoreGuiInset == ignoreInset then
+				if guiObject:IsA("GuiButton")
+					or guiObject:IsA("TextBox")
+					or guiObject:IsA("ScrollingFrame")
+					or guiObject.BackgroundTransparency < 1
+				then
+					return true
+				end
+				if guiObject:IsA("TextLabel") and guiObject.Text ~= "" and guiObject.TextTransparency < 1 then
+					return true
+				end
+				if guiObject:IsA("ImageLabel") and guiObject.Image ~= "" and guiObject.ImageTransparency < 1 then
+					return true
+				end
+			end
+		end
+		return false
+	end
+
+	local pointer = UserInputService:GetMouseLocation()
+	if contains(pointer, true) then
 		return true
 	end
-	return before.LookVector:Dot(after.LookVector) < 0.99999
+	local inset = GuiService:GetGuiInset()
+	return contains(pointer - inset, false)
 end
 
-local function clearKeyboard(keys: CameraKeys)
-	keys.W = false
-	keys.A = false
-	keys.S = false
-	keys.D = false
-end
-
-local function setKeyState(keys: CameraKeys, keyCode: Enum.KeyCode, pressed: boolean): boolean
-	if keyCode == Enum.KeyCode.W then
-		keys.W = pressed
-	elseif keyCode == Enum.KeyCode.A then
-		keys.A = pressed
-	elseif keyCode == Enum.KeyCode.S then
-		keys.S = pressed
-	elseif keyCode == Enum.KeyCode.D then
-		keys.D = pressed
-	else
-		return false
-	end
-	return true
-end
-
-function Controller.new(renderer: any, enabled: boolean): Controller
+function Controller.new(renderer: any, acceptanceMode: boolean?): any
 	return setmetatable({
 		renderer = renderer,
-		enabled = enabled,
-		target = Vector3.new(8, 1, 8),
-		distance = 36,
-		yaw = math.rad(45),
-		elevation = math.rad(38),
-		dragging = false,
-		lastPointerPosition = nil,
-		movementModeActive = false,
-		keyboard = { W = false, A = false, S = false, D = false },
-		keyboardPanReported = false,
-		pointerPanReported = false,
+		acceptanceMode = acceptanceMode == true,
+		camera = nil,
+		targetPivot = Vector3.zero,
+		currentPivot = Vector3.zero,
+		targetDistance = DEFAULT_DISTANCE,
+		currentDistance = DEFAULT_DISTANCE,
+		targetYawOffset = 0,
+		currentYawOffset = 0,
+		targetPitch = DEFAULT_PITCH,
+		currentPitch = DEFAULT_PITCH,
+		middleMouseDown = false,
+		lastMousePosition = nil,
+		keyState = { W = false, A = false, S = false, D = false },
+		keyboardPanSuppressors = {},
 		connections = {},
-		previousType = nil,
-		previousCFrame = nil,
-		Changed = Signal.new(),
+		started = false,
+		FrameRequested = Signal.new(),
 		InputResolved = Signal.new(),
-	}, Controller) :: any
+	}, Controller)
 end
 
-function Controller._apply(self: Controller, event: string): boolean
-	if not self.enabled then
-		return false
-	end
-	local currentCamera = camera()
-	if currentCamera == nil then
-		return false
-	end
-	local horizontal = math.cos(self.elevation) * self.distance
-	local offset = Vector3.new(
-		math.sin(self.yaw) * horizontal,
-		math.sin(self.elevation) * self.distance,
-		math.cos(self.yaw) * horizontal
+function Controller:_cameraPosition(): Vector3
+	local finalYaw = BASE_YAW + self.currentYawOffset
+	local horizontalDistance = math.cos(self.currentPitch) * self.currentDistance
+	local verticalDistance = math.sin(self.currentPitch) * self.currentDistance
+	local offset = CFrame.Angles(0, finalYaw, 0):VectorToWorldSpace(
+		Vector3.new(0, verticalDistance, -horizontalDistance)
 	)
-	currentCamera.CameraType = Enum.CameraType.Scriptable
-	currentCamera.CFrame = CFrame.lookAt(self.target + offset, self.target)
-	self.Changed:Fire(event, self.target, self.distance, currentCamera.CFrame)
-	return true
+	return self.currentPivot + offset
 end
 
-function Controller._reportInput(
-	self: Controller,
-	action: string,
-	source: string,
-	processed: boolean,
-	before: CFrame?,
-	applied: boolean
-)
-	local currentCamera = camera()
-	local changed = currentCamera ~= nil and cframeChanged(before, currentCamera.CFrame)
-	self.InputResolved:Fire(action, source, applied, changed, processed)
-	print(
-		string.format(
-			"[RVTT WorldCamera Input] action=%s source=%s applied=%s changed=%s processed=%s",
-			action,
-			source,
-			tostring(applied),
-			tostring(changed),
-			tostring(processed)
-		)
-	)
-end
-
-function Controller.setMovementModeActive(self: Controller, active: boolean)
-	self.movementModeActive = active
-	if active then
-		clearKeyboard(self.keyboard)
-		self.keyboardPanReported = false
+function Controller:_updateCamera()
+	local camera = Workspace.CurrentCamera
+	if camera == nil then
+		return
 	end
-	print(string.format("[RVTT WorldCamera Mode] movementModeActive=%s", tostring(active)))
-end
-
-function Controller.framePosition(self: Controller, position: Vector3, distance: number?): boolean
-	self.target = position + Vector3.new(0, 1.2, 0)
-	if distance ~= nil then
-		self.distance = math.clamp(distance, 12, 120)
+	self.camera = camera
+	camera.CameraType = Enum.CameraType.Scriptable
+	camera.FieldOfView = FIELD_OF_VIEW
+	local cameraPosition = self:_cameraPosition()
+	local lookDirection = (self.currentPivot - cameraPosition).Unit
+	local upDirection = Vector3.yAxis
+	if math.abs(lookDirection:Dot(upDirection)) > 0.999 then
+		local finalYaw = BASE_YAW + self.currentYawOffset
+		upDirection = CFrame.Angles(0, finalYaw, 0):VectorToWorldSpace(Vector3.new(0, 0, -1))
 	end
-	return self:_apply("frame")
+	camera.CFrame = CFrame.lookAt(cameraPosition, self.currentPivot, upDirection)
+	camera.Focus = CFrame.new(self.currentPivot)
 end
 
-function Controller.frameSelected(self: Controller): boolean
+function Controller:_flatAxes(): (Vector3, Vector3)
+	local lookVector = (self.currentPivot - self:_cameraPosition()).Unit
+	local flatForward = Vector3.new(lookVector.X, 0, lookVector.Z)
+	if flatForward.Magnitude < 0.001 then
+		flatForward = Vector3.new(0, 0, -1)
+	else
+		flatForward = flatForward.Unit
+	end
+	local flatRight = Vector3.new(flatForward.Z, 0, -flatForward.X).Unit
+	return flatRight, flatForward
+end
+
+function Controller:_updateKeyboard(deltaTime: number)
+	if next(self.keyboardPanSuppressors) ~= nil then
+		return
+	end
+	local right, forward = self:_flatAxes()
+	local move = Vector3.zero
+	if self.keyState.W then
+		move += forward
+	end
+	if self.keyState.S then
+		move -= forward
+	end
+	if self.keyState.A then
+		move += right
+	end
+	if self.keyState.D then
+		move -= right
+	end
+	if move.Magnitude <= 0 then
+		return
+	end
+	move = move.Unit
+	self.targetPivot += Vector3.new(move.X, 0, move.Z) * CAMERA_MOVE_SPEED * deltaTime
+	self.InputResolved:Fire("pan", "keyboard-wasd", true, true, false)
+end
+
+function Controller:_selectedBounds(): (Vector3?, Vector3?)
 	local actorId = self.renderer:getSelectedActorId()
 	if actorId == nil then
-		return self:frameAll()
+		return nil, nil
 	end
 	local model = self.renderer:getTokenModel(actorId)
 	if model == nil then
-		return self:frameAll()
+		return nil, nil
 	end
 	local boundsCFrame, boundsSize = model:GetBoundingBox()
-	local distance = math.clamp(math.max(boundsSize.X, boundsSize.Y, boundsSize.Z) * 4.5, 18, 48)
-	return self:framePosition(boundsCFrame.Position, distance)
+	return boundsCFrame.Position, boundsSize
 end
 
-function Controller.requestFrame(self: Controller, source: string, processed: boolean?): boolean
-	local currentCamera = camera()
-	local before = if currentCamera ~= nil then currentCamera.CFrame else nil
-	local applied = self:frameSelected()
-	self:_reportInput("frame", source, processed == true, before, applied)
-	return applied
-end
-
-function Controller.frameAll(self: Controller): boolean
-	local center, size = self.renderer:getWorldBounds()
-	if center == nil or size == nil then
-		return self:framePosition(Vector3.new(8, 0, 8), 38)
-	end
-	local distance = math.clamp(math.max(size.X, size.Y, size.Z) * 2.1 + 14, 22, 110)
-	return self:framePosition(center, distance)
-end
-
-function Controller.panPixels(self: Controller, delta: Vector2): boolean
-	if not self.enabled or delta.Magnitude < MIN_POINTER_DELTA then
+function Controller:requestFrame(source: string?, processed: boolean?): boolean
+	local center, size = self:_selectedBounds()
+	if center == nil then
+		self.InputResolved:Fire("frame", source or "api", false, false, processed == true)
 		return false
 	end
-	local currentCamera = camera()
-	if currentCamera == nil then
-		return false
+	local previous = self.targetPivot
+	self.targetPivot = center
+	if size ~= nil then
+		self.targetDistance = clamp(math.max(size.X, size.Y, size.Z) * 4, MIN_DISTANCE, MAX_DISTANCE)
 	end
-	local right = flatUnit(currentCamera.CFrame.RightVector, Vector3.new(1, 0, 0))
-	local forward = flatUnit(currentCamera.CFrame.LookVector, Vector3.new(0, 0, -1))
-	local scale = self.distance * 0.0027
-	self.target += (-right * delta.X + forward * delta.Y) * scale
-	return self:_apply("pan")
+	local changed = (previous - center).Magnitude > 0.001
+	self.FrameRequested:Fire(source or "api", center)
+	self.InputResolved:Fire("frame", source or "api", true, changed, processed == true)
+	return true
 end
 
-function Controller.panKeyboard(self: Controller, axis: Vector2, deltaTime: number): boolean
-	if not self.enabled or self.movementModeActive or axis.Magnitude <= 0 or deltaTime <= 0 then
-		return false
-	end
-	local currentCamera = camera()
-	if currentCamera == nil then
-		return false
-	end
-	local right = flatUnit(currentCamera.CFrame.RightVector, Vector3.new(1, 0, 0))
-	local forward = flatUnit(currentCamera.CFrame.LookVector, Vector3.new(0, 0, -1))
-	local speed = math.clamp(self.distance * 0.45, 8, 48)
-	self.target += (right * axis.X + forward * axis.Y) * speed * deltaTime
-	return self:_apply("pan")
+function Controller:setFrameResolver(_: any)
+	-- Kept for compatibility. Framing is resolved from the selected renderer token.
 end
 
-function Controller.zoomBy(self: Controller, steps: number): boolean
-	if not self.enabled or steps == 0 then
+function Controller:setKeyboardPanSuppressed(ownerKey: string, suppressed: boolean): boolean
+	if ownerKey == "" then
 		return false
 	end
-	self.distance = math.clamp(self.distance * (1 + steps * 0.12), 12, 120)
-	return self:_apply("zoom")
+	if suppressed then
+		self.keyboardPanSuppressors[ownerKey] = true
+		self.keyState.W = false
+		self.keyState.A = false
+		self.keyState.S = false
+		self.keyState.D = false
+	else
+		self.keyboardPanSuppressors[ownerKey] = nil
+	end
+	return true
 end
 
-function Controller.start(self: Controller)
-	if not self.enabled or #self.connections > 0 then
+function Controller:focusOnPosition(position: Vector3): boolean
+	self.targetPivot = position
+	return true
+end
+
+function Controller:getTargetPivot(): Vector3
+	return self.targetPivot
+end
+
+function Controller:_onInputBegan(input: InputObject, processed: boolean)
+	if processed then
 		return
 	end
-	local currentCamera = camera()
-	if currentCamera ~= nil then
-		self.previousType = currentCamera.CameraType
-		self.previousCFrame = currentCamera.CFrame
+	if input.UserInputType == Enum.UserInputType.MouseButton3 then
+		if isPointerOverVisibleUi() then
+			self.InputResolved:Fire("orbit", "mouse-middle", false, false, false)
+			return
+		end
+		self.middleMouseDown = true
+		self.lastMousePosition = UserInputService:GetMouseLocation()
+		return
 	end
-	self:frameAll()
-
-	ContextActionService:BindActionAtPriority(
-		FRAME_ACTION,
-		function(_actionName: string, inputState: Enum.UserInputState): Enum.ContextActionResult
-			if inputState ~= Enum.UserInputState.Begin then
-				return Enum.ContextActionResult.Sink
-			end
-			if UserInputService:GetFocusedTextBox() ~= nil then
-				return Enum.ContextActionResult.Pass
-			end
-			self:requestFrame("keyboard-f", false)
-			return Enum.ContextActionResult.Sink
-		end,
-		false,
-		INPUT_PRIORITY,
-		Enum.KeyCode.F
-	)
-	ContextActionService:BindActionAtPriority(
-		PAN_ACTION,
-		function(_actionName: string, inputState: Enum.UserInputState): Enum.ContextActionResult
-			if inputState == Enum.UserInputState.Begin then
-				self.dragging = true
-				self.pointerPanReported = false
-				self.lastPointerPosition = UserInputService:GetMouseLocation()
-				print("[RVTT WorldCamera Input] action=pan-start source=mouse-middle")
-			elseif
-				inputState == Enum.UserInputState.End
-				or inputState == Enum.UserInputState.Cancel
-			then
-				self.dragging = false
-				self.pointerPanReported = false
-				self.lastPointerPosition = nil
-				print("[RVTT WorldCamera Input] action=pan-end source=mouse-middle")
-			end
-			return Enum.ContextActionResult.Sink
-		end,
-		false,
-		INPUT_PRIORITY,
-		Enum.UserInputType.MouseButton3
-	)
-	ContextActionService:BindActionAtPriority(
-		WASD_ACTION,
-		function(
-			_actionName: string,
-			inputState: Enum.UserInputState,
-			inputObject: InputObject
-		): Enum.ContextActionResult
-			if self.movementModeActive or UserInputService:GetFocusedTextBox() ~= nil then
-				setKeyState(self.keyboard, inputObject.KeyCode, false)
-				return Enum.ContextActionResult.Pass
-			end
-			if inputState == Enum.UserInputState.Begin then
-				setKeyState(self.keyboard, inputObject.KeyCode, true)
-			elseif
-				inputState == Enum.UserInputState.End
-				or inputState == Enum.UserInputState.Cancel
-			then
-				setKeyState(self.keyboard, inputObject.KeyCode, false)
-			end
-			return Enum.ContextActionResult.Sink
-		end,
-		false,
-		INPUT_PRIORITY,
-		Enum.KeyCode.W,
-		Enum.KeyCode.A,
-		Enum.KeyCode.S,
-		Enum.KeyCode.D
-	)
-
-	table.insert(
-		self.connections,
-		UserInputService.InputChanged:Connect(function(input, processed)
-			if input.UserInputType ~= Enum.UserInputType.MouseWheel then
-				return
-			end
-			local current = camera()
-			local before = if current ~= nil then current.CFrame else nil
-			local applied = self:zoomBy(-input.Position.Z)
-			self:_reportInput("zoom", "mouse-wheel", processed, before, applied)
-		end)
-	)
-	table.insert(
-		self.connections,
-		RunService.RenderStepped:Connect(function(deltaTime)
-			if self.dragging then
-				local pointerPosition = UserInputService:GetMouseLocation()
-				local previousPointerPosition = self.lastPointerPosition
-				self.lastPointerPosition = pointerPosition
-				if previousPointerPosition ~= nil then
-					local delta = pointerPosition - previousPointerPosition
-					if delta.Magnitude >= MIN_POINTER_DELTA then
-						local current = camera()
-						local before = if current ~= nil then current.CFrame else nil
-						local applied = self:panPixels(delta)
-						if applied and not self.pointerPanReported then
-							self.pointerPanReported = true
-							self:_reportInput(
-								"pan",
-								"mouse-middle-screen-delta",
-								false,
-								before,
-								applied
-							)
-						end
-					end
-				end
-			end
-
-			if self.movementModeActive or UserInputService:GetFocusedTextBox() ~= nil then
-				clearKeyboard(self.keyboard)
-				self.keyboardPanReported = false
-				return
-			end
-			local axis = WorldInteractionMath.keyboardPanAxis(
-				self.keyboard.W,
-				self.keyboard.A,
-				self.keyboard.S,
-				self.keyboard.D
-			)
-			if axis.Magnitude <= 0 then
-				self.keyboardPanReported = false
-				return
-			end
-			local current = camera()
-			local before = if current ~= nil then current.CFrame else nil
-			local applied = self:panKeyboard(axis, deltaTime)
-			if applied and not self.keyboardPanReported then
-				self.keyboardPanReported = true
-				self:_reportInput("pan", "keyboard-wasd", false, before, applied)
-			end
-		end)
-	)
-	table.insert(
-		self.connections,
-		UserInputService.WindowFocusReleased:Connect(function()
-			self.dragging = false
-			self.lastPointerPosition = nil
-			self.pointerPanReported = false
-			self.keyboardPanReported = false
-			clearKeyboard(self.keyboard)
-		end)
-	)
+	if input.KeyCode == Enum.KeyCode.Space or input.KeyCode == Enum.KeyCode.F then
+		self:requestFrame(if input.KeyCode == Enum.KeyCode.F then "keyboard-f" else "keyboard-space", false)
+		return
+	end
+	if input.KeyCode == Enum.KeyCode.W then
+		self.keyState.W = true
+	elseif input.KeyCode == Enum.KeyCode.A then
+		self.keyState.A = true
+	elseif input.KeyCode == Enum.KeyCode.S then
+		self.keyState.S = true
+	elseif input.KeyCode == Enum.KeyCode.D then
+		self.keyState.D = true
+	end
 end
 
-function Controller.destroy(self: Controller)
-	ContextActionService:UnbindAction(FRAME_ACTION)
-	ContextActionService:UnbindAction(PAN_ACTION)
-	ContextActionService:UnbindAction(WASD_ACTION)
+function Controller:_onInputEnded(input: InputObject)
+	if input.UserInputType == Enum.UserInputType.MouseButton3 then
+		self.middleMouseDown = false
+		self.lastMousePosition = nil
+	elseif input.KeyCode == Enum.KeyCode.W then
+		self.keyState.W = false
+	elseif input.KeyCode == Enum.KeyCode.A then
+		self.keyState.A = false
+	elseif input.KeyCode == Enum.KeyCode.S then
+		self.keyState.S = false
+	elseif input.KeyCode == Enum.KeyCode.D then
+		self.keyState.D = false
+	end
+end
+
+function Controller:_onInputChanged(input: InputObject, processed: boolean)
+	if input.UserInputType ~= Enum.UserInputType.MouseWheel then
+		return
+	end
+	if processed or isPointerOverVisibleUi() then
+		self.InputResolved:Fire("zoom", "mouse-wheel", false, false, processed)
+		return
+	end
+	local scroll = input.Position.Z
+	local controlDown = UserInputService:IsKeyDown(Enum.KeyCode.LeftControl)
+		or UserInputService:IsKeyDown(Enum.KeyCode.RightControl)
+	if controlDown then
+		self.targetPivot += Vector3.new(0, scroll * VERTICAL_MOVE_STEP, 0)
+		self.InputResolved:Fire("vertical", "control-wheel", true, scroll ~= 0, false)
+		return
+	end
+	local previous = self.targetDistance
+	self.targetDistance = clamp(self.targetDistance - scroll * ZOOM_STEP, MIN_DISTANCE, MAX_DISTANCE)
+	self.InputResolved:Fire("zoom", "mouse-wheel", true, previous ~= self.targetDistance, false)
+end
+
+function Controller:_render(deltaTime: number)
+	if self.middleMouseDown and self.lastMousePosition ~= nil then
+		local mousePosition = UserInputService:GetMouseLocation()
+		local delta = mousePosition - self.lastMousePosition
+		self.lastMousePosition = mousePosition
+		if delta.Magnitude > 0.01 then
+			self.targetYawOffset -= delta.X * ROTATE_SENSITIVITY
+			self.targetPitch = clamp(
+				self.targetPitch + delta.Y * ROTATE_SENSITIVITY,
+				MIN_PITCH,
+				MAX_PITCH
+			)
+			self.InputResolved:Fire("orbit", "mouse-middle", true, true, false)
+		end
+	end
+
+	self:_updateKeyboard(deltaTime)
+	local alpha = 1 - math.exp(-SMOOTH_SPEED * deltaTime)
+	self.currentPivot = self.currentPivot:Lerp(self.targetPivot, alpha)
+	self.currentDistance += (self.targetDistance - self.currentDistance) * alpha
+	self.currentYawOffset += (self.targetYawOffset - self.currentYawOffset) * alpha
+	self.currentPitch += (self.targetPitch - self.currentPitch) * alpha
+	self:_updateCamera()
+end
+
+function Controller:start()
+	if self.started then
+		return
+	end
+	self.started = true
+	self.camera = Workspace.CurrentCamera
+	self:_updateCamera()
+	table.insert(self.connections, UserInputService.InputBegan:Connect(function(input, processed)
+		self:_onInputBegan(input, processed)
+	end))
+	table.insert(self.connections, UserInputService.InputEnded:Connect(function(input)
+		self:_onInputEnded(input)
+	end))
+	table.insert(self.connections, UserInputService.InputChanged:Connect(function(input, processed)
+		self:_onInputChanged(input, processed)
+	end))
+	table.insert(self.connections, RunService.RenderStepped:Connect(function(deltaTime)
+		self:_render(deltaTime)
+	end))
+end
+
+function Controller:destroy()
+	if not self.started then
+		return
+	end
+	self.started = false
 	for _, connection in self.connections do
 		connection:Disconnect()
 	end
-	table.clear(self.connections)
-	self.dragging = false
-	self.lastPointerPosition = nil
-	self.keyboardPanReported = false
-	self.pointerPanReported = false
-	clearKeyboard(self.keyboard)
-	local currentCamera = camera()
-	if currentCamera ~= nil then
-		if self.previousType ~= nil then
-			currentCamera.CameraType = self.previousType
-		end
-		if self.previousCFrame ~= nil then
-			currentCamera.CFrame = self.previousCFrame
-		end
-	end
+	self.connections = {}
+	self.FrameRequested:Destroy()
 	self.InputResolved:Destroy()
-	self.Changed:Destroy()
 end
 
 return Controller
