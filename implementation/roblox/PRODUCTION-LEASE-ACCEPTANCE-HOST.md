@@ -1,6 +1,6 @@
 # Production Lease Integration Acceptance Host
 
-- 상태: `STATIC_VALIDATION_PENDING`
+- 상태: `STATIC_VERIFIED_STUDIO_PENDING`
 - 목적: 실제 Campaign Store를 건드리지 않고 Production `ServerBoot`의 Lease Ownership·Atomic Fence Claim·Fenced Flush·Release를 게시된 Studio 환경에서 검증한다.
 - Seed Project: [`production-lease-seed.project.json`](production-lease-seed.project.json)
 - Verify Project: [`production-lease-verify.project.json`](production-lease-verify.project.json)
@@ -70,15 +70,15 @@ Production ServerBoot Lease Acquire
 [RVTT Production Lease Verify] result=PASS failed=0 checks=true flush=true release=true cleanup=true staleBlocked=true ...
 ```
 
-## 자동 Gate
+## 자동 Gate 결과
 
-- 두 Project JSON 계약과 안전 Store·Key 접두사
-- Seed·Verify 동일 Store·Authority Key와 서로 다른 Owner
-- 실제 `session.join` Remote Command·Sync Projection
-- Seed Fence 1과 Verify Higher Fence
-- 이전 Fence Revision 99 저장의 `PERSISTENCE_FENCED`
-- Flush-before-Release와 Verify Cleanup-after-Release
-- Grand Manifest Seed→Verify 순서·Summary Regex
-- StyLua·Selene·Rojo Build·Luau Type
+- Production Lease Contract Validator: PASS
+- Seed Place Rojo Build: PASS
+- Verify Place Rojo Build: PASS
+- Grand Manifest Contract: PASS
+- Structure·Security·Policy: PASS
+- StyLua·Selene: PASS
+- Production·Test Luau Type: PASS
+- Documentation·Windows Runner: PASS
 
-자동 Gate가 통과해도 실제 Studio Runtime PASS를 뜻하지 않는다. Runtime Evidence는 Grand Persistence Milestone에서만 기록한다.
+자동 Gate가 통과해도 실제 Studio Runtime PASS를 뜻하지 않는다. Seed·Verify Runtime Evidence는 Grand Persistence Milestone에서만 기록한다.
