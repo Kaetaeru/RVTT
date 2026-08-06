@@ -1,6 +1,6 @@
 # RVTT Grand Acceptance Campaign
 
-- 상태: `PERSISTENCE_OUTAGE_LEASE_HOST_STATIC_VERIFIED`
+- 상태: `PRODUCTION_LEASE_FENCED_PERSISTENCE_STATIC_VERIFIED`
 - 목적: 사용자가 한 번의 Windows PowerShell 실행으로 현재 실행 가능한 모든 Acceptance 환경을 순차 실행하고 하나의 결함 보고서를 얻는다.
 - Manifest: [`grand-acceptance-manifest.json`](grand-acceptance-manifest.json)
 - Runner: [`tooling/run-grand-acceptance.ps1`](tooling/run-grand-acceptance.ps1)
@@ -24,6 +24,7 @@ PowerShell 실행 1회
    → Restart Verify
    → Injected DataStore Outage
    → Lease Holder·Contender Pair
+   → 향후 Production ServerBoot Lease Integration
 → JSON·Markdown 통합 보고서
 ```
 
@@ -61,6 +62,7 @@ Runner는 두 Studio 창을 열고 Holder를 먼저 Play한 뒤 Contender를 Pla
 - 일반 기능과 Persistence Evidence를 Phase 단위로 분리한다.
 - 정적·Build·Type PASS를 Studio Runtime PASS로 해석하지 않는다.
 - 주입 장애를 Roblox 플랫폼 실제 장애로 해석하지 않는다.
+- Production Acceptance는 실제 Campaign Store·Key를 사용하지 않는다.
 - 공식 Content Phase는 권리 승인 전까지 `blocked`다.
 - 성능 측정 전 임의 합격선을 만들지 않는다.
 
@@ -72,7 +74,7 @@ Runner는 두 Studio 창을 열고 Holder를 먼저 Play한 뒤 Contender를 Pla
 - Slices 02–12 자동 Authority Scenario
 - Cross-slice Session·Authority Fault
 - Deterministic Network·Storage Fault
-- Persistence Retry·Lease Fencing Unit Spec
+- Persistence Retry·Production Lease·Fence Unit Spec
 - Capacity Sample
 - Slice 01 실제 입력
 
@@ -166,6 +168,27 @@ PASS 로그:
 [RVTT Lease Contender] result=PASS ... failed=0 ... blocked=2 takeovers=1
 ```
 
+### Production ServerBoot Lease Integration
+
+현재 Production Source는 구현됐지만 Published Acceptance Project는 아직 준비 중이다.
+
+예정 흐름:
+
+```text
+Acceptance 전용 Authority Store·Key·Lease Store
+→ 실제 ServerBoot Seed 시작
+→ Lease Acquire
+→ Atomic Authority Fence Claim
+→ Command Commit·Fenced Flush
+→ BindToClose Release
+→ 다음 Server 시작
+→ Higher Fence Claim·Latest Document Restore
+→ 이전 Fence Revision 99 지연 Save 거부
+→ Key Cleanup
+```
+
+이 Host가 Manifest에 등록되기 전에는 Grand Persistence 사용자 실행을 요청하지 않는다.
+
 ## 6. Production 복구 모듈
 
 ### Projection Replica
@@ -195,13 +218,46 @@ PASS 로그:
 - Takeover마다 Fencing Token 증가
 - DataStore 실패는 retryable `PERSISTENCE_FAILED`
 
-이 Lease 모듈은 아직 Production `ServerBoot`의 Campaign Command·Save 경로에 연결되지 않았다.
+### Production Lease Ownership
 
-## 7. 아직 남은 범위
+```text
+Acquire
+→ Remote Verify
+→ Atomic Fence Claim
+→ Load·Restore
+→ Local Command Guard
+→ Background Renew
+→ Flush 전 Remote Verify
+→ Fenced Save
+→ Flush-before-Release
+```
 
-- Production `ServerBoot` Lease Acquire·Renew·Verify·Release
-- Fenced Authority Save와 이전 서버 지연 Write 차단
-- Lease Lost 시 Command·Flush Degrade 정책
+- Lease 미획득 서버는 Authority Document를 Load하지 않는다.
+- Remote·System Command는 Persistence 준비 전 또는 Lease Lost 뒤 실행되지 않는다.
+- `ProfileStore.loadFenced`는 기존 문서를 보존하면서 같은 `UpdateAsync`에서 `persistenceFence`를 Claim한다.
+- Claim 뒤 낮은 Fence, 같은 Fence의 다른 Identity, Unfenced Writer는 `PERSISTENCE_FENCED`다.
+- 이전 서버의 높은 Revision 지연 저장도 Claim 이후에는 거부된다.
+- Higher Fence는 Revision 단조성 검사를 우회하지 않는다.
+- `persistenceFence`는 Runtime Snapshot에서 제거된다.
+- Shutdown은 Fenced Flush 뒤 Lease를 Release한다.
+
+## 7. 자동 Contract Gate
+
+`validate_production_lease.py`와 `Validate production lease` Workflow는 다음을 고정한다.
+
+- Acquire→Fence Claim→Load→Renew 순서
+- Command Guard가 Authority Execute보다 먼저 실행
+- Load·Save 전 Lease Verify·Write Fence
+- Claim과 Save 모두 Fencing 비교
+- Higher Fence의 Revision 우회 금지
+- BindToClose Flush→Release 순서
+- Command·Ownership·Protected Store·Profile Fencing Spec 등록
+
+## 8. 아직 남은 범위
+
+- Acceptance 전용 Production Store·Key Project Config
+- 실제 ServerBoot Seed·Takeover·Stale Write Published Host
+- Lease 미획득·Lease Lost 사용자 UX
 - Roblox 플랫폼 실제 DataStore 장애 Evidence
 - Roblox Remote 지연·대역폭 Throttle
 - Slices 02–12 전체 UI·Disclosure·Recovery
@@ -210,7 +266,7 @@ PASS 로그:
 - Performance Budget·Memory·Network·Soak
 - Slice 16 Full-session Release Gate·Runbook
 
-## 8. 보고서
+## 9. 보고서
 
 기본 출력 위치:
 
@@ -226,13 +282,15 @@ RVTT-grand-acceptance-report.md
 places\*.rbxlx
 ```
 
-주요 신규 로그:
+주요 로그:
 
 ```text
 [RVTT DataStore Outage] ...
 [RVTT Lease Pair Prompt] ...
 [RVTT Lease Holder] ...
 [RVTT Lease Contender] ...
+향후 [RVTT Production Lease Seed] ...
+향후 [RVTT Production Lease Verify] ...
 ```
 
 판정:
@@ -241,7 +299,7 @@ places\*.rbxlx
 - `PARTIAL`: 실행 Phase는 PASS했지만 Blocked 또는 Prepared가 있음
 - `FAIL`: FAIL 또는 Summary 미발견이 있음
 
-## 9. 결함 처리
+## 10. 결함 처리
 
 ```text
 Grand Campaign 끝까지 실행
@@ -252,7 +310,7 @@ Grand Campaign 끝까지 실행
 → Grand Campaign 전체 재실행
 ```
 
-## 10. 사용자 실행 계약
+## 11. 사용자 실행 계약
 
 사용자에게는 항상 다음 요소를 포함한 완전한 다중 행 Windows PowerShell 블록을 제공한다.
 
@@ -267,4 +325,4 @@ run-grand-acceptance.ps1 실행
 
 한 줄 Bootstrap, 원격 `Invoke-Expression`, 중첩 `powershell -Command`는 제공하지 않는다.
 
-현재 Production ServerBoot Lease Ownership·Fenced Save가 연결되지 않았으므로 사용자 Grand Persistence Runtime 실행을 요청하지 않는다.
+현재 Production Lease Integration Acceptance Host가 준비되지 않았으므로 사용자 Grand Persistence Runtime 실행을 요청하지 않는다.
