@@ -19,14 +19,19 @@ required_specs = {
     "slice12-content-platform": "Slice12ContentPlatform.spec.lua",
     "grand-cross-slice-session": "GrandCrossSliceSession.spec.lua",
     "grand-authority-faults": "GrandAuthorityFaults.spec.lua",
+    "grand-network-fault-host": "GrandNetworkFaultHost.spec.lua",
+    "grand-storage-fault-host": "GrandStorageFaultHost.spec.lua",
     "grand-capacity-sample": "GrandCapacitySample.spec.lua",
 }
 
 for relative in (
+    "test.project.json",
     "grand-single-client.project.json",
     "grand-acceptance-manifest.json",
     "tests/TestRunner.server.lua",
     "tests/Integration/ScenarioRuntime.lua",
+    "tests/Integration/FaultTransport.lua",
+    "tests/Integration/FaultStore.lua",
     "tooling/run-grand-acceptance.ps1",
 ):
     if not (ROOT / relative).exists():
@@ -38,6 +43,14 @@ for filename in required_specs.values():
         errors.append(f"missing tests/Integration/{filename}")
     elif not path.read_text(encoding="utf-8").startswith("--!strict"):
         errors.append(f"tests/Integration/{filename}: missing --!strict")
+
+try:
+    test_project = json.loads((ROOT / "test.project.json").read_text(encoding="utf-8"))
+    test_scripts = test_project["tree"]["StarterPlayer"]["StarterPlayerScripts"]
+    if "RVTT" not in test_scripts:
+        errors.append("test.project.json: client modules are not mapped for fault tests")
+except Exception as exc:
+    errors.append(f"test.project.json: {exc}")
 
 try:
     project = json.loads((ROOT / "grand-single-client.project.json").read_text(encoding="utf-8"))
@@ -70,6 +83,9 @@ try:
     baseline = phases.get("unit-integration-baseline", {})
     if "Slices 02-12" not in baseline.get("name", ""):
         errors.append("grand-acceptance-manifest.json: baseline name does not cover Slices 02-12")
+    fault_phase = phases.get("fault-injection", {})
+    if "deterministic" not in fault_phase.get("blocker", "").lower():
+        errors.append("grand-acceptance-manifest.json: fault phase omits deterministic baseline")
     for slice_number in range(2, 13):
         matching = [phase for phase in manifest["phases"] if phase["id"].startswith(f"slice{slice_number:02d}-")]
         if len(matching) != 1:
@@ -103,6 +119,30 @@ for phrase in ("executeAtAuthority", "expectedRevision", "authorityEpoch"):
     if phrase not in scenario_runtime:
         errors.append(f"ScenarioRuntime.lua: missing fault contract {phrase}")
 
+projection_replica = (
+    ROOT / "src" / "StarterPlayer" / "StarterPlayerScripts" / "RVTT" / "Client" / "ProjectionReplica.lua"
+).read_text(encoding="utf-8")
+for phrase in ("seenEpochs", "epochOrder", "projectionSequence <= self.sequence"):
+    if phrase not in projection_replica:
+        errors.append(f"ProjectionReplica.lua: missing delayed epoch contract {phrase}")
+
+command_client = (
+    ROOT / "src" / "StarterPlayer" / "StarterPlayerScripts" / "RVTT" / "Client" / "CommandClient.lua"
+).read_text(encoding="utf-8")
+for phrase in ("CLIENT_TIMEOUT", "retrying", "MAX_ATTEMPTS", "RETRY_INTERVAL_SECONDS"):
+    if phrase not in command_client:
+        errors.append(f"CommandClient.lua: missing receipt-loss recovery contract {phrase}")
+
+network_fault = (ROOT / "tests" / "Integration" / "GrandNetworkFaultHost.spec.lua").read_text(encoding="utf-8")
+for phrase in ("kind=network", "delayed previous epoch", "CLIENT_TIMEOUT", "retrying"):
+    if phrase not in network_fault:
+        errors.append(f"GrandNetworkFaultHost.spec.lua: missing network fault evidence {phrase}")
+
+storage_fault = (ROOT / "tests" / "Integration" / "GrandStorageFaultHost.spec.lua").read_text(encoding="utf-8")
+for phrase in ("kind=storage", "commit_then_fail", "external-winner", "PERSISTENCE_CONFLICT"):
+    if phrase not in storage_fault:
+        errors.append(f"GrandStorageFaultHost.spec.lua: missing storage fault evidence {phrase}")
+
 capacity_text = (ROOT / "tests" / "Integration" / "GrandCapacitySample.spec.lua").read_text(encoding="utf-8")
 for phrase in ("[RVTT Spec Summary] id=grand-capacity-sample sample=capacity", "elapsedMs", "restoreMs"):
     if phrase not in capacity_text:
@@ -128,5 +168,5 @@ if errors:
 
 print(
     "RVTT grand harness validation passed: "
-    f"{len(required_specs)} Slice, cross-slice, fault and capacity scenarios in one single-client run"
+    f"{len(required_specs)} Slice, cross-slice, authority, network, storage and capacity scenarios in one single-client run"
 )
