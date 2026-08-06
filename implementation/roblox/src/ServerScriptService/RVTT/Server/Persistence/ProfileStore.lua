@@ -59,10 +59,7 @@ local function failureDetails(reason: string): { [string]: unknown }
 	return { reason = reason }
 end
 
-local function fenceDetails(
-	candidate: FenceGuard?,
-	current: FenceGuard?
-): { [string]: unknown }
+local function fenceDetails(candidate: FenceGuard?, current: FenceGuard?): { [string]: unknown }
 	return {
 		candidateFencingToken = if candidate ~= nil then candidate.fencingToken else nil,
 		currentFencingToken = if current ~= nil then current.fencingToken else nil,
@@ -144,12 +141,7 @@ function ProfileStore.load(self: any, key: string): any
 	return self.migrations:apply(document)
 end
 
-function ProfileStore.save(
-	self: any,
-	key: string,
-	value: any,
-	fenceGuard: FenceGuard?
-): any
+function ProfileStore.save(self: any, key: string, value: any, fenceGuard: FenceGuard?): any
 	local candidateRevision = revisionOf(value)
 	if candidateRevision == nil then
 		return Result.err("PERSISTENCE_INVALID", "error.persistence.invalid", false)
