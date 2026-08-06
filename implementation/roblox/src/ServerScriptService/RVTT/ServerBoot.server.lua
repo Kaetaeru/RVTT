@@ -130,12 +130,8 @@ if persistenceEnabled then
 
 	local acquireResult = leaseOwnership:acquire()
 	if acquireResult.ok then
-		local protectedStore = LeaseProtectedStore.new(
-			profileStore,
-			leaseOwnership,
-			diagnostics,
-			runtime:snapshot()
-		)
+		local protectedStore =
+			LeaseProtectedStore.new(profileStore, leaseOwnership, diagnostics, runtime:snapshot())
 		persistence = PersistenceCoordinator.new(protectedStore, AUTHORITY_KEY, diagnostics)
 		local loadResult = persistence:load()
 		if loadResult.ok then
