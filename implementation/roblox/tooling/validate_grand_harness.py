@@ -309,8 +309,8 @@ for phrase in (
     "contender-blocked",
     "holder-renewed",
     "contender-acquired",
-    "[RVTT Lease Holder]",
-    "[RVTT Lease Contender]",
+    'finish("Holder"',
+    'finish("Contender"',
 ):
     if phrase not in lease_host:
         errors.append(f"LeaseAcceptance/ServerRunner.server.lua: missing pair evidence {phrase}")
@@ -327,7 +327,7 @@ for phrase in (
     "runGroups",
     "Wait-ForStudioExit",
     "studio-published-pair",
-    "exactly two Project",
+    "paired Studio run",
     "RVTT-grand-acceptance-report.json",
     "RVTT-grand-acceptance-report.md",
 ):
