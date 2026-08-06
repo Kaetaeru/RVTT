@@ -57,6 +57,11 @@ local specs: { Spec } = {
 		runner = require(script.Parent.Unit["RemoteBootstrap.spec"]) :: any,
 	},
 	{
+		id = "unit-command-router-guard",
+		name = "CommandRouterGuard.spec",
+		runner = require(script.Parent.Unit["CommandRouterGuard.spec"]) :: any,
+	},
+	{
 		id = "unit-persistence",
 		name = "Persistence.spec",
 		runner = require(script.Parent.Unit["Persistence.spec"]) :: any,
@@ -72,9 +77,24 @@ local specs: { Spec } = {
 		runner = require(script.Parent.Unit["Lease.spec"]) :: any,
 	},
 	{
+		id = "unit-lease-ownership",
+		name = "LeaseOwnership.spec",
+		runner = require(script.Parent.Unit["LeaseOwnership.spec"]) :: any,
+	},
+	{
+		id = "unit-lease-protected-store",
+		name = "LeaseProtectedStore.spec",
+		runner = require(script.Parent.Unit["LeaseProtectedStore.spec"]) :: any,
+	},
+	{
 		id = "unit-profile-store",
 		name = "ProfileStore.spec",
 		runner = require(script.Parent.Unit["ProfileStore.spec"]) :: any,
+	},
+	{
+		id = "unit-profile-store-fencing",
+		name = "ProfileStoreFencing.spec",
+		runner = require(script.Parent.Unit["ProfileStoreFencing.spec"]) :: any,
 	},
 	{
 		id = "integration-domain-registration",
