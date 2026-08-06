@@ -1,18 +1,18 @@
 # RVTT Codex Active Task
 
 - status: `AWAITING_CODEX_RESULT_COMMENT`
-- commandId: `RVTT-PR2-ADR0092-DELTA-002`
+- commandId: `RVTT-PR2-ADR0092-DELTA-003`
 - repository: `Kaetaeru/RVTT`
 - pullRequest: `2`
 - reviewPhase: `DELTA_REVIEW`
-- reviewerRole: `Test·Authority Drift Delta Reviewer`
-- commandPath: `docs/remake/audits/codex-reviews/PR-0002-DELTA-002-REVIEW-COMMAND.md`
+- reviewerRole: `Event-qualified Workflow Drift Delta Reviewer`
+- commandPath: `docs/remake/audits/codex-reviews/PR-0002-DELTA-003-REVIEW-COMMAND.md`
 - targetMode: `CURRENT_PR_HEAD_AT_START`
 - expectedOutputChannel: `PR #2 Top-level Conversation Comment`
 - resultMarker: `<!-- RVTT_CODEX_REVIEW_RESULT -->`
 - resultStatus: `PENDING`
-- previousCommandId: `RVTT-PR2-ADR0092-DELTA-001`
-- previousResultComment: `https://github.com/Kaetaeru/RVTT/pull/2#issuecomment-5207508456`
+- previousCommandId: `RVTT-PR2-ADR0092-DELTA-002`
+- previousResultComment: `https://github.com/Kaetaeru/RVTT/pull/2#issuecomment-5207572876`
 - updatedBy: `ChatGPT Lead Reviewer`
 - updatedAt: `2026-08-07`
 
