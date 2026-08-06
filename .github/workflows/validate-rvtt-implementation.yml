@@ -169,6 +169,18 @@ jobs:
         working-directory: implementation/roblox
         run: rojo build restart-verify.project.json --output /tmp/RVTT-restart-verify.rbxlx
 
+      - name: Build DataStore outage place with Rojo
+        working-directory: implementation/roblox
+        run: rojo build datastore-outage.project.json --output /tmp/RVTT-datastore-outage.rbxlx
+
+      - name: Build lease holder place with Rojo
+        working-directory: implementation/roblox
+        run: rojo build lease-holder.project.json --output /tmp/RVTT-lease-holder.rbxlx
+
+      - name: Build lease contender place with Rojo
+        working-directory: implementation/roblox
+        run: rojo build lease-contender.project.json --output /tmp/RVTT-lease-contender.rbxlx
+
       - name: Build Slice 01 acceptance place with Rojo
         working-directory: implementation/roblox
         run: rojo build slice01-acceptance.project.json --output /tmp/RVTT-slice01-acceptance.rbxlx
@@ -269,6 +281,9 @@ jobs:
             implementation/roblox/persistence-acceptance.project.json
             implementation/roblox/restart-seed.project.json
             implementation/roblox/restart-verify.project.json
+            implementation/roblox/datastore-outage.project.json
+            implementation/roblox/lease-holder.project.json
+            implementation/roblox/lease-contender.project.json
             implementation/roblox/slice01-acceptance.project.json
             implementation/roblox/stylua.toml
             implementation/roblox/selene.toml
