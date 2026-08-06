@@ -52,6 +52,42 @@ try:
 except Exception as exc:
     errors.append(f"acceptance-batch.json: {exc}")
 
+grand_manifest_path = ROOT / "grand-acceptance-manifest.json"
+try:
+    grand_manifest = json.loads(grand_manifest_path.read_text(encoding="utf-8"))
+    if grand_manifest.get("schemaVersion") != 1:
+        errors.append("grand-acceptance-manifest.json: schemaVersion must be 1")
+    if grand_manifest.get("campaignId") != "rvtt-grand-acceptance":
+        errors.append("grand-acceptance-manifest.json: unexpected campaignId")
+    if grand_manifest.get("runner") != "tooling/run-grand-acceptance.ps1":
+        errors.append("grand-acceptance-manifest.json: unexpected runner")
+
+    phases = grand_manifest.get("phases", [])
+    if len(phases) < 20:
+        errors.append("grand-acceptance-manifest.json: expected at least 20 phases")
+    phase_ids = [phase.get("id") for phase in phases]
+    if len(set(phase_ids)) != len(phase_ids):
+        errors.append("grand-acceptance-manifest.json: duplicate phase id")
+    phase_orders = [phase.get("order") for phase in phases]
+    if len(set(phase_orders)) != len(phase_orders):
+        errors.append("grand-acceptance-manifest.json: duplicate phase order")
+
+    static_projects = grand_manifest.get("staticProjects", [])
+    for project in static_projects:
+        if not (ROOT / project).exists():
+            errors.append(f"grand-acceptance-manifest.json: missing static project {project}")
+
+    for phase in phases:
+        status = phase.get("status")
+        if status not in {"ready", "deferred", "planned", "blocked"}:
+            errors.append(f"grand-acceptance-manifest.json: invalid status for {phase.get('id')}")
+        if status == "ready" and phase.get("execution") != "automated":
+            for field in ("project", "summaryToken", "passRegex"):
+                if not phase.get(field):
+                    errors.append(f"grand-acceptance-manifest.json: {phase.get('id')} missing {field}")
+except Exception as exc:
+    errors.append(f"grand-acceptance-manifest.json: {exc}")
+
 luau = list((ROOT / "src").rglob("*.lua")) + list((ROOT / "tests").rglob("*.lua"))
 if len(luau) < 70:
     errors.append(f"expected at least 70 Luau files, found {len(luau)}")
@@ -85,7 +121,9 @@ for forbidden in ("payload.attackBonus", "payload.armorClass", "payload.damage",
 
 required = [
     "EXECUTION-TEST-RULES.md",
+    "GRAND-ACCEPTANCE-CAMPAIGN.md",
     "acceptance-batch.json",
+    "grand-acceptance-manifest.json",
     "src/ReplicatedStorage/RVTT/Shared/Core/ValueGuard.lua",
     "src/ReplicatedStorage/RVTT/Shared/Diagnostics/BatchSummary.lua",
     "src/ReplicatedStorage/RVTT/Shared/World/WorldTokenContract.lua",
@@ -114,6 +152,7 @@ required = [
     "tests/MultiClient/ServerRunner.server.lua",
     "tests/MultiClient/ClientRunner.client.lua",
     "tooling/run-studio-acceptance-batch.ps1",
+    "tooling/run-grand-acceptance.ps1",
     "manifests/all-slices-script-manifest.md",
 ]
 for relative in required:
@@ -184,6 +223,21 @@ if batch_runner_path.exists():
     ):
         if required_phrase not in batch_runner:
             errors.append(f"run-studio-acceptance-batch.ps1: missing contract {required_phrase}")
+
+grand_runner_path = ROOT / "tooling/run-grand-acceptance.ps1"
+if grand_runner_path.exists():
+    grand_runner = grand_runner_path.read_text(encoding="utf-8")
+    for required_phrase in (
+        "grand-acceptance-manifest.json",
+        "IncludePersistence",
+        "Get-RecentStudioLines",
+        "Wait-ForStudioExit",
+        "RVTT Grand Summary",
+        "RVTT-grand-acceptance-report.json",
+        "SelfTest",
+    ):
+        if required_phrase not in grand_runner:
+            errors.append(f"run-grand-acceptance.ps1: missing contract {required_phrase}")
 
 domains = list((ROOT / "src/ServerScriptService/RVTT/Server/Domains").glob("*Domain.lua"))
 if len(domains) < 18:
