@@ -3,6 +3,8 @@
 - 상태: CURRENT
 - 문서 종류: Global UX Feedback Policy
 - 작성일: 2026-08-05
+- 최종 개정일: 2026-08-06
+- 구현 직전 명세: [`Full UI·UX and Settings Specification`](../shared/implementation-ready-ui-ux-and-settings-spec.md)
 - Policy Work Order: [`CURRENT-WORK-ORDER`](CURRENT-WORK-ORDER.md)
 - Networking 권위: [`Networking Command와 Client Synchronization`](../../architecture/networking-command-event-and-client-synchronization-contract.md)
 - Persistence 권위: [`Persistence와 Session Recovery`](../../architecture/persistence-and-session-recovery-model.md)
@@ -21,14 +23,12 @@
 ```
 
 - UI Animation과 Toast는 Authority 결과가 아니다.
-- Command Result만으로 HP·Item·Turn·Scene 상태를 직접 변경하지 않는다.
-- 사용자는 같은 행동을 다시 눌러야 하는지, 기다려야 하는지, 재선택해야 하는지 구분할 수 있어야 한다.
+- Command Result만으로 HP·Item·Turn·Scene·Position을 직접 변경하지 않는다.
+- 사용자는 다시 눌러야 하는지, 기다려야 하는지, 재선택해야 하는지 구분할 수 있어야 한다.
 - 오류를 숨기기 위해 자동 재시도를 무한히 반복하지 않는다.
-- 비밀 정보는 Error, Support Reference와 Diagnostic에도 포함하지 않는다.
+- 비밀 정보는 Error, Tooltip, Support Reference와 Diagnostic에도 포함하지 않는다.
 
 ## 2. Action Lifecycle 표현
-
-모든 Authority Action은 필요한 범위에서 다음 상태를 가진다.
 
 ```text
 ready
@@ -53,11 +53,9 @@ resync_required
 recovery_required
 ```
 
-표현 규칙:
-
-- `submitted`: Control에 Pending 상태와 중복 제출 차단을 적용한다.
-- `receipt_received`: 서버가 요청을 받았지만 결과가 아직 확정되지 않았음을 표시한다.
-- `awaiting_projection`: 결과 메시지는 받았지만 화면 권위 상태는 아직 Projection을 기다린다.
+- `submitted`: 관련 Control·World Marker를 Pending으로 전환하고 중복 제출을 차단한다.
+- `receipt_received`: 서버가 요청을 받았으나 Authority 결과는 미확정이다.
+- `awaiting_projection`: Result는 왔지만 화면 상태가 최신 Projection을 기다린다.
 - `reconciled`: 최신 Projection에서 실제 결과가 확인됐다.
 - 권위 수치는 `reconciled` 전에 성공값으로 확정 표시하지 않는다.
 
@@ -65,15 +63,16 @@ recovery_required
 
 ### Local Feedback
 
-다음 렌더 단계에서 보여줄 수 있다.
+다음 렌더 단계에서 표시할 수 있다.
 
 - Button Press
 - Selection Highlight
 - Drag Ghost
-- Path Preview
+- Path·Range Preview
+- Destination·Target Pending Marker
 - 제출 Indicator
 
-Local Feedback에는 Preview 또는 Pending임을 나타내는 시각 상태가 있어야 한다.
+Local Feedback에는 Preview 또는 Pending임을 나타내는 상태가 있어야 한다.
 
 ### Authority Feedback
 
@@ -81,7 +80,7 @@ Local Feedback에는 Preview 또는 Pending임을 나타내는 시각 상태가 
 
 - 위치
 - HP·Resource
-- Item Location
+- Item Location·Owner
 - Turn·Opportunity
 - Scene·Fog·Object State
 - Character Build·Level
@@ -94,9 +93,13 @@ Local Preview와 Authority Result가 다르면 Correction을 숨기지 않고 �
 
 현재 Control·Field·Card와 직접 관련된 결과. 가장 우선한다.
 
+### Cursor·World Reason
+
+현재 Pointer Action, Target, Path, Range 또는 Interaction 실패. 일반 Gameplay 오류의 기본 Surface다.
+
 ### Tooltip·Reason Panel
 
-Disabled, Denied, Stale 이유와 해결 조건.
+Disabled, Denied, Stale 이유와 해결 조건. Pointer Hover와 Keyboard Focus에서 접근 가능해야 한다.
 
 ### Toast
 
@@ -116,13 +119,30 @@ Session 전체에 영향을 주는 연결·저장·Mode·권한 상태.
 
 ### Recovery Surface
 
-Projection 불일치, 재접속, 서버 복구처럼 현재 Authority-bound 입력을 일시 차단하는 상태.
+Projection 불일치, 재접속, 서버 복구처럼 Authority-bound 입력을 일시 차단하는 상태.
 
-같은 사건을 Toast, Banner와 Modal로 중복 표시하지 않는다.
+같은 사건을 Cursor Reason, Toast, Banner와 Modal에 중복 표시하지 않는다.
 
-## 5. 메시지 작성 규칙
+## 5. 초기 Timing 기본값
 
-사용자 메시지 순서:
+다음 값은 Production 초기값이며 Studio 측정 후 변경할 수 있다.
+
+| 항목 | 초기값 |
+|---|---:|
+| World Action Label | 즉시 |
+| Disabled Reason Tooltip | 0.15초 |
+| 일반 Tooltip | 0.25초 |
+| 상세 Tooltip | 0.75초 |
+| Success Toast | 2.5초 |
+| Info Toast | 3초 |
+| Warning Toast | 5초 |
+| Ordinary Error Toast | 6초 또는 관련 상태 변경 시까지 |
+| 최대 동시 Toast | 3 |
+| 동일 Event 병합 창 | 2초 |
+
+Tooltip은 Cursor 기본 16 px Offset을 사용하고 Token·경로·Persistent HUD와 겹치면 Flip한다.
+
+## 6. 메시지 작성 규칙
 
 ```text
 무슨 일이 일어났는가
@@ -138,19 +158,12 @@ Projection 불일치, 재접속, 서버 복구처럼 현재 Authority-bound 입�
 최신 위치를 불러왔습니다. 대상을 다시 선택하세요.
 ```
 
-나쁜 예:
-
-```text
-Error 409
-Invalid revision
-```
-
 - 내부 Stable Error Code는 진단용으로 보존하되 사용자 문구와 분리한다.
 - Raw Stack, DataStore Key, Secret ID와 권한 밖 Entity를 표시하지 않는다.
-- 사용자 책임이 아닌 오류에 “잘못했습니다” 같은 비난 표현을 사용하지 않는다.
+- 사용자 책임이 아닌 오류에 비난 표현을 사용하지 않는다.
 - 재시도해도 해결되지 않는 상태에 Retry를 제공하지 않는다.
 
-## 6. Error 분류
+## 7. Error 분류
 
 ### Validation
 
@@ -158,11 +171,11 @@ Invalid revision
 
 ### Eligibility
 
-현재 자원·Turn·Mode·Capability 때문에 실행 불가. 조건과 해결 가능성을 보여준다.
+현재 자원·Turn·Mode·Capability 때문에 실행 불가. 비활성 Action Hover·Focus Reason 또는 World Reason으로 조건을 보여준다.
 
 ### Permission
 
-권한 부족. 존재 여부를 공개할 수 없는 대상은 일반화된 문구를 사용한다.
+권한 부족. 존재 여부를 공개할 수 없는 대상은 일반화된 문구를 사용하며 Action 자리도 만들지 않는다.
 
 ### Conflict·Stale
 
@@ -180,7 +193,7 @@ Network·Storage·Service 일시 실패. 안전한 경우 제한된 자동 재�
 
 Panel·VFX·Camera·Tooltip 오류. Gameplay Authority를 Rollback하지 않고 Fallback UI를 사용한다.
 
-## 7. Retry 정책
+## 8. Retry 정책
 
 자동 Retry 허용 조건:
 
@@ -198,7 +211,7 @@ Panel·VFX·Camera·Tooltip 오류. Gameplay Authority를 Rollback하지 않고 
 
 Retry 중에는 `retrying`과 마지막 안전 상태를 보여준다.
 
-## 8. Projection Gap과 Resync
+## 9. Projection Gap과 Resync
 
 ```text
 Sequence Gap·Integrity Failure
@@ -215,7 +228,7 @@ Sequence Gap·Integrity Failure
 - 이전 Pending Command가 새 Replica에서 확인되지 않으면 명확하게 종료한다.
 - 사용자가 제출하지 않은 Draft를 자동 Commit하지 않는다.
 
-## 9. Reconnect 정책
+## 10. Reconnect 정책
 
 Reconnect 화면은 다음 단계를 구분한다.
 
@@ -225,22 +238,29 @@ Reconnect 화면은 다음 단계를 구분한다.
 → Session 인증·Role 확인
 → Projection Snapshot 수신
 → Scene·Controlled Actor Ready
+→ UI·Input 재구성
 → 입력 재개
 ```
 
 - 단순 Spinner만 표시하지 않는다.
 - 현재 성공한 단계와 실패한 단계를 보여준다.
-- Local Layout·Accessibility는 유지할 수 있다.
+- Local Layout·Accent·Accessibility·Camera Preference는 유지할 수 있다.
 - Authority Prompt·Selection·Turn·Item·Scene 상태는 서버에서 복원한다.
 - 오래된 ConnectionEpoch의 응답은 폐기한다.
 
-## 10. Rollback·Branch 변경
+## 11. Role Change·Rollback
 
-Rollback 전에:
+Role Change:
+
+- 이전 Role Projection과 권한 Action을 즉시 폐기한다.
+- Local Preference는 유지한다.
+- 열린 Table·Targeting·Prompt·Pending을 새 Role 기준으로 재구성한다.
+
+Rollback 전:
 
 - Target Checkpoint
 - 현재와 대상의 주요 Diff
-- 영구적으로 지울 수 없는 Player Knowledge 경고
+- Player Knowledge 경고
 - 영향을 받는 Scene·Turn·Character·Item·Time 범위
 - 승인 주체
 
@@ -254,9 +274,7 @@ Rollback 후:
 → 입력 재개
 ```
 
-과거 Roll 결과나 성공 Command를 선택적으로 재사용하지 않는다.
-
-## 11. Save·Publish·Migration Feedback
+## 12. Save·Publish·Preference Feedback
 
 다음을 별도 상태로 표시한다.
 
@@ -272,19 +290,23 @@ Live Session Unchanged
 Live Patch Pending
 Migration Required
 Recovery Review Required
+Preference Preview
+Preference Saved
+Preference Save Failed · Local Default Active
 ```
 
-“저장됨” 하나로 합치지 않는다.
+“저장됨” 하나로 합치지 않는다. Preference 저장 실패는 Gameplay 진행을 막지 않는다.
 
-## 12. Empty·Unavailable·Failure 복구
+## 13. Empty·Unavailable·Failure 복구
 
 - 데이터가 없으면 Empty 이유와 생성·가져오기 경로를 제공한다.
+- Filtered Empty와 실제 Empty를 구분한다.
 - 권한 없음은 Request Access를 임의 제공하지 않는다.
-- Stream Out 대상은 삭제로 표시하지 않는다.
+- Stream Out 대상을 삭제로 표시하지 않는다.
 - Missing Content는 최신 콘텐츠로 자동 치환하지 않고 Missing Reference와 Recovery 상태를 표시한다.
-- Panel 오류는 Panel Error Boundary 안에서 복구하며 다른 HUD를 유지한다.
+- Panel 오류는 Error Boundary 안에서 복구하며 다른 HUD를 유지한다.
 
-## 13. Support Reference
+## 14. Support Reference
 
 심각하거나 반복되는 오류에는 안전한 Support Reference를 제공한다.
 
@@ -303,25 +325,28 @@ Recovery Review Required
 - 숨은 Entity ID
 - Stack·Credential
 
-## 14. 금지 패턴
+## 15. 금지 패턴
 
 - Spinner만 있고 상태 설명이 없음
 - 낙관적으로 권위 수치 변경 후 실패 시 조용히 되돌림
 - 동일 오류 Toast 무한 반복
-- 모든 오류를 Modal로 표시
+- 일반 Gameplay 실패를 모두 Modal로 표시
 - 권한 거부 메시지로 숨은 대상 존재 암시
 - Retry가 중복 비용·Commit을 만들 수 있음
 - Reconnect 후 이전 Prompt와 Pending을 재사용
 - Panel 오류 때문에 Session 전체를 종료
 - “알 수 없는 오류”만 표시하고 Support Reference도 없음
+- Disabled Button 옆에 긴 불가 문장을 항상 표시해 Action Table을 과밀하게 만듦
 
-## 15. 구현 검수
+## 16. 구현 검수
 
 - Action Lifecycle이 ViewModel에 표현된다.
 - Local Preview와 Authority Result가 구분된다.
-- Denied·Stale·Retry·Resync의 다음 행동이 명확하다.
+- Disabled·Denied·Stale·Retry·Resync의 다음 행동이 명확하다.
+- 일반 Gameplay Error가 관련 Cursor·대상·Control 근처에 표시된다.
+- Tooltip·Toast Timing 기본값과 측정 변경 근거가 있다.
 - Projection Gap에서 부분 상태를 적용하지 않는다.
-- Reconnect·Rollback 후 이전 Epoch 상태가 남지 않는다.
+- Reconnect·Role Change·Rollback 후 이전 Epoch 상태가 남지 않는다.
 - Error 문구가 비밀 정보를 노출하지 않는다.
 - Presentation 실패가 Gameplay 결과를 변경하지 않는다.
 - 심각 오류에 안전한 Support Reference가 있다.
