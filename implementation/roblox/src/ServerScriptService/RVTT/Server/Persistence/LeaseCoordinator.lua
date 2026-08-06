@@ -38,31 +38,43 @@ function LeaseCoordinator.acquire(self: any): any
 	return result
 end
 
-function LeaseCoordinator.renew(self: any): any
-	if self.record == nil then
+function LeaseCoordinator.validateLocal(self: any): any
+	local localRecord = self.record
+	if localRecord == nil then
 		return Result.err("LEASE_NOT_HELD", "error.persistence.lease_not_held", false)
+	end
+	if localRecord.expiresAt <= self.clock() then
+		self.record = nil
+		return Result.err("LEASE_EXPIRED", "error.persistence.lease_expired", false)
+	end
+	return Result.ok(localRecord)
+end
+
+function LeaseCoordinator.renew(self: any): any
+	local localResult = self:validateLocal()
+	if not localResult.ok then
+		return localResult
 	end
 	local result =
 		self.store:renew(self.key, self.ownerId, self.token, self.ttlSeconds, self.clock())
 	if result.ok then
 		self.record = result.value
 	else
-		self.record = nil
+		if result.error.code ~= "PERSISTENCE_FAILED" then
+			self.record = nil
+		end
 		self.diagnostics:increment("persistence.lease_renew_failed")
 	end
 	return result
 end
 
 function LeaseCoordinator.verify(self: any): any
-	local localRecord = self.record
-	if localRecord == nil then
-		return Result.err("LEASE_NOT_HELD", "error.persistence.lease_not_held", false)
+	local localResult = self:validateLocal()
+	if not localResult.ok then
+		return localResult
 	end
+	local localRecord = localResult.value
 	local now = self.clock()
-	if localRecord.expiresAt <= now then
-		self.record = nil
-		return Result.err("LEASE_EXPIRED", "error.persistence.lease_expired", false)
-	end
 
 	local readResult = self.store:read(self.key)
 	if not readResult.ok then
@@ -85,16 +97,32 @@ function LeaseCoordinator.verify(self: any): any
 end
 
 function LeaseCoordinator.release(self: any): any
-	if self.record == nil then
-		return Result.err("LEASE_NOT_HELD", "error.persistence.lease_not_held", false)
+	local localResult = self:validateLocal()
+	if not localResult.ok then
+		return localResult
 	end
 	local result = self.store:release(self.key, self.ownerId, self.token, self.clock())
 	if result.ok then
 		self.record = nil
 	else
+		if result.error.code ~= "PERSISTENCE_FAILED" then
+			self.record = nil
+		end
 		self.diagnostics:increment("persistence.lease_release_failed")
 	end
 	return result
+end
+
+function LeaseCoordinator.writeFence(self: any): any
+	local localResult = self:validateLocal()
+	if not localResult.ok then
+		return localResult
+	end
+	return Result.ok({
+		ownerId = self.ownerId,
+		token = self.token,
+		fencingToken = localResult.value.fencingToken,
+	})
 end
 
 function LeaseCoordinator.fencingToken(self: any): number?
