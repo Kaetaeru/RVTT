@@ -1,29 +1,35 @@
 --!strict
-
-export type BuiltinPack = {
-	packId: string,
-	version: string,
-	ruleset: string?,
-	rightsStatus: string,
-	blockedReason: string?,
-	contentKinds: { string },
-}
-
-local packs: { BuiltinPack } = {
+return {
 	{
-		packId = "rvtt.core.runtime",
-		version = "1.0.0",
-		ruleset = "dnd5e-2024",
-		rightsStatus = "original",
-		contentKinds = { "runtime", "ui", "localization_keys" },
+		packageId = "rvtt.core.rules",
+		version = "5.2.1-rvtt.1",
+		dependencies = {},
+		contentKinds = {
+			"rule-packs",
+			"rule-documents",
+			"rule-search-index",
+		},
+		rightsStatus = "built_in",
+		licenseId = "CC-BY-4.0",
+		attributionRequired = true,
 	},
 	{
-		packId = "rvtt.official.placeholder",
-		version = "0.0.0",
-		rightsStatus = "blocked",
-		blockedReason = "Official data and distribution rights require explicit review.",
-		contentKinds = { "character_options", "spells", "equipment", "monsters" },
+		packageId = "rvtt.core.baseline",
+		version = "2026.08.06",
+		dependencies = {
+			"rvtt.core.rules",
+		},
+		contentKinds = {
+			"token-prefabs",
+			"prop-prefabs",
+			"tile-prefabs",
+			"volume-prefabs",
+			"materials",
+			"vfx",
+			"ui-assets",
+		},
+		rightsStatus = "built_in",
+		licenseId = "RVTT-PROJECT",
+		attributionRequired = false,
 	},
 }
-
-return table.freeze(packs)

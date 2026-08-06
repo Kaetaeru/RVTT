@@ -1,78 +1,52 @@
 # High-Fidelity HTML UI Production Guide Audit
 
-- 상태: `COMPLETE · STATIC HIGH-FIDELITY TARGET · ADR-0090 ALIGNED`
+- 상태: `COMPLETE · FINAL STATIC TARGET · ADR-0091`
 - 감사일: 2026-08-06
 - HTML: [`../user-guides/html/index.html`](../user-guides/html/index.html)
-- Action Matrix·DM Window 결정: [`ADR-0090`](../decisions/ADR-0090-multi-row-action-matrices-and-modular-dm-tool-windows.md)
-- Character Console 상세: [`../ui/combat-hud/character-console-action-matrix-and-resource-rail.md`](../ui/combat-hud/character-console-action-matrix-and-resource-rail.md)
-- DM Window 상세: [`../ui/dm-workspace/modular-dm-tool-window-contract.md`](../ui/dm-workspace/modular-dm-tool-window-contract.md)
+- 최종 공백 감사: [`final-ui-surface-gap-audit.md`](final-ui-surface-gap-audit.md)
 
-## 1. 목적
+## 1. 범위
 
-기존 고정밀 가이드가 Character Console의 행동 밀도와 DM Workspace Modularity까지 실제 제작 기준으로 표현하는지 확인한다.
+Runtime/Reference 화면 33개를 검증한다.
 
-## 2. 화면 범위
+- 2024 2-page Interactive Official Sheet
+- Dice Square→Rectangle Reveal와 모든 d20 변형
+- Core Rules Module Reader
+- Asset Package Registry
+- Invite/Join과 First-run Primer
+- 기존 Player·Observer·DM 화면
 
-Runtime 화면 26개와 제작 기준 Canvas 2개, 총 28개다.
+## 2. 정적 결과
 
-## 3. ADR-0090 고정밀 기준
+- [x] HTML parse
+- [x] JavaScript syntax
+- [x] 33 Screen ID unique
+- [x] 33 Renderer 등록
+- [x] 33 Renderer smoke test
+- [x] 압축 CSS·JS 원본 일치
+- [x] Page 1 35/65, Page 2 68/32 계약
+- [x] Official Sheet Roll·Equipment·Spell Action 표현
+- [x] Dice Natural→Formula→Adjudication
+- [x] Advantage·Disadvantage·Natural 1·20·Reduced Motion
+- [x] Core Rules Chunk Reader·Attribution
+- [x] Asset Stable ID·Rights·Validation·Missing Dependency
+- [x] Audio Mixer 빈 Tab 제거
+- [x] Objective·Map·Minimap 없음
 
-### Character Console
+## 3. 저작권·권리 경계
 
-- [x] 공격·행동 Matrix와 주문 Matrix 분리
-- [x] 사용자 Action Rows `1–4`
-- [x] Icon은 행을 채운 뒤 오른쪽으로 연속 배열
-- [x] 48×48 px Action Cell
-- [x] Hover·Focus Action Description Panel
-- [x] Disabled Lock와 불가능 사유
-- [x] Resource Rail이 Console 상단 전체 폭
-- [x] 기억·준비 `used / maximum` 표시
-- [x] 기억·준비 수와 Spell Slot Pip 분리
-- [x] Console이 아래 Anchor를 유지하고 위로 확장
+- 공식 D&D 2024 시트는 비율·정보 순서의 Reference다.
+- 외부 Logo·Artwork·Font·Icon은 포함하지 않는다.
+- Built-in Rule text는 재배포 권리가 확인된 Package만 허용한다.
+- 비SRD 공식 서적 본문은 공개 저장소에 포함하지 않는다.
 
-### DM Workspace
+## 4. 미완료 Evidence
 
-- [x] Top Authoring Strip은 Window Launcher
-- [x] Left Inspector는 Default Dock Window Instance
-- [x] Live Workspace에 여러 Window 동시 표시
-- [x] Fog·Time·Encounter·Scene Tool을 독립 Window로 표현
-- [x] Window별 Titlebar·Move·Resize·Dock·Close Control
-- [x] Scene Editor에 Catalog와 Material·Lighting Window 동시 표시
-- [x] Quick Action은 작은 Popover 유지
+- Browser Screenshot·Pixel Diff
+- Roblox ScreenGui 비교
+- Multi-client Authority
+- 대형 Rules Package Memory·Search Performance
+- Asset Compile Performance
+- Studio Human Usability
 
-## 4. 정적 검증 결과
-
-- [x] HTML parser 통과
-- [x] JavaScript syntax 통과
-- [x] 압축 CSS·Renderer와 원본 Byte 일치
-- [x] Git Blob SHA 5개 일치
-- [x] 28개 Screen ID 고유
-- [x] 28개 Renderer 등록
-- [x] 28개 Renderer smoke test 통과
-- [x] `consoleActionRows=[1,2,3,4]` Registry 확인
-- [x] `dmWindowModules=true` Registry 확인
-- [x] ActionHoverPanel event delegation 존재
-- [x] Objective·Map·Minimap Runtime Navigation 없음
-
-## 5. 아직 Runtime 증거가 아닌 항목
-
-- Browser pixel-diff
-- Roblox ScreenGui와 HTML Screenshot 비교
-- 실제 Pointer Hover 위치 Flip·Clamp
-- Drag Reorder와 Preference 저장
-- DM Window 실제 Move·Resize·Dock Interaction
-- Window Layout 재접속 복구
-- Multi-client Permission·Stale Window 처리
-
-## 6. Runtime 후속 Gate
-
-```text
-ADR-0090 HTML Target
-→ Action Matrix·Resource Projection
-→ ActionHoverPanel Component
-→ DmToolRegistry·DmWindowHost
-→ Studio Interaction Evidence
-→ Multi-client Permission Evidence
-```
-
-HTML 완료는 Runtime PASS가 아니다.
+이는 기획 공백이 아니라 Runtime Gate다.
