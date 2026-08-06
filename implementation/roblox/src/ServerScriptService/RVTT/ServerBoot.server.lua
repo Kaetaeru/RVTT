@@ -121,13 +121,8 @@ if persistenceEnabled then
 		then "job:" .. game.JobId
 		else "studio:" .. HttpService:GenerateGUID(false)
 	local leaseStore = LeaseStore.new(LEASE_STORE_NAME, diagnostics)
-	local leaseCoordinator = LeaseCoordinator.new(
-		leaseStore,
-		AUTHORITY_KEY,
-		ownerId,
-		LEASE_TTL_SECONDS,
-		diagnostics
-	)
+	local leaseCoordinator =
+		LeaseCoordinator.new(leaseStore, AUTHORITY_KEY, ownerId, LEASE_TTL_SECONDS, diagnostics)
 	leaseOwnership = LeaseOwnership.new(leaseCoordinator, diagnostics, {
 		renewIntervalSeconds = LEASE_RENEW_INTERVAL_SECONDS,
 		retryIntervalSeconds = LEASE_RETRY_INTERVAL_SECONDS,
@@ -258,10 +253,7 @@ local function removeRobloxAvatar(player: Player)
 	end
 end
 
-local function executeSystemCommand(
-	commandType: string,
-	payload: { [string]: unknown }
-): any
+local function executeSystemCommand(commandType: string, payload: { [string]: unknown }): any
 	if commandGuard ~= nil then
 		local guardResult = commandGuard(nil, nil)
 		if not guardResult.ok then
