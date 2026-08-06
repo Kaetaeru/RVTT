@@ -172,6 +172,22 @@ RESOLVED
 
 World Raycast가 `Workspace.RVTT_AcceptanceBoard.MoveSurface`를 반환하는 상황에서도 Screen-space projected bounds fallback이 Token을 선택했다. 이후 Highlight, Destination Marker, 서버 승인 revision 73, Projection 위치 갱신이 확인됐다.
 
+## 자동 Gate
+
+- Structure·Security·Policy Validator: PASS
+- StyLua: PASS
+- Selene: PASS
+- Production Rojo Build: PASS
+- Unit Test Place Rojo Build: PASS
+- Multi-client Place Rojo Build: PASS
+- Persistence Acceptance Place 정적 Build: PASS
+- Slice 01 Acceptance Place Build: PASS
+- Production·Test Luau Type Analysis: PASS
+- Windows Acceptance Bootstrap Validation: PASS
+- Remake Documentation Validation: PASS
+
+이 결과는 정적·Build·Type Evidence이며 실제 Studio WASD·중클릭·F 동작을 대신하지 않는다.
+
 ## UI 시각 디자인 상태
 
 현재 Production UI와 Acceptance Panel은 기능 검증용 Placeholder다. 최종 시각 디자인으로 간주하지 않는다.
@@ -185,7 +201,7 @@ World Raycast가 `Workspace.RVTT_AcceptanceBoard.MoveSurface`를 반환하는 �
 
 ```text
 WASD·Middle-button·Frame Camera 자동 Gate
-→ IMPLEMENTED · CI PENDING
+→ PASSED
 
 실제 WASD·중클릭·F·휠 Acceptance
 → PENDING
