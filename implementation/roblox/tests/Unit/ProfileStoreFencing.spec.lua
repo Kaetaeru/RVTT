@@ -162,7 +162,11 @@ return function(harness: any)
 	local created = store:loadFenced("campaign", initialDocument, fenceOne)
 	harness:expect(created.ok, "fenced load creates an initial document when none exists")
 	if created.ok then
-		harness:equal(created.value.revision, 0, "initial fence claim returns the baseline revision")
+		harness:equal(
+			created.value.revision,
+			0,
+			"initial fence claim returns the baseline revision"
+		)
 	end
 	harness:equal(
 		fakeStore.value.persistenceFence.fencingToken,
