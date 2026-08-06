@@ -118,7 +118,7 @@ return function(harness: any)
 	local elapsedMs = (os.clock() - startedAt) * 1000
 	print(
 		string.format(
-			"[RVTT Capacity Sample] objects=%d items=%d documents=%d revision=%d elapsedMs=%.3f restoreMs=%.3f",
+			"[RVTT Spec Summary] id=grand-capacity-sample sample=capacity objects=%d items=%d documents=%d revision=%d elapsedMs=%.3f restoreMs=%.3f",
 			objectCount,
 			itemCount,
 			documentCount,
