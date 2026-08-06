@@ -5,6 +5,18 @@ local DeepCopy = require(ReplicatedStorage.RVTT.Shared.Core.DeepCopy)
 local Result = require(ReplicatedStorage.RVTT.Shared.Core.Result)
 local ValueGuard = require(ReplicatedStorage.RVTT.Shared.Core.ValueGuard)
 
+local DEFAULT_MAX_ATTEMPTS = 5
+local DEFAULT_INITIAL_DELAY_SECONDS = 0.25
+local DEFAULT_MAX_DELAY_SECONDS = 2
+local DEFAULT_DEADLINE_SECONDS = 25
+
+export type RetryPolicy = {
+	maxAttempts: number?,
+	initialDelaySeconds: number?,
+	maxDelaySeconds: number?,
+	deadlineSeconds: number?,
+}
+
 local PersistenceCoordinator = {}
 PersistenceCoordinator.__index = PersistenceCoordinator
 
@@ -29,6 +41,21 @@ local function failureSummary(result: any): string
 		return string.format("%s: %s", failure.code, reason)
 	end
 	return failure.code
+end
+
+local function positiveNumber(value: number?, fallback: number): number
+	if value == nil or not ValueGuard.isFiniteNumber(value) or value < 0 then
+		return fallback
+	end
+	return value
+end
+
+local function positiveInteger(value: number?, fallback: number): number
+	local candidate = positiveNumber(value, fallback)
+	if candidate < 1 or candidate % 1 ~= 0 then
+		return fallback
+	end
+	return candidate
 end
 
 function PersistenceCoordinator.new(store: any, key: string, diagnostics: any): any
@@ -130,7 +157,7 @@ function PersistenceCoordinator.flush(self: any): any
 		warn(
 			string.format(
 				"[RVTT Persistence] save failed key=%s revision=%s %s",
-				self.key,
+				tostring(self.key),
 				tostring(snapshotRevision),
 				failureSummary(result)
 			)
@@ -141,13 +168,67 @@ function PersistenceCoordinator.flush(self: any): any
 	return result
 end
 
-function PersistenceCoordinator.flushUntilClean(self: any): any
+function PersistenceCoordinator.flushUntilClean(self: any, policy: RetryPolicy?): any
+	local retryPolicy = policy or {}
+	local maxAttempts = positiveInteger(retryPolicy.maxAttempts, DEFAULT_MAX_ATTEMPTS)
+	local initialDelay = positiveNumber(
+		retryPolicy.initialDelaySeconds,
+		DEFAULT_INITIAL_DELAY_SECONDS
+	)
+	local maxDelay = positiveNumber(retryPolicy.maxDelaySeconds, DEFAULT_MAX_DELAY_SECONDS)
+	local deadline = positiveNumber(retryPolicy.deadlineSeconds, DEFAULT_DEADLINE_SECONDS)
+	local startedAt = os.clock()
+	local delaySeconds = math.min(initialDelay, maxDelay)
+	local attempts = 0
+
 	while self.dirty ~= nil or self.flushing do
+		attempts += 1
 		local result = self:flush()
-		if not result.ok then
+		if result.ok then
+			continue
+		end
+
+		local retryable = result.error.retryable == true
+		local elapsed = os.clock() - startedAt
+		if not retryable or attempts >= maxAttempts or elapsed >= deadline then
+			self.diagnostics:increment("persistence.retry_exhausted")
+			warn(
+				string.format(
+					"[RVTT Persistence Retry] result=EXHAUSTED key=%s attempts=%d elapsed=%.3f code=%s",
+					self.key,
+					attempts,
+					elapsed,
+					result.error.code
+				)
+			)
 			return result
 		end
+
+		self.diagnostics:increment("persistence.retry_scheduled")
+		local remaining = math.max(0, deadline - elapsed)
+		local waitSeconds = math.min(delaySeconds, remaining)
+		print(
+			string.format(
+				"[RVTT Persistence Retry] result=RETRYING key=%s attempt=%d wait=%.3f code=%s",
+				self.key,
+				attempts + 1,
+				waitSeconds,
+				result.error.code
+			)
+		)
+		if waitSeconds > 0 then
+			task.wait(waitSeconds)
+		end
+		delaySeconds = math.min(maxDelay, math.max(initialDelay, delaySeconds * 2))
 	end
+	print(
+		string.format(
+			"[RVTT Persistence Retry] result=PASS key=%s attempts=%d elapsed=%.3f",
+			self.key,
+			attempts,
+			os.clock() - startedAt
+		)
+	)
 	return Result.ok(true)
 end
 
