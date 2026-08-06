@@ -1,0 +1,78 @@
+{
+  "name": "RVTTProductionLeaseVerifyAcceptance",
+  "tree": {
+    "$className": "DataModel",
+    "Players": {
+      "$properties": {
+        "CharacterAutoLoads": false
+      }
+    },
+    "ReplicatedStorage": {
+      "RVTT": {"$path": "src/ReplicatedStorage/RVTT"},
+      "RVTT_ProductionLeasePhase": {
+        "$className": "StringValue",
+        "$properties": {"Value": "verify"}
+      },
+      "RVTT_ProductionLeaseTestEvent": {
+        "$className": "RemoteEvent"
+      }
+    },
+    "ServerScriptService": {
+      "RVTT": {"$path": "src/ServerScriptService/RVTT"},
+      "RVTTProductionLeaseAcceptance": {
+        "$className": "Folder",
+        "ServerRunner": {
+          "$path": "tests/ProductionLeaseAcceptance/ServerRunner.server.lua"
+        }
+      }
+    },
+    "ServerStorage": {
+      "RVTT": {
+        "$path": "src/ServerStorage/RVTT",
+        "EnableStudioPersistence": {
+          "$className": "BoolValue",
+          "$properties": {"Value": true}
+        },
+        "AuthorityStoreName": {
+          "$className": "StringValue",
+          "$properties": {"Value": "RVTT_ProductionLeaseAcceptance_Authority_v1"}
+        },
+        "AuthorityKey": {
+          "$className": "StringValue",
+          "$properties": {"Value": "acceptance:production-lease:default"}
+        },
+        "LeaseStoreName": {
+          "$className": "StringValue",
+          "$properties": {"Value": "RVTT_ProductionLeaseAcceptance_Lease_v1"}
+        },
+        "LeaseOwnerId": {
+          "$className": "StringValue",
+          "$properties": {"Value": "acceptance:production-lease:verify"}
+        },
+        "LeaseTtlSeconds": {
+          "$className": "NumberValue",
+          "$properties": {"Value": 30}
+        },
+        "LeaseRenewIntervalSeconds": {
+          "$className": "NumberValue",
+          "$properties": {"Value": 5}
+        },
+        "LeaseRetryIntervalSeconds": {
+          "$className": "NumberValue",
+          "$properties": {"Value": 1}
+        },
+        "ProductionLeaseAcceptancePhase": {
+          "$className": "StringValue",
+          "$properties": {"Value": "verify"}
+        }
+      }
+    },
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "RVTTProductionLeaseClient": {
+          "$path": "tests/ProductionLeaseAcceptance/ClientRunner.client.lua"
+        }
+      }
+    }
+  }
+}
