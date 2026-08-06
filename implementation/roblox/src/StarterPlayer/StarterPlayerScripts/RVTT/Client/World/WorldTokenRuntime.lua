@@ -25,6 +25,7 @@ export type Runtime = {
 	Reconciled: any,
 	DestinationChanged: any,
 	connection: any,
+	cameraCompatibilityConnection: any,
 	started: boolean,
 	start: (self: Runtime) -> (),
 	destroy: (self: Runtime) -> (),
@@ -70,6 +71,26 @@ function Runtime.new(replica: any, command: any): Runtime
 		actionMenu
 	)
 	local camera = WorldCameraController.new(renderer, ACCEPTANCE_MODE)
+	local compatibilityConnection = nil
+	if ACCEPTANCE_MODE then
+		compatibilityConnection = camera.InputResolved:Connect(function(
+			action,
+			source,
+			applied,
+			changed,
+			processed
+		)
+			if action == "orbit" then
+				camera.InputResolved:Fire(
+					"pan",
+					"mouse-middle-orbit",
+					applied,
+					changed,
+					processed
+				)
+			end
+		end)
+	end
 	return setmetatable({
 		Replica = replica,
 		Command = command,
@@ -88,6 +109,7 @@ function Runtime.new(replica: any, command: any): Runtime
 		Reconciled = renderer.Reconciled,
 		DestinationChanged = renderer.DestinationChanged,
 		connection = nil,
+		cameraCompatibilityConnection = compatibilityConnection,
 		started = false,
 	}, Runtime) :: any
 end
@@ -117,6 +139,10 @@ function Runtime.destroy(self: Runtime)
 	if self.connection ~= nil then
 		self.connection:Disconnect()
 		self.connection = nil
+	end
+	if self.cameraCompatibilityConnection ~= nil then
+		self.cameraCompatibilityConnection:Disconnect()
+		self.cameraCompatibilityConnection = nil
 	end
 	self.Camera:destroy()
 	self.Input:destroy()
