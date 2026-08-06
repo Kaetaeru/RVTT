@@ -167,6 +167,16 @@ local specs: { Spec } = {
 		runner = require(script.Parent.Integration["GrandAuthorityFaults.spec"]) :: any,
 	},
 	{
+		id = "grand-network-fault-host",
+		name = "GrandNetworkFaultHost.spec",
+		runner = require(script.Parent.Integration["GrandNetworkFaultHost.spec"]) :: any,
+	},
+	{
+		id = "grand-storage-fault-host",
+		name = "GrandStorageFaultHost.spec",
+		runner = require(script.Parent.Integration["GrandStorageFaultHost.spec"]) :: any,
+	},
+	{
 		id = "grand-capacity-sample",
 		name = "GrandCapacitySample.spec",
 		runner = require(script.Parent.Integration["GrandCapacitySample.spec"]) :: any,
