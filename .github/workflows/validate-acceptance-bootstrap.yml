@@ -8,8 +8,10 @@ on:
   pull_request:
     paths:
       - "implementation/roblox/acceptance-batch.json"
+      - "implementation/roblox/grand-acceptance-manifest.json"
       - "implementation/roblox/tooling/run-studio-acceptance-batch.ps1"
       - "implementation/roblox/tooling/run-local-acceptance.ps1"
+      - "implementation/roblox/tooling/run-grand-acceptance.ps1"
       - "implementation/roblox/tooling/validate_implementation.py"
       - ".github/workflows/validate-acceptance-bootstrap.yml"
   push:
@@ -17,8 +19,10 @@ on:
       - planning/rvtt-remake
     paths:
       - "implementation/roblox/acceptance-batch.json"
+      - "implementation/roblox/grand-acceptance-manifest.json"
       - "implementation/roblox/tooling/run-studio-acceptance-batch.ps1"
       - "implementation/roblox/tooling/run-local-acceptance.ps1"
+      - "implementation/roblox/tooling/run-grand-acceptance.ps1"
       - "implementation/roblox/tooling/validate_implementation.py"
       - ".github/workflows/validate-acceptance-bootstrap.yml"
   workflow_dispatch:
@@ -39,7 +43,8 @@ jobs:
         run: |
           foreach ($relative in @(
             "implementation/roblox/tooling/run-studio-acceptance-batch.ps1",
-            "implementation/roblox/tooling/run-local-acceptance.ps1"
+            "implementation/roblox/tooling/run-local-acceptance.ps1",
+            "implementation/roblox/tooling/run-grand-acceptance.ps1"
           )) {
             $tokens = $null
             $errors = $null
@@ -60,3 +65,4 @@ jobs:
         run: |
           & ./implementation/roblox/tooling/run-studio-acceptance-batch.ps1 -SelfTest -NoOpen
           & ./implementation/roblox/tooling/run-local-acceptance.ps1 -SelfTest -NoOpen
+          & ./implementation/roblox/tooling/run-grand-acceptance.ps1 -SelfTest -NoOpen
