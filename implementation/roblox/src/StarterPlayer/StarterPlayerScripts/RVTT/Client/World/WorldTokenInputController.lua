@@ -50,13 +50,7 @@ local function terminalResult(message: any): (string?, any?)
 	return message.commandId, message.result
 end
 
-function Controller.new(
-	renderer: any,
-	replica: any,
-	command: any,
-	resolver: any,
-	menu: any
-): any
+function Controller.new(renderer: any, replica: any, command: any, resolver: any, menu: any): any
 	return setmetatable({
 		renderer = renderer,
 		replica = replica,
@@ -294,21 +288,36 @@ function Controller:start()
 		return
 	end
 	self.started = true
-	table.insert(self.connections, UserInputService.InputBegan:Connect(function(input, processed)
-		self:_onInputBegan(input, processed)
-	end))
-	table.insert(self.connections, self.command.remotes.receipt.OnClientEvent:Connect(function(message)
-		self:_onReceipt(message)
-	end))
-	table.insert(self.connections, self.menu.ActionInvoked:Connect(function(action)
-		self:_executeAction(action)
-	end))
-	table.insert(self.connections, self.menu.Opened:Connect(function(actions)
-		self.ActionMenuChanged:Fire(true, actions, nil)
-	end))
-	table.insert(self.connections, self.menu.Closed:Connect(function(reason)
-		self.ActionMenuChanged:Fire(false, {}, reason)
-	end))
+	table.insert(
+		self.connections,
+		UserInputService.InputBegan:Connect(function(input, processed)
+			self:_onInputBegan(input, processed)
+		end)
+	)
+	table.insert(
+		self.connections,
+		self.command.remotes.receipt.OnClientEvent:Connect(function(message)
+			self:_onReceipt(message)
+		end)
+	)
+	table.insert(
+		self.connections,
+		self.menu.ActionInvoked:Connect(function(action)
+			self:_executeAction(action)
+		end)
+	)
+	table.insert(
+		self.connections,
+		self.menu.Opened:Connect(function(actions)
+			self.ActionMenuChanged:Fire(true, actions, nil)
+		end)
+	)
+	table.insert(
+		self.connections,
+		self.menu.Closed:Connect(function(reason)
+			self.ActionMenuChanged:Fire(false, {}, reason)
+		end)
+	)
 end
 
 function Controller:destroy()
