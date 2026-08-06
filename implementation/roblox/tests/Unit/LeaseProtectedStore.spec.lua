@@ -71,11 +71,7 @@ return function(harness: any)
 	harness:equal(delegate.saveCalls, 1, "blocked save does not reach the delegate")
 
 	ownership.verifyResult = Result.ok(true)
-	ownership.fenceResult = Result.err(
-		"LEASE_NOT_HELD",
-		"error.persistence.lease_not_held",
-		false
-	)
+	ownership.fenceResult = Result.err("LEASE_NOT_HELD", "error.persistence.lease_not_held", false)
 	local missingFence = store:save("campaign", { revision = 3 })
 	harness:expect(
 		not missingFence.ok and missingFence.error.code == "LEASE_NOT_HELD",
