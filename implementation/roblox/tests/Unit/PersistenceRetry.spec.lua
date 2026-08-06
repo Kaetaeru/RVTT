@@ -19,10 +19,10 @@ return function(harness: any)
 	local retryStore = {
 		attempts = 0,
 	}
-	function retryStore:load(_key: string): any
+	function retryStore.load(_self: any, _key: string): any
 		return Result.ok(nil)
 	end
-	function retryStore:save(_key: string, _value: any): any
+	function retryStore.save(self: any, _key: string, _value: any): any
 		self.attempts += 1
 		if self.attempts < 3 then
 			return Result.err("PERSISTENCE_FAILED", "error.persistence.failed", true)
@@ -49,10 +49,10 @@ return function(harness: any)
 	local terminalStore = {
 		attempts = 0,
 	}
-	function terminalStore:load(_key: string): any
+	function terminalStore.load(_self: any, _key: string): any
 		return Result.ok(nil)
 	end
-	function terminalStore:save(_key: string, _value: any): any
+	function terminalStore.save(self: any, _key: string, _value: any): any
 		self.attempts += 1
 		return Result.err("PERSISTENCE_INVALID", "error.persistence.invalid", false)
 	end
@@ -73,10 +73,10 @@ return function(harness: any)
 	local exhaustedStore = {
 		attempts = 0,
 	}
-	function exhaustedStore:load(_key: string): any
+	function exhaustedStore.load(_self: any, _key: string): any
 		return Result.ok(nil)
 	end
-	function exhaustedStore:save(_key: string, _value: any): any
+	function exhaustedStore.save(self: any, _key: string, _value: any): any
 		self.attempts += 1
 		return Result.err("PERSISTENCE_FAILED", "error.persistence.failed", true)
 	end
