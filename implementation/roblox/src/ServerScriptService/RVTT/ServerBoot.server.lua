@@ -77,36 +77,22 @@ end
 
 local function projectNumberValue(name: string, fallback: number): number
 	local value = projectRoot:FindFirstChild(name)
-	if
-		value ~= nil
-		and (value:IsA("NumberValue") or value:IsA("IntValue"))
-		and value.Value > 0
-	then
+	if value ~= nil and (value:IsA("NumberValue") or value:IsA("IntValue")) and value.Value > 0 then
 		return value.Value
 	end
 	return fallback
 end
 
-local AUTHORITY_STORE_NAME = projectStringValue(
-	"AuthorityStoreName",
-	DEFAULT_AUTHORITY_STORE_NAME
-)
+local AUTHORITY_STORE_NAME = projectStringValue("AuthorityStoreName", DEFAULT_AUTHORITY_STORE_NAME)
 local AUTHORITY_KEY = projectStringValue("AuthorityKey", DEFAULT_AUTHORITY_KEY)
 local LEASE_STORE_NAME = projectStringValue("LeaseStoreName", DEFAULT_LEASE_STORE_NAME)
 local LEASE_TTL_SECONDS = projectNumberValue("LeaseTtlSeconds", DEFAULT_LEASE_TTL_SECONDS)
-local LEASE_RENEW_INTERVAL_SECONDS = projectNumberValue(
-	"LeaseRenewIntervalSeconds",
-	DEFAULT_LEASE_RENEW_INTERVAL_SECONDS
-)
-local LEASE_RETRY_INTERVAL_SECONDS = projectNumberValue(
-	"LeaseRetryIntervalSeconds",
-	DEFAULT_LEASE_RETRY_INTERVAL_SECONDS
-)
+local LEASE_RENEW_INTERVAL_SECONDS =
+	projectNumberValue("LeaseRenewIntervalSeconds", DEFAULT_LEASE_RENEW_INTERVAL_SECONDS)
+local LEASE_RETRY_INTERVAL_SECONDS =
+	projectNumberValue("LeaseRetryIntervalSeconds", DEFAULT_LEASE_RETRY_INTERVAL_SECONDS)
 local LEASE_OWNER_ID_OVERRIDE = projectStringValue("LeaseOwnerId", "")
-local PRODUCTION_LEASE_ACCEPTANCE_PHASE = projectStringValue(
-	"ProductionLeaseAcceptancePhase",
-	""
-)
+local PRODUCTION_LEASE_ACCEPTANCE_PHASE = projectStringValue("ProductionLeaseAcceptancePhase", "")
 local PRODUCTION_LEASE_ACCEPTANCE_META_KEY = AUTHORITY_KEY .. ":meta"
 local productionLeaseAcceptanceEnabled = PRODUCTION_LEASE_ACCEPTANCE_PHASE ~= ""
 
@@ -117,8 +103,7 @@ end
 if productionLeaseAcceptanceEnabled then
 	assert(RunService:IsStudio(), "production lease acceptance is Studio-only")
 	assert(
-		PRODUCTION_LEASE_ACCEPTANCE_PHASE == "seed"
-			or PRODUCTION_LEASE_ACCEPTANCE_PHASE == "verify",
+		PRODUCTION_LEASE_ACCEPTANCE_PHASE == "seed" or PRODUCTION_LEASE_ACCEPTANCE_PHASE == "verify",
 		"unknown production lease acceptance phase"
 	)
 	assert(
@@ -237,10 +222,7 @@ if persistenceEnabled then
 		)
 	)
 
-	if
-		productionLeaseAcceptanceEnabled
-		and PRODUCTION_LEASE_ACCEPTANCE_PHASE == "seed"
-	then
+	if productionLeaseAcceptanceEnabled and PRODUCTION_LEASE_ACCEPTANCE_PHASE == "seed" then
 		local cleanupResult = removeAcceptanceData()
 		if not cleanupResult.ok then
 			persistenceStartupFailure = cleanupResult
@@ -367,10 +349,12 @@ if persistenceEnabled then
 	end
 
 	game:BindToClose(function()
-		local acceptanceChecksPassed =
-			projectRoot:GetAttribute("ProductionLeaseAcceptanceChecksPassed") == true
-		local acceptanceStaleBlocked =
-			projectRoot:GetAttribute("ProductionLeaseAcceptanceStaleBlocked") == true
+		local acceptanceChecksPassed = projectRoot:GetAttribute(
+			"ProductionLeaseAcceptanceChecksPassed"
+		) == true
+		local acceptanceStaleBlocked = projectRoot:GetAttribute(
+			"ProductionLeaseAcceptanceStaleBlocked"
+		) == true
 		local shutdownSnapshot = runtime:snapshot()
 		local shutdownFence: any = nil
 		local flushOk = persistence == nil or not persistenceReady
@@ -404,17 +388,15 @@ if persistenceEnabled then
 			and shutdownFence ~= nil
 		then
 			local ok, failure = pcall(function()
-				DataStoreService:GetDataStore(AUTHORITY_STORE_NAME):SetAsync(
-					PRODUCTION_LEASE_ACCEPTANCE_META_KEY,
-					{
+				DataStoreService:GetDataStore(AUTHORITY_STORE_NAME)
+					:SetAsync(PRODUCTION_LEASE_ACCEPTANCE_META_KEY, {
 						ownerId = shutdownFence.ownerId,
 						token = shutdownFence.token,
 						fencingToken = shutdownFence.fencingToken,
 						revision = shutdownSnapshot.revision,
 						authorityEpoch = shutdownSnapshot.authorityEpoch,
 						checksPassed = acceptanceChecksPassed,
-					}
-				)
+					})
 			end)
 			metadataOk = ok
 			if not ok then
@@ -435,10 +417,7 @@ if persistenceEnabled then
 			end
 		end
 
-		if
-			productionLeaseAcceptanceEnabled
-			and PRODUCTION_LEASE_ACCEPTANCE_PHASE == "verify"
-		then
+		if productionLeaseAcceptanceEnabled and PRODUCTION_LEASE_ACCEPTANCE_PHASE == "verify" then
 			local cleanupResult = removeAcceptanceData()
 			cleanupOk = cleanupResult.ok
 			if not cleanupResult.ok then

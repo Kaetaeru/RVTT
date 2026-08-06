@@ -128,7 +128,10 @@ end)
 expect(reportArrived, "acceptance client reports the remote command result")
 if clientReport ~= nil then
 	expect(clientReport.ok == true, "acceptance client command and projection checks pass")
-	expect(clientReport.membershipAfter == true, "session membership exists after the remote command")
+	expect(
+		clientReport.membershipAfter == true,
+		"session membership exists after the remote command"
+	)
 end
 
 local statusRevision = projectRoot:GetAttribute("ProductionLeaseAuthorityRevision")
@@ -174,7 +177,11 @@ local seedMeta = if metaOk then metaOrFailure else nil
 expect(type(seedMeta) == "table", "verify finds seed fence metadata")
 if type(seedMeta) == "table" then
 	expect(seedMeta.checksPassed == true, "seed shutdown recorded successful pre-close checks")
-	equal(seedMeta.ownerId, "acceptance:production-lease:seed", "seed metadata records the seed owner")
+	equal(
+		seedMeta.ownerId,
+		"acceptance:production-lease:seed",
+		"seed metadata records the seed owner"
+	)
 	equal(seedMeta.fencingToken, 1, "seed metadata records fencing token one")
 end
 
@@ -191,7 +198,10 @@ expect(rawBeforeOk, "verify reads the claimed authority document")
 local rawBefore = if rawBeforeOk then rawBeforeOrFailure else nil
 expect(type(rawBefore) == "table", "verify finds the claimed authority document")
 if type(rawBefore) == "table" then
-	expect(type(rawBefore.persistenceFence) == "table", "claimed document contains persistence fence metadata")
+	expect(
+		type(rawBefore.persistenceFence) == "table",
+		"claimed document contains persistence fence metadata"
+	)
 	equal(
 		rawBefore.persistenceFence.ownerId,
 		expectedOwnerId,
@@ -232,7 +242,11 @@ if type(seedMeta) == "table" and type(rawBefore) == "table" then
 	expect(rawAfterOk, "verify reads the authority document after the stale write attempt")
 	local rawAfter = if rawAfterOk then rawAfterOrFailure else nil
 	if type(rawAfter) == "table" then
-		equal(rawAfter.revision, rawBefore.revision, "stale write cannot replace the claimed revision")
+		equal(
+			rawAfter.revision,
+			rawBefore.revision,
+			"stale write cannot replace the claimed revision"
+		)
 		expect(
 			sameFence(rawAfter.persistenceFence, rawBefore.persistenceFence),
 			"stale write cannot replace the claimed persistence fence"
