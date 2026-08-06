@@ -39,7 +39,10 @@ return function(harness: any)
 	harness:expect(loaded.ok, "load retry succeeds after transient failure")
 	harness:equal(coordinator.lastSavedRevision, 3, "successful load records the stored revision")
 
-	harness:expect(coordinator:markDirty(state(4, "epoch-a", "before-write")), "newer revision becomes dirty")
+	harness:expect(
+		coordinator:markDirty(state(4, "epoch-a", "before-write")),
+		"newer revision becomes dirty"
+	)
 	store:queue("save", {
 		kind = "fail",
 		code = "PERSISTENCE_FAILED",
@@ -48,15 +51,26 @@ return function(harness: any)
 	local failedSave = coordinator:flush()
 	harness:expect(not failedSave.ok, "pre-commit storage failure is surfaced")
 	harness:equal(coordinator.dirty.revision, 4, "pre-commit failure preserves dirty state")
-	harness:equal(store:document(key).revision, 3, "pre-commit failure does not mutate stored state")
+	harness:equal(
+		store:document(key).revision,
+		3,
+		"pre-commit failure does not mutate stored state"
+	)
 
 	local retriedSave = coordinator:flush()
 	harness:expect(retriedSave.ok, "pre-commit failure succeeds on retry")
 	harness:expect(coordinator.dirty == nil, "successful retry clears dirty state")
 	harness:equal(coordinator.lastSavedRevision, 4, "successful retry advances saved revision")
-	harness:equal(store:document(key).domains.fault.marker, "before-write", "retry commits the intended state")
+	harness:equal(
+		store:document(key).domains.fault.marker,
+		"before-write",
+		"retry commits the intended state"
+	)
 
-	harness:expect(coordinator:markDirty(state(5, "epoch-a", "ack-lost")), "ack-loss revision becomes dirty")
+	harness:expect(
+		coordinator:markDirty(state(5, "epoch-a", "ack-lost")),
+		"ack-loss revision becomes dirty"
+	)
 	store:queue("save", {
 		kind = "commit_then_fail",
 		code = "PERSISTENCE_FAILED",
@@ -64,15 +78,26 @@ return function(harness: any)
 	})
 	local lostAck = coordinator:flush()
 	harness:expect(not lostAck.ok, "committed write with lost acknowledgement is surfaced")
-	harness:equal(store:document(key).revision, 5, "ack-loss fault commits the authoritative document")
+	harness:equal(
+		store:document(key).revision,
+		5,
+		"ack-loss fault commits the authoritative document"
+	)
 	harness:equal(coordinator.dirty.revision, 5, "ack-loss fault keeps the snapshot retryable")
 
 	local idempotentRetry = coordinator:flush()
 	harness:expect(idempotentRetry.ok, "same revision and epoch retry is idempotent")
 	harness:expect(coordinator.dirty == nil, "idempotent retry clears dirty state")
-	harness:equal(coordinator.lastSavedRevision, 5, "idempotent retry records the committed revision")
+	harness:equal(
+		coordinator.lastSavedRevision,
+		5,
+		"idempotent retry records the committed revision"
+	)
 
-	harness:expect(coordinator:markDirty(state(6, "epoch-a", "conflicted")), "conflict candidate becomes dirty")
+	harness:expect(
+		coordinator:markDirty(state(6, "epoch-a", "conflicted")),
+		"conflict candidate becomes dirty"
+	)
 	store:queue("save", {
 		kind = "conflict",
 		code = "PERSISTENCE_CONFLICT",
@@ -81,7 +106,11 @@ return function(harness: any)
 	local injectedConflict = coordinator:flush()
 	harness:expect(not injectedConflict.ok, "injected revision conflict is surfaced")
 	if not injectedConflict.ok then
-		harness:equal(injectedConflict.error.code, "PERSISTENCE_CONFLICT", "conflict code is explicit")
+		harness:equal(
+			injectedConflict.error.code,
+			"PERSISTENCE_CONFLICT",
+			"conflict code is explicit"
+		)
 	end
 	harness:equal(coordinator.dirty.revision, 6, "conflict preserves the unsaved candidate")
 	harness:equal(store:document(key).revision, 5, "conflict does not overwrite the stored winner")
@@ -90,16 +119,31 @@ return function(harness: any)
 	local staleRetry = coordinator:flush()
 	harness:expect(not staleRetry.ok, "stale retry loses to a newer external revision")
 	if not staleRetry.ok then
-		harness:equal(staleRetry.error.code, "PERSISTENCE_CONFLICT", "external winner returns conflict")
+		harness:equal(
+			staleRetry.error.code,
+			"PERSISTENCE_CONFLICT",
+			"external winner returns conflict"
+		)
 	end
-	harness:equal(store:document(key).domains.fault.marker, "external-winner", "stale retry preserves external winner")
+	harness:equal(
+		store:document(key).domains.fault.marker,
+		"external-winner",
+		"stale retry preserves external winner"
+	)
 
-	harness:expect(coordinator:markDirty(state(8, "epoch-a", "reconciled")), "reconciled newer state replaces stale dirty state")
+	harness:expect(
+		coordinator:markDirty(state(8, "epoch-a", "reconciled")),
+		"reconciled newer state replaces stale dirty state"
+	)
 	local reconciled = coordinator:flush()
 	harness:expect(reconciled.ok, "revision above external winner commits")
 	harness:expect(coordinator.dirty == nil, "reconciled save clears dirty state")
 	harness:equal(coordinator.lastSavedRevision, 8, "reconciled save advances saved revision")
-	harness:equal(store:document(key).domains.fault.marker, "reconciled", "reconciled state becomes authoritative")
+	harness:equal(
+		store:document(key).domains.fault.marker,
+		"reconciled",
+		"reconciled state becomes authoritative"
+	)
 
 	store:queue("load", {
 		kind = "value",
@@ -108,7 +152,11 @@ return function(harness: any)
 	local corruptCoordinator = PersistenceCoordinator.new(store, key, Diagnostics.new())
 	local corruptLoad = corruptCoordinator:load()
 	harness:expect(corruptLoad.ok, "store-level corrupt value is returned for runtime validation")
-	harness:equal(corruptCoordinator.lastSavedRevision, -1, "invalid loaded revision is never marked saved")
+	harness:equal(
+		corruptCoordinator.lastSavedRevision,
+		-1,
+		"invalid loaded revision is never marked saved"
+	)
 
 	local metrics = store:metricsSnapshot()
 	print(

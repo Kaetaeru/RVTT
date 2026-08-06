@@ -65,7 +65,8 @@ return function(harness: any)
 	transport:send("epoch-a-1-duplicate", projection("epoch-a", 1, 1, "one"), deliver, "duplicate")
 	transport:flush()
 	harness:expect(
-		deliveryResults[#deliveryResults] == false and deliveryResults[#deliveryResults - 1] == false,
+		deliveryResults[#deliveryResults] == false
+			and deliveryResults[#deliveryResults - 1] == false,
 		"duplicate projections are ignored"
 	)
 	harness:equal(gapCount, 0, "duplicate projection does not create a false gap")
@@ -73,7 +74,10 @@ return function(harness: any)
 	transport:send("epoch-a-2", projection("epoch-a", 2, 2, "two"), deliver, "drop")
 	transport:send("epoch-a-3", projection("epoch-a", 3, 3, "three"), deliver, "deliver")
 	transport:flush()
-	harness:expect(deliveryResults[#deliveryResults] == false, "projection after a dropped packet is rejected")
+	harness:expect(
+		deliveryResults[#deliveryResults] == false,
+		"projection after a dropped packet is rejected"
+	)
 	harness:equal(gapCount, 1, "dropped projection creates one gap signal")
 	harness:equal(replica.sequence, 1, "gap rejection preserves the last contiguous projection")
 
@@ -84,14 +88,27 @@ return function(harness: any)
 	transport:send("epoch-a-4", projection("epoch-a", 4, 4, "four"), deliver, "hold")
 	transport:send("epoch-a-5", projection("epoch-a", 5, 5, "five"), deliver, "deliver")
 	transport:flush()
-	harness:expect(deliveryResults[#deliveryResults] == false, "reordered future projection is rejected")
+	harness:expect(
+		deliveryResults[#deliveryResults] == false,
+		"reordered future projection is rejected"
+	)
 	harness:equal(gapCount, 2, "reordered future projection creates a gap signal")
-	harness:equal(transport:release("epoch-a-4", true), 1, "held projection is released deterministically")
+	harness:equal(
+		transport:release("epoch-a-4", true),
+		1,
+		"held projection is released deterministically"
+	)
 	transport:flush()
-	harness:expect(deliveryResults[#deliveryResults] == true, "released missing projection is accepted")
+	harness:expect(
+		deliveryResults[#deliveryResults] == true,
+		"released missing projection is accepted"
+	)
 	transport:send("epoch-a-5-retry", projection("epoch-a", 5, 5, "five"), deliver, "deliver")
 	transport:flush()
-	harness:expect(deliveryResults[#deliveryResults] == true, "future projection succeeds after gap recovery")
+	harness:expect(
+		deliveryResults[#deliveryResults] == true,
+		"future projection succeeds after gap recovery"
+	)
 	harness:equal(replica.sequence, 5, "reordered stream recovers to the latest sequence")
 
 	transport:send("epoch-b-1", projection("epoch-b", 6, 1, "new epoch"), deliver, "deliver")
@@ -99,11 +116,20 @@ return function(harness: any)
 	harness:expect(deliveryResults[#deliveryResults] == true, "new authority epoch is accepted")
 	harness:equal(replica.epoch, "epoch-b", "replica switches to the new authority epoch")
 
-	transport:send("epoch-a-delayed", projection("epoch-a", 7, 6, "stale epoch"), deliver, "deliver")
+	transport:send(
+		"epoch-a-delayed",
+		projection("epoch-a", 7, 6, "stale epoch"),
+		deliver,
+		"deliver"
+	)
 	transport:flush()
 	harness:expect(deliveryResults[#deliveryResults] == false, "delayed previous epoch is rejected")
 	harness:equal(replica.epoch, "epoch-b", "delayed epoch cannot roll back the replica")
-	harness:equal(replica.payload.value, "new epoch", "delayed epoch cannot replace current payload")
+	harness:equal(
+		replica.payload.value,
+		"new epoch",
+		"delayed epoch cannot replace current payload"
+	)
 
 	local now = 0
 	local receiptSignal = newSynchronousSignal()
@@ -127,12 +153,19 @@ return function(harness: any)
 
 	local commandId = client:submit("session.ready", { ready = true })
 	harness:equal(#sentEnvelopes, 1, "command is sent once initially")
-	harness:expect(client.pending[commandId] ~= nil, "command remains pending without a terminal receipt")
+	harness:expect(
+		client.pending[commandId] ~= nil,
+		"command remains pending without a terminal receipt"
+	)
 
 	now += CommandClient.RETRY_INTERVAL_SECONDS
 	client:tick(now)
 	harness:equal(#sentEnvelopes, 2, "lost terminal receipt triggers a retry")
-	harness:equal(sentEnvelopes[2].commandId, commandId, "retry reuses the original command identity")
+	harness:equal(
+		sentEnvelopes[2].commandId,
+		commandId,
+		"retry reuses the original command identity"
+	)
 	harness:equal(receipts[#receipts].phase, "retrying", "retry emits a structured receipt phase")
 
 	now += CommandClient.RETRY_INTERVAL_SECONDS
@@ -152,13 +185,23 @@ return function(harness: any)
 	local timeoutCommandId = client:submit("session.ready", { ready = false })
 	now += CommandClient.COMMAND_TIMEOUT_SECONDS
 	client:tick(now)
-	harness:expect(client.pending[timeoutCommandId] == nil, "timed out command is removed from pending state")
+	harness:expect(
+		client.pending[timeoutCommandId] == nil,
+		"timed out command is removed from pending state"
+	)
 	local timeoutReceipt = receipts[#receipts]
 	harness:equal(timeoutReceipt.phase, "terminal", "timeout produces a terminal client receipt")
 	harness:expect(not timeoutReceipt.result.ok, "timeout terminal receipt is a failure")
 	if not timeoutReceipt.result.ok then
-		harness:equal(timeoutReceipt.result.error.code, "CLIENT_TIMEOUT", "timeout failure code is explicit")
-		harness:expect(timeoutReceipt.result.error.retryable, "command timeout remains retryable to the user flow")
+		harness:equal(
+			timeoutReceipt.result.error.code,
+			"CLIENT_TIMEOUT",
+			"timeout failure code is explicit"
+		)
+		harness:expect(
+			timeoutReceipt.result.error.retryable,
+			"command timeout remains retryable to the user flow"
+		)
 	end
 	client:stop()
 

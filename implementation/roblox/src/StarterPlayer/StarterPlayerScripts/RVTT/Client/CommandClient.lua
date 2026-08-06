@@ -44,7 +44,11 @@ local function sendRecord(self: CommandClient, record: any)
 	self.remotes.command:FireServer(record.envelope)
 end
 
-function CommandClient.new(remotes: any, replica: any, clockOverride: (() -> number)?): CommandClient
+function CommandClient.new(
+	remotes: any,
+	replica: any,
+	clockOverride: (() -> number)?
+): CommandClient
 	return setmetatable({
 		remotes = remotes,
 		replica = replica,
