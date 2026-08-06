@@ -20,6 +20,8 @@
     "datastore-outage.project.json",
     "lease-holder.project.json",
     "lease-contender.project.json",
+    "production-lease-seed.project.json",
+    "production-lease-verify.project.json",
     "slice01-acceptance.project.json"
   ],
   "phases": [
@@ -203,6 +205,46 @@
       "blocker": "Runs concurrently with the holder Place in the dedicated published persistence milestone"
     },
     {
+      "order": 90,
+      "id": "production-lease-seed",
+      "name": "Production ServerBoot fenced persistence seed",
+      "status": "deferred",
+      "execution": "studio-published",
+      "runId": "grand-production-lease-seed",
+      "group": "persistence",
+      "project": "production-lease-seed.project.json",
+      "persistence": true,
+      "summaryToken": "[RVTT Production Lease Seed]",
+      "evidenceTokens": [
+        "[RVTT Production Lease Prompt]",
+        "[RVTT Production Lease Client]",
+        "[RVTT Lease]",
+        "[RVTT Persistence Retry]"
+      ],
+      "passRegex": "\\[RVTT Production Lease Seed\\].*result=PASS.*failed=0.*checks=true.*flush=true.*metadata=true.*release=true",
+      "blocker": "Runs before production lease verify in the dedicated published persistence milestone"
+    },
+    {
+      "order": 91,
+      "id": "production-lease-verify",
+      "name": "Production ServerBoot higher fence restore and stale writer rejection",
+      "status": "deferred",
+      "execution": "studio-published",
+      "runId": "grand-production-lease-verify",
+      "group": "persistence",
+      "project": "production-lease-verify.project.json",
+      "persistence": true,
+      "summaryToken": "[RVTT Production Lease Verify]",
+      "evidenceTokens": [
+        "[RVTT Production Lease Prompt]",
+        "[RVTT Production Lease Client]",
+        "[RVTT Lease]",
+        "[RVTT Persistence Retry]"
+      ],
+      "passRegex": "\\[RVTT Production Lease Verify\\].*result=PASS.*failed=0.*checks=true.*flush=true.*release=true.*cleanup=true.*staleBlocked=true",
+      "blocker": "Runs after production lease seed in the dedicated published persistence milestone"
+    },
+    {
       "order": 100,
       "id": "slice02-core-rules",
       "name": "Slice 02 core rules and D20",
@@ -360,7 +402,7 @@
       "execution": "automated-and-studio",
       "group": "quality",
       "persistence": true,
-      "blocker": "Deterministic faults, real Player disconnect/reconnect, bounded shutdown retry, restart recovery, injected outage and paired cross-server lease hosts are registered; Roblox transport throttling and runtime Studio evidence remain"
+      "blocker": "Deterministic faults, real Player disconnect/reconnect, bounded shutdown retry, restart recovery, injected outage, paired cross-server lease, and production ServerBoot fenced persistence hosts are registered; Roblox transport throttling and runtime Studio evidence remain"
     },
     {
       "order": 260,
