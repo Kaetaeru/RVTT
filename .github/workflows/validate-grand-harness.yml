@@ -1,0 +1,47 @@
+name: Validate Grand harness
+
+concurrency:
+  group: rvtt-grand-harness-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+    paths:
+      - "implementation/roblox/grand-single-client.project.json"
+      - "implementation/roblox/grand-acceptance-manifest.json"
+      - "implementation/roblox/tests/TestRunner.server.lua"
+      - "implementation/roblox/tests/Integration/**"
+      - "implementation/roblox/tooling/run-grand-acceptance.ps1"
+      - "implementation/roblox/tooling/validate_grand_harness.py"
+      - ".github/workflows/validate-grand-harness.yml"
+  push:
+    branches:
+      - planning/rvtt-remake
+    paths:
+      - "implementation/roblox/grand-single-client.project.json"
+      - "implementation/roblox/grand-acceptance-manifest.json"
+      - "implementation/roblox/tests/TestRunner.server.lua"
+      - "implementation/roblox/tests/Integration/**"
+      - "implementation/roblox/tooling/run-grand-acceptance.ps1"
+      - "implementation/roblox/tooling/validate_grand_harness.py"
+      - ".github/workflows/validate-grand-harness.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate Grand harness contracts
+        run: python implementation/roblox/tooling/validate_grand_harness.py
