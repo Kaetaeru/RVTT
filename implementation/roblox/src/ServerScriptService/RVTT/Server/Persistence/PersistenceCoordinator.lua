@@ -101,7 +101,11 @@ function PersistenceCoordinator.load(self: any): any
 	return result
 end
 
-function PersistenceCoordinator.markDirty(self: any, state: any): boolean
+function PersistenceCoordinator.markDirty(
+	self: any,
+	state: any,
+	scheduleFlush: boolean?
+): boolean
 	local revision = revisionOf(state)
 	if revision == nil then
 		self.diagnostics:increment("persistence.invalid_dirty_state")
@@ -115,7 +119,7 @@ function PersistenceCoordinator.markDirty(self: any, state: any): boolean
 	end
 
 	self.dirty = DeepCopy(state)
-	if self.scheduled then
+	if scheduleFlush == false or self.scheduled then
 		return true
 	end
 	self.scheduled = true
@@ -157,7 +161,7 @@ function PersistenceCoordinator.flush(self: any): any
 		warn(
 			string.format(
 				"[RVTT Persistence] save failed key=%s revision=%s %s",
-				tostring(self.key),
+				self.key,
 				tostring(snapshotRevision),
 				failureSummary(result)
 			)
