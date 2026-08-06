@@ -77,7 +77,11 @@ return function(harness: any)
 	harness:equal(guardCalls, 1, "valid command invokes the lease guard")
 	harness:equal(runtime.executeCalls, 0, "failed guard prevents authority execution")
 	harness:equal(publisher.publishCalls, 0, "failed guard prevents projection publication")
-	harness:equal(#receiptRemote.calls, 2, "blocked command still receives accepted and terminal receipts")
+	harness:equal(
+		#receiptRemote.calls,
+		2,
+		"blocked command still receives accepted and terminal receipts"
+	)
 	harness:equal(receiptRemote.calls[2].value.phase, "terminal", "guard failure is terminal")
 	harness:equal(
 		receiptRemote.calls[2].value.result.error.code,
