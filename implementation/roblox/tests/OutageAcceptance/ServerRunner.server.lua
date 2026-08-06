@@ -50,7 +50,7 @@ function ControlledStore.load(self: any, storeKey: string): any
 			"PERSISTENCE_FAILED",
 			"error.persistence.failed",
 			true,
-			({ reason = "forced datastore outage before GetAsync" } :: { [string]: unknown })
+			{ reason = "forced datastore outage before GetAsync" } :: { [string]: unknown }
 		)
 	end
 	return self.delegate:load(storeKey)
@@ -63,7 +63,7 @@ function ControlledStore.save(self: any, storeKey: string, value: any): any
 			"PERSISTENCE_FAILED",
 			"error.persistence.failed",
 			true,
-			({ reason = "forced datastore outage before UpdateAsync" } :: { [string]: unknown })
+			{ reason = "forced datastore outage before UpdateAsync" } :: { [string]: unknown }
 		)
 	end
 	return self.delegate:save(storeKey, value)
