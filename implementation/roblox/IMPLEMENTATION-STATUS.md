@@ -1,9 +1,9 @@
 # RVTT Production Implementation Status
 
-- 상태: `GRAND_ACCEPTANCE_FOUNDATION_VALIDATED`
+- 상태: `GRAND_SLICES_02_12_AUTOMATED_BASELINE_STATIC_VERIFIED`
 - 작성일: 2026-08-05
 - 최종 갱신일: 2026-08-06
-- 범위: 16개 Slice Runtime baseline과 Grand Acceptance Campaign Foundation
+- 범위: 16개 Slice Runtime baseline, Grand Acceptance Campaign과 Slices 02–12 자동 Authority Scenario
 - Grand Campaign: [`GRAND-ACCEPTANCE-CAMPAIGN.md`](GRAND-ACCEPTANCE-CAMPAIGN.md)
 - 실행 테스트 규칙: [`EXECUTION-TEST-RULES.md`](EXECUTION-TEST-RULES.md)
 
@@ -22,7 +22,7 @@
 - 16개 Slice Domain Command baseline
 - Unit·Integration·Security·Disclosure Test Source
 
-## 기존 Studio Baseline Evidence
+## 기존 Studio Evidence
 
 ```text
 [RVTT Tests] passed=173 failed=0
@@ -48,16 +48,16 @@ Camera WASD·Middle-button·Frame Correction
 
 기존 Camera Harness의 직접 메서드 호출로 생성된 Slice 01 `16/16 PASS`는 실제 입력 Evidence에서 철회했다.
 
-## Grand Acceptance Foundation
+## Grand Acceptance 구현
 
 ```text
 Grand Manifest
 → IMPLEMENTED
 
-Grand Windows Runner
+Grouped Windows Runner
 → IMPLEMENTED
 
-Sequential Studio Phase Launch
+Shared Studio Run via runId
 → IMPLEMENTED
 
 Recent Roblox Log Summary Collection
@@ -66,69 +66,81 @@ Recent Roblox Log Summary Collection
 JSON·Markdown Consolidated Report
 → IMPLEMENTED
 
-Windows Parser·Manifest SelfTest
-→ PASSED
+Grand Single-client Place
+→ IMPLEMENTED · DATASTORE DISABLED
 
-Structure·Manifest·Runner Validator
-→ PASSED
-
-All Registered Rojo Builds·Luau Type Analysis
-→ PASSED
+Grand Multi-client Place
+→ REGISTERED
 
 Actual Grand Campaign Runtime
 → NOT YET EXECUTED
 ```
 
-현재 Runner는 첫 실패에서 중단하지 않고 가능한 모든 선택 Phase를 끝까지 실행한다. 결과는 다음 상태로 구분한다.
+현재 Runner는 첫 실패에서 중단하지 않고 가능한 모든 선택 Phase를 끝까지 실행한다. 결과는 `pass`, `fail`, `incomplete`, `prepared`, `blocked`로 분리한다.
 
-- `pass`: 기대 PASS Summary 발견
-- `fail`: Summary는 발견했지만 PASS 계약 불일치 또는 Build 실패
-- `incomplete`: 기대 Summary를 Log에서 찾지 못함
-- `prepared`: `-NoOpen`으로 Place만 Build
-- `blocked`: Harness·환경·권리·Evidence가 아직 준비되지 않음
+## Grand Single-client 자동 Scenario
 
-## Grand Phase Registry
+한 번의 Studio Play에서 기존 Unit·Integration과 함께 다음 Spec을 실행하도록 등록했다.
 
-### READY
+### Slice baseline
 
-- Static and Rojo Build Gate
-- Unit·Integration Baseline
-- Slice 01 World Interaction
-- Multi-client Authority·Projection
+- Slice 02 — Ability Check·Save·Attack·HP·Authorization·Idempotency
+- Slice 03 — Interaction·Locked/Hidden Object·Search·Knowledge·Fog·Restore
+- Slice 04 — Encounter Lifecycle·Turn·Action·Rollback·End·Restore
+- Slice 05 — Draft·Ownership·Activation·Level Up·Restore
+- Slice 06 — Item Create·Move·Equip·Drop·Restore
+- Slice 07 — Clock·Schedule·Activity·Completion·Restore
+- Slice 08 — UI Preference Validation·User Isolation·Restore
+- Slice 09 — Journal Ownership·Edit·Link·Ping·Restore
+- Slice 10 — Source·Compile·Candidate Invalidation·Publish·Restore
+- Slice 11 — Control·Quick Action·Runtime Patch·Recovery Request·Restore
+- Slice 12 — Pack Rights·Dependency·Activation·Localization·Restore
 
-### DEFERRED
+### Grand scenario
 
-- Live DataStore Baseline
-- Persistence Restart·Migration·Conflict Recovery
+- Cross-slice Full-session State 연결과 Snapshot Restore
+- Stale Revision·Stale Epoch·Invalid Payload·Duplicate Replay
+- Corrupt Snapshot 거부와 Runtime 보존
+- Restore 후 AuthorityEpoch 갱신과 이전 Epoch 폐기
+- Capacity Sample: Object 32·Item 32·Document 16
+- Capacity `elapsedMs`와 `restoreMs` Evidence
 
-### PLANNED
+각 Spec은 다음 구조화 로그를 출력한다.
 
-- Slices 02–12 사용자·보안·복구 Harness
-- UI Visual·Accessibility Evidence
-- Network·Storage Fault Injection
-- Performance·Soak·Capacity
-- Slice 16 Full-session Release Campaign
+```text
+[RVTT Spec Summary] id=<id> result=PASS|FAIL passed=<n> failed=<n>
+[RVTT Spec Failure] <id>: <failure>
+[RVTT Tests] passed=<n> failed=<n>
+```
 
-### BLOCKED
+Capacity Sample은 같은 `[RVTT Spec Summary]` 증거 토큰으로 측정값을 보고한다.
 
-- Slice 13 공식 Character Content
-- Slice 14 공식 Spell·Equipment·Rules Content
-- Slice 15 NPC·Monster·Campaign Content
+## 완료 의미
 
-Slices 13–15는 Source Version·권리·배포 범위·Asset 승인 전까지 실행 대상이 아니다.
+현재 Slices 02–12 상태는 다음과 같다.
+
+```text
+AUTOMATED AUTHORITY BASELINE
+→ SOURCE·FORMAT·LINT·BUILD·TYPE VERIFIED
+→ STUDIO RUNTIME NOT YET EXECUTED
+→ FULL SLICE ACCEPTANCE NOT COMPLETE
+```
+
+자동 Scenario는 Domain Command·Authorization·State·Restore의 대표 경로를 검증한다. 실제 UI Flow, Viewer Disclosure 전체 Matrix, Human Accessibility, DataStore Restart, Network Fault와 Soak Evidence는 각 Slice의 남은 Gate다.
 
 ## 일반 기능과 Persistence 분리
 
-`slice01-acceptance.project.json`은 계속 `EnableStudioPersistence=false`를 사용한다.
+`grand-single-client.project.json`과 `slice01-acceptance.project.json`은 `EnableStudioPersistence=false`를 사용한다.
 
-일반 기능 Phase:
+일반 Grand Run:
 
 - 입력·카메라
 - Token 선택·이동
-- Command·Projection
-- 메모리 내 Authority
+- Slices 02–12 메모리 내 Authority Scenario
+- Cross-slice·Fault·Capacity Sample
+- Multi-client Projection
 
-Persistence Phase:
+Persistence Grand Run:
 
 - Load·Save·Dirty·Flush
 - Stop·Play Restore
@@ -136,17 +148,28 @@ Persistence Phase:
 - Migration·Lease·Conflict
 - Failure Recovery·Rollback
 
-Persistence는 관련 변경을 축적한 뒤 Grand Campaign에서 `-IncludePersistence`를 사용해 한 번에 실행한다.
+Persistence는 관련 변경을 축적한 뒤 `-IncludePersistence`로 한 번에 실행한다.
+
+## Content Blocker
+
+Slices 13–15는 Runtime과 Rights Gate Source는 존재하지만 공식 데이터를 포함하지 않는다.
+
+- 승인된 Source Version
+- 권리와 배포 범위
+- Localization·Asset 승인
+- Package·Catalog 등록
+
+위 조건 전에는 공식 Character·Spell·Item·NPC·Monster Content를 Grand PASS 대상으로 등록하지 않는다. Monster는 승인된 공식 원본 Statblock을 그대로 사용하며 임의 CR·수치 재조정을 하지 않는다.
 
 ## 자동 Gate
 
+- Grand Contract Validator: PASS
 - Structure·Security·Policy Validator: PASS
-- Grand Manifest Schema·Phase Registry Validator: PASS
 - PowerShell Parser: PASS
 - Runner SelfTest: PASS
 - StyLua: PASS
 - Selene: PASS
-- Production·Test·Multi-client·Persistence·Slice01 Rojo Build: PASS
+- Production·Test·Grand Single-client·Multi-client·Persistence·Slice01 Rojo Build: PASS
 - Production·Test Luau Type Analysis: PASS
 - Documentation Validation: PASS
 
@@ -156,29 +179,27 @@ Persistence는 관련 변경을 축적한 뒤 Grand Campaign에서 `-IncludePers
 
 - 최신 Slice 01 Camera WASD·Middle-button·Frame 실제 입력
 - Grand Runner의 실제 사용자 PC 순차 Studio 실행과 Log 수집
-- Slices 02–12 Grand Harness
+- Slices 02–12 전체 사용자·Disclosure·Recovery Scenario
 - DataStore Restart·Cross-server Lease·Migration·Conflict Grand Phase
 - Slices 13–15 공식 데이터·권리·Asset
 - Navigation·Physics·Streaming·Large Scene
 - UI Visual Redesign·Accessibility Human Review
-- Performance·Memory·Network·Fault·Soak
+- Network Drop·Delay·Reorder·Storage Fault Injection
+- 실제 성능 Budget·Memory·Network·장시간 Soak
 - Full-session Release Runbook
 
 ## 현재 Gate
 
 ```text
-Grand Acceptance Foundation 자동 Gate
+Grand Automated Harness Static Gate
 → PASS
 
-READY Phase Grand Runtime
+Grand Runtime
 → USER EXECUTION DEFERRED
 
-Slices 02–12 Harness Expansion
-→ QUEUED
-
-Persistence Grand Phase
-→ DEFERRED
+Persistence·Human UI·Full Fault·Soak
+→ IMPLEMENTATION IN PROGRESS
 
 Full Grand Campaign
-→ BLOCKED UNTIL PHASES READY
+→ BLOCKED UNTIL TARGET PHASES READY
 ```
