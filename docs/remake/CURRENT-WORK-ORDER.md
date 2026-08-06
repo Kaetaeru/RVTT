@@ -48,8 +48,11 @@ Real Player Disconnect·Reconnect·Server Restart
 Injected DataStore Outage·Cross-server Lease Pair
 → IMPLEMENTED · STATIC VERIFIED · STUDIO NOT EXECUTED
 
+Production ServerBoot Lease Ownership·Atomic Fence Claim
+→ IMPLEMENTED · STATIC VERIFIED · STUDIO NOT EXECUTED
+
 현재 작업
-→ Production ServerBoot Lease Ownership·Fenced Persistence 연결
+→ Production Lease Integration Acceptance Host
 ```
 
 ## 2. 상위 작업 순서
@@ -70,15 +73,16 @@ Injected DataStore Outage·Cross-server Lease Pair
 | 12 | DONE | Deterministic Fault Host | Network·Storage 결정적 장애 계약 |
 | 13 | DONE | Real Transport·Restart Host | 실제 Player Lifecycle·Shutdown Retry·두 서버 Restore |
 | 14 | DONE | DataStore Outage·Lease Pair Host | 주입 장애 복구·Lease Fencing·두 Studio Pair 등록 |
-| 15 | IN_PROGRESS | Production Lease Ownership Integration | ServerBoot Acquire·Renew·Verify·Release·Fenced Save |
-| 16 | QUEUED | Grand Persistence Milestone | Live·Restart·Outage·Lease·Production Ownership 일괄 실행 |
-| 17 | QUEUED | Human UI·Accessibility | Checklist·Screenshot Reference·Visual Redesign Gate |
-| 18 | BLOCKED | Slices 13–15 Content Acceptance | Source Version·Rights·Distribution·Asset 승인 필요 |
-| 19 | QUEUED | Performance·Soak | Budget·다중 Client·장시간 Session Evidence |
-| 20 | QUEUED | Full Grand Runtime | Target Phase가 READY인 Milestone에서 사용자 실행 1회 |
-| 21 | BLOCKED | Release Hardening | Build·Migration·Fault·Soak·Runbook Evidence 필요 |
+| 15 | DONE | Production Lease Ownership Integration | Acquire·Atomic Claim·Guard·Renew·Fenced Save·Release |
+| 16 | IN_PROGRESS | Production Lease Acceptance Host | 안전한 Test Store·Key의 실제 ServerBoot Seed·Takeover·Stale Write Evidence |
+| 17 | QUEUED | Grand Persistence Milestone | Live·Restart·Outage·Lease·Production Boot 일괄 실행 |
+| 18 | QUEUED | Human UI·Accessibility | Checklist·Screenshot Reference·Visual Redesign Gate |
+| 19 | BLOCKED | Slices 13–15 Content Acceptance | Source Version·Rights·Distribution·Asset 승인 필요 |
+| 20 | QUEUED | Performance·Soak | Budget·다중 Client·장시간 Session Evidence |
+| 21 | QUEUED | Full Grand Runtime | Target Phase가 READY인 Milestone에서 사용자 실행 1회 |
+| 22 | BLOCKED | Release Hardening | Build·Migration·Fault·Soak·Runbook Evidence 필요 |
 
-## 3. Fault Host 확장 결과
+## 3. Persistence·Fault 확장 결과
 
 ### Deterministic Fault
 
@@ -95,35 +99,51 @@ Injected DataStore Outage·Cross-server Lease Pair
 - `BindToClose` Retry·Deadline
 - 새 서버 Restore·Epoch 교체·이전 Epoch 거부
 
-### Injected Outage
+### Injected Outage·Lease Pair
 
 - Production Adapter 호출 전 retryable 장애 주입
 - Save Retry 고갈·Dirty State 보존
 - 장애 해제 후 실제 DataStore Save·Reload
-- Roblox 플랫폼 자체 장애 Evidence는 아님
-
-### Cross-server Lease Pair
-
-- Holder·Contender가 동일한 실제 DataStore Lease Key 사용
-- 활성·갱신 Lease에서 Contender 두 번 차단
-- 만료 후 더 높은 Fencing Token Takeover
+- Holder·Contender 동일 Lease Key
+- 활성·갱신 Lease에서 Contender 차단
+- 만료 후 Higher Fencing Token Takeover
 - 이전 Holder Verify·Release 거부
-- 서로 다른 두 Place를 하나의 Pair Run에서 독립 판정
 
-모든 신규 Host는 Source·Format·Lint·13개 Rojo Build·Luau Type·Grand Contract 검증을 통과했다. 새 Studio Runtime Evidence는 없다.
+### Production Lease Ownership·Fenced Persistence
+
+```text
+Lease Acquire
+→ Remote Verify
+→ Authority Document Atomic Fence Claim
+→ Latest Document Load·Restore
+→ Remote·System Command Guard
+→ Background Renew
+→ Flush 전 Remote Verify·Write Fence
+→ Fenced Save
+→ BindToClose Flush-before-Release
+```
+
+- Claim은 Authority Document와 같은 `UpdateAsync`에서 `persistenceFence`를 기록한다.
+- Claim 이후 이전 서버의 높은 Revision 지연 저장도 `PERSISTENCE_FENCED`로 거부한다.
+- Higher Fence는 Revision 단조성 검사를 우회하지 않는다.
+- Runtime Snapshot에서는 Persistence Fence Metadata를 제거한다.
+- Lease Lost·Expiry·Not Held는 Command와 Persistence를 Fail-closed로 전환한다.
+- 전용 `Validate production lease` Workflow가 순서·Spec·금지 우회를 강제한다.
+
+모든 신규 Source는 Format·Lint·13개 Rojo Build·Luau Type·Production Lease Contract·Grand Contract 검증을 통과했다. 새 Studio Runtime Evidence는 없다.
 
 ## 4. 현재 Production 공백
 
-Lease Store·Coordinator와 Pair Host는 구현됐지만 Production `ServerBoot`는 아직 다음을 수행하지 않는다.
+Production Lease Source는 연결됐지만 실제 `ServerBoot` Acceptance는 아직 없다.
 
-- Campaign Lease Acquire
-- 주기적 Renew와 Grace Window
-- Command·Flush 전 Lease Verify
-- Fencing Token 기반 지연 Save 차단
-- Lease Lost 시 Authority Degrade
-- `BindToClose` Release
+- 실제 Campaign Store를 건드리지 않는 Acceptance 전용 Store·Key 주입
+- Seed Server의 Command Commit·Fenced Flush·Release
+- 다음 Server의 Higher Fence Claim·Latest Restore
+- 이전 Fence Revision 99 지연 Save 거부
+- Integration Key Cleanup
+- Lease 미획득·Lease Lost 사용자 UX
 
-따라서 Cross-server Lease Host의 정적 PASS를 Production 동시 서버 보호 완료로 해석하지 않는다.
+따라서 정적 PASS를 실제 다중 서버 Production 보호 완료로 해석하지 않는다.
 
 ## 5. Grand Acceptance 운영
 
@@ -144,6 +164,7 @@ Lease Store·Coordinator와 Pair Host는 구현됐지만 Production `ServerBoot`
 - `grand-multi-client`: DM·Player·Observer Authority·Projection
 - `grand-real-transport`: 실제 Client 종료·Replacement Client
 - Grand Persistence: Live·Restart Seed·Verify·Injected Outage·Lease Pair
+- 향후 Production Lease Integration: 실제 ServerBoot Seed·Takeover
 
 ## 6. 운영 규칙
 
@@ -151,20 +172,22 @@ Lease Store·Coordinator와 Pair Host는 구현됐지만 Production `ServerBoot`
 2. 자동 Gate 실패 상태에서는 사용자 Studio 실행을 요청하지 않는다.
 3. Studio Evidence 없이 Runtime PASS를 주장하지 않는다.
 4. 주입 장애를 Roblox 플랫폼 장애로 표현하지 않는다.
-5. Lease Primitive·Host와 Production Boot 연결 상태를 분리한다.
-6. Slices 02–12 자동 baseline을 전체 Slice Acceptance로 해석하지 않는다.
-7. 저장 Schema 변경에는 Migration·Version·Last Known Good가 필요하다.
-8. DataStore 검사는 Grand Persistence Milestone에서 한 번에 한다.
-9. 성능 측정 전 임의 합격선을 확정하지 않는다.
-10. Slices 13–15 공식 Content는 승인 전까지 Release 대상에 포함하지 않는다.
-11. 공식 Monster Statblock은 승인된 원본을 그대로 사용하고 임의 CR·수치 재조정을 하지 않는다.
-12. `SUPERSEDED`, `DISCONTINUED`, `ARCHIVED` 문서를 Authority로 사용하지 않는다.
+5. Lease Source·Static Gate와 실제 Production Boot Runtime Evidence를 분리한다.
+6. Acceptance는 실제 Campaign Store·Key를 사용하지 않는다.
+7. Slices 02–12 자동 baseline을 전체 Slice Acceptance로 해석하지 않는다.
+8. 저장 Schema 변경에는 Migration·Version·Last Known Good가 필요하다.
+9. DataStore 검사는 Grand Persistence Milestone에서 한 번에 한다.
+10. 성능 측정 전 임의 합격선을 확정하지 않는다.
+11. Slices 13–15 공식 Content는 승인 전까지 Release 대상에 포함하지 않는다.
+12. 공식 Monster Statblock은 승인된 원본을 그대로 사용하고 임의 CR·수치 재조정을 하지 않는다.
+13. `SUPERSEDED`, `DISCONTINUED`, `ARCHIVED` 문서를 Authority로 사용하지 않는다.
 
 ## 7. 다음 단계 Gate
 
 ```text
-Production ServerBoot Lease Ownership
-→ Fenced Authority Save·Delayed Writer 차단
+Production Lease Acceptance Store·Key Config
+→ 실제 ServerBoot Seed·Fenced Flush·Release
+→ Higher Fence Claim·Restore·Stale Write 거부
 → Grand Persistence Milestone
 → UI·Accessibility Human Evidence
 → Performance·Soak
