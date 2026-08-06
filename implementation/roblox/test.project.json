@@ -19,6 +19,11 @@
         "Integration": {"$path": "tests/Integration"}
       }
     },
-    "ServerStorage": {"RVTT": {"$path": "src/ServerStorage/RVTT"}}
+    "ServerStorage": {"RVTT": {"$path": "src/ServerStorage/RVTT"}},
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "RVTT": {"$path": "src/StarterPlayer/StarterPlayerScripts/RVTT"}
+      }
+    }
   }
 }
