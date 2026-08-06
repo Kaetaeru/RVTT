@@ -69,7 +69,7 @@ function Runtime.new(replica: any, command: any): Runtime
 	local compatibilityConnection = nil
 	if ACCEPTANCE_MODE then
 		compatibilityConnection = camera.InputResolved:Connect(
-			function(action, source, applied, changed, processed)
+			function(action, _source, applied, changed, processed)
 				if action == "orbit" then
 					camera.InputResolved:Fire(
 						"pan",
