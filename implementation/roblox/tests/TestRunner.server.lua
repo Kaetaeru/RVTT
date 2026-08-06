@@ -156,6 +156,21 @@ local specs: { Spec } = {
 		name = "Slice12ContentPlatform.spec",
 		runner = require(script.Parent.Integration["Slice12ContentPlatform.spec"]) :: any,
 	},
+	{
+		id = "grand-cross-slice-session",
+		name = "GrandCrossSliceSession.spec",
+		runner = require(script.Parent.Integration["GrandCrossSliceSession.spec"]) :: any,
+	},
+	{
+		id = "grand-authority-faults",
+		name = "GrandAuthorityFaults.spec",
+		runner = require(script.Parent.Integration["GrandAuthorityFaults.spec"]) :: any,
+	},
+	{
+		id = "grand-capacity-sample",
+		name = "GrandCapacitySample.spec",
+		runner = require(script.Parent.Integration["GrandCapacitySample.spec"]) :: any,
+	},
 }
 
 for _, spec in specs do
