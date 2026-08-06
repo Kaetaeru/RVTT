@@ -29,7 +29,7 @@
     {
       "order": 10,
       "id": "unit-integration-baseline",
-      "name": "Unit integration and Slices 02-04 automated baseline",
+      "name": "Unit integration and Slices 02-12 automated baseline",
       "status": "ready",
       "execution": "studio-single-client",
       "runId": "grand-single-client",
@@ -109,7 +109,7 @@
       "execution": "studio-campaign",
       "group": "slice",
       "persistence": false,
-      "blocker": "Automated authority baseline is included in grand-single-client; full user, disclosure, recovery and content coverage remains"
+      "blocker": "Automated ability check, save, attack, HP, authorization and idempotency baseline is included in grand-single-client; full user flow, disclosure, recovery and content coverage remains"
     },
     {
       "order": 110,
@@ -119,7 +119,7 @@
       "execution": "studio-campaign",
       "group": "slice",
       "persistence": false,
-      "blocker": "Automated interaction, search, fog and restore baseline is included in grand-single-client; input, navigation and disclosure coverage remains"
+      "blocker": "Automated interaction, locked and hidden object, search, knowledge, fog, authorization and restore baseline is included in grand-single-client; input, navigation and projection disclosure coverage remains"
     },
     {
       "order": 120,
@@ -129,7 +129,7 @@
       "execution": "studio-campaign",
       "group": "slice",
       "persistence": false,
-      "blocker": "Automated lifecycle, turn, action and rollback baseline is included in grand-single-client; reaction, objective and recovery coverage remains"
+      "blocker": "Automated lifecycle, initiative, turn ownership, action opportunity, rollback, end and restore baseline is included in grand-single-client; reaction, objective, death and restart coverage remains"
     },
     {
       "order": 130,
@@ -139,7 +139,7 @@
       "execution": "studio-campaign",
       "group": "slice",
       "persistence": false,
-      "blocker": "Slice 05 acceptance harness and summary are not implemented"
+      "blocker": "Automated draft validation, ownership, activation, level-up and restore baseline is included in grand-single-client; compiler, review, sheet, actor binding and migration coverage remains"
     },
     {
       "order": 140,
@@ -149,7 +149,7 @@
       "execution": "studio-campaign",
       "group": "slice",
       "persistence": false,
-      "blocker": "Slice 06 acceptance harness and summary are not implemented"
+      "blocker": "Automated item creation, quantity clamp, ownership, move, equip, drop and restore baseline is included in grand-single-client; slot conflict, stack, streaming, world presence and UI coverage remains"
     },
     {
       "order": 150,
@@ -159,7 +159,7 @@
       "execution": "studio-campaign",
       "group": "slice",
       "persistence": false,
-      "blocker": "Slice 07 acceptance harness and summary are not implemented"
+      "blocker": "Automated campaign clock, schedule, activity ownership, completion, duplicate suppression and restore baseline is included in grand-single-client; rest, resource, level-up, crafting, travel and restart coverage remains"
     },
     {
       "order": 160,
@@ -169,7 +169,7 @@
       "execution": "studio-campaign",
       "group": "slice",
       "persistence": false,
-      "blocker": "Slice 08 acceptance harness and summary are not implemented"
+      "blocker": "Automated preference validation, per-user isolation and restore baseline is included in grand-single-client; projection replica, semantic input, command reconciliation, presentation and human accessibility evidence remains"
     },
     {
       "order": 170,
@@ -179,7 +179,7 @@
       "execution": "studio-campaign",
       "group": "slice",
       "persistence": false,
-      "blocker": "Slice 09 acceptance harness and summary are not implemented"
+      "blocker": "Automated document ownership, edit, structured link, point ping and restore baseline is included in grand-single-client; Markdown compiler, ACL search, backlink and safe navigation coverage remains"
     },
     {
       "order": 180,
@@ -189,7 +189,7 @@
       "execution": "studio-campaign",
       "group": "slice",
       "persistence": false,
-      "blocker": "Slice 10 acceptance harness and summary are not implemented"
+      "blocker": "Automated source, stable object, candidate invalidation, compile, atomic publish and restore baseline is included in grand-single-client; editor tools, diagnostics, test play and large-scene coverage remains"
     },
     {
       "order": 190,
@@ -199,7 +199,7 @@
       "execution": "studio-campaign",
       "group": "slice",
       "persistence": false,
-      "blocker": "Slice 11 acceptance harness and summary are not implemented"
+      "blocker": "Automated control assignment, quick action audit, runtime patch, recovery request and restore baseline is included in grand-single-client; player-view preview, pause, transition, live patch and operator recovery coverage remains"
     },
     {
       "order": 200,
@@ -209,7 +209,7 @@
       "execution": "studio-campaign",
       "group": "slice",
       "persistence": false,
-      "blocker": "Slice 12 acceptance harness and summary are not implemented"
+      "blocker": "Automated pack registration, rights gate, dependency activation, localization, authorization and restore baseline is included in grand-single-client; signing, trust host, budget, migration, removal and catalog-load coverage remains"
     },
     {
       "order": 210,
