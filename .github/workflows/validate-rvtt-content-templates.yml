@@ -9,6 +9,8 @@ on:
     paths:
       - "implementation/roblox/content-templates/**"
       - "implementation/roblox/tooling/validate_content_templates.py"
+      - "docs/remake/decisions/ADR-0092-campaign-survival-logistics-and-dm-authored-actor-tokens.md"
+      - "docs/remake/architecture/dm-authored-actor-token-and-statblock-import-runtime-contract.md"
       - ".github/workflows/validate-rvtt-content-templates.yml"
   push:
     branches:
@@ -16,6 +18,8 @@ on:
     paths:
       - "implementation/roblox/content-templates/**"
       - "implementation/roblox/tooling/validate_content_templates.py"
+      - "docs/remake/decisions/ADR-0092-campaign-survival-logistics-and-dm-authored-actor-tokens.md"
+      - "docs/remake/architecture/dm-authored-actor-token-and-statblock-import-runtime-contract.md"
       - ".github/workflows/validate-rvtt-content-templates.yml"
   workflow_dispatch:
 
@@ -34,5 +38,5 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Validate actor schemas and canonical fixtures
+      - name: Validate actor schemas, authority documents, and canonical fixtures
         run: python implementation/roblox/tooling/validate_content_templates.py
