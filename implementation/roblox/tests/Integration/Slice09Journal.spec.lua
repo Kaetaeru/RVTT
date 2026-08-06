@@ -1,6 +1,6 @@
 --!strict
 
-return function(harness)
+return function(harness: any)
 	local ScenarioRuntime = require(script.Parent.ScenarioRuntime)
 	local scenario = ScenarioRuntime.new(909, "player")
 
@@ -28,14 +28,15 @@ return function(harness)
 		harness:equal(deniedEdit.error.code, "UNAUTHORIZED", "journal ownership denial is explicit")
 	end
 
+	local links: { any } = {
+		{ kind = "scene", targetId = "scene:test" },
+		{ kind = "coordinate", position = { x = 5, y = 0, z = 7 } },
+	}
 	local edit = scenario:execute("journal.edit", {
 		documentId = documentId,
 		title = "Slice 09 Journal Updated",
 		body = "# Entry\nUpdated through an authoritative command.",
-		links = {
-			{ kind = "scene", targetId = "scene:test" },
-			{ kind = "coordinate", position = { x = 5, y = 0, z = 7 } },
-		},
+		links = links,
 	})
 	local editOutcome = scenario:expectOutcome(harness, edit, "Slice 09 edits the owned journal")
 	if editOutcome == nil then
