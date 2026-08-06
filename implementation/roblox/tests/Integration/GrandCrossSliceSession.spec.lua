@@ -3,14 +3,15 @@
 return function(harness: any)
 	local ScenarioRuntime = require(script.Parent.ScenarioRuntime)
 	local scenario = ScenarioRuntime.new(1602, "dm")
-	local heroId = scenario:bootstrapCharacter(harness, "Grand Session Hero", "scene:grand-session", {
-		strength = 16,
-		dexterity = 14,
-		constitution = 14,
-		intelligence = 12,
-		wisdom = 12,
-		charisma = 10,
-	})
+	local heroId =
+		scenario:bootstrapCharacter(harness, "Grand Session Hero", "scene:grand-session", {
+			strength = 16,
+			dexterity = 14,
+			constitution = 14,
+			intelligence = 12,
+			wisdom = 12,
+			charisma = 10,
+		})
 	if heroId == nil then
 		return
 	end
@@ -19,7 +20,10 @@ return function(harness: any)
 		key = "accentPaletteId",
 		value = "azure",
 	})
-	if scenario:expectOutcome(harness, preference, "Grand session stores a player UI preference") == nil then
+	if
+		scenario:expectOutcome(harness, preference, "Grand session stores a player UI preference")
+		== nil
+	then
 		return
 	end
 
@@ -31,20 +35,30 @@ return function(harness: any)
 			dependencies = {},
 		},
 	})
-	if scenario:expectOutcome(harness, registerPack, "Grand session registers original content") == nil then
+	if
+		scenario:expectOutcome(harness, registerPack, "Grand session registers original content")
+		== nil
+	then
 		return
 	end
 	local activatePack = scenario:execute("content.activate_pack", {
 		packId = "pack:grand-original",
 	})
-	if scenario:expectOutcome(harness, activatePack, "Grand session activates original content") == nil then
+	if
+		scenario:expectOutcome(harness, activatePack, "Grand session activates original content")
+		== nil
+	then
 		return
 	end
 
 	local authoredScene = scenario:execute("authoring.create_scene", {
 		name = "Grand Authored Scene",
 	})
-	local authoredSceneOutcome = scenario:expectOutcome(harness, authoredScene, "Grand session creates authored scene source")
+	local authoredSceneOutcome = scenario:expectOutcome(
+		harness,
+		authoredScene,
+		"Grand session creates authored scene source"
+	)
 	if authoredSceneOutcome == nil then
 		return
 	end
@@ -57,7 +71,13 @@ return function(harness: any)
 			position = { x = 4, y = 0, z = 4 },
 		},
 	})
-	if scenario:expectOutcome(harness, authoredObject, "Grand session authors a stable scene object") == nil then
+	if
+		scenario:expectOutcome(
+			harness,
+			authoredObject,
+			"Grand session authors a stable scene object"
+		) == nil
+	then
 		return
 	end
 	local compile = scenario:execute("authoring.compile", { sceneId = authoredSceneId })
@@ -65,7 +85,9 @@ return function(harness: any)
 		return
 	end
 	local publish = scenario:execute("authoring.publish", { sceneId = authoredSceneId })
-	if scenario:expectOutcome(harness, publish, "Grand session publishes authored scene") == nil then
+	if
+		scenario:expectOutcome(harness, publish, "Grand session publishes authored scene") == nil
+	then
 		return
 	end
 
@@ -74,7 +96,8 @@ return function(harness: any)
 		body = "# Session\nCross-slice acceptance note.",
 		visibility = "private",
 	})
-	local journalOutcome = scenario:expectOutcome(harness, journal, "Grand session creates player journal")
+	local journalOutcome =
+		scenario:expectOutcome(harness, journal, "Grand session creates player journal")
 	if journalOutcome == nil then
 		return
 	end
@@ -115,7 +138,8 @@ return function(harness: any)
 		state = { state = "closed", locked = false },
 		interactionIds = { "open" },
 	})
-	local doorOutcome = scenario:expectOutcome(harness, door, "Grand session spawns an exploration door")
+	local doorOutcome =
+		scenario:expectOutcome(harness, door, "Grand session spawns an exploration door")
 	if doorOutcome == nil then
 		return
 	end
@@ -124,7 +148,9 @@ return function(harness: any)
 		objectId = doorOutcome.id,
 		interactionId = "open",
 	})
-	if scenario:expectOutcome(harness, interact, "Grand session opens the exploration door") == nil then
+	if
+		scenario:expectOutcome(harness, interact, "Grand session opens the exploration door") == nil
+	then
 		return
 	end
 
@@ -134,7 +160,8 @@ return function(harness: any)
 		difficultyClass = 1,
 		labelKey = "grand.session.check",
 	})
-	local challengeOutcome = scenario:expectOutcome(harness, challenge, "Grand session creates a rules challenge")
+	local challengeOutcome =
+		scenario:expectOutcome(harness, challenge, "Grand session creates a rules challenge")
 	if challengeOutcome == nil then
 		return
 	end
@@ -142,7 +169,8 @@ return function(harness: any)
 		actorId = heroId,
 		challengeId = challengeOutcome.challengeId,
 	})
-	local checkOutcome = scenario:expectOutcome(harness, check, "Grand session resolves a player ability check")
+	local checkOutcome =
+		scenario:expectOutcome(harness, check, "Grand session resolves a player ability check")
 	if checkOutcome == nil then
 		return
 	end
@@ -151,7 +179,8 @@ return function(harness: any)
 	local target = scenario:execute("scene.spawn_actor", {
 		position = { x = 10, y = 0, z = 0 },
 	})
-	local targetOutcome = scenario:expectOutcome(harness, target, "Grand session spawns encounter target")
+	local targetOutcome =
+		scenario:expectOutcome(harness, target, "Grand session spawns encounter target")
 	if targetOutcome == nil then
 		return
 	end
@@ -175,7 +204,10 @@ return function(harness: any)
 		afterSeconds = 600,
 		payload = { event = "event:grand-session" },
 	})
-	if scenario:expectOutcome(harness, schedule, "Grand session schedules campaign time event") == nil then
+	if
+		scenario:expectOutcome(harness, schedule, "Grand session schedules campaign time event")
+		== nil
+	then
 		return
 	end
 	local activity = scenario:executeAs("player", 1602, "time.start_activity", {
@@ -183,7 +215,9 @@ return function(harness: any)
 		kind = "rest",
 		characterId = heroId,
 	})
-	if scenario:expectOutcome(harness, activity, "Grand session starts a player activity") == nil then
+	if
+		scenario:expectOutcome(harness, activity, "Grand session starts a player activity") == nil
+	then
 		return
 	end
 
@@ -191,31 +225,88 @@ return function(harness: any)
 		actionId = "action:grand-session-note",
 		payload = { documentId = journalOutcome.id },
 	})
-	if scenario:expectOutcome(harness, quickAction, "Grand session records a DM quick action") == nil then
+	if
+		scenario:expectOutcome(harness, quickAction, "Grand session records a DM quick action")
+		== nil
+	then
 		return
 	end
 
 	local snapshot = scenario:snapshot()
-	harness:expect(snapshot.revision >= 20, "Grand session accumulates one monotonic authority revision stream")
-	harness:equal(snapshot.domains.ui_preferences.byUser["1602"].accentPaletteId, "azure", "Grand session keeps UI preference")
-	harness:equal(snapshot.domains.content.active["pack:grand-original"], "1.0.0", "Grand session keeps active content version")
-	harness:expect(snapshot.domains.scene_authoring.published[authoredSceneId] ~= nil, "Grand session keeps published scene")
-	harness:expect(snapshot.domains.journal.documents[journalOutcome.id] ~= nil, "Grand session keeps journal document")
-	harness:equal(snapshot.domains.inventory.locations[itemId].kind, "equipped", "Grand session keeps equipped item location")
-	harness:equal(snapshot.domains.exploration.objectStates[doorOutcome.id].state, "open", "Grand session keeps exploration state")
-	harness:expect(snapshot.domains.encounter.active == nil, "Grand session returns from encounter to exploration")
-	harness:equal(snapshot.domains.time.activities["activity:grand-session"].status, "started", "Grand session keeps active downtime")
-	harness:equal(#snapshot.domains.dm_workspace.quickActions, 1, "Grand session keeps DM audit action")
+	harness:expect(
+		snapshot.revision >= 20,
+		"Grand session accumulates one monotonic authority revision stream"
+	)
+	harness:equal(
+		snapshot.domains.ui_preferences.byUser["1602"].accentPaletteId,
+		"azure",
+		"Grand session keeps UI preference"
+	)
+	harness:equal(
+		snapshot.domains.content.active["pack:grand-original"],
+		"1.0.0",
+		"Grand session keeps active content version"
+	)
+	harness:expect(
+		snapshot.domains.scene_authoring.published[authoredSceneId] ~= nil,
+		"Grand session keeps published scene"
+	)
+	harness:expect(
+		snapshot.domains.journal.documents[journalOutcome.id] ~= nil,
+		"Grand session keeps journal document"
+	)
+	harness:equal(
+		snapshot.domains.inventory.locations[itemId].kind,
+		"equipped",
+		"Grand session keeps equipped item location"
+	)
+	harness:equal(
+		snapshot.domains.exploration.objectStates[doorOutcome.id].state,
+		"open",
+		"Grand session keeps exploration state"
+	)
+	harness:expect(
+		snapshot.domains.encounter.active == nil,
+		"Grand session returns from encounter to exploration"
+	)
+	harness:equal(
+		snapshot.domains.time.activities["activity:grand-session"].status,
+		"started",
+		"Grand session keeps active downtime"
+	)
+	harness:equal(
+		#snapshot.domains.dm_workspace.quickActions,
+		1,
+		"Grand session keeps DM audit action"
+	)
 
 	local restored = ScenarioRuntime.new(1602, "dm")
 	local restore = restored:restore(snapshot)
 	harness:expect(restore.ok, "Grand cross-slice snapshot restores")
 	if restore.ok then
 		local restoredDomains = restored:snapshot().domains
-		harness:equal(restoredDomains.inventory.locations[itemId].kind, "equipped", "restore keeps cross-slice inventory")
-		harness:expect(restoredDomains.scene_authoring.published[authoredSceneId] ~= nil, "restore keeps cross-slice published scene")
-		harness:expect(restoredDomains.journal.documents[journalOutcome.id] ~= nil, "restore keeps cross-slice journal")
-		harness:equal(restoredDomains.exploration.objectStates[doorOutcome.id].state, "open", "restore keeps cross-slice exploration")
-		harness:equal(restoredDomains.time.activities["activity:grand-session"].status, "started", "restore keeps cross-slice activity")
+		harness:equal(
+			restoredDomains.inventory.locations[itemId].kind,
+			"equipped",
+			"restore keeps cross-slice inventory"
+		)
+		harness:expect(
+			restoredDomains.scene_authoring.published[authoredSceneId] ~= nil,
+			"restore keeps cross-slice published scene"
+		)
+		harness:expect(
+			restoredDomains.journal.documents[journalOutcome.id] ~= nil,
+			"restore keeps cross-slice journal"
+		)
+		harness:equal(
+			restoredDomains.exploration.objectStates[doorOutcome.id].state,
+			"open",
+			"restore keeps cross-slice exploration"
+		)
+		harness:equal(
+			restoredDomains.time.activities["activity:grand-session"].status,
+			"started",
+			"restore keeps cross-slice activity"
+		)
 	end
 end

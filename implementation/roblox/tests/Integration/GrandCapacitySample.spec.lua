@@ -16,7 +16,8 @@ return function(harness: any)
 	local scene = scenario:execute("authoring.create_scene", {
 		name = "Grand Capacity Scene",
 	})
-	local sceneOutcome = scenario:expectOutcome(harness, scene, "Capacity sample creates a scene source")
+	local sceneOutcome =
+		scenario:expectOutcome(harness, scene, "Capacity sample creates a scene source")
 	if sceneOutcome == nil then
 		return
 	end
@@ -38,7 +39,10 @@ return function(harness: any)
 		end
 	end
 	local compile = scenario:execute("authoring.compile", { sceneId = sceneId })
-	if scenario:expectOutcome(harness, compile, "Capacity sample compiles the large scene source") == nil then
+	if
+		scenario:expectOutcome(harness, compile, "Capacity sample compiles the large scene source")
+		== nil
+	then
 		return
 	end
 
@@ -75,9 +79,17 @@ return function(harness: any)
 	local authoredObjects = snapshot.domains.scene_authoring.sources[sceneId].objects
 	local items = snapshot.domains.inventory.items
 	local documents = snapshot.domains.journal.documents
-	harness:equal(countKeys(authoredObjects), objectCount, "capacity sample preserves every authored object")
+	harness:equal(
+		countKeys(authoredObjects),
+		objectCount,
+		"capacity sample preserves every authored object"
+	)
 	harness:equal(countKeys(items), itemCount, "capacity sample preserves every item")
-	harness:equal(countKeys(documents), documentCount, "capacity sample preserves every journal document")
+	harness:equal(
+		countKeys(documents),
+		documentCount,
+		"capacity sample preserves every journal document"
+	)
 
 	local restored = ScenarioRuntime.new(1603, "dm")
 	local restoreStartedAt = os.clock()
@@ -91,7 +103,11 @@ return function(harness: any)
 			objectCount,
 			"capacity restore preserves authored objects"
 		)
-		harness:equal(countKeys(restoredDomains.inventory.items), itemCount, "capacity restore preserves items")
+		harness:equal(
+			countKeys(restoredDomains.inventory.items),
+			itemCount,
+			"capacity restore preserves items"
+		)
 		harness:equal(
 			countKeys(restoredDomains.journal.documents),
 			documentCount,
@@ -100,13 +116,15 @@ return function(harness: any)
 	end
 
 	local elapsedMs = (os.clock() - startedAt) * 1000
-	print(string.format(
-		"[RVTT Capacity Sample] objects=%d items=%d documents=%d revision=%d elapsedMs=%.3f restoreMs=%.3f",
-		objectCount,
-		itemCount,
-		documentCount,
-		snapshot.revision,
-		elapsedMs,
-		restoreElapsedMs
-	))
+	print(
+		string.format(
+			"[RVTT Capacity Sample] objects=%d items=%d documents=%d revision=%d elapsedMs=%.3f restoreMs=%.3f",
+			objectCount,
+			itemCount,
+			documentCount,
+			snapshot.revision,
+			elapsedMs,
+			restoreElapsedMs
+		)
+	)
 end
