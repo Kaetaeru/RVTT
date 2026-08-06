@@ -1,31 +1,28 @@
 # RVTT Production Implementation Status
 
-- 상태: `GRAND_REAL_TRANSPORT_RESTART_HOST_STATIC_VERIFIED`
+- 상태: `GRAND_PERSISTENCE_OUTAGE_LEASE_HOST_STATIC_VERIFIED`
 - 작성일: 2026-08-05
 - 최종 갱신일: 2026-08-06
-- 범위: 16개 Slice Runtime baseline, Grand Acceptance Campaign, Slices 02–12 자동 Authority Scenario, Deterministic Fault Host, Real Transport와 Two-run Restart Host
+- 범위: 16개 Slice Runtime baseline, Grand Acceptance Campaign, Slices 02–12 자동 Authority Scenario, Deterministic Fault Host, Real Transport·Restart·Injected Outage·Cross-server Lease Pair Host
 - Grand Campaign: [`GRAND-ACCEPTANCE-CAMPAIGN.md`](GRAND-ACCEPTANCE-CAMPAIGN.md)
 - 실행 테스트 규칙: [`EXECUTION-TEST-RULES.md`](EXECUTION-TEST-RULES.md)
 
 ## 구현된 공통 계약
 
-- Versioned Command Envelope와 재귀 Payload 제한
-- 명시적 Command Authorization 필수 Registry
-- 서버 권위 Transaction·Idempotency·Outbox·Projection
-- Viewer별 Domain Projection과 DM 정보 Negative Disclosure
-- Character·Actor·Item Ownership·Control 검증
-- 서버 계산 D20·Attack·Damage·HP 변경
-- AuthorityEpoch·Revision·Projection Gap·Full Resync
-- 지연된 이전 AuthorityEpoch Projection 폐기
+- Versioned Command Envelope·Authorization·Transaction·Idempotency
+- 서버 권위 Revision·AuthorityEpoch·Projection·Negative Disclosure
+- Character·Actor·Item Ownership·Rules·D20·HP
+- Projection Gap·Full Resync·이전 Epoch Packet 폐기
 - Terminal Receipt 유실 Bounded Retry·Timeout·Pending 정리
-- Migration·DataStore Adapter·Persistence Coordinator
-- Shutdown-only Dirty Snapshot과 Bounded `BindToClose` Retry
-- 실제 Player Lifecycle 기반 Disconnect·Reconnect Acceptance Host
-- 두 Studio Server 실행을 잇는 Restart Seed·Verify Host
+- Migration·ProfileStore·Persistence Coordinator
+- Shutdown-only Dirty Snapshot·Bounded `BindToClose` Retry
+- Lease Store·Coordinator·Expiry·Fencing Token
+- 실제 Player Lifecycle Disconnect·Reconnect Host
+- Restart Seed·Verify Host
+- Injected DataStore Outage Recovery Host
+- Cross-server Lease Holder·Contender Pair Host
 - Semantic Input·Client Runtime·Token 기반 UI Shell
-- Roblox 기본 Avatar와 RVTT Token 분리
 - 16개 Slice Domain Command baseline
-- Unit·Integration·Security·Disclosure·Fault Test Source
 
 ## 기존 Studio Evidence
 
@@ -35,7 +32,7 @@
 [RVTT MultiClient] passed=56 failed=0 clients=3 staleRetries=3
 ```
 
-추가 사용자 관측:
+사용자 관측:
 
 ```text
 Slice 01 Token Pick·Highlight·Destination·Movement
@@ -51,276 +48,181 @@ Camera WASD·Middle-button·Frame Correction
 → IMPLEMENTED · LATEST STUDIO RETEST PENDING
 ```
 
-기존 Camera Harness의 직접 메서드 호출로 생성된 Slice 01 `16/16 PASS`는 실제 입력 Evidence에서 철회했다.
+새 Outage·Lease Host를 포함한 Grand Runtime Evidence는 아직 없다.
 
-## Grand Acceptance 구현
-
-```text
-Grand Manifest
-→ IMPLEMENTED
-
-Grouped Windows Runner
-→ IMPLEMENTED
-
-Shared Studio Run via runId
-→ IMPLEMENTED
-
-Recent Roblox Log Summary Collection
-→ IMPLEMENTED
-
-JSON·Markdown Consolidated Report
-→ IMPLEMENTED
-
-Grand Single-client Place
-→ IMPLEMENTED · DATASTORE DISABLED
-
-Grand Multi-client Place
-→ REGISTERED
-
-Real Transport Local Server Place
-→ REGISTERED · STUDIO NOT EXECUTED
-
-Restart Seed·Verify Places
-→ REGISTERED · PERSISTENCE MILESTONE ONLY · STUDIO NOT EXECUTED
-
-Actual Grand Campaign Runtime
-→ NOT YET EXECUTED
-```
-
-Runner는 첫 실패에서 중단하지 않고 가능한 모든 선택 Phase를 끝까지 실행한다. 결과는 `pass`, `fail`, `incomplete`, `prepared`, `blocked`로 분리한다.
-
-## Grand Single-client 자동 Scenario
-
-한 번의 Studio Play에서 기존 Unit·Integration과 함께 다음 Spec을 실행하도록 등록했다.
-
-### Slice baseline
-
-- Slice 02 — Ability Check·Save·Attack·HP·Authorization·Idempotency
-- Slice 03 — Interaction·Locked/Hidden Object·Search·Knowledge·Fog·Restore
-- Slice 04 — Encounter Lifecycle·Turn·Action·Rollback·End·Restore
-- Slice 05 — Draft·Ownership·Activation·Level Up·Restore
-- Slice 06 — Item Create·Move·Equip·Drop·Restore
-- Slice 07 — Clock·Schedule·Activity·Completion·Restore
-- Slice 08 — UI Preference Validation·User Isolation·Restore
-- Slice 09 — Journal Ownership·Edit·Link·Ping·Restore
-- Slice 10 — Source·Compile·Candidate Invalidation·Publish·Restore
-- Slice 11 — Control·Quick Action·Runtime Patch·Recovery Request·Restore
-- Slice 12 — Pack Rights·Dependency·Activation·Localization·Restore
-
-### Grand authority·capacity scenario
-
-- Cross-slice Full-session State 연결과 Snapshot Restore
-- Stale Revision·Stale Epoch·Invalid Payload·Duplicate Replay
-- Corrupt Snapshot 거부와 Runtime 보존
-- Restore 후 AuthorityEpoch 갱신과 이전 Epoch 폐기
-- Capacity Sample: Object 32·Item 32·Document 16
-- Capacity `elapsedMs`와 `restoreMs` Evidence
-
-### Deterministic network fault scenario
-
-- Projection Drop 뒤 Gap 감지와 Full Resync
-- Duplicate Projection 무시
-- Hold·Reorder·Release 뒤 Sequence 복구
-- 새 Epoch 전환 뒤 지연된 이전 Epoch Packet 거부
-- Terminal Receipt 유실 뒤 동일 Command ID 재전송
-- 최대 3회 전송과 8초 Timeout
-- retryable `CLIENT_TIMEOUT`과 Pending 정리
-
-### Deterministic storage fault scenario
-
-- Transient Load Failure와 재시도
-- Commit 전 Save Failure와 Dirty Snapshot 보존
-- Commit 뒤 Ack Loss와 동일 Revision·Epoch 멱등 재저장
-- Revision Conflict와 External Winner 보존
-- 더 높은 Revision으로 Reconcile
-- Invalid Load Revision의 Saved Revision 승격 방지
-
-### Persistence retry scenario
-
-- Shutdown-only Dirty Snapshot
-- Retryable Save Failure 뒤 성공
-- 최대 Attempt 제한
-- Deadline과 지수 Backoff
-- Non-retryable Failure 즉시 종료
-- Retry Exhaustion 시 Dirty State 보존
-
-구조화 로그:
+## Grand Acceptance 실행 환경
 
 ```text
-[RVTT Spec Summary] id=<id> result=PASS|FAIL passed=<n> failed=<n>
-[RVTT Spec Failure] <id>: <failure>
-[RVTT Fault Host] kind=network ...
-[RVTT Fault Host] kind=storage ...
-[RVTT Persistence Retry] result=RETRYING|PASS|EXHAUSTED ...
-[RVTT Tests] passed=<n> failed=<n>
+grand-single-client
+→ Unit·Integration·Slices 02–12
+→ Cross-slice·Authority Fault
+→ Deterministic Network·Storage Fault
+→ Persistence Retry·Lease Unit Spec
+→ Capacity·Slice 01 Input
+
+grand-multi-client
+→ DM·Player·Observer Authority·Projection
+
+grand-real-transport
+→ 실제 Player 종료·Replacement Client·Full Sync
+
+grand-persistence-live
+→ Live DataStore Baseline
+
+grand-persistence-restart-seed
+→ BindToClose Checkpoint
+
+grand-persistence-restart-verify
+→ Fresh Server Restore·Epoch 교체
+
+grand-persistence-outage
+→ 주입 장애 고갈·Dirty 보존·실제 DataStore 복귀
+
+grand-persistence-lease-pair
+→ Holder·Contender 두 Studio 동시 실행·Fencing Takeover
 ```
 
-## Real Transport Acceptance
+Runner는 `studio-published-pair`에서 서로 다른 두 Place를 열고 두 Summary를 독립 판정한다.
 
-`real-transport.project.json`은 Production ServerBoot를 복제하지 않고 같은 Production Runtime·CommandRouter·ProjectionPublisher를 직접 조립한다.
+## Injected DataStore Outage Host
 
-검사 흐름:
+`datastore-outage.project.json`은 게시된 Studio와 API Access를 전제로 한다.
+
+- 실제 `ProfileStore`와 임시 DataStore Key를 사용한다.
+- 장애 구간에는 `GetAsync`·`UpdateAsync` 호출 전에 retryable `PERSISTENCE_FAILED`를 주입한다.
+- Save Retry가 고갈돼도 Dirty Snapshot과 이전 Saved Revision을 보존한다.
+- 장애 해제 뒤 같은 Dirty Snapshot을 실제 DataStore에 저장한다.
+- 실제 재로드로 Revision·AuthorityEpoch를 확인한다.
+- Integration Key를 정리한다.
+
+이 Host는 Roblox 서비스 자체 장애를 발생시키거나 증명하지 않는다.
+
+## Lease Store·Coordinator
+
+Production Persistence 모듈에 다음 계약을 추가했다.
 
 ```text
-Local Server + 3 Clients
-→ DM·Player·Observer 논리 사용자 배정
-→ 실제 Player Client 종료
-→ PlayerRemoving
-→ Connection=disconnected
-→ Replacement Client 추가
-→ PlayerAdded
-→ 같은 논리 사용자 재가입
-→ Full Sync 검증
+LeaseRecord
+→ ownerId
+→ token
+→ expiresAt
+→ fencingToken
 ```
 
-완료 계약:
+- 최초 획득은 Fencing Token 1이다.
+- 활성 소유자가 있으면 Contender는 retryable `LEASE_HELD`다.
+- Renew는 동일 Fencing Token으로 만료 시각만 연장한다.
+- 만료 뒤 Takeover는 Fencing Token을 증가시킨다.
+- 이전 소유자의 Renew·Verify·Release는 `LEASE_LOST`, `LEASE_EXPIRED` 또는 `LEASE_NOT_HELD`로 종료한다.
+- DataStore 호출 실패는 retryable `PERSISTENCE_FAILED`다.
 
-- Physical Player Instance 교체
-- Membership 수 3 유지
-- Connection State 복구
-- 같은 서버 AuthorityEpoch 유지
-- Projection Sequence 증가
-- 중복 Membership 없음
-- `[RVTT Real Transport] result=PASS ... reconnects=1`
+## Cross-server Lease Pair Host
 
-## Two-run Restart Acceptance
+`lease-holder.project.json`과 `lease-contender.project.json`은 동일한 실제 DataStore Lease Key를 사용한다.
 
-### Seed
+```text
+Holder Acquire
+→ Contender LEASE_HELD
+→ Holder Renew
+→ Contender LEASE_HELD
+→ Holder Renew 중단·Expiry
+→ Contender Higher Fencing Token Takeover
+→ 이전 Holder Verify·Release 거부
+→ Contender Release·Integration Key Cleanup
+```
 
-- 전용 DataStore Key 초기화
-- Membership·Connection State 생성
-- 자동 5초 Flush 없이 Dirty Snapshot 유지
-- Studio 종료 시 `BindToClose`
-- Retry Policy를 사용해 Shutdown Checkpoint 저장
-- `[RVTT Restart Seed] result=PASS ...`
+Summary:
 
-### Verify
+```text
+[RVTT Lease Holder] result=PASS ... renewals=1 takeovers=1
+[RVTT Lease Contender] result=PASS ... blocked=2 takeovers=1
+```
 
-- 새 Studio Server가 같은 DataStore 문서 Load
-- Authority Runtime Restore
-- Revision 유지
-- AuthorityEpoch 교체
-- 이전 Epoch Command `STALE_EPOCH`
-- 현재 Epoch Command 1회 Commit
-- Post-restart Snapshot 저장
-- Test Key 정리
-- `[RVTT Restart Verify] result=PASS ...`
-
-이 두 Phase는 게시된 Experience와 Studio API Access가 필요한 Grand Persistence Milestone에서만 선택한다.
-
-## Production 복구 보강
-
-### Projection Replica
-
-- 최근 AuthorityEpoch 이력을 제한된 크기로 보존한다.
-- 현재 Epoch와 다른 Packet이 이미 처리한 이전 Epoch라면 폐기한다.
-- 동일 또는 이전 Projection Sequence는 False Gap 없이 무시한다.
-- 실제 Sequence Gap은 Full Resync 전까지 현재 연속 Snapshot을 유지한다.
-
-### Command Client
-
-- Terminal Receipt가 유실되면 원본 Envelope와 Command ID를 재사용한다.
-- 1.5초 간격으로 최대 3회 전송한다.
-- 제출 후 8초가 지나면 retryable `CLIENT_TIMEOUT` Terminal 상태를 생성한다.
-- 실제 Terminal Receipt 또는 Timeout 뒤 Pending 상태를 제거한다.
-
-### Persistence Coordinator
-
-- 기본 종료 Retry는 최대 5회다.
-- Backoff는 0.25초에서 시작해 최대 2초다.
-- 전체 Deadline은 25초다.
-- Retryable Failure만 재시도한다.
-- Non-retryable Failure와 Attempt·Deadline 고갈은 명시적으로 종료한다.
-- 실패 시 Dirty Snapshot을 유지한다.
-- `scheduleFlush=false`로 Shutdown-only Snapshot을 만들 수 있다.
+두 Host는 정적·Build·Type 검증만 완료했으며 실제 두 Studio Runtime PASS는 없다.
 
 ## 완료 의미
 
-현재 자동 Harness 상태는 다음과 같다.
-
 ```text
-SLICES 02–12 + DETERMINISTIC FAULT + REAL TRANSPORT/RESTART HOST
+SLICES 02–12 + DETERMINISTIC FAULT
++ REAL TRANSPORT/RESTART
++ INJECTED OUTAGE/CROSS-SERVER LEASE PAIR
 → SOURCE·FORMAT·LINT·BUILD·TYPE VERIFIED
 → NEW STUDIO RUNTIME NOT YET EXECUTED
-→ FORCED OUTAGE·CROSS-SERVER LEASE·FULL ACCEPTANCE NOT COMPLETE
+→ PRODUCTION SERVERBOOT LEASE OWNERSHIP NOT YET CONNECTED
 ```
 
-실제 Player Disconnect·Reconnect와 Server Restart 검증 환경은 등록됐지만 Studio Runtime PASS는 아직 없다. Roblox Remote Throttle, 강제 DataStore Outage, Cross-server Lease·Conflict, Human Accessibility와 Soak Evidence는 남은 Gate다.
+현재 Lease 모듈과 Pair Host는 동시 소유권 계약을 검증하지만 Production `ServerBoot`의 Campaign Load·Command Commit·Save 경로는 아직 Lease를 획득하거나 Fencing Token을 검증하지 않는다.
+
+## 다음 Production 통합
+
+- `ServerBoot` 시작 시 Campaign Lease Acquire
+- Lease 미획득 서버의 Authority Command 차단
+- Renew Loop와 Grace Window
+- Commit·Flush 전 authoritative Lease Verify
+- Fencing Token을 저장 문서 또는 별도 write fence에 연결
+- Lease Lost 시 Dirty Flush 중단·진단·Server Degrade
+- `BindToClose` Release
+- 이전 서버의 지연 Save 차단
+- 이 통합에 대한 Unit·Integration·Published Pair Evidence
 
 ## 일반 기능과 Persistence 분리
 
 일반 Grand Run:
 
-- 입력·카메라
-- Token 선택·이동
-- Slices 02–12 메모리 내 Authority Scenario
-- Cross-slice·Authority Fault·Deterministic Network/Storage Fault·Capacity Sample
-- 기존 Multi-client Projection
-- Real Player Disconnect·Reconnect Local Server Host
+- 입력·카메라·Token 이동
+- Slices 02–12 메모리 Authority Scenario
+- Cross-slice·Deterministic Fault·Capacity
+- Multi-client·Real Player Transport
 
 Persistence Grand Run:
 
-- Live DataStore Baseline
-- Restart Seed `BindToClose` Save
-- Fresh Server Restart Verify
-- Migration·Lease·Conflict
-- DataStore Throttle·Outage Recovery
-
-Persistence는 관련 변경을 축적한 뒤 `-IncludePersistence`로 한 번에 실행한다.
-
-## Content Blocker
-
-Slices 13–15는 Runtime과 Rights Gate Source는 존재하지만 공식 데이터를 포함하지 않는다.
-
-- 승인된 Source Version
-- 권리와 배포 범위
-- Localization·Asset 승인
-- Package·Catalog 등록
-
-위 조건 전에는 공식 Character·Spell·Item·NPC·Monster Content를 Grand PASS 대상으로 등록하지 않는다. Monster는 승인된 공식 원본 Statblock을 그대로 사용하며 임의 CR·수치 재조정을 하지 않는다.
+- Live DataStore
+- Restart Seed·Verify
+- Injected Outage Recovery
+- Cross-server Lease Pair
+- 향후 Production Boot Lease·Fenced Save
 
 ## 자동 Gate
 
 - Grand Contract Validator: PASS
 - Structure·Security·Policy Validator: PASS
-- PowerShell Parser: PASS
-- Runner SelfTest: PASS
+- PowerShell Parser·Runner SelfTest: PASS
 - StyLua: PASS
 - Selene: PASS
-- Production·Test·Grand Single-client·Multi-client·Real Transport·Persistence·Restart Seed·Restart Verify·Slice01 Rojo Build: PASS
+- 13개 등록 Rojo Project Build: PASS
 - Production·Test Luau Type Analysis: PASS
 - Documentation Validation: PASS
 
-위 결과는 정적·Build Evidence다. 실제 Studio Phase PASS를 대신하지 않는다.
+위 결과는 Source·Build·Type Evidence이며 실제 Studio Phase PASS를 대신하지 않는다.
 
 ## 아직 미검증
 
-- 최신 Slice 01 Camera WASD·Middle-button·Frame 실제 입력
-- Grand Runner의 실제 사용자 PC 순차 Studio 실행과 Log 수집
-- Slices 02–12 전체 사용자·Disclosure·Recovery Scenario
-- Real Transport Host의 실제 Player 창 종료·Replacement Client 추가
-- Restart Seed·Verify의 게시 Experience DataStore 실행
-- Roblox 실제 Remote 지연·제한·대역폭 Throttle
-- 강제 DataStore Outage·Cross-server Lease·동시 Conflict
-- Slices 13–15 공식 데이터·권리·Asset
-- Navigation·Physics·Streaming·Large Scene
+- 최신 Slice 01 Camera 실제 입력
+- Grand Runner 실제 사용자 PC 순차 실행과 Log 수집
+- Slices 02–12 전체 사용자·Disclosure·Recovery
+- Real Transport Client 종료·Replacement Client
+- Restart Seed·Verify Published DataStore
+- Injected Outage Published DataStore
+- Cross-server Lease Pair 두 Studio 동시 실행
+- Production ServerBoot Lease Ownership·Fenced Save
+- Roblox 실제 Remote Throttle·플랫폼 DataStore 장애
 - UI Visual Redesign·Accessibility Human Review
-- 실제 성능 Budget·Memory·Network·장시간 Soak
+- 성능 Budget·Memory·Network·장시간 Soak
 - Full-session Release Runbook
 
 ## 현재 Gate
 
 ```text
-Grand Real Transport·Restart Host Static Gate
+Grand Outage·Lease Host Static Gate
 → PASS
 
-Grand Runtime
-→ USER EXECUTION DEFERRED
-
-Forced DataStore Outage·Cross-server Lease Host
+Production ServerBoot Lease Ownership·Fenced Persistence
 → IMPLEMENTATION IN PROGRESS
 
-Persistence·Human UI·Soak
+Grand Persistence Runtime
+→ USER EXECUTION DEFERRED
+
+Human UI·Soak
 → QUEUED
 
 Full Grand Campaign
