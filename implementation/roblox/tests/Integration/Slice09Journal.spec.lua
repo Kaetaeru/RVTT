@@ -9,7 +9,8 @@ return function(harness)
 		body = "# Entry\nA stable world note.",
 		visibility = "private",
 	})
-	local documentOutcome = scenario:expectOutcome(harness, document, "Slice 09 creates a journal document")
+	local documentOutcome =
+		scenario:expectOutcome(harness, document, "Slice 09 creates a journal document")
 	if documentOutcome == nil then
 		return
 	end
@@ -48,12 +49,17 @@ return function(harness)
 		documentId = documentId,
 		body = "# Entry\nReviewed by the DM.",
 	})
-	local dmEditOutcome = scenario:expectOutcome(harness, dmEdit, "Slice 09 allows DM review editing")
+	local dmEditOutcome =
+		scenario:expectOutcome(harness, dmEdit, "Slice 09 allows DM review editing")
 	if dmEditOutcome == nil then
 		return
 	end
 	harness:equal(dmEditOutcome.revision, 3, "DM edit increments journal revision")
-	harness:equal(dmEditOutcome.body, "# Entry\nReviewed by the DM.", "DM edit commits the reviewed body")
+	harness:equal(
+		dmEditOutcome.body,
+		"# Entry\nReviewed by the DM.",
+		"DM edit commits the reviewed body"
+	)
 
 	local invalidPing = scenario:execute("journal.ping", {
 		position = { x = math.huge, y = 0, z = 0 },
@@ -61,7 +67,11 @@ return function(harness)
 	})
 	harness:expect(not invalidPing.ok, "invalid ping position is rejected")
 	if not invalidPing.ok then
-		harness:equal(invalidPing.error.code, "VALIDATION_FAILED", "invalid ping uses validation error")
+		harness:equal(
+			invalidPing.error.code,
+			"VALIDATION_FAILED",
+			"invalid ping uses validation error"
+		)
 	end
 
 	local ping = scenario:execute("journal.ping", {
@@ -83,8 +93,19 @@ return function(harness)
 	harness:expect(restore.ok, "Slice 09 journal snapshot restores")
 	if restore.ok then
 		local restoredJournal = restored:snapshot().domains.journal
-		harness:equal(restoredJournal.documents[documentId].revision, 3, "restore preserves journal revision")
-		harness:equal(restoredJournal.documents[documentId].visibility, "private", "restore preserves visibility")
-		harness:expect(restoredJournal.pings[pingOutcome.id] ~= nil, "restore preserves active ping state")
+		harness:equal(
+			restoredJournal.documents[documentId].revision,
+			3,
+			"restore preserves journal revision"
+		)
+		harness:equal(
+			restoredJournal.documents[documentId].visibility,
+			"private",
+			"restore preserves visibility"
+		)
+		harness:expect(
+			restoredJournal.pings[pingOutcome.id] ~= nil,
+			"restore preserves active ping state"
+		)
 	end
 end

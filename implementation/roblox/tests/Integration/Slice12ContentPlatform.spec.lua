@@ -13,7 +13,11 @@ return function(harness)
 	})
 	harness:expect(not deniedRegister.ok, "player cannot register a content pack")
 	if not deniedRegister.ok then
-		harness:equal(deniedRegister.error.code, "UNAUTHORIZED", "content registration denial is explicit")
+		harness:equal(
+			deniedRegister.error.code,
+			"UNAUTHORIZED",
+			"content registration denial is explicit"
+		)
 	end
 
 	local basePack = scenario:execute("content.register_pack", {
@@ -24,7 +28,8 @@ return function(harness)
 			dependencies = {},
 		},
 	})
-	local basePackOutcome = scenario:expectOutcome(harness, basePack, "Slice 12 registers an approved base pack")
+	local basePackOutcome =
+		scenario:expectOutcome(harness, basePack, "Slice 12 registers an approved base pack")
 	if basePackOutcome == nil then
 		return
 	end
@@ -39,7 +44,13 @@ return function(harness)
 			dependencies = { "pack:base" },
 		},
 	})
-	if scenario:expectOutcome(harness, dependentPack, "Slice 12 registers a dependent original pack") == nil then
+	if
+		scenario:expectOutcome(
+			harness,
+			dependentPack,
+			"Slice 12 registers a dependent original pack"
+		) == nil
+	then
 		return
 	end
 
@@ -51,7 +62,13 @@ return function(harness)
 			dependencies = {},
 		},
 	})
-	if scenario:expectOutcome(harness, blockedPack, "Slice 12 records a rights-blocked pack without activating it") == nil then
+	if
+		scenario:expectOutcome(
+			harness,
+			blockedPack,
+			"Slice 12 records a rights-blocked pack without activating it"
+		) == nil
+	then
 		return
 	end
 
@@ -72,13 +89,18 @@ return function(harness)
 	})
 	harness:expect(not missingDependency.ok, "dependent pack cannot activate before its dependency")
 	if not missingDependency.ok then
-		harness:equal(missingDependency.error.code, "CONFLICT", "inactive dependency returns conflict")
+		harness:equal(
+			missingDependency.error.code,
+			"CONFLICT",
+			"inactive dependency returns conflict"
+		)
 	end
 
 	local activateBase = scenario:execute("content.activate_pack", {
 		packId = "pack:base",
 	})
-	local activateBaseOutcome = scenario:expectOutcome(harness, activateBase, "Slice 12 activates the base pack")
+	local activateBaseOutcome =
+		scenario:expectOutcome(harness, activateBase, "Slice 12 activates the base pack")
 	if activateBaseOutcome == nil then
 		return
 	end
@@ -87,11 +109,19 @@ return function(harness)
 	local activateDependent = scenario:execute("content.activate_pack", {
 		packId = "pack:dependent",
 	})
-	local activateDependentOutcome = scenario:expectOutcome(harness, activateDependent, "Slice 12 activates the dependency-complete pack")
+	local activateDependentOutcome = scenario:expectOutcome(
+		harness,
+		activateDependent,
+		"Slice 12 activates the dependency-complete pack"
+	)
 	if activateDependentOutcome == nil then
 		return
 	end
-	harness:equal(activateDependentOutcome.version, "2.0.0", "dependent pack activation freezes its version")
+	harness:equal(
+		activateDependentOutcome.version,
+		"2.0.0",
+		"dependent pack activation freezes its version"
+	)
 
 	local blockedActivation = scenario:execute("content.activate_pack", {
 		packId = "pack:blocked",
@@ -112,7 +142,8 @@ return function(harness)
 			["ui.action.cancel"] = "취소",
 		},
 	})
-	local localizationOutcome = scenario:expectOutcome(harness, localization, "Slice 12 registers localization entries")
+	local localizationOutcome =
+		scenario:expectOutcome(harness, localization, "Slice 12 registers localization entries")
 	if localizationOutcome == nil then
 		return
 	end
@@ -125,7 +156,11 @@ return function(harness)
 	})
 	harness:expect(not deniedLocalization.ok, "player cannot replace localization authority data")
 	if not deniedLocalization.ok then
-		harness:equal(deniedLocalization.error.code, "UNAUTHORIZED", "localization denial is explicit")
+		harness:equal(
+			deniedLocalization.error.code,
+			"UNAUTHORIZED",
+			"localization denial is explicit"
+		)
 	end
 
 	local persisted = scenario:snapshot()
@@ -134,8 +169,20 @@ return function(harness)
 	harness:expect(restore.ok, "Slice 12 content snapshot restores")
 	if restore.ok then
 		local restoredContent = restored:snapshot().domains.content
-		harness:equal(restoredContent.active["pack:base"], "1.0.0", "restore preserves base pack version")
-		harness:equal(restoredContent.active["pack:dependent"], "2.0.0", "restore preserves dependent pack version")
-		harness:equal(restoredContent.localization["ko-KR"]["ui.action.confirm"], "확인", "restore preserves localization entries")
+		harness:equal(
+			restoredContent.active["pack:base"],
+			"1.0.0",
+			"restore preserves base pack version"
+		)
+		harness:equal(
+			restoredContent.active["pack:dependent"],
+			"2.0.0",
+			"restore preserves dependent pack version"
+		)
+		harness:equal(
+			restoredContent.localization["ko-KR"]["ui.action.confirm"],
+			"확인",
+			"restore preserves localization entries"
+		)
 	end
 end

@@ -28,7 +28,11 @@ return function(harness)
 	})
 	harness:expect(not publishWithoutCandidate.ok, "scene cannot publish without a valid candidate")
 	if not publishWithoutCandidate.ok then
-		harness:equal(publishWithoutCandidate.error.code, "CONFLICT", "missing candidate returns conflict")
+		harness:equal(
+			publishWithoutCandidate.error.code,
+			"CONFLICT",
+			"missing candidate returns conflict"
+		)
 	end
 
 	local object = scenario:execute("authoring.upsert_object", {
@@ -44,7 +48,11 @@ return function(harness)
 	if objectOutcome == nil then
 		return
 	end
-	harness:equal(objectOutcome.id, "object:slice-10-door", "provided stable object identity is retained")
+	harness:equal(
+		objectOutcome.id,
+		"object:slice-10-door",
+		"provided stable object identity is retained"
+	)
 	harness:equal(
 		scenario:snapshot().domains.scene_authoring.sources[sceneId].revision,
 		2,
@@ -54,14 +62,18 @@ return function(harness)
 	local compile = scenario:execute("authoring.compile", {
 		sceneId = sceneId,
 	})
-	local compileOutcome = scenario:expectOutcome(harness, compile, "Slice 10 compiles the scene source")
+	local compileOutcome =
+		scenario:expectOutcome(harness, compile, "Slice 10 compiles the scene source")
 	if compileOutcome == nil then
 		return
 	end
 	harness:expect(compileOutcome.valid == true, "valid source creates a valid candidate")
 	harness:equal(compileOutcome.sourceRevision, 2, "candidate is bound to source revision")
 	harness:equal(#compileOutcome.errors, 0, "valid candidate has no diagnostics")
-	harness:expect(compileOutcome.objects["object:slice-10-door"] ~= nil, "candidate contains compiled object")
+	harness:expect(
+		compileOutcome.objects["object:slice-10-door"] ~= nil,
+		"candidate contains compiled object"
+	)
 
 	local sourceMutation = scenario:execute("authoring.upsert_object", {
 		sceneId = sceneId,
@@ -71,7 +83,10 @@ return function(harness)
 			position = { x = 0, y = 0, z = 0 },
 		},
 	})
-	if scenario:expectOutcome(harness, sourceMutation, "Slice 10 mutates the source after compile") == nil then
+	if
+		scenario:expectOutcome(harness, sourceMutation, "Slice 10 mutates the source after compile")
+		== nil
+	then
 		return
 	end
 	harness:expect(
@@ -90,14 +105,20 @@ return function(harness)
 	local recompile = scenario:execute("authoring.compile", {
 		sceneId = sceneId,
 	})
-	local recompileOutcome = scenario:expectOutcome(harness, recompile, "Slice 10 recompiles the current source")
+	local recompileOutcome =
+		scenario:expectOutcome(harness, recompile, "Slice 10 recompiles the current source")
 	if recompileOutcome == nil then
 		return
 	end
-	harness:equal(recompileOutcome.sourceRevision, 3, "recompiled candidate uses current source revision")
 	harness:equal(
-		if recompileOutcome.objects["object:slice-10-door"] ~= nil then 1 else 0
-			+ if recompileOutcome.objects["object:slice-10-floor"] ~= nil then 1 else 0,
+		recompileOutcome.sourceRevision,
+		3,
+		"recompiled candidate uses current source revision"
+	)
+	harness:equal(
+		if recompileOutcome.objects["object:slice-10-door"] ~= nil
+			then 1
+			else 0 + if recompileOutcome.objects["object:slice-10-floor"] ~= nil then 1 else 0,
 		2,
 		"recompiled candidate contains both stable objects"
 	)
@@ -105,12 +126,20 @@ return function(harness)
 	local publish = scenario:execute("authoring.publish", {
 		sceneId = sceneId,
 	})
-	local publishOutcome = scenario:expectOutcome(harness, publish, "Slice 10 atomically publishes the current candidate")
+	local publishOutcome = scenario:expectOutcome(
+		harness,
+		publish,
+		"Slice 10 atomically publishes the current candidate"
+	)
 	if publishOutcome == nil then
 		return
 	end
 	harness:expect(publishOutcome.valid == true, "published build remains valid")
-	harness:equal(publishOutcome.sourceRevision, 3, "published build points at current source revision")
+	harness:equal(
+		publishOutcome.sourceRevision,
+		3,
+		"published build points at current source revision"
+	)
 	harness:equal(
 		scenario:snapshot().domains.scene_authoring.published[sceneId].sourceRevision,
 		3,
@@ -124,9 +153,16 @@ return function(harness)
 			position = { x = math.huge, y = 0, z = 0 },
 		},
 	})
-	harness:expect(not invalidObject.ok, "invalid object position is rejected before source mutation")
+	harness:expect(
+		not invalidObject.ok,
+		"invalid object position is rejected before source mutation"
+	)
 	if not invalidObject.ok then
-		harness:equal(invalidObject.error.code, "VALIDATION_FAILED", "invalid authoring object uses validation error")
+		harness:equal(
+			invalidObject.error.code,
+			"VALIDATION_FAILED",
+			"invalid authoring object uses validation error"
+		)
 	end
 	harness:equal(
 		scenario:snapshot().domains.scene_authoring.published[sceneId].sourceRevision,
@@ -140,7 +176,15 @@ return function(harness)
 	harness:expect(restore.ok, "Slice 10 authoring snapshot restores")
 	if restore.ok then
 		local restoredAuthoring = restored:snapshot().domains.scene_authoring
-		harness:equal(restoredAuthoring.sources[sceneId].revision, 3, "restore preserves source revision")
-		harness:equal(restoredAuthoring.published[sceneId].sourceRevision, 3, "restore preserves published pointer")
+		harness:equal(
+			restoredAuthoring.sources[sceneId].revision,
+			3,
+			"restore preserves source revision"
+		)
+		harness:equal(
+			restoredAuthoring.published[sceneId].sourceRevision,
+			3,
+			"restore preserves published pointer"
+		)
 	end
 end

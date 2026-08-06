@@ -14,19 +14,28 @@ return function(harness)
 	})
 	harness:expect(not deniedControl.ok, "player cannot assign actor control")
 	if not deniedControl.ok then
-		harness:equal(deniedControl.error.code, "UNAUTHORIZED", "control assignment denial is explicit")
+		harness:equal(
+			deniedControl.error.code,
+			"UNAUTHORIZED",
+			"control assignment denial is explicit"
+		)
 	end
 
 	local control = scenario:execute("dm.assign_control", {
 		actorId = heroId,
 		controllerUserId = 2222,
 	})
-	local controlOutcome = scenario:expectOutcome(harness, control, "Slice 11 assigns actor control")
+	local controlOutcome =
+		scenario:expectOutcome(harness, control, "Slice 11 assigns actor control")
 	if controlOutcome == nil then
 		return
 	end
 	harness:equal(controlOutcome.actorId, heroId, "control assignment targets the expected actor")
-	harness:equal(controlOutcome.controllerUserId, 2222, "control assignment stores the expected controller")
+	harness:equal(
+		controlOutcome.controllerUserId,
+		2222,
+		"control assignment stores the expected controller"
+	)
 	harness:equal(
 		scenario:snapshot().domains.scene.actors[heroId].controllerUserId,
 		2222,
@@ -45,36 +54,60 @@ return function(harness)
 		actionId = "action:reveal-area",
 		payload = { regionId = "region:slice-11" },
 	})
-	local quickActionOutcome = scenario:expectOutcome(harness, quickAction, "Slice 11 records a DM quick action")
+	local quickActionOutcome =
+		scenario:expectOutcome(harness, quickAction, "Slice 11 records a DM quick action")
 	if quickActionOutcome == nil then
 		return
 	end
-	harness:equal(quickActionOutcome.actionId, "action:reveal-area", "quick action keeps its stable action id")
-	harness:equal(quickActionOutcome.payload.regionId, "region:slice-11", "quick action keeps its bounded payload")
-	harness:expect(type(quickActionOutcome.commandId) == "string", "quick action records its command id")
-	harness:equal(#scenario:snapshot().domains.dm_workspace.quickActions, 1, "quick action is appended once")
+	harness:equal(
+		quickActionOutcome.actionId,
+		"action:reveal-area",
+		"quick action keeps its stable action id"
+	)
+	harness:equal(
+		quickActionOutcome.payload.regionId,
+		"region:slice-11",
+		"quick action keeps its bounded payload"
+	)
+	harness:expect(
+		type(quickActionOutcome.commandId) == "string",
+		"quick action records its command id"
+	)
+	harness:equal(
+		#scenario:snapshot().domains.dm_workspace.quickActions,
+		1,
+		"quick action is appended once"
+	)
 
 	local firstPatch = scenario:execute("dm.runtime_patch", {
 		targetId = heroId,
 		patch = { visible = false },
 	})
-	local firstPatchOutcome = scenario:expectOutcome(harness, firstPatch, "Slice 11 applies a runtime patch")
+	local firstPatchOutcome =
+		scenario:expectOutcome(harness, firstPatch, "Slice 11 applies a runtime patch")
 	if firstPatchOutcome == nil then
 		return
 	end
 	harness:equal(firstPatchOutcome.revision, 1, "first runtime patch starts at revision one")
-	harness:expect(firstPatchOutcome.promoted == false, "runtime patch is not implicitly promoted to source")
+	harness:expect(
+		firstPatchOutcome.promoted == false,
+		"runtime patch is not implicitly promoted to source"
+	)
 
 	local secondPatch = scenario:execute("dm.runtime_patch", {
 		targetId = heroId,
 		patch = { visible = true, lighting = "dim" },
 	})
-	local secondPatchOutcome = scenario:expectOutcome(harness, secondPatch, "Slice 11 replaces the runtime patch")
+	local secondPatchOutcome =
+		scenario:expectOutcome(harness, secondPatch, "Slice 11 replaces the runtime patch")
 	if secondPatchOutcome == nil then
 		return
 	end
 	harness:equal(secondPatchOutcome.revision, 2, "replacement runtime patch increments revision")
-	harness:expect(secondPatchOutcome.patch.visible == true, "replacement patch stores current values")
+	harness:expect(
+		secondPatchOutcome.patch.visible == true,
+		"replacement patch stores current values"
+	)
 
 	local deniedPatch = scenario:executeAs("player", 1111, "dm.runtime_patch", {
 		targetId = heroId,
@@ -93,20 +126,36 @@ return function(harness)
 	local recovery = scenario:execute("dm.request_recovery", {
 		target = "checkpoint:slice-11",
 	})
-	local recoveryOutcome = scenario:expectOutcome(harness, recovery, "Slice 11 records a recovery request")
+	local recoveryOutcome =
+		scenario:expectOutcome(harness, recovery, "Slice 11 records a recovery request")
 	if recoveryOutcome == nil then
 		return
 	end
-	harness:equal(recoveryOutcome.status, "requested", "recovery request starts pending operator review")
-	harness:equal(recoveryOutcome.target, "checkpoint:slice-11", "recovery request keeps its target")
-	harness:expect(string.sub(recoveryOutcome.id, 1, 9) == "recovery:", "recovery request has a stable command-derived id")
+	harness:equal(
+		recoveryOutcome.status,
+		"requested",
+		"recovery request starts pending operator review"
+	)
+	harness:equal(
+		recoveryOutcome.target,
+		"checkpoint:slice-11",
+		"recovery request keeps its target"
+	)
+	harness:expect(
+		string.sub(recoveryOutcome.id, 1, 9) == "recovery:",
+		"recovery request has a stable command-derived id"
+	)
 
 	local deniedRecovery = scenario:executeAs("player", 1111, "dm.request_recovery", {
 		target = "checkpoint:denied",
 	})
 	harness:expect(not deniedRecovery.ok, "player cannot request operator recovery")
 	if not deniedRecovery.ok then
-		harness:equal(deniedRecovery.error.code, "UNAUTHORIZED", "recovery request denial is explicit")
+		harness:equal(
+			deniedRecovery.error.code,
+			"UNAUTHORIZED",
+			"recovery request denial is explicit"
+		)
 	end
 
 	local persisted = scenario:snapshot()
@@ -115,8 +164,19 @@ return function(harness)
 	harness:expect(restore.ok, "Slice 11 DM workspace snapshot restores")
 	if restore.ok then
 		local restoredDomains = restored:snapshot().domains
-		harness:equal(restoredDomains.dm_workspace.control[heroId], 2222, "restore preserves control assignment")
-		harness:equal(restoredDomains.dm_workspace.runtimePatches[heroId].revision, 2, "restore preserves runtime patch revision")
-		harness:expect(restoredDomains.dm_workspace.recoveryRequests[recoveryOutcome.id] ~= nil, "restore preserves recovery request")
+		harness:equal(
+			restoredDomains.dm_workspace.control[heroId],
+			2222,
+			"restore preserves control assignment"
+		)
+		harness:equal(
+			restoredDomains.dm_workspace.runtimePatches[heroId].revision,
+			2,
+			"restore preserves runtime patch revision"
+		)
+		harness:expect(
+			restoredDomains.dm_workspace.recoveryRequests[recoveryOutcome.id] ~= nil,
+			"restore preserves recovery request"
+		)
 	end
 end
