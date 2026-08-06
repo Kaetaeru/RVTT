@@ -17,6 +17,7 @@ $ManifestPath = Join-Path $RobloxRoot "grand-acceptance-manifest.json"
 $DefaultConfigPath = Join-Path $RobloxRoot "grand-persistence-config.json"
 $ExampleConfigPath = Join-Path $RobloxRoot "grand-persistence-config.example.json"
 $StudioProcessNames = @("RobloxStudioBeta", "RobloxStudio")
+$ConfiguredPersistenceExecutions = @("studio-published", "studio-published-pair")
 $RequiredProjects = @(
     "live-datastore.project.json",
     "restart-seed.project.json",
@@ -134,6 +135,18 @@ function Get-PhaseTokens {
     return @($tokens | Select-Object -Unique)
 }
 
+function Get-ConfiguredPersistencePhases {
+    param([object]$Manifest)
+    return @(
+        $Manifest.phases |
+            Where-Object {
+                $_.persistence -eq $true -and
+                [string]$_.execution -in $ConfiguredPersistenceExecutions
+            } |
+            Sort-Object { [int]$_.order }
+    )
+}
+
 function Assert-Config {
     param([object]$Config)
     if ([int]$Config.schemaVersion -ne 1) {
@@ -161,7 +174,7 @@ function Invoke-SelfTest {
         throw "grand persistence example config가 없습니다."
     }
     $manifest = Get-Content -Raw -Encoding UTF8 $ManifestPath | ConvertFrom-Json
-    $persistence = @($manifest.phases | Where-Object { $_.persistence -eq $true } | Sort-Object { [int]$_.order })
+    $persistence = Get-ConfiguredPersistencePhases $manifest
     $projects = @($persistence | ForEach-Object { [string]$_.project } | Select-Object -Unique)
     foreach ($project in $RequiredProjects) {
         if ($project -notin $projects) {
@@ -194,7 +207,7 @@ $config = Get-Content -Raw -Encoding UTF8 $resolvedConfigPath | ConvertFrom-Json
 Assert-Config $config
 
 $manifest = Get-Content -Raw -Encoding UTF8 $ManifestPath | ConvertFrom-Json
-$phases = @($manifest.phases | Where-Object { $_.persistence -eq $true } | Sort-Object { [int]$_.order })
+$phases = Get-ConfiguredPersistencePhases $manifest
 $gitPath = Resolve-ApplicationPath @("git.exe", "git")
 $rojoPath = Resolve-ApplicationPath @("rojo.exe", "rojo")
 $studioPath = Resolve-StudioPath
