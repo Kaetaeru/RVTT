@@ -28,13 +28,8 @@ function LeaseCoordinator.new(
 end
 
 function LeaseCoordinator.acquire(self: any): any
-	local result = self.store:acquire(
-		self.key,
-		self.ownerId,
-		self.token,
-		self.ttlSeconds,
-		self.clock()
-	)
+	local result =
+		self.store:acquire(self.key, self.ownerId, self.token, self.ttlSeconds, self.clock())
 	if result.ok then
 		self.record = result.value
 	else
@@ -47,13 +42,8 @@ function LeaseCoordinator.renew(self: any): any
 	if self.record == nil then
 		return Result.err("LEASE_NOT_HELD", "error.persistence.lease_not_held", false)
 	end
-	local result = self.store:renew(
-		self.key,
-		self.ownerId,
-		self.token,
-		self.ttlSeconds,
-		self.clock()
-	)
+	local result =
+		self.store:renew(self.key, self.ownerId, self.token, self.ttlSeconds, self.clock())
 	if result.ok then
 		self.record = result.value
 	else
