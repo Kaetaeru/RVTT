@@ -32,17 +32,18 @@ return function(harness)
 		objectId = doorId,
 		interactionId = "open",
 	})
-	local openDoorOutcome = scenario:expectOutcome(
-		harness,
-		openDoor,
-		"Slice 03 opens a door through the player route"
-	)
+	local openDoorOutcome =
+		scenario:expectOutcome(harness, openDoor, "Slice 03 opens a door through the player route")
 	if openDoorOutcome == nil then
 		return
 	end
 	harness:equal(openDoorOutcome.object.state, "open", "door state commits as open")
 	harness:equal(openDoorOutcome.object.revision, 1, "door interaction increments object revision")
-	harness:equal(openDoorOutcome.object.lastActorId, heroId, "door records the authoritative actor")
+	harness:equal(
+		openDoorOutcome.object.lastActorId,
+		heroId,
+		"door records the authoritative actor"
+	)
 
 	local unavailable = scenario:executeAs("player", 303, "exploration.interact", {
 		actorId = heroId,
@@ -51,7 +52,11 @@ return function(harness)
 	})
 	harness:expect(not unavailable.ok, "unavailable interaction is rejected")
 	if not unavailable.ok then
-		harness:equal(unavailable.error.code, "CONFLICT", "unavailable interaction returns conflict")
+		harness:equal(
+			unavailable.error.code,
+			"CONFLICT",
+			"unavailable interaction returns conflict"
+		)
 	end
 	harness:equal(
 		scenario:snapshot().domains.exploration.objectStates[doorId].revision,
@@ -65,7 +70,8 @@ return function(harness)
 		state = { state = "closed", locked = true },
 		interactionIds = { "open" },
 	})
-	local lockedDoorOutcome = scenario:expectOutcome(harness, lockedDoor, "Slice 03 spawns a locked door")
+	local lockedDoorOutcome =
+		scenario:expectOutcome(harness, lockedDoor, "Slice 03 spawns a locked door")
 	if lockedDoorOutcome == nil then
 		return
 	end
@@ -94,11 +100,8 @@ return function(harness)
 		knowledgeIds = { "knowledge:trap-03" },
 		hidden = true,
 	})
-	local hiddenObjectOutcome = scenario:expectOutcome(
-		harness,
-		hiddenObject,
-		"Slice 03 spawns a hidden searchable object"
-	)
+	local hiddenObjectOutcome =
+		scenario:expectOutcome(harness, hiddenObject, "Slice 03 spawns a hidden searchable object")
 	if hiddenObjectOutcome == nil then
 		return
 	end
@@ -111,24 +114,29 @@ return function(harness)
 	})
 	harness:expect(not hiddenInteract.ok, "hidden object is not interactable before discovery")
 	if not hiddenInteract.ok then
-		harness:equal(hiddenInteract.error.code, "NOT_FOUND", "hidden object uses non-disclosing denial")
+		harness:equal(
+			hiddenInteract.error.code,
+			"NOT_FOUND",
+			"hidden object uses non-disclosing denial"
+		)
 	end
 
 	local search = scenario:executeAs("player", 303, "exploration.search", {
 		actorId = heroId,
 		objectId = hiddenObjectId,
 	})
-	local searchOutcome = scenario:expectOutcome(
-		harness,
-		search,
-		"Slice 03 resolves a successful search"
-	)
+	local searchOutcome =
+		scenario:expectOutcome(harness, search, "Slice 03 resolves a successful search")
 	if searchOutcome == nil then
 		return
 	end
 	harness:expect(searchOutcome.resolution.success == true, "DC 1 search succeeds")
 	harness:equal(#searchOutcome.revealed, 1, "successful search reveals one knowledge entry")
-	harness:equal(searchOutcome.revealed[1], "knowledge:trap-03", "search reveals the expected knowledge")
+	harness:equal(
+		searchOutcome.revealed[1],
+		"knowledge:trap-03",
+		"search reveals the expected knowledge"
+	)
 	harness:expect(
 		scenario:snapshot().domains.scene.objects[hiddenObjectId].hidden == false,
 		"successful search reveals the object"
@@ -147,11 +155,8 @@ return function(harness)
 		knowledgeIds = { "knowledge:secret-03" },
 		hidden = true,
 	})
-	local hardSecretOutcome = scenario:expectOutcome(
-		harness,
-		hardSecret,
-		"Slice 03 spawns a hard secret"
-	)
+	local hardSecretOutcome =
+		scenario:expectOutcome(harness, hardSecret, "Slice 03 spawns a hard secret")
 	if hardSecretOutcome == nil then
 		return
 	end

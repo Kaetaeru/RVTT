@@ -21,11 +21,8 @@ return function(harness)
 		difficultyClass = 1,
 		labelKey = "test.slice02.easy",
 	})
-	local easyChallengeOutcome = scenario:expectOutcome(
-		harness,
-		easyChallenge,
-		"Slice 02 creates an easy ability challenge"
-	)
+	local easyChallengeOutcome =
+		scenario:expectOutcome(harness, easyChallenge, "Slice 02 creates an easy ability challenge")
 	if easyChallengeOutcome == nil then
 		return
 	end
@@ -43,7 +40,11 @@ return function(harness)
 	if easyCheckOutcome == nil then
 		return
 	end
-	harness:equal(easyCheckOutcome.kind, "ability_check", "ability check creates the right record kind")
+	harness:equal(
+		easyCheckOutcome.kind,
+		"ability_check",
+		"ability check creates the right record kind"
+	)
 	harness:equal(easyCheckOutcome.data.modifier, 7, "ability modifier is derived on the server")
 	harness:equal(easyCheckOutcome.data.difficultyClass, 1, "challenge DC is authoritative")
 	harness:expect(easyCheckOutcome.data.success == true, "DC 1 ability check succeeds")
@@ -58,11 +59,8 @@ return function(harness)
 		difficultyClass = 40,
 		labelKey = "test.slice02.hard",
 	})
-	local hardChallengeOutcome = scenario:expectOutcome(
-		harness,
-		hardChallenge,
-		"Slice 02 creates a hard ability challenge"
-	)
+	local hardChallengeOutcome =
+		scenario:expectOutcome(harness, hardChallenge, "Slice 02 creates a hard ability challenge")
 	if hardChallengeOutcome == nil then
 		return
 	end
@@ -71,11 +69,8 @@ return function(harness)
 		actorId = heroId,
 		challengeId = hardChallengeOutcome.challengeId,
 	})
-	local hardCheckOutcome = scenario:expectOutcome(
-		harness,
-		hardCheck,
-		"Slice 02 resolves a failed ability check"
-	)
+	local hardCheckOutcome =
+		scenario:expectOutcome(harness, hardCheck, "Slice 02 resolves a failed ability check")
 	if hardCheckOutcome == nil then
 		return
 	end
@@ -88,11 +83,8 @@ return function(harness)
 		difficultyClass = 1,
 		labelKey = "test.slice02.save",
 	})
-	local saveChallengeOutcome = scenario:expectOutcome(
-		harness,
-		saveChallenge,
-		"Slice 02 creates a saving throw challenge"
-	)
+	local saveChallengeOutcome =
+		scenario:expectOutcome(harness, saveChallenge, "Slice 02 creates a saving throw challenge")
 	if saveChallengeOutcome == nil then
 		return
 	end
@@ -101,22 +93,24 @@ return function(harness)
 		actorId = heroId,
 		challengeId = saveChallengeOutcome.challengeId,
 	})
-	local savingThrowOutcome = scenario:expectOutcome(
-		harness,
-		savingThrow,
-		"Slice 02 resolves a saving throw"
-	)
+	local savingThrowOutcome =
+		scenario:expectOutcome(harness, savingThrow, "Slice 02 resolves a saving throw")
 	if savingThrowOutcome == nil then
 		return
 	end
-	harness:equal(savingThrowOutcome.kind, "saving_throw", "saving throw creates the right record kind")
+	harness:equal(
+		savingThrowOutcome.kind,
+		"saving_throw",
+		"saving throw creates the right record kind"
+	)
 	harness:equal(savingThrowOutcome.data.modifier, 4, "saving throw proficiency is server-derived")
 	harness:expect(savingThrowOutcome.data.success == true, "DC 1 saving throw succeeds")
 
 	local target = scenario:execute("scene.spawn_actor", {
 		position = { x = 8, y = 0, z = 0 },
 	})
-	local targetOutcome = scenario:expectOutcome(harness, target, "Slice 02 spawns an attack target")
+	local targetOutcome =
+		scenario:expectOutcome(harness, target, "Slice 02 spawns an attack target")
 	if targetOutcome == nil then
 		return
 	end
@@ -128,7 +122,10 @@ return function(harness)
 		maximumHitPoints = 20,
 		temporaryHitPoints = 3,
 	})
-	if scenario:expectOutcome(harness, setTargetState, "Slice 02 initializes target hit points") == nil then
+	if
+		scenario:expectOutcome(harness, setTargetState, "Slice 02 initializes target hit points")
+		== nil
+	then
 		return
 	end
 
@@ -140,11 +137,8 @@ return function(harness)
 		armorClass = -999,
 		damage = 999,
 	})
-	local attackOutcome = scenario:expectOutcome(
-		harness,
-		attack,
-		"Slice 02 resolves a server-authoritative attack"
-	)
+	local attackOutcome =
+		scenario:expectOutcome(harness, attack, "Slice 02 resolves a server-authoritative attack")
 	if attackOutcome == nil then
 		return
 	end
@@ -152,7 +146,10 @@ return function(harness)
 	harness:equal(attackOutcome.data.modifier, 7, "client attack bonus is ignored")
 	harness:equal(attackOutcome.data.armorClass, 10, "client armor class is ignored")
 	harness:expect(attackOutcome.data.damage >= 0, "attack damage is non-negative")
-	harness:expect(attackOutcome.data.damage <= 15, "unarmed damage stays within server formula bounds")
+	harness:expect(
+		attackOutcome.data.damage <= 15,
+		"unarmed damage stays within server formula bounds"
+	)
 
 	local targetState = scenario:snapshot().domains.rules.actorStates[targetId]
 	harness:expect(targetState ~= nil, "target hit point state exists")
@@ -163,10 +160,21 @@ return function(harness)
 				attackOutcome.data.targetHitPoints,
 				"attack projection matches committed hit points"
 			)
-			harness:expect(targetState.temporaryHitPoints <= 3, "temporary hit points absorb damage first")
+			harness:expect(
+				targetState.temporaryHitPoints <= 3,
+				"temporary hit points absorb damage first"
+			)
 		else
-			harness:equal(targetState.currentHitPoints, 20, "miss does not mutate current hit points")
-			harness:equal(targetState.temporaryHitPoints, 3, "miss does not mutate temporary hit points")
+			harness:equal(
+				targetState.currentHitPoints,
+				20,
+				"miss does not mutate current hit points"
+			)
+			harness:equal(
+				targetState.temporaryHitPoints,
+				3,
+				"miss does not mutate temporary hit points"
+			)
 		end
 	end
 
@@ -184,11 +192,15 @@ return function(harness)
 		ability = "wisdom",
 		difficultyClass = 10,
 	})
-	local secondDuplicate = scenario:executeDuplicate(duplicateCommandId, "rules.create_challenge", {
-		ability = "charisma",
-		difficultyClass = 30,
-	})
-	harness:expect(firstDuplicate.ok and secondDuplicate.ok, "duplicate command returns a terminal result")
+	local secondDuplicate =
+		scenario:executeDuplicate(duplicateCommandId, "rules.create_challenge", {
+			ability = "charisma",
+			difficultyClass = 30,
+		})
+	harness:expect(
+		firstDuplicate.ok and secondDuplicate.ok,
+		"duplicate command returns a terminal result"
+	)
 	if firstDuplicate.ok and secondDuplicate.ok then
 		harness:equal(
 			secondDuplicate.value.outcome.challengeId,

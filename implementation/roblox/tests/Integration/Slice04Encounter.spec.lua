@@ -18,7 +18,8 @@ return function(harness)
 	local target = scenario:execute("scene.spawn_actor", {
 		position = { x = 6, y = 0, z = 0 },
 	})
-	local targetOutcome = scenario:expectOutcome(harness, target, "Slice 04 spawns an encounter target")
+	local targetOutcome =
+		scenario:expectOutcome(harness, target, "Slice 04 spawns an encounter target")
 	if targetOutcome == nil then
 		return
 	end
@@ -47,7 +48,10 @@ return function(harness)
 	harness:equal(startOutcome.cursor, 1, "encounter starts at the first timeline entry")
 	harness:equal(#startOutcome.timeline, 2, "encounter has both participants")
 	harness:expect(startOutcome.opportunities.action == true, "active turn starts with an action")
-	harness:expect(startOutcome.opportunities.reaction == true, "active turn starts with a reaction")
+	harness:expect(
+		startOutcome.opportunities.reaction == true,
+		"active turn starts with a reaction"
+	)
 	harness:equal(
 		#scenario:snapshot().domains.encounter.checkpoints,
 		1,
@@ -64,14 +68,16 @@ return function(harness)
 
 	local guard = 0
 	while
-		scenario:snapshot().domains.encounter.active.timeline[
-			scenario:snapshot().domains.encounter.active.cursor
-		].actorId ~= heroId
+		scenario:snapshot().domains.encounter.active.timeline[scenario:snapshot().domains.encounter.active.cursor].actorId
+			~= heroId
 		and guard < 3
 	do
 		guard += 1
 		local advance = scenario:execute("encounter.end_turn", {})
-		if scenario:expectOutcome(harness, advance, "DM advances to the controlled actor turn") == nil then
+		if
+			scenario:expectOutcome(harness, advance, "DM advances to the controlled actor turn")
+			== nil
+		then
 			return
 		end
 	end
@@ -118,11 +124,8 @@ return function(harness)
 	local completedRound = scenario:snapshot().domains.encounter.active.round
 	local completedCursor = scenario:snapshot().domains.encounter.active.cursor
 	local endControlledTurn = scenario:executeAs("player", 404, "encounter.end_turn", {})
-	local endControlledTurnOutcome = scenario:expectOutcome(
-		harness,
-		endControlledTurn,
-		"controller ends the active turn"
-	)
+	local endControlledTurnOutcome =
+		scenario:expectOutcome(harness, endControlledTurn, "controller ends the active turn")
 	if endControlledTurnOutcome == nil then
 		return
 	end
@@ -132,7 +135,10 @@ return function(harness)
 		"ending a turn advances cursor or round"
 	)
 	harness:expect(endControlledTurnOutcome.opportunities.action == true, "next turn resets action")
-	harness:expect(endControlledTurnOutcome.opportunities.reaction == true, "next turn resets reaction")
+	harness:expect(
+		endControlledTurnOutcome.opportunities.reaction == true,
+		"next turn resets reaction"
+	)
 	harness:expect(
 		#scenario:snapshot().domains.encounter.checkpoints >= 2,
 		"turn transition adds a checkpoint"
@@ -140,13 +146,17 @@ return function(harness)
 
 	local epochBeforeRollback = scenario:snapshot().authorityEpoch
 	local rollback = scenario:execute("encounter.rollback", { checkpointIndex = 1 })
-	local rollbackOutcome = scenario:expectOutcome(harness, rollback, "Slice 04 rolls back to the first checkpoint")
+	local rollbackOutcome =
+		scenario:expectOutcome(harness, rollback, "Slice 04 rolls back to the first checkpoint")
 	if rollbackOutcome == nil then
 		return
 	end
 	harness:equal(rollbackOutcome.round, 1, "rollback restores the checkpoint round")
 	harness:equal(rollbackOutcome.cursor, 1, "rollback restores the checkpoint cursor")
-	harness:expect(rollbackOutcome.opportunities.action == true, "rollback restores action opportunity")
+	harness:expect(
+		rollbackOutcome.opportunities.action == true,
+		"rollback restores action opportunity"
+	)
 	harness:expect(
 		scenario:snapshot().authorityEpoch ~= epochBeforeRollback,
 		"rollback refreshes authority epoch"
@@ -161,7 +171,10 @@ return function(harness)
 	end
 	harness:equal(endedOutcome.status, "ended", "ended encounter is marked ended")
 	harness:equal(endedOutcome.reason, "acceptance-complete", "encounter end reason is retained")
-	harness:expect(scenario:snapshot().domains.encounter.active == nil, "encounter returns to inactive state")
+	harness:expect(
+		scenario:snapshot().domains.encounter.active == nil,
+		"encounter returns to inactive state"
+	)
 
 	local persisted = scenario:snapshot()
 	local restored = ScenarioRuntime.new(404, "dm")

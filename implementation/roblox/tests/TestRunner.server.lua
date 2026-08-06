@@ -3,9 +3,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local testMode = ReplicatedStorage:FindFirstChild("RVTT_TestMode")
 local grandMode = ReplicatedStorage:FindFirstChild("RVTT_GrandMode")
-local unitModeEnabled = testMode ~= nil
-	and testMode:IsA("StringValue")
-	and testMode.Value == "unit"
+local unitModeEnabled = testMode ~= nil and testMode:IsA("StringValue") and testMode.Value == "unit"
 local grandModeEnabled = grandMode ~= nil
 	and grandMode:IsA("StringValue")
 	and grandMode.Value == "single-client"
@@ -130,13 +128,15 @@ for _, spec in specs do
 	end
 
 	local result = if specHarness.failed == 0 then "PASS" else "FAIL"
-	print(string.format(
-		"[RVTT Spec Summary] id=%s result=%s passed=%d failed=%d",
-		spec.id,
-		result,
-		specHarness.passed,
-		specHarness.failed
-	))
+	print(
+		string.format(
+			"[RVTT Spec Summary] id=%s result=%s passed=%d failed=%d",
+			spec.id,
+			result,
+			specHarness.passed,
+			specHarness.failed
+		)
+	)
 
 	aggregate.passed += specHarness.passed
 	aggregate.failed += specHarness.failed
