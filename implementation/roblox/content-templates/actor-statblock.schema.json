@@ -53,3 +53,4 @@
     "automation": {"type": "object", "additionalProperties": false, "required": ["mode"], "properties": {"mode": {"enum": ["manual", "trusted_recipe"]}, "recipeRef": {"type": ["string", "null"]}}, "allOf": [{"if": {"properties": {"mode": {"const": "trusted_recipe"}}}, "then": {"required": ["recipeRef"]}}, {"if": {"properties": {"mode": {"const": "manual"}}}, "then": {"properties": {"recipeRef": {"type": "null"}}}}]}
   }
 }
+}
