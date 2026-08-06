@@ -2,260 +2,327 @@
 
 - 사용자 가이드 상태: `TARGET_EXPERIENCE`
 - 대상: Player, DM, Observer
-- 최종 갱신일: 2026-08-05
-- 상세 Player Guide: [`player/README.md`](player/README.md)
-- 상세 DM Guide: [`dm/README.md`](dm/README.md)
+- 최종 갱신일: 2026-08-06
+- 전체 UI HTML 예시: [`html/index.html`](html/index.html)
+- Player Guide: [`player/README.md`](player/README.md)
+- Player·Observer 화면 지도: [`player/UI-EXAMPLES.md`](player/UI-EXAMPLES.md)
+- DM Guide: [`dm/README.md`](dm/README.md)
+- DM 화면 지도: [`dm/UI-EXAMPLES.md`](dm/UI-EXAMPLES.md)
 
-> 이 문서는 구현 전 목표 사용자 경험을 가장 간단하게 보여 준다. 코딩 구조나 내부 시스템은 설명하지 않는다.
+> 이 문서는 구현 전 목표 사용자 경험을 간단하게 보여 준다. 각 단계의 화면은 연결된 HTML 예시에서 확인한다. HTML은 Roblox Runtime Evidence가 아니다.
 
 ## 1. 30초 요약
 
 ```text
-DM이 캠페인과 장면을 준비한다
-→ 플레이어가 캐릭터를 선택하고 준비한다
-→ DM이 세션을 시작한다
-→ 함께 탐험한다
-→ 필요하면 전투한다
-→ 전투가 끝나면 다시 탐험한다
-→ 다른 장면으로 이동하거나 세션을 끝낸다
+DM이 Campaign과 시작 Scene을 준비한다
+→ Player가 Character를 선택하고 준비한다
+→ DM이 Session을 시작한다
+→ 함께 Exploration을 진행한다
+→ 필요하면 Encounter를 진행한다
+→ Encounter가 끝나면 같은 Scene의 Exploration으로 돌아간다
+→ Scene을 전환하거나 Session을 종료한다
 ```
 
-RVTT의 기본 세션은 **탐험을 중심으로 진행되며, 전투와 장면 전환이 그 사이에 들어오는 구조**다.
+관련 화면:
 
----
+- [`세션 참가·Character 선택`](html/index.html#session-entry)
+- [`Exploration HUD`](html/index.html#exploration)
+- [`Encounter HUD`](html/index.html#encounter)
+- [`DM Live Workspace`](html/index.html#dm-live)
 
-## 2. 전체 세션 흐름
-
-```mermaid
-flowchart TD
-    A[DM이 캠페인과 시작 장면 준비] --> B[플레이어 입장]
-    B --> C[캐릭터 선택과 준비 완료]
-    C --> D[DM이 세션 시작]
-    D --> E[탐험]
-
-    E --> F{무슨 일이 일어나는가?}
-
-    F -->|계속 이동·조사·상황 진행| E
-    F -->|전투 발생| G[전투]
-    F -->|다른 장소로 이동| H[장면 전환]
-    F -->|잠시 멈춤| I[세션 일시정지]
-    F -->|오늘 세션 종료| J[결과 확인과 저장]
-
-    G --> K{전투가 끝났는가?}
-    K -->|아니오| G
-    K -->|예| E
-
-    H --> L[새 장면 확인]
-    L --> E
-
-    I --> M{다시 시작하는가?}
-    M -->|예| E
-    M -->|아니오| J
-
-    J --> N[세션 종료]
-```
-
-핵심은 다음과 같다.
-
-- 탐험과 전투는 서로 다른 게임이 아니라 같은 세션의 두 진행 방식이다.
-- 전투가 끝나도 캐릭터와 주변 상태를 유지한 채 탐험으로 돌아간다.
-- 장면이 바뀌어도 세션은 계속 이어진다.
-- DM은 필요할 때 세션을 멈추거나 종료할 수 있다.
-
----
-
-## 3. 플레이어 흐름
-
-```mermaid
-flowchart TD
-    A[세션 참가] --> B[사용할 캐릭터 선택]
-    B --> C[캐릭터 상태 확인]
-    C --> D[준비 완료]
-    D --> E[DM의 시작을 기다림]
-    E --> F[장면 입장]
-    F --> G[탐험]
-
-    G --> H{하고 싶은 행동}
-    H -->|이동| I[목적지를 정해 이동]
-    H -->|주변 확인| J[조사하거나 살펴보기]
-    H -->|대상 사용| K[문·상자·레버 등과 상호작용]
-    H -->|능력 사용| L[행동·주문·아이템 선택]
-    H -->|정보 확인| M[캐릭터 시트·인벤토리·저널 확인]
-
-    I --> N{전투가 시작됐는가?}
-    J --> N
-    K --> N
-    L --> N
-    M --> N
-
-    N -->|예| O[자신의 차례를 기다림]
-    O --> P[이동과 행동 선택]
-    P --> Q[결과 확인]
-    Q --> R{전투가 끝났는가?}
-    R -->|아니오| O
-    R -->|예| S{세션을 계속하는가?}
-
-    N -->|아니오| S
-    S -->|예| G
-    S -->|아니오| T[최종 상태 확인 후 나가기]
-```
-
-### 플레이어가 기억할 것
+## 2. 공통 입력
 
 ```text
-탐험
-→ 자유롭게 이동하고 조사한다
+Left Click
+→ 선택 또는 클릭 전에 표시된 기본 행동
 
-전투
-→ 자신의 차례에 이동과 행동을 정한다
+Right Click
+→ Capability 기반 Context Action Table
+
+Middle-button Drag
+→ Camera Orbit
+
+WASD
+→ Camera 기준 평면 이동
+
+Wheel
+→ Camera Zoom
+
+Ctrl+Wheel
+→ Camera Pivot Y
+
+F 또는 Space
+→ 선택 Actor Frame
 
 Q
-→ 지금 하던 선택을 취소하거나 한 단계 돌아간다
+→ 최상위 Context 하나만 취소·닫기·거절
 
 E
-→ 현재 선택을 확정하거나 대상과 상호작용한다
+→ 현재 화면에 표시된 Confirm 하나 제출
+
+1–5
+→ 현재 Label이 보이는 주요 선택지
+
+ESC
+→ Gameplay 의미 없음
 ```
 
-탐험에서는 캐릭터를 클릭 또는 WASD로 이동할 수 있다. 전투에서는 경로를 확인한 뒤 목적지를 클릭해 이동하며, WASD는 카메라 이동에 사용한다.
+관련 화면:
 
----
+- [`Context Action Table`](html/index.html#context-actions)
+- [`이동 경로 Preview`](html/index.html#movement-preview)
+- [`Tooltip·Toast·Component 상태`](html/index.html#component-states)
 
-## 4. DM 흐름
+## 3. 전체 Session 흐름
 
 ```mermaid
 flowchart TD
-    A[캠페인 선택] --> B[시작 장면과 캐릭터 확인]
-    B --> C[숨겨진 대상·안개·메모 준비]
-    C --> D[플레이어 입장과 준비 상태 확인]
-    D --> E[세션 시작]
-    E --> F[탐험 진행]
+    A[DM이 Campaign과 시작 Scene 준비] --> B[Player·Observer 입장]
+    B --> C[Role·Character 선택과 준비]
+    C --> D[Projection과 Scene 준비]
+    D --> E[DM이 Session 시작]
+    E --> F[Exploration]
 
-    F --> G{DM에게 필요한 일}
-    G -->|상황 설명| H[장면과 결과 설명]
-    G -->|정보 공개| I[장소·대상·메모 공개]
-    G -->|판정 필요| J[굴림 또는 선택 요청]
-    G -->|NPC·환경 조작| K[대상 선택 후 상태 변경]
-    G -->|전투 발생| L[참가자 확인 후 전투 시작]
-    G -->|장소 이동| M[다음 장면으로 전환]
-    G -->|큰 수정 필요| N[세션을 잠시 멈춤]
-    G -->|오늘 종료| O[상태 확인과 세션 종료]
+    F --> G{무슨 일이 일어나는가?}
+    G -->|계속 이동·조사·상호작용| F
+    G -->|적대 상황| H[Encounter]
+    G -->|다른 장소| I[Scene 전환]
+    G -->|휴식·Downtime| J[Activity·Rest]
+    G -->|진행 문제| K[Pause·Recovery]
+    G -->|오늘 종료| L[결과 확인·Session 종료]
 
-    H --> F
-    I --> F
+    H --> M{Encounter 종료?}
+    M -->|아니오| H
+    M -->|예| F
+
+    I --> N[새 Scene 준비]
+    N --> F
+
     J --> F
-    K --> F
-
-    L --> P[차례와 행동 진행]
-    P --> Q{전투가 끝났는가?}
-    Q -->|아니오| P
-    Q -->|예| R[결과를 유지하고 탐험으로 복귀]
-    R --> F
-
-    M --> S[새 장면 확인]
-    S --> F
-
-    N --> T[필요한 수정 또는 복구]
-    T --> U{계속 진행하는가?}
-    U -->|예| F
-    U -->|아니오| O
-
-    O --> V[세션 종료]
+    K --> O{복구 완료?}
+    O -->|예| F
+    O -->|아니오| L
+    L --> P[Session 종료]
 ```
+
+## 4. Player 흐름
+
+```mermaid
+flowchart TD
+    A[Session 참가] --> B[Character 또는 Observer 선택]
+    B --> C[Gameplay Ready 대기]
+    C --> D[Exploration]
+    D --> E{하고 싶은 일}
+    E -->|이동| F[경로·거리·위험 Preview]
+    E -->|주변 확인| G[Search·Study·상호작용]
+    E -->|능력 사용| H[행동·주문·Item 선택]
+    E -->|정보 확인| I[Sheet·Inventory·Journal·Map]
+    F --> J{Encounter 시작?}
+    G --> J
+    H --> J
+    I --> J
+    J -->|아니오| D
+    J -->|예| K[Turn·Target·Resource 확인]
+    K --> L[이동·행동 제출]
+    L --> M[Reaction·Dice·결과 확인]
+    M --> N{Encounter 종료?}
+    N -->|아니오| K
+    N -->|예| D
+```
+
+관련 화면:
+
+- [`Movement Preview`](html/index.html#movement-preview)
+- [`Targeting`](html/index.html#targeting)
+- [`Reaction Prompt`](html/index.html#reaction)
+- [`Dice Result`](html/index.html#dice)
+- [`Character Sheet`](html/index.html#character-sheet)
+- [`Inventory`](html/index.html#inventory)
+- [`Journal`](html/index.html#journal)
+- [`Map`](html/index.html#map)
+
+### Player가 기억할 것
+
+- 클릭 전에 World Action Label, 경로, 범위와 비용을 확인한다.
+- 사용 가능한 행동과 권한에는 있지만 현재 불가능한 행동을 구분한다.
+- 권한에 없는 행동과 미인지 정보는 화면에 자리도 나타나지 않는다.
+- Pending은 제출됐다는 표시이며 성공 확정이 아니다.
+- 이동·공격·상호작용 뒤 행동 주체 Actor 선택은 유지된다.
+- Turn이 바뀌어도 Camera를 강제로 빼앗지 않는다.
+
+## 5. Observer 흐름
+
+```mermaid
+flowchart TD
+    A[Session 참가] --> B[Observer 선택]
+    B --> C[공개 Projection 준비]
+    C --> D[공개 Scene·Party·Log 확인]
+    D --> E[Camera Focus·Map·Journal 사용]
+    E --> F{Role 변경?}
+    F -->|아니오| D
+    F -->|예| G[기존 공개 Context 정리]
+    G --> H[새 Role Projection 준비]
+```
+
+관련 화면: [`Observer 공개 HUD`](html/index.html#observer)
+
+Observer에게는 이동·공격·Item 사용 Action Hotbar와 권한 밖 행동 자리를 제공하지 않는다.
+
+## 6. DM 흐름
+
+```mermaid
+flowchart TD
+    A[Campaign·Scene 준비] --> B[Player 입장과 준비 확인]
+    B --> C[Session 시작]
+    C --> D[DM Live Workspace]
+    D --> E{DM에게 필요한 일}
+    E -->|설명·공개·판정| F[Journal·Fog·Roll·Prompt]
+    E -->|NPC·Object 조작| G[Quick Action]
+    E -->|적대 상황| H[Encounter·Initiative·Turn]
+    E -->|Player 상태 확인| I[Player View Preview]
+    E -->|큰 수정| J[Pause·Scene Editor]
+    E -->|문제 복구| K[Recovery·Rollback Review]
+    F --> D
+    G --> D
+    H --> L{Encounter 종료?}
+    L -->|아니오| H
+    L -->|예| D
+    I --> D
+    J --> D
+    K --> D
+```
+
+관련 화면:
+
+- [`DM Live Workspace`](html/index.html#dm-live)
+- [`DM Quick Action`](html/index.html#dm-quick)
+- [`Encounter·Fog Control`](html/index.html#dm-encounter)
+- [`Player View Preview`](html/index.html#player-preview)
+- [`Scene Editor`](html/index.html#scene-editor)
+- [`Rollback Review`](html/index.html#rollback)
 
 ### DM이 기억할 것
 
-```text
-세션 전
-→ 장면·캐릭터·숨겨진 정보를 준비한다
+- Player Route와 DM Override를 시각적으로 구분한다.
+- 위험한 Override는 대상·공개 범위·영향과 Audit을 확인한다.
+- Player View Preview는 Player의 Camera·Selection·Control Assignment를 바꾸지 않는다.
+- Scene Source, Candidate, Published와 Live Runtime을 같은 상태로 표현하지 않는다.
+- Rollback 전에 Diff와 Player Knowledge 경고를 확인한다.
 
-탐험 중
-→ 설명·공개·판정·NPC와 환경을 관리한다
-
-전투 중
-→ 참가자·차례·행동과 결과를 진행한다
-
-큰 수정이 필요할 때
-→ 먼저 세션을 멈추고 수정한 뒤 다시 시작한다
-```
-
-DM은 플레이어와 같은 장면 위에서 진행하지만, 숨겨진 정보와 추가 진행 도구를 함께 사용한다.
-
----
-
-## 5. 탐험과 전투의 반복
+## 7. Exploration과 Encounter 반복
 
 ```mermaid
 flowchart LR
-    A[탐험] --> B{위험이나 적대 상황?}
+    A[Exploration] --> B{위험이나 적대 상황?}
     B -->|아니오| C[이동·조사·상호작용]
     C --> A
-
-    B -->|예| D[전투 시작]
-    D --> E[차례대로 이동과 행동]
-    E --> F{전투 종료?}
+    B -->|예| D[Encounter 시작]
+    D --> E[Turn별 이동·행동·Reaction]
+    E --> F{Encounter 종료?}
     F -->|아니오| E
-    F -->|예| G[결과 확인]
+    F -->|예| G[결과 Projection 확인]
     G --> A
 ```
 
-전투가 시작될 때 장면을 새로 불러오지 않는다. 탐험 중이던 위치와 주변 상태에서 그대로 전투가 시작되고, 끝난 뒤 같은 장소에서 탐험을 계속한다.
+Encounter가 시작될 때 다른 전투 화면으로 Scene을 새로 불러오지 않는다. 기존 위치와 Object 상태를 유지한 채 Initiative·Turn Resource·End Turn UI가 추가된다.
 
----
+## 8. Character·Inventory·Rest
 
-## 6. 장면 전환
-
-```mermaid
-flowchart LR
-    A[현재 장면에서 이동 결정] --> B[DM이 다음 장면 선택]
-    B --> C[새 장면 준비 중]
-    C --> D[플레이어가 새 장면 확인]
-    D --> E[현재 캐릭터 상태로 탐험 계속]
+```text
+Character 상태 확인
+→ Sheet·Inventory·Equipment
+→ 필요하면 Loot·Transfer
+→ Downtime·Rest Proposal
+→ 비용·참가자·회복 Preview
+→ E 제출
+→ Server Result와 Projection 확인
 ```
 
-장면 전환은 다른 장소로 이동하는 것이다. 캐릭터의 HP, 자원, 장비와 계속 유지되어야 하는 효과는 그대로 이어진다.
+관련 화면:
 
----
+- [`Character Sheet`](html/index.html#character-sheet)
+- [`Inventory·Equipment`](html/index.html#inventory)
+- [`Loot·Transfer`](html/index.html#loot)
+- [`Downtime·Rest`](html/index.html#downtime)
+- [`HP 0·Death Save`](html/index.html#death-save)
 
-## 7. 연결이 끊겼을 때
+HP 0은 전체 화면 Game Over로 처리하지 않는다. Party 상태, Camera와 현재 허용된 Death Save·Reaction·정보 행동을 유지한다.
+
+## 9. Settings
+
+```text
+System Button 또는 OpenSystemMenu
+→ Interface·Gameplay UX·Camera·Accessibility·Bindings
+→ 즉시 Preview
+→ 저장 또는 Category Reset
+```
+
+관련 화면:
+
+- [`Interface Settings`](html/index.html#settings-interface)
+- [`Camera·Accessibility`](html/index.html#settings-accessibility)
+- [`Binding Conflict`](html/index.html#binding-conflict)
+- [`System Menu`](html/index.html#system-menu)
+
+기본 Accent는 Gold다. UI·Camera·Accessibility 설정 변경이 Selection·Pending·Modal·Input Context를 초기화하지 않는다.
+
+## 10. 연결이 끊겼을 때
 
 ```mermaid
 flowchart TD
-    A[연결 끊김] --> B[다시 세션 참가]
-    B --> C[현재 캐릭터와 장면 불러오기]
-    C --> D{아직 준비 중인가?}
-    D -->|예| E[잠시 기다림]
-    E --> D
-    D -->|아니오| F[현재 진행 상황으로 복귀]
+    A[연결 끊김 감지] --> B[재접속 시도]
+    B --> C[Session·Role 확인]
+    C --> D[Projection Snapshot 수신]
+    D --> E[Scene·Controlled Actor 준비]
+    E --> F[UI·Input 재구성]
+    F --> G[입력 재개]
 ```
 
-다시 들어왔을 때 이전 화면이 잠시 보이더라도 바로 조작하지 않는다. 현재 장면과 캐릭터 상태를 모두 불러왔다는 안내가 나온 뒤 플레이를 계속한다.
+관련 화면: [`Reconnect·Resync·Recovery`](html/index.html#reconnect)
 
----
+- 단순 Spinner 대신 현재 성공 단계와 실패 단계를 표시한다.
+- Last Known Good 화면을 읽을 수 있어도 Authority 입력은 Gate한다.
+- 이전 ConnectionEpoch·AuthorityEpoch의 Prompt·Selection·ACK를 재사용하지 않는다.
+- Accent·UI Scale·접근성·Camera Preference는 유지한다.
 
-## 8. DM이 이전 상태로 되돌릴 때
+## 11. DM이 이전 상태로 되돌릴 때
 
 ```mermaid
 flowchart TD
-    A[DM이 문제 발견] --> B[세션 또는 전투를 잠시 멈춤]
-    B --> C[되돌릴 시점 선택]
-    C --> D[바뀌는 내용 확인]
-    D --> E{되돌릴 것인가?}
-    E -->|아니오| F[현재 상태 유지]
-    E -->|예| G[선택한 시점의 상태로 복구]
-    F --> H[세션 계속]
-    G --> H
+    A[DM이 문제 발견] --> B[Session 또는 Encounter Pause]
+    B --> C[Checkpoint 선택]
+    C --> D[현재와 대상 Diff 확인]
+    D --> E[Player Knowledge 경고 확인]
+    E --> F{Rollback 실행?}
+    F -->|아니오| G[현재 상태 유지]
+    F -->|예| H[새 AuthorityEpoch로 복구]
+    H --> I[전체 Client Resync]
+    G --> J[Session 계속]
+    I --> J
 ```
 
-되돌리기는 실수나 진행 문제를 바로잡기 위한 DM 기능이다. 플레이어는 복구가 끝난 뒤 현재 캐릭터와 장면 상태를 다시 확인하고 플레이를 이어 간다.
+관련 화면: [`DM Recovery·Rollback Review`](html/index.html#rollback)
 
----
+## 12. 역할 한 줄 정리
 
-## 9. 가장 짧은 역할 정리
+| 역할 | 세션에서 하는 일 | 화면 예시 |
+|---|---|---|
+| Player | Character를 선택하고 이동·조사·행동·전투·Item 관리를 수행한다. | [`Player UI`](player/UI-EXAMPLES.md) |
+| Observer | 공개된 진행과 정보를 보며 Camera·Map·Journal을 사용한다. | [`Observer HUD`](html/index.html#observer) |
+| DM | Scene, 정보 공개, 판정, NPC, Encounter, 저작과 복구를 관리한다. | [`DM UI`](dm/UI-EXAMPLES.md) |
 
-| 역할 | 세션에서 하는 일 |
-|---|---|
-| Player | 캐릭터를 선택하고 이동·조사·행동·전투를 수행한다. |
-| Observer | 공개된 진행을 보지만 캐릭터를 직접 조작하지 않는다. |
-| DM | 장면, 정보 공개, 판정, NPC, 전투와 세션 흐름을 관리한다. |
+## 13. 검증 상태
 
-더 자세한 조작과 상황별 설명은 [`Player Guide`](player/README.md)와 [`DM Guide`](dm/README.md)에서 확인한다.
+```text
+Quick Flow
+→ TARGET EXPERIENCE
+
+HTML UI Examples
+→ STATIC COVERAGE COMPLETE · 28 SCREENS
+
+Roblox Studio Runtime
+→ NOT EXECUTED
+
+Release Screenshot Verification
+→ NOT EXECUTED
+```
