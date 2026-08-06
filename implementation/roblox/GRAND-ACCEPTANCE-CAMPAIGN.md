@@ -1,6 +1,6 @@
 # RVTT Grand Acceptance Campaign
 
-- 상태: `AUTOMATED_BASELINE_EXPANDED_STATIC_VERIFIED`
+- 상태: `DETERMINISTIC_FAULT_BASELINE_STATIC_VERIFIED`
 - 목적: 사용자가 한 번의 Windows PowerShell 실행으로 현재 실행 가능한 모든 Acceptance 환경을 순차 실행하고 하나의 결함 보고서를 얻는다.
 - Manifest: [`grand-acceptance-manifest.json`](grand-acceptance-manifest.json)
 - Runner: [`tooling/run-grand-acceptance.ps1`](tooling/run-grand-acceptance.ps1)
@@ -16,7 +16,7 @@ PowerShell 실행 1회
 → grand-single-client Studio Run
 → grand-multi-client Studio Run
 → 선택적 Grand Persistence Runs
-→ 향후 Human UI·Full Fault·Soak Runs
+→ 향후 Real Transport·Restart·Human UI·Soak Runs
 → JSON·Markdown 통합 보고서
 ```
 
@@ -33,7 +33,7 @@ unit-integration-baseline
 slice01-world-interaction
 ```
 
-`unit-integration-baseline` 내부에는 기존 Unit·Integration과 Slices 02–12 자동 Authority Scenario, Cross-slice Session, Authority Fault, Capacity Sample가 포함된다. Slice 01은 같은 Play에서 실제 사용자 입력을 받아 별도 Batch Summary를 출력한다.
+`unit-integration-baseline` 내부에는 기존 Unit·Integration, Slices 02–12 자동 Authority Scenario, Cross-slice Session, Authority Fault, Deterministic Network·Storage Fault Host와 Capacity Sample가 포함된다. Slice 01은 같은 Play에서 실제 사용자 입력을 받아 별도 Batch Summary를 출력한다.
 
 같은 Run의 각 Phase는 서로 다른 `summaryToken`, `evidenceTokens`, `passRegex`를 유지한다. 따라서 Studio 실행 수를 줄여도 판정과 Evidence는 합쳐지지 않는다.
 
@@ -48,6 +48,7 @@ slice01-world-interaction
 - 아직 구현되지 않은 Phase는 `blocked`로 표시한다.
 - 일반 기능과 Persistence Evidence는 같은 보고서에서도 Phase 단위로 분리한다.
 - 공식 데이터·권리 검토가 필요한 Content Phase는 승인 전까지 `blocked`다.
+- Fault Scenario는 같은 입력에서 같은 장애가 발생하는 결정적 Host부터 검증한다.
 - Capacity Sample은 실제 수치를 기록하되 측정 전 임의 성능 합격선을 만들지 않는다.
 
 ## 4. 현재 `grand-single-client` 범위
@@ -100,6 +101,36 @@ Session·Character·Scene
 - Restore 후 Epoch 갱신
 - 이전 Epoch 폐기
 
+### Deterministic Network Fault Host
+
+- Projection Packet Drop
+- Duplicate Packet
+- Hold·Reorder·Release
+- Sequence Gap과 Full Resync
+- 새 AuthorityEpoch 뒤 지연된 이전 Epoch Packet
+- Terminal Receipt 유실
+- 동일 Command ID 재전송
+- 최대 3회 전송과 8초 retryable Timeout
+
+Network Host가 발견한 Production 공백에 따라 다음을 보강했다.
+
+- `ProjectionReplica`는 최근 Epoch 이력을 유지하고 지연된 이전 Epoch rollback을 거부한다.
+- 동일 또는 이전 Projection Sequence는 False Gap 없이 무시한다.
+- `CommandClient`는 Terminal Receipt 유실 시 원본 Envelope를 bounded retry한다.
+- Terminal Receipt가 끝내 없으면 `CLIENT_TIMEOUT` Terminal 상태와 Pending 정리를 수행한다.
+
+### Deterministic Storage Fault Host
+
+- Transient Load Failure와 Retry
+- Commit 전 Save Failure
+- Dirty Snapshot 보존
+- Commit 뒤 Ack Loss
+- 동일 Revision·Epoch 멱등 Retry
+- Revision Conflict
+- External Winner 보존
+- 더 높은 Revision Reconcile
+- Invalid Revision Load 처리
+
 ### Capacity Sample
 
 ```text
@@ -149,12 +180,13 @@ restoreMs=<measured>
 - Slices 02–12의 전체 사용자 UI·Disclosure·Recovery Scenario
 - Slices 13–15 공식 데이터·권리·Asset 승인
 - UI Visual Redesign·Accessibility Human Review 수집
-- Network Drop·Delay·Duplicate·Reorder Host
-- DataStore Throttle·Partial Commit·Restart Fault Host
+- Roblox 실제 Remote 지연·제한·Disconnect·Reconnect Host
+- Studio Server Restart Host
+- 실제 DataStore Throttle·Outage·Cross-server Conflict Host
 - 실제 Performance Budget·Memory·Network·Soak
 - Slice 16 Full-session Release Gate와 Runbook
 
-자동 baseline이 존재하더라도 전체 Slice Phase는 남은 범위가 완료되기 전까지 `planned`다.
+결정적 Fault baseline이 존재해도 실제 Roblox Transport·Restart·Persistence Fault Phase는 남은 범위가 완료되기 전까지 `planned`다.
 
 ## 7. 보고서
 
@@ -177,6 +209,8 @@ places\*.rbxlx
 ```text
 [RVTT Spec Summary] id=<id> result=PASS|FAIL passed=<n> failed=<n>
 [RVTT Spec Failure] <id>: <failure>
+[RVTT Fault Host] kind=network sent=... delivered=... dropped=... duplicated=... held=... released=... gaps=... retries=...
+[RVTT Fault Host] kind=storage loads=... saves=... failures=... conflicts=... committed=... ackLosses=... finalRevision=...
 [RVTT Spec Summary] id=grand-capacity-sample sample=capacity ... elapsedMs=... restoreMs=...
 [RVTT Tests] passed=<n> failed=<n>
 [RVTT Batch Summary] batch=slice01-world-interaction ...
@@ -218,4 +252,4 @@ run-grand-acceptance.ps1 실행
 
 한 줄 Bootstrap, 원격 `Invoke-Expression`, 중첩 `powershell -Command`는 제공하지 않는다.
 
-현재는 Persistence·Human UI·Full Fault·Soak Phase를 더 연결하는 중이므로 사용자 Grand Runtime 실행을 요청하지 않는다.
+현재는 실제 Transport·Restart, Persistence, Human UI와 Soak Phase를 더 연결하는 중이므로 사용자 Grand Runtime 실행을 요청하지 않는다.
