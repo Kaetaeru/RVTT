@@ -63,33 +63,24 @@ function Runtime.new(replica: any, command: any): Runtime
 	local renderer = WorldTokenRenderer.new(nil, nil)
 	local actionResolver = WorldContextActionResolver.new(replica)
 	local actionMenu = WorldActionMenu.new()
-	local input = WorldTokenInputController.new(
-		renderer,
-		replica,
-		command,
-		actionResolver,
-		actionMenu
-	)
+	local input =
+		WorldTokenInputController.new(renderer, replica, command, actionResolver, actionMenu)
 	local camera = WorldCameraController.new(renderer, ACCEPTANCE_MODE)
 	local compatibilityConnection = nil
 	if ACCEPTANCE_MODE then
-		compatibilityConnection = camera.InputResolved:Connect(function(
-			action,
-			source,
-			applied,
-			changed,
-			processed
-		)
-			if action == "orbit" then
-				camera.InputResolved:Fire(
-					"pan",
-					"mouse-middle-orbit",
-					applied,
-					changed,
-					processed
-				)
+		compatibilityConnection = camera.InputResolved:Connect(
+			function(action, source, applied, changed, processed)
+				if action == "orbit" then
+					camera.InputResolved:Fire(
+						"pan",
+						"mouse-middle-orbit",
+						applied,
+						changed,
+						processed
+					)
+				end
 			end
-		end)
+		)
 	end
 	return setmetatable({
 		Replica = replica,
