@@ -2,7 +2,7 @@
 
 - 상태: ACTIVE
 - 문서 종류: Product Index
-- 최종 갱신일: 2026-08-06
+- 최종 갱신일: 2026-08-07
 
 RVTT가 무엇을 만들고 무엇을 지원하지 않는지 정의하는 권위 문서를 안내한다.
 
@@ -39,6 +39,11 @@ User Guide는 사용자 경험을 설명하는 비권위 문서다. 제품 범�
    - Campaign-local Actor Template Publish·SceneNpc Migration
 4. [`캠페인 Material Component 정책`](campaign-material-component-policy.md)
    - 캠페인 수준 물질 구성요소 정책과 규칙 적용 범위
+5. [`Codex 감독형 검수·테스트 정책`](codex-supervised-review-and-test-policy.md)
+   - 사용자의 제품 결정, ChatGPT Lead Reviewer와 Codex Reviewer의 역할 분리
+   - Target SHA 기반 Review Packet
+   - Finding 분류·수정·Delta Review·Merge Gate
+   - Codex Review와 Roblox Runtime Evidence의 분리
 
 ## Campaign Rule Profile의 공통 해석
 
@@ -65,6 +70,23 @@ Campaign-authored Actor·Token은 신뢰된 Registry를 참조하는 순수 데�
 - Core Definition을 직접 수정하지 않는다.
 - Publish와 기존 Actor Migration은 DM의 명시적 검토를 요구한다.
 
+## Codex 검수의 공통 해석
+
+Codex는 제품 결정자나 자동 승인자가 아니다.
+
+```text
+사용자
+→ 제품 결정·최종 수용
+
+ChatGPT Lead Reviewer
+→ 검수 명령·권위 해석·Finding 분류·후속 지시
+
+Codex Reviewer
+→ 독립 검수·반례·재현·최소 수정안
+```
+
+Codex 검수 성공은 문서·CI·Roblox Studio·Human Acceptance를 대신하지 않는다.
+
 ## 사용자 흐름 책임
 
 전체 세션 흐름을 설명하던 초기 `core-session-loop.md`는 최신 확정 범위와 충돌해 `DISCONTINUED`로 전환됐다.
@@ -83,6 +105,7 @@ Campaign-authored Actor·Token은 신뢰된 Registry를 참조하는 순수 데�
 - 캠페인 수준 정책과 Profile
 - 생존·보급의 최종 제품 범위
 - Campaign-authored Actor·Token의 신뢰 경계
+- Codex 감독형 검수·테스트의 지휘·판정 경계
 - 사용자 경험에 영향을 주는 고정 제품 경계
 
 ## 제외 범위
@@ -99,6 +122,8 @@ Campaign-authored Actor·Token은 신뢰된 Registry를 참조하는 순수 데�
 
 - 현재 작업 순서: [`../CURRENT-WORK-ORDER.md`](../CURRENT-WORK-ORDER.md)
 - ADR-0092 Slice Sync: [`../specs/ADR-0092-SLICE-SYNC-PLAN.md`](../specs/ADR-0092-SLICE-SYNC-PLAN.md)
+- Codex Test Gate: [`../../../implementation/roblox/CODEX-REVIEW-TEST-GATE.md`](../../../implementation/roblox/CODEX-REVIEW-TEST-GATE.md)
+- Codex Command Template: [`../../../.github/CODEX-REVIEW-COMMAND-TEMPLATE.md`](../../../.github/CODEX-REVIEW-COMMAND-TEMPLATE.md)
 - Main System Guides: [`../guides/README.md`](../guides/README.md)
 - Architecture: [`../architecture/README.md`](../architecture/README.md)
 - Systems: [`../systems/README.md`](../systems/README.md)
