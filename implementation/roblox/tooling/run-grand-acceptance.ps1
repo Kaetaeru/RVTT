@@ -13,6 +13,8 @@ $ProgressPreference = "SilentlyContinue"
 $RobloxRoot = Split-Path -Parent $PSScriptRoot
 $RepoRoot = Split-Path -Parent (Split-Path -Parent $RobloxRoot)
 $ManifestPath = Join-Path $RobloxRoot "grand-acceptance-manifest.json"
+$DefaultJsonReportName = "RVTT-grand-acceptance-report.json"
+$DefaultMarkdownReportName = "RVTT-grand-acceptance-report.md"
 $StudioProcessNames = @("RobloxStudioBeta", "RobloxStudio")
 
 function Write-Step {
@@ -143,6 +145,12 @@ function Invoke-SelfTest {
     }
     if ([string]$manifest.runner -ne "tooling/run-grand-acceptance.ps1") {
         throw "grand acceptance runner 경로 계약이 잘못되었습니다."
+    }
+    if ([string]$manifest.report.json -ne $DefaultJsonReportName) {
+        throw "grand acceptance JSON report 이름이 잘못되었습니다."
+    }
+    if ([string]$manifest.report.markdown -ne $DefaultMarkdownReportName) {
+        throw "grand acceptance Markdown report 이름이 잘못되었습니다."
     }
 
     $ids = @($manifest.phases | ForEach-Object { [string]$_.id })
@@ -362,8 +370,18 @@ $report = [pscustomobject][ordered]@{
     phases = @($results)
 }
 
-$jsonPath = Join-Path $reportRoot ([string]$manifest.report.json)
-$markdownPath = Join-Path $reportRoot ([string]$manifest.report.markdown)
+$jsonReportName = if ([string]::IsNullOrWhiteSpace([string]$manifest.report.json)) {
+    $DefaultJsonReportName
+} else {
+    [string]$manifest.report.json
+}
+$markdownReportName = if ([string]::IsNullOrWhiteSpace([string]$manifest.report.markdown)) {
+    $DefaultMarkdownReportName
+} else {
+    [string]$manifest.report.markdown
+}
+$jsonPath = Join-Path $reportRoot $jsonReportName
+$markdownPath = Join-Path $reportRoot $markdownReportName
 $report | ConvertTo-Json -Depth 10 | Set-Content -Encoding UTF8 $jsonPath
 
 $markdown = New-Object System.Collections.Generic.List[string]
