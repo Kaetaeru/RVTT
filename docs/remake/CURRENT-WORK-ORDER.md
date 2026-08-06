@@ -48,8 +48,14 @@ Cross-slice Session·Authority Fault·Capacity Sample
 Deterministic Network·Storage Fault Host
 → IMPLEMENTED · STATIC VERIFIED · STUDIO NOT EXECUTED
 
+Real Player Disconnect·Reconnect Host
+→ IMPLEMENTED · STATIC VERIFIED · STUDIO NOT EXECUTED
+
+BindToClose·Two-run Server Restart Host
+→ IMPLEMENTED · STATIC VERIFIED · PUBLISHED STUDIO NOT EXECUTED
+
 현재 작업
-→ 실제 Roblox Transport·Disconnect·Restart·DataStore Outage Host 연결
+→ Forced DataStore Outage·Cross-server Lease/Conflict Host 연결
 ```
 
 ## 2. 상위 작업 순서
@@ -68,13 +74,14 @@ Deterministic Network·Storage Fault Host
 | 10 | DONE | Slices 02–12 Automated Baseline | Domain Authority·거부·Restore 대표 Scenario 등록 |
 | 11 | DONE | Cross-slice·Authority Fault·Capacity | Full-session State·Stale/Epoch·측정 Sample 등록 |
 | 12 | DONE | Deterministic Fault Host | Network Drop·Duplicate·Reorder·Receipt Loss·Storage Failure·Ack Loss·Conflict |
-| 13 | IN_PROGRESS | Real Transport·Restart Fault Host | 실제 Disconnect·Reconnect·Server Restart·DataStore Outage Evidence |
-| 14 | QUEUED | Grand Persistence Phase | Restart·Migration·Lease·Conflict Summary 연결 |
-| 15 | QUEUED | Human UI·Accessibility | Checklist·Screenshot Reference·Visual Redesign Gate |
-| 16 | BLOCKED | Slices 13–15 Content Acceptance | Source Version·Rights·Distribution·Asset 승인 필요 |
-| 17 | QUEUED | Performance·Soak | Budget·다중 Client·장시간 Session Evidence |
-| 18 | QUEUED | Full Grand Runtime | Target Phase가 READY인 Milestone에서 사용자 실행 1회 |
-| 19 | BLOCKED | Release Hardening | 16개 Build·Migration·Fault·Soak·Runbook Evidence 필요 |
+| 13 | DONE | Real Transport·Restart Host | 실제 Player Lifecycle·Shutdown Retry·두 서버 Restore 등록 |
+| 14 | IN_PROGRESS | DataStore Outage·Lease Host | 강제 실패·Cross-server Lease·동시 Conflict Evidence |
+| 15 | QUEUED | Grand Persistence Milestone | Live·Restart·Outage·Lease Summary 일괄 실행 |
+| 16 | QUEUED | Human UI·Accessibility | Checklist·Screenshot Reference·Visual Redesign Gate |
+| 17 | BLOCKED | Slices 13–15 Content Acceptance | Source Version·Rights·Distribution·Asset 승인 필요 |
+| 18 | QUEUED | Performance·Soak | Budget·다중 Client·장시간 Session Evidence |
+| 19 | QUEUED | Full Grand Runtime | Target Phase가 READY인 Milestone에서 사용자 실행 1회 |
+| 20 | BLOCKED | Release Hardening | 16개 Build·Migration·Fault·Soak·Runbook Evidence 필요 |
 
 ## 3. Studio Evidence 해석
 
@@ -99,33 +106,43 @@ Latest Camera WASD·Middle-button·Frame
 → RETEST PENDING
 ```
 
-새 Slices 02–12·Cross-slice·Authority Fault·Deterministic Network/Storage Fault·Capacity Source는 정적·Build·Type 검증만 완료했다. 아직 새 Studio Runtime Evidence가 없다.
+새 Slices 02–12·Cross-slice·Authority Fault·Deterministic Network/Storage Fault·Real Transport·Restart·Capacity Source는 정적·Build·Type 검증만 완료했다. 아직 새 Studio Runtime Evidence가 없다.
 
-## 4. Deterministic Fault Host 결과
+## 4. Fault Host 확장 결과
 
-### Network
+### Deterministic Network·Storage
 
 - Projection Drop·Duplicate·Hold·Reorder·Release
 - Sequence Gap과 Full Resync
-- 새 AuthorityEpoch 뒤 지연된 이전 Epoch Packet 폐기
-- Terminal Receipt 유실 뒤 동일 Command ID 재전송
-- 최대 3회 전송과 8초 retryable Timeout
-
-발견된 Production 공백을 수정했다.
-
-- `ProjectionReplica`: 이전 Epoch rollback 차단과 Duplicate Sequence 무시
-- `CommandClient`: bounded retry, `CLIENT_TIMEOUT`, Pending 정리
-
-### Storage
-
-- Load·Save transient failure
+- 지연된 이전 AuthorityEpoch 폐기
+- Terminal Receipt 유실과 Bounded Retry·Timeout
+- Load·Save Failure
 - Commit Ack Loss
-- 동일 Revision·Epoch 멱등 Retry
-- Revision Conflict와 External Winner 보존
-- 더 높은 Revision Reconcile
-- Invalid Load Revision 비승격
+- Revision Conflict와 External Winner
 
-이 Host는 결정적 in-process baseline이다. 실제 Roblox Remote 제한, Disconnect·Reconnect, Server Restart, DataStore Throttle·Outage는 현재 `IN_PROGRESS` 범위다.
+### Real Player Transport
+
+- Local Server 1개와 Client 3개
+- 실제 Player Client 종료
+- `PlayerRemoving` 기반 Disconnect Commit
+- Replacement Client의 `PlayerAdded`
+- 같은 논리 사용자 재가입
+- Membership 중복 방지
+- Full Sync Sequence 증가
+- 같은 서버 AuthorityEpoch 유지
+
+### Server Restart
+
+- 자동 Flush를 끈 Shutdown-only Dirty Snapshot
+- `BindToClose` 최대 5회 Retry·25초 Deadline
+- Retryable·Non-retryable·Exhaustion Unit Contract
+- Restart Seed와 Restart Verify 독립 Place
+- 새 서버 DataStore Restore
+- AuthorityEpoch 교체
+- 이전 Epoch Command `STALE_EPOCH`
+- Post-restart Revision 단조 증가
+
+위 Host들은 Source·Format·Lint·Rojo Build·Luau Type 검증을 완료했다. 실제 Studio 실행 결과는 아직 없다.
 
 ## 5. Grand Acceptance 운영
 
@@ -142,9 +159,10 @@ Latest Camera WASD·Middle-button·Frame
 
 현재 실행 그룹:
 
-- `grand-single-client`: Unit·Integration, Slices 02–12, Cross-slice·Authority/Network/Storage Fault·Capacity, Slice 01 수동 입력
+- `grand-single-client`: Unit·Integration, Slices 02–12, Cross-slice·Authority/Network/Storage Fault·Persistence Retry·Capacity, Slice 01 수동 입력
 - `grand-multi-client`: DM·Player·Observer Authority·Projection
-- Grand Persistence: 전용 Milestone에서만 `-IncludePersistence`
+- `grand-real-transport`: 실제 Client 종료·Replacement Client·Full Sync
+- Grand Persistence: `-IncludePersistence`에서 Live DataStore·Restart Seed·Restart Verify
 
 한 기능이나 한 버그 수정마다 Studio를 실행하지 않는다.
 
@@ -155,7 +173,7 @@ Latest Camera WASD·Middle-button·Frame
 3. 자동 Gate 실패 상태에서는 사용자 Studio 실행을 요청하지 않는다.
 4. Studio Evidence 없이 Runtime PASS를 주장하지 않는다.
 5. Slices 02–12 자동 baseline을 전체 Slice Acceptance로 해석하지 않는다.
-6. Deterministic Fault PASS를 실제 Transport·Restart·DataStore Outage PASS로 해석하지 않는다.
+6. 등록된 Real Transport·Restart Host를 Studio Runtime PASS로 해석하지 않는다.
 7. 저장 Schema 변경에는 Migration·Version·Last Known Good가 필요하다.
 8. DataStore 검사는 관련 변경을 모은 Grand Persistence Milestone에서 한 번에 한다.
 9. 성능 측정 전 임의 Capacity·Timeout 수치를 완료 기준으로 확정하지 않는다.
@@ -166,9 +184,9 @@ Latest Camera WASD·Middle-button·Frame
 ## 7. 다음 단계 Gate
 
 ```text
-Real Roblox Transport·Disconnect·Reconnect Host
-→ Server Restart·DataStore Outage Host
-→ Grand Persistence Summary·Restart Flow
+Forced DataStore Outage Host
+→ Cross-server Lease·동시 Conflict Host
+→ Grand Persistence Milestone
 → UI·Accessibility Human Evidence Capture
 → Performance·Soak Host
 → Target Phase READY 판정
