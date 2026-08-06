@@ -360,7 +360,7 @@
       "execution": "automated-and-studio",
       "group": "quality",
       "persistence": true,
-      "blocker": "Deterministic faults, real Player reconnect, bounded shutdown retry, restart recovery, injected outage and paired cross-server lease hosts are registered; Roblox transport throttling and runtime Studio evidence remain"
+      "blocker": "Deterministic faults, real Player disconnect/reconnect, bounded shutdown retry, restart recovery, injected outage and paired cross-server lease hosts are registered; Roblox transport throttling and runtime Studio evidence remain"
     },
     {
       "order": 260,
