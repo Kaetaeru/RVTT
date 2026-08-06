@@ -214,30 +214,52 @@ function Invoke-SelfTest {
 
     $runContracts = @{}
     foreach ($phase in @($manifest.phases)) {
-        if ([string]$phase.status -eq "ready" -and [string]$phase.execution -ne "automated") {
+        $phaseStatus = [string]$phase.status
+        $configuredStudioPhase = $phaseStatus -eq "ready" -or ($phase.persistence -eq $true -and $phaseStatus -eq "deferred")
+        if ($configuredStudioPhase -and [string]$phase.execution -ne "automated") {
             $phaseId = [string]$phase.id
             $project = [string](Get-OptionalProperty $phase "project" "")
+            $execution = [string]$phase.execution
             $summaryToken = [string](Get-OptionalProperty $phase "summaryToken" "")
             $passRegex = [string](Get-OptionalProperty $phase "passRegex" "")
             $runId = [string](Get-OptionalProperty $phase "runId" "")
             if ([string]::IsNullOrWhiteSpace($project)) {
-                throw "ready Studio phase에 project가 없습니다: $phaseId"
+                throw "configured Studio phase에 project가 없습니다: $phaseId"
             }
             if ([string]::IsNullOrWhiteSpace($summaryToken)) {
-                throw "ready Studio phase에 summaryToken이 없습니다: $phaseId"
+                throw "configured Studio phase에 summaryToken이 없습니다: $phaseId"
             }
             if ([string]::IsNullOrWhiteSpace($passRegex)) {
-                throw "ready Studio phase에 passRegex가 없습니다: $phaseId"
+                throw "configured Studio phase에 passRegex가 없습니다: $phaseId"
             }
             if ([string]::IsNullOrWhiteSpace($runId)) {
-                throw "ready Studio phase에 runId가 없습니다: $phaseId"
+                throw "configured Studio phase에 runId가 없습니다: $phaseId"
             }
 
-            $contract = "$project|$([string]$phase.execution)"
-            if ($runContracts.ContainsKey($runId) -and [string]$runContracts[$runId] -ne $contract) {
-                throw "같은 runId의 project 또는 execution이 다릅니다: $runId"
+            if (-not $runContracts.ContainsKey($runId)) {
+                $runContracts[$runId] = [pscustomobject]@{
+                    execution = $execution
+                    project = $project
+                    projects = New-Object System.Collections.Generic.List[string]
+                }
             }
-            $runContracts[$runId] = $contract
+            $contract = $runContracts[$runId]
+            if ([string]$contract.execution -ne $execution) {
+                throw "같은 runId의 execution이 다릅니다: $runId"
+            }
+            if ($execution -ne "studio-published-pair" -and [string]$contract.project -ne $project) {
+                throw "같은 runId의 project가 다릅니다: $runId"
+            }
+            if (-not $contract.projects.Contains($project)) {
+                $contract.projects.Add($project)
+            }
+        }
+    }
+
+    foreach ($runId in @($runContracts.Keys)) {
+        $contract = $runContracts[$runId]
+        if ([string]$contract.execution -eq "studio-published-pair" -and $contract.projects.Count -ne 2) {
+            throw "paired Studio run은 정확히 두 Project가 필요합니다: $runId"
         }
     }
 
@@ -352,30 +374,45 @@ foreach ($phase in $phases) {
         continue
     }
 
+    $execution = [string]$phase.execution
     if (-not $runGroups.Contains($runId)) {
         $runGroups[$runId] = [pscustomobject]@{
             id = $runId
             project = $project
-            execution = [string]$phase.execution
+            projects = New-Object System.Collections.Generic.List[string]
+            execution = $execution
             phases = New-Object System.Collections.Generic.List[object]
         }
     }
     $group = $runGroups[$runId]
-    if ([string]$group.project -ne $project -or [string]$group.execution -ne [string]$phase.execution) {
-        throw "runId contract mismatch: $runId"
+    if ([string]$group.execution -ne $execution) {
+        throw "runId execution contract mismatch: $runId"
+    }
+    if ($execution -ne "studio-published-pair" -and [string]$group.project -ne $project) {
+        throw "runId project contract mismatch: $runId"
+    }
+    if (-not $group.projects.Contains($project)) {
+        $group.projects.Add($project)
     }
     $group.phases.Add($phase)
 }
 
 foreach ($runId in @($runGroups.Keys)) {
     $group = $runGroups[$runId]
-    $project = [string]$group.project
-    $place = [string]$buildOutputs[$project]
+    $projects = @($group.projects)
+    $places = @($projects | ForEach-Object { [string]$buildOutputs[[string]$_] })
     $groupPhases = @($group.phases)
+
+    if ([string]$group.execution -eq "studio-published-pair" -and $places.Count -ne 2) {
+        foreach ($phase in $groupPhases) {
+            $results.Add((New-PhaseResult ([string]$phase.id) ([string]$phase.name) "fail" "paired Studio run requires two built Places" @($places) $runId))
+        }
+        continue
+    }
 
     if ($NoOpen) {
         foreach ($phase in $groupPhases) {
-            $results.Add((New-PhaseResult ([string]$phase.id) ([string]$phase.name) "prepared" "shared Place built; Studio launch disabled" @($place) $runId))
+            $results.Add((New-PhaseResult ([string]$phase.id) ([string]$phase.name) "prepared" "shared Place set built; Studio launch disabled" @($places) $runId))
         }
         continue
     }
@@ -392,7 +429,7 @@ foreach ($runId in @($runGroups.Keys)) {
     Write-Host "============================================================" -ForegroundColor Yellow
     Write-Host "Grand run: $runId" -ForegroundColor Yellow
     Write-Host "Phases: $($phaseIds -join ', ')"
-    Write-Host "Project: $project"
+    Write-Host "Projects: $($projects -join ', ')"
     Write-Host "Studio에서 이 Run의 모든 Phase를 끝까지 실행한 뒤 Studio를 닫으세요."
     if ([string]$group.execution -eq "studio-single-client") {
         Write-Host "Play를 시작하세요. 자동 Spec이 실행되는 동안 화면의 수동 Acceptance 항목도 완료하세요."
@@ -403,11 +440,20 @@ foreach ($runId in @($runGroups.Keys)) {
     if ([string]$group.execution -eq "studio-published") {
         Write-Host "이 Run은 게시된 Experience와 Studio API Access가 필요합니다."
     }
+    if ([string]$group.execution -eq "studio-published-pair") {
+        Write-Host "두 Studio 창이 열립니다. Holder 창을 먼저 Play한 뒤 Contender 창을 Play하세요."
+        Write-Host "두 창 모두 게시된 Experience와 Studio API Access가 필요합니다. 두 PASS Summary 후 두 창을 닫으세요."
+    }
     Write-Host "Studio를 닫으면 다음 Run이 자동으로 시작됩니다."
     Write-Host "============================================================" -ForegroundColor Yellow
 
     $startedAt = Get-Date
-    Start-Process -FilePath $studioPath -ArgumentList "`"$place`"" | Out-Null
+    foreach ($place in $places) {
+        Start-Process -FilePath $studioPath -ArgumentList "`"$place`"" | Out-Null
+        if ([string]$group.execution -eq "studio-published-pair") {
+            Start-Sleep -Seconds 2
+        }
+    }
     Wait-ForStudioExit
 
     foreach ($phase in $groupPhases) {
