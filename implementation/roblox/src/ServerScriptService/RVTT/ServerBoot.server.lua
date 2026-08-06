@@ -400,9 +400,10 @@ if persistenceEnabled then
 			end)
 			metadataOk = ok
 			if not ok then
-				diagnostics:record("error", "PRODUCTION_LEASE_ACCEPTANCE_META_SAVE_FAILED", {
+				local details: { [string]: unknown } = {
 					reason = tostring(failure),
-				})
+				}
+				diagnostics:record("error", "PRODUCTION_LEASE_ACCEPTANCE_META_SAVE_FAILED", details)
 			end
 		end
 
