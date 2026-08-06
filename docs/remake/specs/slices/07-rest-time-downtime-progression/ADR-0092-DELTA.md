@@ -2,7 +2,7 @@
 
 - 상태: `ADDITIVE_DELTA_SPEC_COMPLETE`
 - 문서 종류: Slice 07 Additive Contract
-- 최종 갱신일: 2026-08-06
+- 최종 갱신일: 2026-08-07
 - 기존 통합 계약: [`implementation-contract.md`](implementation-contract.md)
 - 상위 동기화 계획: [`ADR-0092-SLICE-SYNC-PLAN.md`](../../ADR-0092-SLICE-SYNC-PLAN.md)
 - Slice 06 선행 Delta: [`Supply Metadata·Allocation·Reservation`](../06-inventory-equipment-world-items/ADR-0092-DELTA.md)
@@ -16,7 +16,7 @@ DM이 수일 여행·휴식·다운타임 또는 명시적 시간 진행을 요�
 
 ```text
 Time Advance Proposal
-→ Frozen Campaign Policy
+→ Frozen Campaign Policy와 Source Order
 → Logistics Boundary
 → Consumer Requirement
 → Slice 06 Allocation·Reservation
@@ -33,6 +33,7 @@ Time Advance Proposal
 - Narrative·Standard·Survival·Custom Preset Binding
 - Food·Water·Mount Feed Module
 - Exposure·Encumbrance·Ammunition·Rest Quality·Spoilage 확장 Binding
+- Supply Source Priority Policy와 Safe Boundary 변경
 - Consumption Requirement Definition 해결
 - 부분 날짜·식사·휴식 Boundary Accumulator
 - Character·Follower·Mount Consumer Scope
@@ -46,6 +47,7 @@ Time Advance Proposal
 제외:
 
 - Item Definition·Location·Stack Store 소유
+- Supply Source membership·ACL Store 소유
 - Campaign Rules Window Layout
 - Actor Model Registry·Stat Block Authoring
 - 규칙 팩에 없는 공식 수치 창작
@@ -57,7 +59,16 @@ export type CampaignSurvivalProfile = {
     profileId: "narrative" | "standard" | "survival" | "custom",
     policySnapshotRef: string,
     moduleBindings: {[string]: string},
+    sourcePriorityPolicyRef: string,
     activationRevision: number,
+}
+
+export type SupplySourcePriorityPolicy = {
+    policyBindingId: string,
+    orderedSourceBindingIds: {string},
+    fallbackSourceKinds: {string},
+    sourceOrderDigest: string,
+    revision: number,
 }
 
 export type LogisticsBoundary = {
@@ -92,12 +103,13 @@ export type SupplySettlementPlan = {
     campaignId: string,
     boundaryRefs: {string},
     policySnapshotRef: string,
+    sourceOrderDigest: string,
     requirementLines: {SupplyRequirementLine},
     allocationPlanRef: string,
     reservationRefs: {string},
     shortagePlanRef: string?,
     planDigest: string,
-    state: "proposed" | "awaiting_confirmation" | "reserved" | "committing" | "committed" | "cancelled" | "failed",
+    state: "proposed" | "awaiting_confirmation" | "reserved" | "committing" | "committed" | "cancelled" | "failed" | "stale",
     revision: number,
 }
 
@@ -106,6 +118,7 @@ export type SupplyLedgerEntry = {
     settlementId: string,
     boundaryRef: string,
     policySnapshotRef: string,
+    sourceOrderDigest: string,
     consumedItemRefs: {string},
     shortageOutcomeRefs: {string},
     authorityRevision: number,
@@ -134,7 +147,7 @@ Custom
 
 Preset 문자열 자체를 Gameplay 분기로 하드코딩하지 않는다. Frozen Policy Snapshot의 Family Binding을 해결한다.
 
-## 5. Requirement 해결
+## 5. Requirement와 Source Order 해결
 
 ```text
 Consumer Binding
@@ -145,13 +158,23 @@ Consumer Binding
 → Supply Requirement Lines
 ```
 
+```text
+Slice 06 Supply Source membership·ACL
++ survival.source_priority Frozen Binding
+→ orderedSourceBindingIds
+→ sourceOrderDigest
+→ Slice 06 SupplyAllocationContext
+```
+
 규칙:
 
 - 정확한 소비량은 Versioned Definition에서 온다.
 - 같은 Snapshot과 Context Digest는 같은 Requirement를 만든다.
+- 같은 Policy Snapshot과 Source membership revision은 같은 Source Order Digest를 만든다.
 - Definition이 없거나 Conflict가 해결되지 않으면 자동 Fallback 수치를 만들지 않는다.
 - Hidden Consumer는 Authority 계산에 포함될 수 있지만 권한 없는 Player Projection에는 공개하지 않는다.
 - Encounter Turn마다 하루 소비를 실행하지 않는다.
+- Slice 06은 Source 순서 숫자를 독립 저장하거나 직접 재정렬하지 않는다.
 
 ## 6. 부분 날짜와 Boundary
 
@@ -184,9 +207,10 @@ Time Advance는 하루 단위로만 제한하지 않는다.
 
 - Campaign Time Revision
 - Policy Snapshot Ref와 Activation Revision
+- Source Order Digest
 - Consumer Binding Revision
 - Requirement Plan Digest
-- Slice 06 Item·Location Revision과 Reservation
+- Slice 06 Item·Location·Source Binding Revision과 Reservation
 - Shortage Consequence Recipe Version
 - Authority Epoch와 Idempotency Key
 
@@ -222,7 +246,7 @@ Shortage Line
 ```text
 Policy Change Proposal
 → Candidate Snapshot Compile
-→ Requirement·Projection·Active Activity Impact Diff
+→ Requirement·Source Order·Projection·Active Activity Impact Diff
 → Activation Boundary 선택
 → Atomic Activation
 ```
@@ -243,6 +267,14 @@ Campaign Maintenance 필요
 - 기존 Ledger 변경 없음
 - 기존 결핍 Effect 자동 삭제 없음
 
+Supply Source 순서 변경도 일반 Policy Change와 동일하게 처리한다.
+
+- `ProposeSupplySourcePriorityChange`가 Candidate Snapshot과 새 `sourceOrderDigest`를 만든다.
+- Pending Settlement Plan과 Reservation이 이전 Digest를 참조하면 `stale`로 전환한다.
+- 활성 Commit 중 순서를 교체하지 않는다.
+- Safe Boundary 활성화 뒤 Retry·Restart는 새 Snapshot과 Digest로 Allocation을 재생성한다.
+- 과거 Ledger의 Source Order Digest는 변경하지 않는다.
+
 ## 10. Retroactive Reconcile 경계
 
 Retroactive Reconcile은 일반 Toggle의 부작용이 아니다.
@@ -261,6 +293,7 @@ Retroactive Reconcile은 일반 Toggle의 부작용이 아니다.
 ## 11. Command Delta
 
 - `ProposeCampaignSurvivalProfileChange`
+- `ProposeSupplySourcePriorityChange`
 - `ActivateCampaignPolicySnapshot`
 - `ProposeSupplySettlement`
 - `ConfirmSupplySettlement`
@@ -268,6 +301,8 @@ Retroactive Reconcile은 일반 Toggle의 부작용이 아니다.
 - `ResolveSupplyShortage`
 - `RequestRetroactiveSupplyReconcile`
 - `ConfirmRetroactiveSupplyReconcile`
+
+`ReorderSupplySources`를 Slice 06 Direct Command로 제공하지 않는다.
 
 Time Advance Command는 필요할 때 Settlement Plan Ref를 요구한다. Client가 소비 결과와 Shortage 결과를 직접 제출하지 않는다.
 
@@ -284,6 +319,7 @@ DM:
 
 - 전체 Consumer·Source·Requirement·Reservation
 - Candidate Snapshot Diff
+- Source Order 변경 영향과 stale Plan
 - Hidden Shortage·Environment Modifier
 - Ledger·Reconcile·Audit
 
@@ -298,6 +334,7 @@ Count, Error, Tooltip, Loading 상태에서도 Hidden Consumer·Storage를 누�
 저장:
 
 - 활성 Campaign Survival Profile과 Frozen Snapshot Ref
+- Source Priority Policy Ref와 Source Order Digest
 - Boundary Accumulator
 - Consumer Binding
 - Pending·Committed Settlement
@@ -307,7 +344,7 @@ Count, Error, Tooltip, Loading 상태에서도 Hidden Consumer·Storage를 누�
 
 Restart:
 
-- Pending Reservation 상태 재검증
+- Pending Reservation 상태와 Source Order Digest 재검증
 - 이미 Commit된 Settlement 중복 실행 차단
 - Due Boundary와 Time Advance Plan 재구성
 
@@ -321,6 +358,7 @@ Rollback:
 ```text
 SURVIVAL_POLICY_CONFLICT
 SURVIVAL_POLICY_MIGRATION_REQUIRED
+SUPPLY_SOURCE_ORDER_STALE
 SUPPLY_REQUIREMENT_DEFINITION_MISSING
 SUPPLY_REQUIREMENT_VERSION_MISSING
 SUPPLY_BOUNDARY_STALE
@@ -344,17 +382,19 @@ RETROACTIVE_RECONCILE_CONFLICT
 8. 같은 Settlement Retry가 중복 소비·Ledger를 만들지 않는다.
 9. Toggle Off가 과거 소비·Effect·Ledger를 변경하지 않는다.
 10. Toggle On이 과거 기간을 자동 정산하지 않는다.
-11. Reconcile은 Preview·Confirm·Audit 전 Store를 변경하지 않는다.
-12. Hidden Follower·Container가 Player Projection·Error에 없다.
-13. Restart·Rollback 후 exact Policy·Settlement 상태 복원.
-14. 대규모 Consumer·Source·다일 Advance Budget 측정.
+11. Pending Settlement 중 Source 순서 변경은 기존 Plan·Reservation을 stale 처리한다.
+12. Safe Boundary 활성화 후 Retry·Restart가 새 Source Order Digest로 동일 Allocation을 재생성한다.
+13. Reconcile은 Preview·Confirm·Audit 전 Store를 변경하지 않는다.
+14. Hidden Follower·Container가 Player Projection·Error에 없다.
+15. Restart·Rollback 후 exact Policy·Source Order·Settlement 상태 복원.
+16. 대규모 Consumer·Source·다일 Advance Budget 측정.
 
 ## 16. 본 계약 흡수 Gate
 
 다음이 확인되면 이 Delta를 `implementation-contract.md`와 Script Manifest로 흡수한다.
 
 - 실제 Campaign Time·Scheduler·Policy Snapshot Mapping
-- Slice 06 Supply Query·Reservation API
+- Slice 06 Supply Query·Reservation·Source Binding API
 - Rule Profile Consumption Definition·Shortage Recipe Mapping
 - Effect·RuleExecution Integration
 - Ledger·Projection·Persistence Schema
