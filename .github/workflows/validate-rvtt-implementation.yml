@@ -145,6 +145,10 @@ jobs:
         working-directory: implementation/roblox
         run: rojo build test.project.json --output /tmp/RVTT-tests.rbxlx
 
+      - name: Build Grand single-client place with Rojo
+        working-directory: implementation/roblox
+        run: rojo build grand-single-client.project.json --output /tmp/RVTT-grand-single-client.rbxlx
+
       - name: Build multi-client place with Rojo
         working-directory: implementation/roblox
         run: rojo build multi-client.project.json --output /tmp/RVTT-multi-client.rbxlx
@@ -246,6 +250,7 @@ jobs:
             implementation/roblox/tests
             implementation/roblox/default.project.json
             implementation/roblox/test.project.json
+            implementation/roblox/grand-single-client.project.json
             implementation/roblox/live-datastore.project.json
             implementation/roblox/multi-client.project.json
             implementation/roblox/persistence-acceptance.project.json
