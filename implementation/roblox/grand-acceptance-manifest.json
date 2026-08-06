@@ -12,8 +12,11 @@
     "test.project.json",
     "grand-single-client.project.json",
     "multi-client.project.json",
+    "real-transport.project.json",
     "live-datastore.project.json",
     "persistence-acceptance.project.json",
+    "restart-seed.project.json",
+    "restart-verify.project.json",
     "slice01-acceptance.project.json"
   ],
   "phases": [
@@ -40,7 +43,8 @@
       "evidenceTokens": [
         "[RVTT Spec Summary]",
         "[RVTT Spec Failure]",
-        "[RVTT Fault Host]"
+        "[RVTT Fault Host]",
+        "[RVTT Persistence Retry]"
       ],
       "passRegex": "\\[RVTT Tests\\].*failed=0"
     },
@@ -75,6 +79,23 @@
       "passRegex": "\\[RVTT MultiClient\\].*failed=0"
     },
     {
+      "order": 35,
+      "id": "real-transport-reconnect",
+      "name": "Real Player disconnect reconnect and full resync",
+      "status": "ready",
+      "execution": "studio-multi-client",
+      "runId": "grand-real-transport",
+      "group": "quality",
+      "project": "real-transport.project.json",
+      "persistence": false,
+      "summaryToken": "[RVTT Real Transport]",
+      "evidenceTokens": [
+        "[RVTT Real Transport Prompt]",
+        "[RVTT Real Transport Client]"
+      ],
+      "passRegex": "\\[RVTT Real Transport\\].*result=PASS.*failed=0.*reconnects=1"
+    },
+    {
       "order": 40,
       "id": "live-datastore-baseline",
       "name": "Live DataStore baseline",
@@ -90,17 +111,39 @@
     },
     {
       "order": 50,
-      "id": "persistence-restart-recovery",
-      "name": "Persistence restart migration and conflict recovery",
+      "id": "persistence-restart-seed",
+      "name": "BindToClose restart checkpoint seed",
       "status": "deferred",
       "execution": "studio-published",
-      "runId": "grand-persistence-recovery",
+      "runId": "grand-persistence-restart-seed",
       "group": "persistence",
-      "project": "persistence-acceptance.project.json",
+      "project": "restart-seed.project.json",
       "persistence": true,
-      "summaryToken": "[RVTT Persistence Batch Summary]",
-      "passRegex": "\\[RVTT Persistence Batch Summary\\].*result=PASS.*failed=0",
-      "blocker": "Persistence summary harness and published restart flow are not complete"
+      "summaryToken": "[RVTT Restart Seed]",
+      "evidenceTokens": [
+        "[RVTT Restart Prompt]",
+        "[RVTT Persistence Retry]"
+      ],
+      "passRegex": "\\[RVTT Restart Seed\\].*result=PASS.*failed=0",
+      "blocker": "Runs only in the dedicated published persistence milestone"
+    },
+    {
+      "order": 60,
+      "id": "persistence-restart-verify",
+      "name": "Fresh server restore epoch rotation and stale command rejection",
+      "status": "deferred",
+      "execution": "studio-published",
+      "runId": "grand-persistence-restart-verify",
+      "group": "persistence",
+      "project": "restart-verify.project.json",
+      "persistence": true,
+      "summaryToken": "[RVTT Restart Verify]",
+      "evidenceTokens": [
+        "[RVTT Persistence]",
+        "[RVTT Persistence Retry]"
+      ],
+      "passRegex": "\\[RVTT Restart Verify\\].*result=PASS.*failed=0",
+      "blocker": "Runs after the restart seed in the dedicated published persistence milestone"
     },
     {
       "order": 100,
@@ -260,7 +303,7 @@
       "execution": "automated-and-studio",
       "group": "quality",
       "persistence": true,
-      "blocker": "Deterministic in-process network drop, duplicate, reorder, delayed epoch, receipt loss, storage failure, acknowledgement loss and revision conflict baseline is included in grand-single-client; real Roblox transport throttling, disconnect, reconnect, server restart and DataStore outage host remains"
+      "blocker": "Deterministic network and storage faults, real Player disconnect/reconnect, bounded shutdown retry and two-run restart recovery hosts are registered; Roblox transport throttling, forced DataStore outage, cross-server lease and runtime Studio evidence remain"
     },
     {
       "order": 260,
