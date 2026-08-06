@@ -257,10 +257,14 @@ local function executeSystemCommand(commandType: string, payload: { [string]: un
 	if commandGuard ~= nil then
 		local guardResult = commandGuard(nil, nil)
 		if not guardResult.ok then
-			diagnostics:record("warning", "SYSTEM_COMMAND_LEASE_BLOCKED", {
-				commandType = commandType,
-				code = guardResult.error.code,
-			})
+			diagnostics:record(
+				"warning",
+				"SYSTEM_COMMAND_LEASE_BLOCKED",
+				{
+					commandType = commandType,
+					code = guardResult.error.code,
+				} :: { [string]: unknown }
+			)
 			return guardResult
 		end
 	end
