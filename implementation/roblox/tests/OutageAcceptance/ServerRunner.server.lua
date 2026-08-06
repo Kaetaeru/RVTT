@@ -147,7 +147,11 @@ local persisted = realStore:load(key)
 expect(persisted.ok, "actual DataStore reload succeeds after recovery")
 if persisted.ok and persisted.value ~= nil then
 	equal(persisted.value.revision, 1, "actual DataStore contains the recovered revision")
-	equal(persisted.value.authorityEpoch, "outage-epoch", "actual DataStore contains the intended epoch")
+	equal(
+		persisted.value.authorityEpoch,
+		"outage-epoch",
+		"actual DataStore contains the intended epoch"
+	)
 else
 	expect(false, "actual DataStore contains the recovered document")
 	expect(false, "actual DataStore contains the recovered authority epoch")
