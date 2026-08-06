@@ -1,6 +1,6 @@
 --!strict
 
-return function(harness)
+return function(harness: any)
 	local ScenarioRuntime = require(script.Parent.ScenarioRuntime)
 	local scenario = ScenarioRuntime.new(1212, "dm")
 
