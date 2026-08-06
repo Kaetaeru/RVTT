@@ -30,15 +30,23 @@ required_paths = (
     "real-transport.project.json",
     "restart-seed.project.json",
     "restart-verify.project.json",
+    "datastore-outage.project.json",
+    "lease-holder.project.json",
+    "lease-contender.project.json",
     "grand-acceptance-manifest.json",
     "tests/TestRunner.server.lua",
     "tests/Unit/PersistenceRetry.spec.lua",
+    "tests/Unit/Lease.spec.lua",
     "tests/Integration/ScenarioRuntime.lua",
     "tests/Integration/FaultTransport.lua",
     "tests/Integration/FaultStore.lua",
     "tests/RealTransport/ServerRunner.server.lua",
     "tests/RealTransport/ClientRunner.client.lua",
     "tests/RestartAcceptance/ServerRunner.server.lua",
+    "tests/OutageAcceptance/ServerRunner.server.lua",
+    "tests/LeaseAcceptance/ServerRunner.server.lua",
+    "src/ServerScriptService/RVTT/Server/Persistence/LeaseStore.lua",
+    "src/ServerScriptService/RVTT/Server/Persistence/LeaseCoordinator.lua",
     "tooling/run-grand-acceptance.ps1",
 )
 for relative in required_paths:
@@ -54,9 +62,14 @@ for filename in required_specs.values():
 
 for relative in (
     "tests/Unit/PersistenceRetry.spec.lua",
+    "tests/Unit/Lease.spec.lua",
     "tests/RealTransport/ServerRunner.server.lua",
     "tests/RealTransport/ClientRunner.client.lua",
     "tests/RestartAcceptance/ServerRunner.server.lua",
+    "tests/OutageAcceptance/ServerRunner.server.lua",
+    "tests/LeaseAcceptance/ServerRunner.server.lua",
+    "src/ServerScriptService/RVTT/Server/Persistence/LeaseStore.lua",
+    "src/ServerScriptService/RVTT/Server/Persistence/LeaseCoordinator.lua",
 ):
     path = ROOT / relative
     if path.exists() and not path.read_text(encoding="utf-8").startswith("--!strict"):
@@ -111,6 +124,32 @@ for project_name, expected_phase in (
         errors.append(f"{project_name}: {exc}")
 
 try:
+    outage_project = json.loads((ROOT / "datastore-outage.project.json").read_text(encoding="utf-8"))
+    replicated = outage_project["tree"]["ReplicatedStorage"]
+    if replicated["RVTT_TestMode"]["$properties"]["Value"] != "datastore-outage":
+        errors.append("datastore-outage.project.json: invalid RVTT_TestMode")
+    if "RVTTDataStoreOutageTests" not in outage_project["tree"]["ServerScriptService"]:
+        errors.append("datastore-outage.project.json: outage host is not mapped")
+except Exception as exc:
+    errors.append(f"datastore-outage.project.json: {exc}")
+
+for project_name, expected_role in (
+    ("lease-holder.project.json", "holder"),
+    ("lease-contender.project.json", "contender"),
+):
+    try:
+        project = json.loads((ROOT / project_name).read_text(encoding="utf-8"))
+        replicated = project["tree"]["ReplicatedStorage"]
+        if replicated["RVTT_TestMode"]["$properties"]["Value"] != "lease-acceptance":
+            errors.append(f"{project_name}: invalid RVTT_TestMode")
+        if replicated["RVTT_LeaseRole"]["$properties"]["Value"] != expected_role:
+            errors.append(f"{project_name}: invalid lease role")
+        if "RVTTLeaseTests" not in project["tree"]["ServerScriptService"]:
+            errors.append(f"{project_name}: lease host is not mapped")
+    except Exception as exc:
+        errors.append(f"{project_name}: {exc}")
+
+try:
     manifest = json.loads((ROOT / "grand-acceptance-manifest.json").read_text(encoding="utf-8"))
     phases = {phase["id"]: phase for phase in manifest["phases"]}
     for project in (
@@ -118,6 +157,9 @@ try:
         "real-transport.project.json",
         "restart-seed.project.json",
         "restart-verify.project.json",
+        "datastore-outage.project.json",
+        "lease-holder.project.json",
+        "lease-contender.project.json",
     ):
         if project not in manifest["staticProjects"]:
             errors.append(f"grand-acceptance-manifest.json: {project} missing from staticProjects")
@@ -137,22 +179,33 @@ try:
         errors.append("grand-acceptance-manifest.json: real transport project mismatch")
     if real_transport.get("execution") != "studio-multi-client":
         errors.append("grand-acceptance-manifest.json: real transport execution mismatch")
-    restart_contracts = {
-        "persistence-restart-seed": ("restart-seed.project.json", "[RVTT Restart Seed]"),
-        "persistence-restart-verify": ("restart-verify.project.json", "[RVTT Restart Verify]"),
+    persistence_contracts = {
+        "persistence-restart-seed": ("restart-seed.project.json", "[RVTT Restart Seed]", "studio-published"),
+        "persistence-restart-verify": ("restart-verify.project.json", "[RVTT Restart Verify]", "studio-published"),
+        "persistence-forced-outage": ("datastore-outage.project.json", "[RVTT DataStore Outage]", "studio-published"),
+        "cross-server-lease-holder": ("lease-holder.project.json", "[RVTT Lease Holder]", "studio-published-pair"),
+        "cross-server-lease-contender": ("lease-contender.project.json", "[RVTT Lease Contender]", "studio-published-pair"),
     }
-    for phase_id, (project, token) in restart_contracts.items():
+    for phase_id, (project, token, execution) in persistence_contracts.items():
         phase = phases.get(phase_id, {})
         if phase.get("status") != "deferred" or phase.get("persistence") is not True:
             errors.append(f"grand-acceptance-manifest.json: invalid {phase_id} selection contract")
         if phase.get("project") != project or phase.get("summaryToken") != token:
             errors.append(f"grand-acceptance-manifest.json: invalid {phase_id} evidence contract")
+        if phase.get("execution") != execution:
+            errors.append(f"grand-acceptance-manifest.json: invalid {phase_id} execution contract")
+    holder = phases.get("cross-server-lease-holder", {})
+    contender = phases.get("cross-server-lease-contender", {})
+    if holder.get("runId") != "grand-persistence-lease-pair" or contender.get("runId") != holder.get("runId"):
+        errors.append("grand-acceptance-manifest.json: lease pair runId mismatch")
+    if holder.get("project") == contender.get("project"):
+        errors.append("grand-acceptance-manifest.json: lease pair must use different projects")
     baseline = phases.get("unit-integration-baseline", {})
     if "Slices 02-12" not in baseline.get("name", ""):
         errors.append("grand-acceptance-manifest.json: baseline name does not cover Slices 02-12")
     fault_phase = phases.get("fault-injection", {})
     blocker = fault_phase.get("blocker", "").lower()
-    for phrase in ("deterministic", "disconnect", "restart", "outage"):
+    for phrase in ("deterministic", "disconnect", "restart", "outage", "lease"):
         if phrase not in blocker:
             errors.append(f"grand-acceptance-manifest.json: fault phase omits {phrase}")
     for slice_number in range(2, 13):
@@ -176,6 +229,8 @@ for spec_id, filename in required_specs.items():
 for phrase in (
     'id = "unit-persistence-retry"',
     '["PersistenceRetry.spec"]',
+    'id = "unit-lease"',
+    '["Lease.spec"]',
     "RVTT_GrandMode",
     "[RVTT Spec Summary]",
     "[RVTT Spec Failure]",
@@ -210,6 +265,20 @@ for phrase in ("RetryPolicy", "persistence.retry_scheduled", "persistence.retry_
     if phrase not in persistence:
         errors.append(f"PersistenceCoordinator.lua: missing shutdown retry contract {phrase}")
 
+lease_store = (
+    ROOT / "src" / "ServerScriptService" / "RVTT" / "Server" / "Persistence" / "LeaseStore.lua"
+).read_text(encoding="utf-8")
+for phrase in ("LEASE_HELD", "LEASE_LOST", "fencingToken", "UpdateAsync"):
+    if phrase not in lease_store:
+        errors.append(f"LeaseStore.lua: missing lease contract {phrase}")
+
+lease_coordinator = (
+    ROOT / "src" / "ServerScriptService" / "RVTT" / "Server" / "Persistence" / "LeaseCoordinator.lua"
+).read_text(encoding="utf-8")
+for phrase in ("acquire", "renew", "verify", "release", "fencingToken"):
+    if phrase not in lease_coordinator:
+        errors.append(f"LeaseCoordinator.lua: missing lease lifecycle {phrase}")
+
 network_fault = (ROOT / "tests" / "Integration" / "GrandNetworkFaultHost.spec.lua").read_text(encoding="utf-8")
 for phrase in ("kind=network", "delayed previous epoch", "CLIENT_TIMEOUT", "retrying"):
     if phrase not in network_fault:
@@ -230,6 +299,22 @@ for phrase in ("BindToClose", "[RVTT Restart Seed]", "[RVTT Restart Verify]", "S
     if phrase not in restart_host:
         errors.append(f"RestartAcceptance/ServerRunner.server.lua: missing restart evidence {phrase}")
 
+outage_host = (ROOT / "tests" / "OutageAcceptance" / "ServerRunner.server.lua").read_text(encoding="utf-8")
+for phrase in ("forced datastore outage", "flushUntilClean", "dirty snapshot", "[RVTT DataStore Outage]"):
+    if phrase not in outage_host:
+        errors.append(f"OutageAcceptance/ServerRunner.server.lua: missing outage evidence {phrase}")
+
+lease_host = (ROOT / "tests" / "LeaseAcceptance" / "ServerRunner.server.lua").read_text(encoding="utf-8")
+for phrase in (
+    "contender-blocked",
+    "holder-renewed",
+    "contender-acquired",
+    "[RVTT Lease Holder]",
+    "[RVTT Lease Contender]",
+):
+    if phrase not in lease_host:
+        errors.append(f"LeaseAcceptance/ServerRunner.server.lua: missing pair evidence {phrase}")
+
 capacity_text = (ROOT / "tests" / "Integration" / "GrandCapacitySample.spec.lua").read_text(encoding="utf-8")
 for phrase in ("[RVTT Spec Summary] id=grand-capacity-sample sample=capacity", "elapsedMs", "restoreMs"):
     if phrase not in capacity_text:
@@ -241,6 +326,8 @@ for phrase in (
     "runId",
     "runGroups",
     "Wait-ForStudioExit",
+    "studio-published-pair",
+    "exactly two Project",
     "RVTT-grand-acceptance-report.json",
     "RVTT-grand-acceptance-report.md",
 ):
@@ -255,5 +342,5 @@ if errors:
 
 print(
     "RVTT grand harness validation passed: "
-    f"{len(required_specs)} automated specs plus real transport and two-run restart hosts"
+    f"{len(required_specs)} automated specs plus real transport, restart, outage and paired lease hosts"
 )
