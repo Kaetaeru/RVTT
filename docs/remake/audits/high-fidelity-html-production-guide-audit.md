@@ -44,6 +44,8 @@ Runtime 화면 26개와 제작 기준 Canvas 2개, 총 28개다.
 
 - [x] HTML parser 통과
 - [x] JavaScript syntax 통과
+- [x] 압축 CSS·Renderer와 원본 Byte 일치
+- [x] Git Blob SHA 5개 일치
 - [x] 28개 Screen ID 고유
 - [x] 28개 Renderer 등록
 - [x] 28개 Renderer smoke test 통과
