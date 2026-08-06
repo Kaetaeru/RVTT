@@ -31,7 +31,9 @@ local function rememberEpoch(self: Replica, epoch: string)
 	table.insert(self.epochOrder, epoch)
 	if #self.epochOrder > MAX_EPOCH_HISTORY then
 		local expired = table.remove(self.epochOrder, 1)
-		self.seenEpochs[expired] = nil
+		if expired ~= nil then
+			self.seenEpochs[expired] = nil
+		end
 	end
 end
 
