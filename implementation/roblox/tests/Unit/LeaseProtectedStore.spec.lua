@@ -34,10 +34,13 @@ return function(harness: any)
 		loadCalls = 0,
 		saveCalls = 0,
 		lastFence = nil,
+		lastInitialDocument = nil,
 	}
-	function delegate:load(key: string): any
+	function delegate:loadFenced(_key: string, initialDocument: any, fence: any): any
 		self.loadCalls += 1
-		return Result.ok({ key = key })
+		self.lastInitialDocument = initialDocument
+		self.lastFence = fence
+		return Result.ok(initialDocument)
 	end
 	function delegate:save(_key: string, _value: any, fence: any): any
 		self.saveCalls += 1
@@ -45,10 +48,22 @@ return function(harness: any)
 		return Result.ok(true)
 	end
 
-	local store = LeaseProtectedStore.new(delegate, ownership, diagnostics)
+	local initialDocument = {
+		schemaVersion = 1,
+		revision = 0,
+		authorityEpoch = "epoch:initial",
+		domains = {},
+	}
+	local store = LeaseProtectedStore.new(delegate, ownership, diagnostics, initialDocument)
 	local loaded = store:load("campaign")
-	harness:expect(loaded.ok, "verified ownership permits load")
-	harness:equal(delegate.loadCalls, 1, "permitted load reaches the delegate")
+	harness:expect(loaded.ok, "verified ownership permits fenced load")
+	harness:equal(delegate.loadCalls, 1, "permitted load reaches the fenced delegate")
+	harness:equal(
+		delegate.lastInitialDocument.revision,
+		0,
+		"fenced load forwards the initial authority document"
+	)
+	harness:equal(delegate.lastFence.fencingToken, 1, "fenced load forwards the active write fence")
 
 	local saved = store:save("campaign", { revision = 1 })
 	harness:expect(saved.ok, "verified ownership permits save")
@@ -72,10 +87,17 @@ return function(harness: any)
 
 	ownership.verifyResult = Result.ok(true)
 	ownership.fenceResult = Result.err("LEASE_NOT_HELD", "error.persistence.lease_not_held", false)
-	local missingFence = store:save("campaign", { revision = 3 })
+	local missingFenceLoad = store:load("campaign")
 	harness:expect(
-		not missingFence.ok and missingFence.error.code == "LEASE_NOT_HELD",
+		not missingFenceLoad.ok and missingFenceLoad.error.code == "LEASE_NOT_HELD",
+		"missing fence blocks delegate load"
+	)
+	harness:equal(delegate.loadCalls, 1, "missing load fence never reaches the delegate")
+
+	local missingFenceSave = store:save("campaign", { revision = 3 })
+	harness:expect(
+		not missingFenceSave.ok and missingFenceSave.error.code == "LEASE_NOT_HELD",
 		"missing fence blocks delegate save"
 	)
-	harness:equal(delegate.saveCalls, 1, "missing fence never reaches the delegate")
+	harness:equal(delegate.saveCalls, 1, "missing save fence never reaches the delegate")
 end
