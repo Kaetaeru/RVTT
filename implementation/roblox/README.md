@@ -5,11 +5,24 @@
 ## 현재 기준 문서
 
 - [`CURRENT-WORK-ORDER.md`](CURRENT-WORK-ORDER.md) — 현재 구현·검증 순서
+- [`ADR-0092-PHASED-PRODUCTION-PLAN.md`](ADR-0092-PHASED-PRODUCTION-PLAN.md) — 현재 UI 정합화 뒤 Slice 06→07→11→12→15→16 순서로 진행할 생존·Actor Authoring Lane
 - [`IMPLEMENTATION-STATUS.md`](IMPLEMENTATION-STATUS.md) — 구현·Studio Evidence 상태
 - [`EXECUTION-TEST-RULES.md`](EXECUTION-TEST-RULES.md) — Batch와 Grand Campaign 실행 규칙
 - [`GRAND-ACCEPTANCE-CAMPAIGN.md`](GRAND-ACCEPTANCE-CAMPAIGN.md) — 단일 PowerShell 실행 기반 통합 Acceptance
 - [`grand-acceptance-manifest.json`](grand-acceptance-manifest.json) — Grand Phase Registry와 Summary 계약
 - [`manifests/all-slices-script-manifest.md`](manifests/all-slices-script-manifest.md) — 16개 Slice Script Coverage
+
+## 현재 Production Lane
+
+```text
+Full UI·UX Source·Acceptance 정합화
+→ Static Gate
+→ Exploration·Context Input Studio Retest
+→ Role·Recovery·Accessibility Evidence
+→ Grand Persistence
+```
+
+ADR-0092는 현재 Lane을 선점하지 않는다. 실제 Source Mapping이 준비되면 별도 단계 계획에 따라 하나씩 구현한다.
 
 ## Source 구조
 
@@ -45,7 +58,7 @@ tooling
 → JSON·Markdown 통합 Report 생성
 ```
 
-아직 구현되지 않은 Slice·Fault·UI·Performance Phase는 `blocked`로 기록한다. 실제 Runtime PASS로 간주하지 않는다.
+아직 구현되지 않은 Slice·Fault·UI·Performance·ADR-0092 Phase는 `blocked`로 기록한다. 실제 Runtime PASS로 간주하지 않는다.
 
 ## 핵심 경계
 
@@ -57,3 +70,5 @@ tooling
 - Persistence는 별도 Grand Milestone에서 한 번에 검증한다.
 - Acceptance Harness는 실제 사용자 입력을 메서드 직접 호출로 대체하지 않는다.
 - 사용자 실행 명령은 저장소 Update와 정확한 Head 검사가 포함된 완전한 Windows PowerShell 블록으로 제공한다.
+- AI Prompt·JSON·Campaign Data는 Untrusted Draft이며 임의 Script·Remote·URL을 실행하지 않는다.
+- 문서·Schema·Static Build PASS는 Roblox Studio Runtime PASS가 아니다.
