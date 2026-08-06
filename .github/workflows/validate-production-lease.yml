@@ -1,0 +1,51 @@
+name: Validate production lease
+
+concurrency:
+  group: rvtt-production-lease-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+    paths:
+      - "implementation/roblox/src/ServerScriptService/RVTT/ServerBoot.server.lua"
+      - "implementation/roblox/src/ServerScriptService/RVTT/Server/Networking/CommandRouter.lua"
+      - "implementation/roblox/src/ServerScriptService/RVTT/Server/Persistence/**"
+      - "implementation/roblox/tests/TestRunner.server.lua"
+      - "implementation/roblox/tests/Unit/CommandRouterGuard.spec.lua"
+      - "implementation/roblox/tests/Unit/Lease*.spec.lua"
+      - "implementation/roblox/tests/Unit/ProfileStore*.spec.lua"
+      - "implementation/roblox/tooling/validate_production_lease.py"
+      - ".github/workflows/validate-production-lease.yml"
+  push:
+    branches:
+      - planning/rvtt-remake
+    paths:
+      - "implementation/roblox/src/ServerScriptService/RVTT/ServerBoot.server.lua"
+      - "implementation/roblox/src/ServerScriptService/RVTT/Server/Networking/CommandRouter.lua"
+      - "implementation/roblox/src/ServerScriptService/RVTT/Server/Persistence/**"
+      - "implementation/roblox/tests/TestRunner.server.lua"
+      - "implementation/roblox/tests/Unit/CommandRouterGuard.spec.lua"
+      - "implementation/roblox/tests/Unit/Lease*.spec.lua"
+      - "implementation/roblox/tests/Unit/ProfileStore*.spec.lua"
+      - "implementation/roblox/tooling/validate_production_lease.py"
+      - ".github/workflows/validate-production-lease.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate production lease contracts
+        run: python implementation/roblox/tooling/validate_production_lease.py
