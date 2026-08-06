@@ -169,7 +169,7 @@ function PersistenceCoordinator.flush(self: any): any
 end
 
 function PersistenceCoordinator.flushUntilClean(self: any, policy: RetryPolicy?): any
-	local retryPolicy = policy or {}
+	local retryPolicy: RetryPolicy = if policy ~= nil then policy else {}
 	local maxAttempts = positiveInteger(retryPolicy.maxAttempts, DEFAULT_MAX_ATTEMPTS)
 	local initialDelay =
 		positiveNumber(retryPolicy.initialDelaySeconds, DEFAULT_INITIAL_DELAY_SECONDS)
