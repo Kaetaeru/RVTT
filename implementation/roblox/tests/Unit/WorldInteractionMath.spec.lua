@@ -55,4 +55,31 @@ return function(harness)
 	actorId, method = InteractionMath.resolvePick(nil, "actor:screen")
 	harness:equal(actorId, "actor:screen", "screen bounds recover a missed world ray")
 	harness:equal(method, "screen", "screen fallback reports its method")
+
+	harness:expect(
+		InteractionMath.keyboardPanAxis(true, false, false, false) == Vector2.new(0, 1),
+		"W pans the camera forward"
+	)
+	harness:expect(
+		InteractionMath.keyboardPanAxis(false, true, false, false) == Vector2.new(-1, 0),
+		"A pans the camera left"
+	)
+	harness:expect(
+		InteractionMath.keyboardPanAxis(false, false, true, false) == Vector2.new(0, -1),
+		"S pans the camera backward"
+	)
+	harness:expect(
+		InteractionMath.keyboardPanAxis(false, false, false, true) == Vector2.new(1, 0),
+		"D pans the camera right"
+	)
+	harness:expect(
+		InteractionMath.keyboardPanAxis(true, false, true, false) == Vector2.zero,
+		"opposite vertical keys cancel"
+	)
+	harness:expect(
+		InteractionMath.keyboardPanAxis(false, true, false, true) == Vector2.zero,
+		"opposite horizontal keys cancel"
+	)
+	local diagonal = InteractionMath.keyboardPanAxis(true, false, false, true)
+	harness:expect(math.abs(diagonal.Magnitude - 1) < 0.0001, "diagonal keyboard pan is normalized")
 end
