@@ -12,8 +12,8 @@ end
 local REQUIRED_CLIENTS = 3
 local INITIAL_TIMEOUT_SECONDS = 45
 local TRANSITION_TIMEOUT_SECONDS = 180
-local ROLE_ORDER = { "dm", "player", "observer" }
-local TEST_USER_IDS = {
+local ROLE_ORDER: { string } = { "dm", "player", "observer" }
+local TEST_USER_IDS: { [string]: number } = {
 	dm = 2101,
 	player = 2102,
 	observer = 2103,
@@ -62,8 +62,8 @@ end
 
 local roleByPlayer: { [Player]: string } = {}
 local generationByPlayer: { [Player]: number } = {}
-local activeByRole: { [string]: Player } = {}
-local generationByRole = {
+local activeByRole: { [string]: Player? } = {}
+local generationByRole: { [string]: number } = {
 	dm = 0,
 	player = 0,
 	observer = 0,
@@ -362,7 +362,10 @@ task.spawn(function()
 		finish(0)
 		return
 	end
-	expect(reconnectedPlayer ~= disconnectedPlayer, "reconnect uses a new Roblox Player instance")
+	expect(
+		not rawequal(reconnectedPlayer, disconnectedPlayer),
+		"reconnect uses a new Roblox Player instance"
+	)
 
 	local reconnectReady = waitUntil(function()
 		return reportFor("ready", TARGET_ROLE, 1) ~= nil
