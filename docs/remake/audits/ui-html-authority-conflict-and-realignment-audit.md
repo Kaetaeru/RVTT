@@ -1,11 +1,12 @@
 # UI HTML과 상위 권위 문서 충돌·재정렬 감사
 
-- 상태: `COMPLETE · CORRECTIVE ADR ISSUED`
+- 상태: `COMPLETE · CORRECTIVE ADR ISSUED · HIGH-FIDELITY GUIDE AVAILABLE`
 - 감사일: 2026-08-06
 - 대상 HTML 기준 HEAD: `6e3626b`
 - 정정 결정: [`ADR-0089`](../decisions/ADR-0089-observer-first-session-and-ui-surface-realignment.md)
 - 정정 UI 명세: [`implementation-ready-ui-ux-and-settings-spec.md`](../ui/shared/implementation-ready-ui-ux-and-settings-spec.md)
-- 재작성 HTML: [`User Guide HTML`](../user-guides/html/index.html)
+- 현재 고정밀 HTML: [`User Guide HTML`](../user-guides/html/index.html)
+- 고정밀 제작 감사: [`High-Fidelity HTML Production Guide Audit`](high-fidelity-html-production-guide-audit.md)
 
 ## 1. 결론
 
@@ -16,7 +17,7 @@ A. 기존 상위 ADR은 이미 올바른 방향이었으나 HTML이 잘못 표�
 B. 이번 사용자 결정으로 기존 상위 문서 자체를 변경해야 함
 ```
 
-HTML을 단독 수정하면 같은 문제가 반복되므로 ADR-0089와 구현 직전 명세를 먼저 갱신하고 HTML을 재작성한다.
+HTML을 단독 수정하면 같은 문제가 반복되므로 ADR-0089와 구현 직전 명세를 먼저 갱신하고 HTML을 재작성했다. 이후 구조 와이어프레임 수준의 HTML도 실제 Roblox UI 제작을 안내하기에는 부족하다고 판단해, 별도 고정밀 제작 가이드로 다시 교체했다.
 
 ## 2. 기존 HTML이 이미 확정된 ADR을 어긴 부분
 
@@ -67,13 +68,19 @@ HTML을 단독 수정하면 같은 문제가 반복되므로 ADR-0089와 구현 
 - ADR-0088
 - 구현 직전 UI·UX·Settings 명세
 
+### 제작 기준 Reference
+
+- High-Fidelity HTML Production Target
+- 26개 Runtime 화면 + 2개 Design System Canvas
+- 화면별 Layout Metric·State·Input·Acceptance
+
 ### 기존 문서
 
 ADR-0033·0039·0040·0041·0044·0045·0047·0049·0080은 Domain·Authority 의미를 유지한다. 충돌하는 Presentation·Layout·Entry 부분만 ADR-0089가 대체한다.
 
 `scene-editor-interaction-and-layout.md`의 오른쪽 Inspector와 플로팅 Asset 기본 배치는 현재 권위가 아니다. 새 `scene-editor-interaction-and-layout-v2.md`를 따른다.
 
-## 6. 재작성 HTML Gate
+## 6. 현재 HTML Gate
 
 - [x] Observer-first Entry
 - [x] DM Assignment Transition
@@ -89,11 +96,16 @@ ADR-0033·0039·0040·0041·0044·0045·0047·0049·0080은 Domain·Authority �
 - [x] DM left Inspector + top tools
 - [x] Quick Action small popover
 - [x] Scene Editor bottom catalog
+- [x] Design Token·Layout Grid Canvas
+- [x] Component State·Layering Canvas
+- [x] 28개 Renderer smoke test
+- [ ] Browser Screenshot Pixel Comparison
 - [ ] Roblox Studio Runtime Layout Evidence
 - [ ] Player·Observer·DM Multi-client Evidence
 
 ## 7. 외부 참고 경계
 
 - 공식 D&D 2024 Character Sheet는 정보 구조와 읽기 순서의 기준이다.
+- Baldur’s Gate 3는 하단 Character Console과 전술 정보 밀도의 참고점이다.
 - TaleSpire는 전장 중심 Build Mode와 Catalog workflow의 참고점이다.
 - 로고, 공식 장식, 고유 아트, 고유 아이콘과 픽셀 단위 외형은 복제하지 않는다.
