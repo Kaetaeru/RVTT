@@ -1,177 +1,59 @@
-# RVTT Roblox Source Workspace
+# RVTT Roblox Implementation Workspace
 
-- 상태: BOOTSTRAPPED
-- 작성일: 2026-08-05
-- 상위 Workspace: [`implementation`](../README.md)
-- Slice 명세: [`docs/remake/specs/slices`](../../docs/remake/specs/slices/README.md)
-- UI·UX Policy: [`docs/remake/ui/policies`](../../docs/remake/ui/policies/README.md)
+이 디렉터리는 RVTT 리메이크의 Roblox Production Source, Test Source, Rojo Project와 Acceptance Tooling을 둔다.
 
-이 Workspace는 Roblox DataModel Service 구조를 파일 시스템에 그대로 드러낸다. 실제 Luau Script는 Slice와 Script Manifest 순서대로 하나씩 추가한다.
+## 현재 기준 문서
 
-## 목표 구조
+- [`CURRENT-WORK-ORDER.md`](CURRENT-WORK-ORDER.md) — 현재 구현·검증 순서
+- [`IMPLEMENTATION-STATUS.md`](IMPLEMENTATION-STATUS.md) — 구현·Studio Evidence 상태
+- [`EXECUTION-TEST-RULES.md`](EXECUTION-TEST-RULES.md) — Batch와 Grand Campaign 실행 규칙
+- [`GRAND-ACCEPTANCE-CAMPAIGN.md`](GRAND-ACCEPTANCE-CAMPAIGN.md) — 단일 PowerShell 실행 기반 통합 Acceptance
+- [`grand-acceptance-manifest.json`](grand-acceptance-manifest.json) — Grand Phase Registry와 Summary 계약
+- [`manifests/all-slices-script-manifest.md`](manifests/all-slices-script-manifest.md) — 16개 Slice Script Coverage
 
-```text
-implementation/roblox/
-├─ src/
-│  ├─ ReplicatedFirst/
-│  │  └─ RVTT/
-│  ├─ ReplicatedStorage/
-│  │  └─ RVTT/
-│  ├─ ServerScriptService/
-│  │  └─ RVTT/
-│  ├─ ServerStorage/
-│  │  └─ RVTT/
-│  ├─ StarterPlayer/
-│  │  └─ StarterPlayerScripts/
-│  │     └─ RVTT/
-│  └─ StarterGui/
-│     └─ RVTT/
-├─ tests/
-├─ tooling/
-└─ manifests/
-```
-
-Git은 빈 폴더를 저장하지 않으므로 현재는 각 Service Folder에 책임 설명용 `README.md`를 둔다.
-
-## Service 책임
-
-### ReplicatedFirst
-
-- Client Boot Gate
-- 초기 Loading·Reconnect·Recovery Surface
-- 최소 Version·Bootstrap 검증
-
-Gameplay Domain과 전체 UI Runtime을 여기 넣지 않는다.
-
-### ReplicatedStorage
-
-- Shared Luau Types
-- Stable IDs·Version·Result·Error 계약
-- Network Envelope·Registry
-- Shared pure utility
-- UI Design Token·Component Contract
-
-Server Authority Store와 Client-only State를 넣지 않는다.
-
-### ServerScriptService
-
-- Server Bootstrap
-- Authority Services
-- Session·Scene·Movement·Rules·Encounter Domain
-- Transaction·Event·Projection
-- Persistence Coordinator·Diagnostics Adapter
-
-실제 Data Definition·Migration Fixture와 Secret Content Source는 ServerStorage로 분리한다.
-
-### ServerStorage
-
-- Server-only Content Source
-- Migration Definition
-- Test Fixture
-- Candidate Build Artifact Source
-
-Runtime Store의 독립 복사본을 Source Asset처럼 저장하지 않는다.
-
-### StarterPlayerScripts
-
-- Client Bootstrap 이후 Runtime
-- Projection Replica·ViewModel
-- Semantic Input·Selection
-- Camera·Presentation Client
-- UI Intent Route
-
-Authority 계산과 Permission 판정을 구현하지 않는다.
-
-### StarterGui
-
-- Screen·Panel·Shared Component Composition
-- Theme·Token Binding
-- Loading·Prompt·Recovery UI
-
-Domain Store·Remote 직접 호출을 넣지 않는다.
-
-## 비Service Folder
-
-### tests
-
-- Pure Unit Test
-- Headless Integration
-- Virtual Client·Network·Storage Scenario
-- Roblox Studio Integration Test
-
-### tooling
-
-- Build·Validation·Code Generation
-- Documentation·Schema Consistency Check
-- Local developer command
-
-### manifests
-
-- Script Manifest
-- Package·Registry Mapping
-- Schema·Migration Version Index
-- Content·Asset Manifest Reference
-
-## Script 작성 순서
-
-각 Slice는 먼저 `manifests/slice-XX-script-manifest.md`를 만든다.
-
-Manifest 항목:
+## Source 구조
 
 ```text
-순서
-Script 경로
-Script 종류
-단일 책임
-공개 API
-의존 Script
-연결 Spec
-Test
-Migration 영향
-UI·UX Policy 영향
-완료 상태
+src/ReplicatedFirst
+src/ReplicatedStorage
+src/ServerScriptService
+src/ServerStorage
+src/StarterGui
+src/StarterPlayer
+tests
+tooling
 ```
 
-그 뒤 가장 위의 `IN_PROGRESS` Script 하나만 작성한다.
+## Rojo Project
 
-## 파일 규칙
+- `default.project.json` — Production Place
+- `test.project.json` — Unit·Integration Test Place
+- `multi-client.project.json` — DM·Player·Observer Multi-client Place
+- `live-datastore.project.json` — Live DataStore Baseline
+- `persistence-acceptance.project.json` — Persistence 전용 Acceptance
+- `slice01-acceptance.project.json` — DataStore 비활성 Slice 01 World Interaction
 
-- Roblox Service 이름과 Folder 이름을 일치시킨다.
-- Package Root는 `RVTT`로 통일한다.
-- Script 이름은 역할을 나타내며 `Manager`, `Handler`, `Util`만으로 끝내지 않는다.
-- 하나의 Script가 Server·Client 양쪽 분기를 갖지 않는다.
-- Circular Dependency를 허용하지 않는다.
-- Runtime Instance 이름을 Stable Identity로 사용하지 않는다.
-- Shared Module은 순수 계산·Schema·Type·Registry 계약을 우선한다.
-- UI Component는 RemoteEvent를 직접 참조하지 않는다.
+## Grand Acceptance
 
-## Toolchain 결정
-
-현재 폴더 구조는 Roblox Service Mapping을 확정한다. 다음은 Slice 01 Script Manifest에서 선택·검증한다.
-
-- Rojo Project 파일 여부와 정확한 Mapping
-- Luau Package Manager 사용 여부
-- Test Runner
-- Formatter·Linter·Type Check
-- Studio Sync·CI 방식
-
-Toolchain 선택 전 임의 `default.project.json`이나 Dependency Lockfile을 만들지 않는다.
-
-## 현재 상태
+`tooling/run-grand-acceptance.ps1`은 다음을 수행한다.
 
 ```text
-Roblox Folder Structure
-→ CREATED
-
-Service Responsibility
-→ DEFINED
-
-Toolchain
-→ TO BE VERIFIED
-
-Slice 01 Script Manifest
-→ NEXT
-
-Luau Scripts
-→ NOT STARTED
+등록된 Project 전체 Build
+→ READY Studio Phase 순차 실행
+→ 최근 Roblox Log Summary 수집
+→ 실패 후에도 다음 Phase 계속 실행
+→ JSON·Markdown 통합 Report 생성
 ```
+
+아직 구현되지 않은 Slice·Fault·UI·Performance Phase는 `blocked`로 기록한다. 실제 Runtime PASS로 간주하지 않는다.
+
+## 핵심 경계
+
+- Client는 Intent만 제출한다.
+- Server가 Authorization·Rules·Transaction·Projection을 소유한다.
+- UI는 Remote를 직접 호출하지 않는다.
+- Player·DM·Observer 정보는 Viewer별 Projection으로 분리한다.
+- 일반 기능 Acceptance는 DataStore를 사용하지 않는다.
+- Persistence는 별도 Grand Milestone에서 한 번에 검증한다.
+- Acceptance Harness는 실제 사용자 입력을 메서드 직접 호출로 대체하지 않는다.
+- 사용자 실행 명령은 저장소 Update와 정확한 Head 검사가 포함된 완전한 Windows PowerShell 블록으로 제공한다.
