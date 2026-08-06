@@ -69,6 +69,17 @@ local function controlsActor(allDomains: any, playerId: number, actorId: string)
 		and (actor.controllerUserId == playerId or actor.ownerUserId == playerId)
 end
 
+local function activeTurn(allDomains: any, actorId: string): (boolean, any?)
+	local encounter = allDomains.encounter
+	local active = type(encounter) == "table" and encounter.active or nil
+	if type(active) ~= "table" then
+		return true, nil
+	end
+	local timeline = active.timeline
+	local entry = type(timeline) == "table" and timeline[active.cursor] or nil
+	return type(entry) == "table" and entry.actorId == actorId, active
+end
+
 local function attackProfiles(allDomains: any, actorId: string): { string }
 	local actor = sceneActor(allDomains, actorId)
 	if type(actor) ~= "table" then
@@ -166,11 +177,14 @@ function Resolver:resolve(selectedActorId: string, target: Target): { Action }
 	end
 
 	local actions: { Action } = {}
-	local encounter = allDomains.encounter
-	local encounterActive = type(encounter) == "table" and encounter.active ~= nil
+	local ownsTurn, activeEncounter = activeTurn(allDomains, selectedActorId)
 
 	if target.kind == "actor" and target.actorId ~= nil and target.actorId ~= selectedActorId then
-		if encounterActive then
+		local canAttack = activeEncounter ~= nil
+			and ownsTurn
+			and type(activeEncounter.opportunities) == "table"
+			and activeEncounter.opportunities.action == true
+		if canAttack then
 			local profiles = attackProfiles(allDomains, selectedActorId)
 			for index, profileId in profiles do
 				table.insert(actions, {
@@ -230,22 +244,38 @@ function Resolver:resolve(selectedActorId: string, target: Target): { Action }
 		return actions
 	end
 
-	if target.kind == "surface" and target.position ~= nil then
-		table.insert(actions, {
-			id = "move",
-			label = "이동",
-			kind = "move",
-			commandType = "movement.commit",
-			payload = {
-				actorId = selectedActorId,
-				destination = {
-					x = target.position.X,
-					y = target.position.Y,
-					z = target.position.Z,
+	if target.kind == "surface" and target.position ~= nil and ownsTurn then
+		local actor = sceneActor(allDomains, selectedActorId)
+		local current = type(actor) == "table" and actor.position or nil
+		local movementAllowed = true
+		if activeEncounter ~= nil then
+			local remaining = activeEncounter.movementRemaining
+			if type(remaining) ~= "number" or type(current) ~= "table" then
+				movementAllowed = false
+			else
+				local dx = target.position.X - current.x
+				local dy = target.position.Y - current.y
+				local dz = target.position.Z - current.z
+				movementAllowed = math.sqrt(dx * dx + dy * dy + dz * dz) <= remaining
+			end
+		end
+		if movementAllowed then
+			table.insert(actions, {
+				id = "move",
+				label = "이동",
+				kind = "move",
+				commandType = "movement.commit",
+				payload = {
+					actorId = selectedActorId,
+					destination = {
+						x = target.position.X,
+						y = target.position.Y,
+						z = target.position.Z,
+					},
 				},
-			},
-			isDefault = true,
-		})
+				isDefault = true,
+			})
+		end
 	end
 
 	return actions
