@@ -17,6 +17,9 @@ required_specs = {
     "slice10-scene-authoring": "Slice10SceneAuthoring.spec.lua",
     "slice11-dm-workspace": "Slice11DmWorkspace.spec.lua",
     "slice12-content-platform": "Slice12ContentPlatform.spec.lua",
+    "grand-cross-slice-session": "GrandCrossSliceSession.spec.lua",
+    "grand-authority-faults": "GrandAuthorityFaults.spec.lua",
+    "grand-capacity-sample": "GrandCapacitySample.spec.lua",
 }
 
 for relative in (
@@ -95,6 +98,16 @@ for phrase in (
     if phrase not in runner_text:
         errors.append(f"TestRunner.server.lua: missing {phrase}")
 
+scenario_runtime = (ROOT / "tests" / "Integration" / "ScenarioRuntime.lua").read_text(encoding="utf-8")
+for phrase in ("executeAtAuthority", "expectedRevision", "authorityEpoch"):
+    if phrase not in scenario_runtime:
+        errors.append(f"ScenarioRuntime.lua: missing fault contract {phrase}")
+
+capacity_text = (ROOT / "tests" / "Integration" / "GrandCapacitySample.spec.lua").read_text(encoding="utf-8")
+for phrase in ("[RVTT Capacity Sample]", "elapsedMs", "restoreMs"):
+    if phrase not in capacity_text:
+        errors.append(f"GrandCapacitySample.spec.lua: missing measurement {phrase}")
+
 powershell_text = (ROOT / "tooling" / "run-grand-acceptance.ps1").read_text(encoding="utf-8")
 for phrase in (
     "Get-PhaseTokens",
@@ -115,5 +128,5 @@ if errors:
 
 print(
     "RVTT grand harness validation passed: "
-    f"{len(required_specs)} Slice baselines in one single-client run"
+    f"{len(required_specs)} Slice, cross-slice, fault and capacity scenarios in one single-client run"
 )
