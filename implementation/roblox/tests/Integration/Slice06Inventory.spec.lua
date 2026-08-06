@@ -22,7 +22,11 @@ return function(harness)
 		return
 	end
 	local itemId = itemOutcome.item.id
-	harness:equal(itemOutcome.item.definitionId, "item:test-sword", "item keeps its stable definition reference")
+	harness:equal(
+		itemOutcome.item.definitionId,
+		"item:test-sword",
+		"item keeps its stable definition reference"
+	)
 	harness:equal(itemOutcome.item.quantity, 9999, "item quantity is clamped to the server maximum")
 	harness:equal(itemOutcome.item.revision, 1, "new item starts at revision one")
 	harness:equal(itemOutcome.location.kind, "ground", "new item starts on the ground")
@@ -40,7 +44,10 @@ return function(harness)
 		itemId = itemId,
 		location = { kind = "inventory", characterId = heroId },
 	})
-	harness:expect(not deniedPickup.ok, "non-owner cannot pick up another user's reserved ground item")
+	harness:expect(
+		not deniedPickup.ok,
+		"non-owner cannot pick up another user's reserved ground item"
+	)
 	if not deniedPickup.ok then
 		harness:equal(deniedPickup.error.code, "UNAUTHORIZED", "item ownership denial is explicit")
 	end
@@ -49,13 +56,18 @@ return function(harness)
 		itemId = itemId,
 		location = { kind = "inventory", characterId = heroId },
 	})
-	local pickupOutcome = scenario:expectOutcome(harness, pickup, "Slice 06 moves the item into inventory")
+	local pickupOutcome =
+		scenario:expectOutcome(harness, pickup, "Slice 06 moves the item into inventory")
 	if pickupOutcome == nil then
 		return
 	end
 	harness:equal(pickupOutcome.item.revision, 2, "pickup increments item revision")
 	harness:equal(pickupOutcome.location.kind, "inventory", "pickup creates an inventory location")
-	harness:equal(pickupOutcome.location.characterId, heroId, "inventory location is bound to the character")
+	harness:equal(
+		pickupOutcome.location.characterId,
+		heroId,
+		"inventory location is bound to the character"
+	)
 	harness:equal(
 		scenario:snapshot().domains.inventory.locations[itemId].kind,
 		"inventory",
@@ -91,7 +103,11 @@ return function(harness)
 	})
 	harness:expect(not invalidMove.ok, "unsupported item location is rejected")
 	if not invalidMove.ok then
-		harness:equal(invalidMove.error.code, "VALIDATION_FAILED", "unsupported location uses validation error")
+		harness:equal(
+			invalidMove.error.code,
+			"VALIDATION_FAILED",
+			"unsupported location uses validation error"
+		)
 	end
 	harness:equal(
 		scenario:snapshot().domains.inventory.locations[itemId].kind,
@@ -106,13 +122,18 @@ return function(harness)
 			position = { x = 10, y = 0, z = 8 },
 		},
 	})
-	local dropOutcome = scenario:expectOutcome(harness, drop, "Slice 06 drops the item back into the world")
+	local dropOutcome =
+		scenario:expectOutcome(harness, drop, "Slice 06 drops the item back into the world")
 	if dropOutcome == nil then
 		return
 	end
 	harness:equal(dropOutcome.item.revision, 4, "drop increments item revision")
 	harness:equal(dropOutcome.location.kind, "ground", "drop restores ground presence")
-	harness:equal(dropOutcome.location.position.x, 10, "drop stores the authoritative world position")
+	harness:equal(
+		dropOutcome.location.position.x,
+		10,
+		"drop stores the authoritative world position"
+	)
 
 	local persisted = scenario:snapshot()
 	local restored = ScenarioRuntime.new(606, "dm")
@@ -120,8 +141,20 @@ return function(harness)
 	harness:expect(restore.ok, "Slice 06 snapshot restores")
 	if restore.ok then
 		local restoredInventory = restored:snapshot().domains.inventory
-		harness:equal(restoredInventory.items[itemId].quantity, 9999, "restore preserves item quantity")
-		harness:equal(restoredInventory.items[itemId].revision, 4, "restore preserves item revision")
-		harness:equal(restoredInventory.locations[itemId].kind, "ground", "restore preserves item location")
+		harness:equal(
+			restoredInventory.items[itemId].quantity,
+			9999,
+			"restore preserves item quantity"
+		)
+		harness:equal(
+			restoredInventory.items[itemId].revision,
+			4,
+			"restore preserves item revision"
+		)
+		harness:equal(
+			restoredInventory.locations[itemId].kind,
+			"ground",
+			"restore preserves item location"
+		)
 	end
 end

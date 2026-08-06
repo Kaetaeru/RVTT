@@ -22,7 +22,8 @@ return function(harness)
 		afterSeconds = 3600,
 		payload = { event = "event:test" },
 	})
-	local scheduleOutcome = scenario:expectOutcome(harness, schedule, "Slice 07 creates a campaign schedule")
+	local scheduleOutcome =
+		scenario:expectOutcome(harness, schedule, "Slice 07 creates a campaign schedule")
 	if scheduleOutcome == nil then
 		return
 	end
@@ -35,7 +36,11 @@ return function(harness)
 	})
 	harness:expect(not duplicateSchedule.ok, "duplicate schedule identity is rejected")
 	if not duplicateSchedule.ok then
-		harness:equal(duplicateSchedule.error.code, "CONFLICT", "duplicate schedule returns conflict")
+		harness:equal(
+			duplicateSchedule.error.code,
+			"CONFLICT",
+			"duplicate schedule returns conflict"
+		)
 	end
 
 	local deniedAdvance = scenario:executeAs("player", 707, "time.advance", { seconds = 1800 })
@@ -45,11 +50,16 @@ return function(harness)
 	end
 
 	local firstAdvance = scenario:execute("time.advance", { seconds = 1800 })
-	local firstAdvanceOutcome = scenario:expectOutcome(harness, firstAdvance, "Slice 07 advances campaign time before due")
+	local firstAdvanceOutcome =
+		scenario:expectOutcome(harness, firstAdvance, "Slice 07 advances campaign time before due")
 	if firstAdvanceOutcome == nil then
 		return
 	end
-	harness:equal(firstAdvanceOutcome.campaignSeconds, 1800, "campaign time advances by the requested duration")
+	harness:equal(
+		firstAdvanceOutcome.campaignSeconds,
+		1800,
+		"campaign time advances by the requested duration"
+	)
 	harness:equal(#firstAdvanceOutcome.due, 0, "schedule is not due before its deadline")
 
 	local invalidActivity = scenario:executeAs("player", 707, "time.start_activity", {
@@ -59,7 +69,11 @@ return function(harness)
 	})
 	harness:expect(not invalidActivity.ok, "unsupported activity kind is rejected")
 	if not invalidActivity.ok then
-		harness:equal(invalidActivity.error.code, "VALIDATION_FAILED", "invalid activity uses validation error")
+		harness:equal(
+			invalidActivity.error.code,
+			"VALIDATION_FAILED",
+			"invalid activity uses validation error"
+		)
 	end
 
 	local activity = scenario:executeAs("player", 707, "time.start_activity", {
@@ -67,7 +81,8 @@ return function(harness)
 		kind = "training",
 		characterId = heroId,
 	})
-	local activityOutcome = scenario:expectOutcome(harness, activity, "Slice 07 starts an owned activity")
+	local activityOutcome =
+		scenario:expectOutcome(harness, activity, "Slice 07 starts an owned activity")
 	if activityOutcome == nil then
 		return
 	end
@@ -82,17 +97,29 @@ return function(harness)
 	})
 	harness:expect(not duplicateActivity.ok, "duplicate activity identity is rejected")
 	if not duplicateActivity.ok then
-		harness:equal(duplicateActivity.error.code, "CONFLICT", "duplicate activity returns conflict")
+		harness:equal(
+			duplicateActivity.error.code,
+			"CONFLICT",
+			"duplicate activity returns conflict"
+		)
 	end
 
 	local secondAdvance = scenario:execute("time.advance", { seconds = 1800 })
-	local secondAdvanceOutcome = scenario:expectOutcome(harness, secondAdvance, "Slice 07 advances campaign time to the deadline")
+	local secondAdvanceOutcome = scenario:expectOutcome(
+		harness,
+		secondAdvance,
+		"Slice 07 advances campaign time to the deadline"
+	)
 	if secondAdvanceOutcome == nil then
 		return
 	end
 	harness:equal(secondAdvanceOutcome.campaignSeconds, 3600, "campaign time reaches the deadline")
 	harness:equal(#secondAdvanceOutcome.due, 1, "due schedule is emitted once")
-	harness:equal(secondAdvanceOutcome.due[1], "schedule:slice-07", "the expected schedule becomes due")
+	harness:equal(
+		secondAdvanceOutcome.due[1],
+		"schedule:slice-07",
+		"the expected schedule becomes due"
+	)
 	harness:equal(
 		scenario:snapshot().domains.time.schedules["schedule:slice-07"].status,
 		"due",
@@ -105,14 +132,19 @@ return function(harness)
 	})
 	harness:expect(not deniedResolve.ok, "unrelated player cannot resolve another user's activity")
 	if not deniedResolve.ok then
-		harness:equal(deniedResolve.error.code, "UNAUTHORIZED", "activity ownership denial is explicit")
+		harness:equal(
+			deniedResolve.error.code,
+			"UNAUTHORIZED",
+			"activity ownership denial is explicit"
+		)
 	end
 
 	local resolve = scenario:executeAs("player", 707, "time.resolve_activity", {
 		activityId = "activity:slice-07",
 		status = "completed",
 	})
-	local resolveOutcome = scenario:expectOutcome(harness, resolve, "Slice 07 completes the owned activity")
+	local resolveOutcome =
+		scenario:expectOutcome(harness, resolve, "Slice 07 completes the owned activity")
 	if resolveOutcome == nil then
 		return
 	end
@@ -120,7 +152,11 @@ return function(harness)
 	harness:equal(resolveOutcome.resolvedAt, 3600, "activity completion records campaign time")
 
 	local repeatedAdvance = scenario:execute("time.advance", { seconds = 0 })
-	local repeatedAdvanceOutcome = scenario:expectOutcome(harness, repeatedAdvance, "Slice 07 re-evaluates due schedules safely")
+	local repeatedAdvanceOutcome = scenario:expectOutcome(
+		harness,
+		repeatedAdvance,
+		"Slice 07 re-evaluates due schedules safely"
+	)
 	if repeatedAdvanceOutcome == nil then
 		return
 	end
@@ -133,7 +169,15 @@ return function(harness)
 	if restore.ok then
 		local restoredTime = restored:snapshot().domains.time
 		harness:equal(restoredTime.campaignSeconds, 3600, "restore preserves campaign time")
-		harness:equal(restoredTime.schedules["schedule:slice-07"].status, "due", "restore preserves schedule state")
-		harness:equal(restoredTime.activities["activity:slice-07"].status, "completed", "restore preserves activity state")
+		harness:equal(
+			restoredTime.schedules["schedule:slice-07"].status,
+			"due",
+			"restore preserves schedule state"
+		)
+		harness:equal(
+			restoredTime.activities["activity:slice-07"].status,
+			"completed",
+			"restore preserves activity state"
+		)
 	end
 end

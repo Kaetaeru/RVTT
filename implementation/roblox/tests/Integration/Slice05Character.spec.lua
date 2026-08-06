@@ -5,7 +5,8 @@ return function(harness)
 	local scenario = ScenarioRuntime.new(505, "player")
 
 	local draft = scenario:execute("character.create_draft", { name = "" })
-	local draftOutcome = scenario:expectOutcome(harness, draft, "Slice 05 creates a character draft")
+	local draftOutcome =
+		scenario:expectOutcome(harness, draft, "Slice 05 creates a character draft")
 	if draftOutcome == nil then
 		return
 	end
@@ -19,7 +20,11 @@ return function(harness)
 	})
 	harness:expect(not incompleteActivation.ok, "incomplete character draft cannot activate")
 	if not incompleteActivation.ok then
-		harness:equal(incompleteActivation.error.code, "CONFLICT", "incomplete activation returns conflict")
+		harness:equal(
+			incompleteActivation.error.code,
+			"CONFLICT",
+			"incomplete activation returns conflict"
+		)
 	end
 	harness:expect(
 		scenario:snapshot().domains.character.drafts[characterId] ~= nil,
@@ -41,7 +46,11 @@ return function(harness)
 	})
 	harness:expect(not invalidAbilities.ok, "invalid ability scores are rejected")
 	if not invalidAbilities.ok then
-		harness:equal(invalidAbilities.error.code, "VALIDATION_FAILED", "invalid ability scores use validation error")
+		harness:equal(
+			invalidAbilities.error.code,
+			"VALIDATION_FAILED",
+			"invalid ability scores use validation error"
+		)
 	end
 
 	local update = scenario:execute("character.update_draft", {
@@ -63,14 +72,18 @@ return function(harness)
 			serverOnlyMutation = "ignored",
 		},
 	})
-	local updateOutcome = scenario:expectOutcome(harness, update, "Slice 05 updates the character draft")
+	local updateOutcome =
+		scenario:expectOutcome(harness, update, "Slice 05 updates the character draft")
 	if updateOutcome == nil then
 		return
 	end
 	harness:equal(updateOutcome.name, "Slice 05 Hero", "draft name updates")
 	harness:equal(updateOutcome.abilities.strength, 16, "draft ability scores update")
 	harness:equal(updateOutcome.revision, 2, "valid draft update increments revision")
-	harness:expect(updateOutcome.serverOnlyMutation == nil, "draft update ignores fields outside the allowlist")
+	harness:expect(
+		updateOutcome.serverOnlyMutation == nil,
+		"draft update ignores fields outside the allowlist"
+	)
 
 	local deniedUpdate = scenario:executeAs("player", 999, "character.update_draft", {
 		characterId = characterId,
@@ -84,7 +97,8 @@ return function(harness)
 	local activation = scenario:execute("character.activate", {
 		characterId = characterId,
 	})
-	local activationOutcome = scenario:expectOutcome(harness, activation, "Slice 05 activates a complete character")
+	local activationOutcome =
+		scenario:expectOutcome(harness, activation, "Slice 05 activates a complete character")
 	if activationOutcome == nil then
 		return
 	end
@@ -92,7 +106,10 @@ return function(harness)
 	harness:equal(activationOutcome.revision, 3, "activation increments character revision")
 	local characterState = scenario:snapshot().domains.character
 	harness:expect(characterState.drafts[characterId] == nil, "activation removes the draft entry")
-	harness:expect(characterState.characters[characterId] ~= nil, "activation creates the active character entry")
+	harness:expect(
+		characterState.characters[characterId] ~= nil,
+		"activation creates the active character entry"
+	)
 
 	local skippedLevel = scenario:execute("character.level_up", {
 		characterId = characterId,
@@ -117,12 +134,17 @@ return function(harness)
 		level = 2,
 		choices = { feature = "feature:test" },
 	})
-	local levelOutcome = scenario:expectOutcome(harness, levelUp, "Slice 05 advances the character one level")
+	local levelOutcome =
+		scenario:expectOutcome(harness, levelUp, "Slice 05 advances the character one level")
 	if levelOutcome == nil then
 		return
 	end
 	harness:equal(levelOutcome.level, 2, "valid level-up advances exactly one level")
-	harness:equal(levelOutcome.choices[2].feature, "feature:test", "level choices are stored by level")
+	harness:equal(
+		levelOutcome.choices[2].feature,
+		"feature:test",
+		"level choices are stored by level"
+	)
 	harness:equal(levelOutcome.revision, 4, "level-up increments character revision")
 
 	local persisted = scenario:snapshot()
