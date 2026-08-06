@@ -1,6 +1,6 @@
 # RVTT Roblox Implementation 현재 작업 순서
 
-- 상태: `GRAND_PERSISTENCE_OUTAGE_LEASE_HOST_STATIC_VERIFIED`
+- 상태: `GRAND_PRODUCTION_LEASE_FENCED_PERSISTENCE_STATIC_VERIFIED`
 - 문서 종류: Production Implementation Work Order
 - 최종 갱신일: 2026-08-06
 - Grand Campaign: [`GRAND-ACCEPTANCE-CAMPAIGN.md`](GRAND-ACCEPTANCE-CAMPAIGN.md)
@@ -50,8 +50,11 @@ Injected DataStore Outage Host
 Cross-server Lease Holder·Contender Pair Host
 → IMPLEMENTED · STATIC VERIFIED · PUBLISHED STUDIO NOT EXECUTED
 
+Production ServerBoot Lease Ownership·Atomic Fence Claim
+→ IMPLEMENTED · STATIC VERIFIED · PUBLISHED STUDIO NOT EXECUTED
+
 현재 작업
-→ Production ServerBoot Lease Ownership·Fenced Persistence 연결
+→ Production Lease Integration Acceptance Host 연결
 ```
 
 ## 2. 테스트 운영 방식
@@ -82,7 +85,7 @@ Cross-server Lease Holder·Contender Pair Host
 - 결정적 Network Drop·Duplicate·Hold·Reorder·Delayed Epoch
 - Terminal Receipt 유실·동일 Command ID 재전송·Bounded Timeout
 - Storage Failure·Ack Loss·Revision Conflict·External Winner
-- Shutdown Persistence Retry와 Lease Fencing Unit Scenario
+- Shutdown Persistence Retry와 Production Lease·Fence Unit Scenario
 - Capacity Sample
 
 ### `grand-multi-client`
@@ -107,7 +110,7 @@ DM·Player·Observer 접속
 
 ### Grand Persistence
 
-`-IncludePersistence` 전용 Milestone에서 다음을 순서대로 실행하도록 등록했다.
+`-IncludePersistence` 전용 Milestone에 다음 환경이 등록되어 있다.
 
 1. Live DataStore Baseline
 2. Restart Seed
@@ -123,9 +126,15 @@ DM·Player·Observer 접속
 5. Cross-server Lease Pair
    - Holder·Contender 두 Studio Place 동시 실행
    - 활성 Lease 두 번 차단
-   - Holder 갱신
    - 만료 후 더 높은 Fencing Token으로 Contender 인수
-   - 이전 Holder 검증·해제 거부
+6. Production Lease Integration Acceptance
+   - 안전한 전용 Store·Key를 사용하는 실제 `ServerBoot`
+   - Acquire→Atomic Fence Claim→Load
+   - Commit·Fenced Flush·Release
+   - 다음 Server의 더 높은 Fence Claim·Restore
+   - 이전 Fence 지연 Save 거부
+
+6번 Host는 아직 구현 중이므로 전체 Grand Persistence 사용자 실행은 보류한다.
 
 ## 4. Slices 02–12 자동 baseline 범위
 
@@ -179,6 +188,29 @@ DM·Player·Observer 접속
 - Takeover·Release 후 Reacquire는 Fencing Token을 증가시킨다.
 - DataStore 호출 실패는 retryable `PERSISTENCE_FAILED`다.
 
+### Production ServerBoot Lease Ownership
+
+```text
+Lease Acquire
+→ Lease Store Remote Verify
+→ Authority Document Atomic Fence Claim
+→ Claim된 최신 Document Load·Restore
+→ Local Lease Command Guard
+→ Background Renew
+→ Flush 전 Remote Verify·Write Fence
+→ BindToClose Fenced Flush
+→ Lease Release
+```
+
+- Persistence 활성 환경은 Lease를 얻기 전에 Authority 문서를 Load하지 않는다.
+- `ProfileStore.loadFenced`는 기존 문서를 보존하면서 `persistenceFence`를 같은 `UpdateAsync`에서 Claim한다.
+- Runtime으로 반환할 때 `persistenceFence`는 제거되어 Domain State와 저장 메타데이터가 분리된다.
+- Claim 이후 낮은 Fencing Token, 같은 Token의 다른 소유자, Unfenced Writer는 `PERSISTENCE_FENCED`다.
+- 현재 소유자도 Revision·AuthorityEpoch 단조성 검사를 우회하지 않는다.
+- Remote·System Command는 Persistence 준비 전이나 Lease Lost 뒤 실행되지 않는다.
+- Retryable Renew 장애는 Local Expiry 전까지만 소유권을 유지하고 Terminal Lease 오류는 즉시 Degrade한다.
+- Shutdown은 Renew 중단→Fenced Flush→Release 순서다.
+
 ### Cross-server Lease Pair
 
 - Holder와 Contender가 동일한 실제 DataStore Lease Key를 사용한다.
@@ -189,10 +221,11 @@ DM·Player·Observer 접속
 
 ### 아직 남은 Production 경계
 
-- `ServerBoot`의 Campaign Load·Command Commit·Save를 Lease 소유권과 연결
-- 저장 전에 현재 Fencing Token 검증
-- Lease Renew Loop·Graceful Release·Lease Lost 시 Command 중단
-- Fenced Authority Document와 이전 서버의 지연 Save 차단
+- Production `ServerBoot` Store·Key를 안전한 Acceptance 전용 값으로 주입하는 Project Config
+- 실제 Seed Server의 Command Commit·Fenced Flush·Release
+- 다음 Server의 Higher Fence Claim·Restore
+- Claim 이후 이전 Fence Revision 99 지연 Save 거부의 Published Evidence
+- Lease 미획득·Lease Lost 사용자 상태와 운영자 Recovery UX
 - Roblox 실제 Remote 지연·대역폭 Throttle
 - Roblox 플랫폼 자체 DataStore 장애 Evidence
 - 운영자 Recovery Runbook
@@ -223,12 +256,16 @@ Slices 02–12·Deterministic Fault·Real Transport·Restart
 
 Injected Outage·Cross-server Lease Pair
 → NEW STUDIO EVIDENCE NONE
+
+Production Lease Ownership·Atomic Fence Claim
+→ STATIC VERIFIED · NEW STUDIO EVIDENCE NONE
 ```
 
 정적 Gate를 Studio Runtime PASS나 Roblox 플랫폼 장애 PASS로 해석하지 않는다.
 
 ## 7. 자동 Gate 결과
 
+- Production Lease Contract Validator: PASS
 - Grand Contract Validator: PASS
 - Structure·Security·Policy Validator: PASS
 - Windows PowerShell Parser·Runner SelfTest: PASS
@@ -250,20 +287,21 @@ Injected Outage·Cross-server Lease Pair
 | 4 | DONE | Deterministic Fault Host | Network·Storage 결정적 장애 계약 |
 | 5 | DONE | Real Transport·Restart Host | 실제 Player Lifecycle·Shutdown Retry·두 서버 Restore 등록 |
 | 6 | DONE | DataStore Outage·Lease Pair Host | 주입 장애 복구·Lease Fencing·두 서버 동시 Pair 등록 |
-| 7 | IN_PROGRESS | Production Lease Ownership Integration | ServerBoot Acquire·Renew·Verify·Release와 Fenced Save 연결 |
-| 8 | QUEUED | Persistence Grand Milestone | Live·Restart·Outage·Lease 일괄 게시 Studio 실행 |
-| 9 | QUEUED | UI·Accessibility Evidence | Human Checklist·Screenshot Reference |
-| 10 | BLOCKED | Slices 13–15 Content | Source Version·Rights·Distribution·Asset 승인 |
-| 11 | QUEUED | Performance·Soak Host | 측정 Budget·다중 Client·장시간 Session |
-| 12 | QUEUED | Slice 16 Release Campaign | 전체 Phase·Migration·Runbook Gate |
+| 7 | DONE | Production Lease Ownership Integration | Acquire·Atomic Claim·Guard·Renew·Fenced Save·Flush-before-Release |
+| 8 | IN_PROGRESS | Production Lease Integration Acceptance Host | 안전한 Test Key의 실제 ServerBoot Seed·Takeover·Stale Write Evidence |
+| 9 | QUEUED | Persistence Grand Milestone | Live·Restart·Outage·Lease·Production Boot 일괄 게시 Studio 실행 |
+| 10 | QUEUED | UI·Accessibility Evidence | Human Checklist·Screenshot Reference |
+| 11 | BLOCKED | Slices 13–15 Content | Source Version·Rights·Distribution·Asset 승인 |
+| 12 | QUEUED | Performance·Soak Host | 측정 Budget·다중 Client·장시간 Session |
+| 13 | QUEUED | Slice 16 Release Campaign | 전체 Phase·Migration·Runbook Gate |
 
 ## 9. 다음 Gate
 
 ```text
-Outage·Lease Host 자동 Gate
+Production Lease·Atomic Fence Claim 자동 Gate
 → PASS
 
-Production ServerBoot Lease Ownership·Fenced Save
+Production Lease Integration Acceptance Host
 → 구현 진행
 
 Grand Persistence Runtime
