@@ -22,7 +22,6 @@ local BATCH_NAME = "slice01-world-interaction"
 local SCENE_ID = "scene:slice-01-acceptance"
 local HERO_NAME = "Slice 01 Hero"
 local COMMAND_TIMEOUT_SECONDS = 10
-local INITIAL_RESTORE_WAIT_SECONDS = 4
 
 local summary = BatchSummary.new(BATCH_NAME, {
 	{ id = "boot", label = "Client Runtime Boot" },
@@ -30,10 +29,10 @@ local summary = BatchSummary.new(BATCH_NAME, {
 	{ id = "character", label = "Active Character Selection" },
 	{ id = "scene", label = "Active Scene and Actor" },
 	{ id = "token-projection", label = "Workspace 3D Token Projection" },
-	{ id = "state-restore", label = "Loaded Character Scene Position Restore" },
+	{ id = "camera-wasd-pan", label = "3D Camera WASD Pan" },
 	{ id = "avatar-suppression", label = "Roblox Avatar Suppression" },
 	{ id = "camera-frame", label = "3D Camera Frame" },
-	{ id = "camera-pan", label = "3D Camera Pan" },
+	{ id = "camera-pan", label = "3D Camera Middle-button Pan" },
 	{ id = "camera-zoom", label = "3D Camera Zoom" },
 	{ id = "token-pick", label = "Ray or Screen-space Token Pick" },
 	{ id = "selection-highlight", label = "Selected Token Highlight" },
@@ -130,7 +129,7 @@ instructions.Size = UDim2.new(1, -32, 0, 58)
 instructions.BackgroundTransparency = 1
 instructions.Font = Enum.Font.Gotham
 instructions.Text =
-	"실제 입력 필수: 중클릭 드래그=Pan · Wheel=Zoom · F 또는 Token Frame=Frame. 이후 Token 선택·바닥 이동을 확인하세요."
+	"실제 입력 필수: WASD 또는 중클릭 드래그=Pan · Wheel=Zoom · F 또는 Token Frame=Frame. 이후 Token 선택·바닥 이동을 확인하세요. 이 Build는 DataStore를 사용하지 않습니다."
 instructions.TextColor3 = Color3.fromRGB(184, 191, 202)
 instructions.TextSize = 12
 instructions.TextWrapped = true
@@ -543,6 +542,7 @@ local function initializeCameraChecks()
 	local requirements: { [string]: string } = {
 		["camera-frame"] = "press F or Token Frame",
 		["camera-pan"] = "middle-click drag",
+		["camera-wasd-pan"] = "press W/A/S/D outside WASD movement mode",
 		["camera-zoom"] = "mouse wheel",
 	}
 	for id, detail in requirements do
@@ -572,41 +572,6 @@ local function run(action: () -> ())
 	refresh()
 end
 
-local function detectInitialRestore()
-	local deadline = os.clock() + INITIAL_RESTORE_WAIT_SECONDS
-	repeat
-		local state = currentState()
-		local position = actorPosition(state)
-		local model = if type(state.characterId) == "string"
-			then worldTokens.Renderer:getTokenModel(state.characterId)
-			else nil
-		if
-			client.Replica.revision >= 0
-			and type(state.characterId) == "string"
-			and state.selectedId == state.characterId
-			and state.session.phase == "active"
-			and state.scene.activeSceneId == SCENE_ID
-			and position ~= nil
-			and model ~= nil
-		then
-			pass(
-				"state-restore",
-				string.format(
-					"revision=%d position=(%.2f,%.2f,%.2f)",
-					client.Replica.revision,
-					position.X,
-					position.Y,
-					position.Z
-				)
-			)
-			return
-		end
-		task.wait(0.05)
-	until os.clock() >= deadline
-	summary:pending("state-restore", "first run: save then Stop·Play")
-	refresh()
-end
-
 prepareButton.Activated:Connect(function()
 	task.spawn(function()
 		run(function()
@@ -629,8 +594,12 @@ end)
 worldTokens.Camera.InputResolved:Connect(function(action, source, applied, changed, processed)
 	local id = if action == "frame"
 		then "camera-frame"
-		elseif action == "pan" then "camera-pan"
-		elseif action == "zoom" then "camera-zoom"
+		elseif action == "pan" and source == "keyboard-wasd"
+		then "camera-wasd-pan"
+		elseif action == "pan"
+		then "camera-pan"
+		elseif action == "zoom"
+		then "camera-zoom"
 		else nil
 	if id == nil then
 		return
@@ -758,7 +727,7 @@ worldTokens.DestinationChanged:Connect(function(destination)
 				)
 			)
 			setOperation(
-				"서버 Projection 이동 PASS · 저장 후 재실행 복구 상태도 Summary에 포함됩니다"
+				"서버 Projection 이동 PASS · 이 Build는 메모리 상태만 검증합니다"
 			)
 		else
 			fail("projection-move", "Projection reached unchanged position")
@@ -789,14 +758,13 @@ refresh()
 
 print(
 	string.format(
-		"[RVTT Batch] event=ready batch=%s revision=%d mode=acceptance",
+		"[RVTT Batch] event=ready batch=%s revision=%d mode=acceptance persistence=disabled",
 		BATCH_NAME,
 		client.Replica.revision
 	)
 )
 
 task.spawn(function()
-	detectInitialRestore()
 	run(function()
 		prepareScene()
 		initializeCameraChecks()
