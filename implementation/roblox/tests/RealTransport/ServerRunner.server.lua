@@ -85,13 +85,8 @@ end
 
 local remotes = RemoteBootstrap.create()
 local builder = ProjectionBuilder.new()
-local publisher: any = ProjectionPublisher.new(
-	runtime,
-	builder,
-	remotes,
-	roleResolver,
-	playerIdResolver
-)
+local publisher: any =
+	ProjectionPublisher.new(runtime, builder, remotes, roleResolver, playerIdResolver)
 local router: any = CommandRouter.new(
 	runtime,
 	remotes,
@@ -183,7 +178,8 @@ reportRemote.OnServerEvent:Connect(function(player, message)
 	if role == nil or generation == nil or type(message) ~= "table" then
 		return
 	end
-	if message.role ~= role
+	if
+		message.role ~= role
 		or message.testUserId ~= TEST_USER_IDS[role]
 		or message.reconnectGeneration ~= generation
 	then
@@ -311,7 +307,11 @@ task.spawn(function()
 	local initialEpoch = initialSnapshot.authorityEpoch
 	local revisionBeforeDisconnect = initialSnapshot.revision
 	local sessionBefore = initialSnapshot.domains.session
-	equal(countEntries(sessionBefore.memberships), 3, "initial server has exactly three memberships")
+	equal(
+		countEntries(sessionBefore.memberships),
+		3,
+		"initial server has exactly three memberships"
+	)
 	equal(activeCount(), 3, "initial server has one active player per role")
 
 	local target = activeByRole[TARGET_ROLE]
@@ -396,6 +396,9 @@ task.spawn(function()
 	)
 	equal(activeCount(), 3, "replacement restores one active player per role")
 	equal(finalSnapshot.authorityEpoch, initialEpoch, "reconnect does not rotate server epoch")
-	expect(finalSnapshot.revision > disconnectedSnapshot.revision, "reconnect advances authority revision")
+	expect(
+		finalSnapshot.revision > disconnectedSnapshot.revision,
+		"reconnect advances authority revision"
+	)
 	finish(1)
 end)

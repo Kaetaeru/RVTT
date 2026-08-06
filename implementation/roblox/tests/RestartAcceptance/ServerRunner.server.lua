@@ -119,12 +119,8 @@ if phaseValue.Value == "seed" then
 
 	local authority = runtime()
 	local beforeJoin = authority:snapshot()
-	local joined = join(
-		authority,
-		"restart:seed:join",
-		beforeJoin.authorityEpoch,
-		beforeJoin.revision
-	)
+	local joined =
+		join(authority, "restart:seed:join", beforeJoin.authorityEpoch, beforeJoin.revision)
 	expect(joined.ok, "seed creates the restart membership")
 	local connected = authority:executeSystem("session.connection", {
 		userId = TEST_USER_ID,
@@ -212,12 +208,7 @@ if loaded.ok and loaded.value ~= nil then
 			"restart restores the connected checkpoint"
 		)
 
-		local stale = join(
-			authority,
-			"restart:verify:stale",
-			previousEpoch,
-			snapshot.revision
-		)
+		local stale = join(authority, "restart:verify:stale", previousEpoch, snapshot.revision)
 		expect(
 			not stale.ok and stale.error.code == "STALE_EPOCH",
 			"fresh server rejects a command from the previous epoch"

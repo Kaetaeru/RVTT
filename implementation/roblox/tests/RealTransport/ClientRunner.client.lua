@@ -23,7 +23,10 @@ local testUserId = player:GetAttribute("RVTT_TestUserId")
 local reconnectGeneration = player:GetAttribute("RVTT_ReconnectGeneration")
 assert(type(role) == "string", "real transport role was not assigned")
 assert(type(testUserId) == "number", "real transport user id was not assigned")
-assert(type(reconnectGeneration) == "number", "real transport reconnect generation was not assigned")
+assert(
+	type(reconnectGeneration) == "number",
+	"real transport reconnect generation was not assigned"
+)
 
 local coordination = ReplicatedStorage:WaitForChild("RVTT_RealTransport")
 local control = coordination:WaitForChild("Control") :: RemoteEvent
@@ -173,7 +176,8 @@ control.OnClientEvent:Connect(function(message)
 				then second.payload.domains
 				else nil
 			local session = if type(domains) == "table" then domains.session else nil
-			local connection = if type(session) == "table" and type(session.connections) == "table"
+			local connection = if type(session) == "table"
+					and type(session.connections) == "table"
 				then session.connections[tostring(testUserId)]
 				else nil
 			report({

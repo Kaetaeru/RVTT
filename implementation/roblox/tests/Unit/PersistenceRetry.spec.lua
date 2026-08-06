@@ -57,11 +57,8 @@ return function(harness: any)
 		return Result.err("PERSISTENCE_INVALID", "error.persistence.invalid", false)
 	end
 
-	local terminalCoordinator = PersistenceCoordinator.new(
-		terminalStore,
-		"terminal",
-		Diagnostics.new()
-	)
+	local terminalCoordinator =
+		PersistenceCoordinator.new(terminalStore, "terminal", Diagnostics.new())
 	terminalCoordinator:markDirty(state(2), false)
 	local terminal = terminalCoordinator:flushUntilClean({
 		maxAttempts = 5,
@@ -84,11 +81,8 @@ return function(harness: any)
 		return Result.err("PERSISTENCE_FAILED", "error.persistence.failed", true)
 	end
 
-	local exhaustedCoordinator = PersistenceCoordinator.new(
-		exhaustedStore,
-		"exhausted",
-		Diagnostics.new()
-	)
+	local exhaustedCoordinator =
+		PersistenceCoordinator.new(exhaustedStore, "exhausted", Diagnostics.new())
 	exhaustedCoordinator:markDirty(state(3), false)
 	local exhausted = exhaustedCoordinator:flushUntilClean({
 		maxAttempts = 2,

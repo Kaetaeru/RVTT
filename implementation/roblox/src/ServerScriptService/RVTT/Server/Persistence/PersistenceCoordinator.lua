@@ -101,11 +101,7 @@ function PersistenceCoordinator.load(self: any): any
 	return result
 end
 
-function PersistenceCoordinator.markDirty(
-	self: any,
-	state: any,
-	scheduleFlush: boolean?
-): boolean
+function PersistenceCoordinator.markDirty(self: any, state: any, scheduleFlush: boolean?): boolean
 	local revision = revisionOf(state)
 	if revision == nil then
 		self.diagnostics:increment("persistence.invalid_dirty_state")
@@ -175,10 +171,8 @@ end
 function PersistenceCoordinator.flushUntilClean(self: any, policy: RetryPolicy?): any
 	local retryPolicy = policy or {}
 	local maxAttempts = positiveInteger(retryPolicy.maxAttempts, DEFAULT_MAX_ATTEMPTS)
-	local initialDelay = positiveNumber(
-		retryPolicy.initialDelaySeconds,
-		DEFAULT_INITIAL_DELAY_SECONDS
-	)
+	local initialDelay =
+		positiveNumber(retryPolicy.initialDelaySeconds, DEFAULT_INITIAL_DELAY_SECONDS)
 	local maxDelay = positiveNumber(retryPolicy.maxDelaySeconds, DEFAULT_MAX_DELAY_SECONDS)
 	local deadline = positiveNumber(retryPolicy.deadlineSeconds, DEFAULT_DEADLINE_SECONDS)
 	local startedAt = os.clock()
