@@ -1,317 +1,332 @@
 --!strict
 
 local GuiService = game:GetService("GuiService")
-local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
 local Signal = require(ReplicatedStorage.RVTT.Shared.Core.Signal)
-local Contract = require(ReplicatedStorage.RVTT.Shared.World.WorldTokenContract)
-local InteractionMath = require(ReplicatedStorage.RVTT.Shared.World.WorldInteractionMath)
-
-type PendingMove = {
-	actorId: string,
-	destination: { x: number, y: number, z: number },
-	baseRevision: number,
-}
-
-export type Controller = {
-	renderer: any,
-	replica: any,
-	command: any,
-	inputConnection: RBXScriptConnection?,
-	receiptConnection: RBXScriptConnection?,
-	pendingMoves: { [string]: PendingMove },
-	PickResolved: any,
-	MoveRequested: any,
-	MoveResolved: any,
-	_selectActor: (self: Controller, actorId: string, method: string, hitName: string) -> boolean,
-	_moveSelected: (self: Controller, hit: RaycastResult) -> boolean,
-	_handlePrimary: (self: Controller, input: InputObject) -> (),
-	_handleReceipt: (self: Controller, message: any) -> (),
-	start: (self: Controller) -> (),
-	destroy: (self: Controller) -> (),
-}
 
 local Controller = {}
 Controller.__index = Controller
 
-local rvtt = ReplicatedStorage:WaitForChild("RVTT")
-local acceptanceMode = rvtt:FindFirstChild("Slice01AcceptanceMode")
-local DEBUG_INTERACTIONS = acceptanceMode ~= nil
-	and acceptanceMode:IsA("BoolValue")
-	and acceptanceMode.Value
+local RAY_DISTANCE = 2048
 
-local function diagnostic(event: string, fields: string)
-	if DEBUG_INTERACTIONS then
-		print(string.format("[RVTT WorldToken Input] event=%s %s", event, fields))
+type Action = {
+	id: string,
+	label: string,
+	kind: string,
+	commandType: string,
+	payload: { [string]: any },
+	isDefault: boolean,
+}
+
+type Target = {
+	kind: string,
+	actorId: string?,
+	objectId: string?,
+	position: Vector3?,
+	instance: Instance?,
+}
+
+local function attributeInAncestors(instance: Instance?, name: string): any
+	local current = instance
+	while current ~= nil do
+		local value = current:GetAttribute(name)
+		if value ~= nil then
+			return value
+		end
+		current = current.Parent
 	end
+	return nil
 end
 
-local function screenPosition(input: InputObject): Vector2
-	if
-		input.UserInputType == Enum.UserInputType.MouseButton1
-		or input.UserInputType == Enum.UserInputType.MouseButton2
-	then
-		return UserInputService:GetMouseLocation()
+local function terminalResult(message: any): (string?, any?)
+	if type(message) ~= "table" or message.phase ~= "terminal" then
+		return nil, nil
 	end
-	return Vector2.new(input.Position.X, input.Position.Y)
-end
-
-local function viewportPosition(screen: Vector2): Vector2
-	local topLeftInset = GuiService:GetGuiInset()
-	return InteractionMath.screenToViewport(screen, topLeftInset)
-end
-
-local function raycastFromViewport(position: Vector2): RaycastResult?
-	local camera = Workspace.CurrentCamera
-	if camera == nil then
-		return nil
+	if type(message.commandId) ~= "string" then
+		return nil, nil
 	end
-	local ray = camera:ViewportPointToRay(position.X, position.Y)
-	local params = RaycastParams.new()
-	params.FilterType = Enum.RaycastFilterType.Exclude
-	local excluded: { Instance } = {}
-	local character = Players.LocalPlayer.Character
-	if character ~= nil then
-		table.insert(excluded, character)
-	end
-	params.FilterDescendantsInstances = excluded
-	params.IgnoreWater = false
-	return Workspace:Raycast(ray.Origin, ray.Direction * 2048, params)
+	return message.commandId, message.result
 end
 
-local function instanceName(instance: Instance?): string
-	return if instance ~= nil then instance:GetFullName() else "none"
-end
-
-local function terminalRevision(result: any): number?
-	if type(result) ~= "table" or type(result.value) ~= "table" then
-		return nil
-	end
-	return if type(result.value.revision) == "number" then result.value.revision else nil
-end
-
-local function terminalCode(result: any): string?
-	if type(result) ~= "table" or type(result.error) ~= "table" then
-		return nil
-	end
-	return if type(result.error.code) == "string" then result.error.code else nil
-end
-
-function Controller.new(renderer: any, replica: any, command: any): Controller
+function Controller.new(
+	renderer: any,
+	replica: any,
+	command: any,
+	resolver: any,
+	menu: any
+): any
 	return setmetatable({
 		renderer = renderer,
 		replica = replica,
 		command = command,
-		inputConnection = nil,
-		receiptConnection = nil,
-		pendingMoves = {},
+		resolver = resolver,
+		menu = menu,
+		connections = {},
+		pending = {},
+		started = false,
 		PickResolved = Signal.new(),
 		MoveRequested = Signal.new(),
 		MoveResolved = Signal.new(),
-	}, Controller) :: any
+		ContextActionRequested = Signal.new(),
+		ContextActionResolved = Signal.new(),
+		ActionMenuChanged = Signal.new(),
+	}, Controller)
 end
 
-function Controller:_selectActor(actorId: string, method: string, hitName: string): boolean
-	local actor = Contract.actor(self.replica.payload, actorId)
-	if not Contract.canControl(self.replica.payload, actor, Players.LocalPlayer.UserId) then
-		diagnostic(
-			"pick",
-			string.format("result=denied method=%s actor=%s hit=%s", method, actorId, hitName)
-		)
-		self.PickResolved:Fire(actorId, method, false, hitName)
-		return false
+function Controller:_pointerPosition(): Vector2
+	local pointer = UserInputService:GetMouseLocation()
+	local inset = GuiService:GetGuiInset()
+	return pointer - inset
+end
+
+function Controller:_raycastTarget(): Target
+	local camera = Workspace.CurrentCamera
+	if camera == nil then
+		return { kind = "none" }
 	end
-	local selected = self.renderer:setSelected(actorId)
-	diagnostic(
-		"pick",
-		string.format(
-			"result=%s method=%s actor=%s hit=%s",
-			if selected then "selected" else "missing",
-			method,
-			actorId,
-			hitName
-		)
+	local pointer = self:_pointerPosition()
+	local ray = camera:ViewportPointToRay(pointer.X, pointer.Y)
+	local result = Workspace:Raycast(ray.Origin, ray.Direction * RAY_DISTANCE)
+	if result ~= nil then
+		local actorId = self.renderer:actorIdFromInstance(result.Instance)
+		if actorId ~= nil then
+			return {
+				kind = "actor",
+				actorId = actorId,
+				position = result.Position,
+				instance = result.Instance,
+			}
+		end
+		local objectId = attributeInAncestors(result.Instance, "RVTTObjectId")
+		if type(objectId) == "string" then
+			return {
+				kind = "object",
+				objectId = objectId,
+				position = result.Position,
+				instance = result.Instance,
+			}
+		end
+		if attributeInAncestors(result.Instance, "RVTTMoveSurface") == true then
+			return {
+				kind = "surface",
+				position = result.Position,
+				instance = result.Instance,
+			}
+		end
+	end
+
+	local fallbackActorId = self.renderer:actorIdFromViewportPoint(camera, pointer, nil)
+	if fallbackActorId ~= nil then
+		return { kind = "actor", actorId = fallbackActorId }
+	end
+	return { kind = "none" }
+end
+
+function Controller:resolveActionsForTarget(target: Target): { Action }
+	local selectedActorId = self.renderer:getSelectedActorId()
+	if selectedActorId == nil then
+		return {}
+	end
+	return self.resolver:resolve(selectedActorId, target)
+end
+
+function Controller:_targetLabel(target: Target): string
+	if target.actorId ~= nil then
+		return target.actorId
+	end
+	if target.objectId ~= nil then
+		return target.objectId
+	end
+	if target.kind == "surface" then
+		return "바닥"
+	end
+	return ""
+end
+
+function Controller:openActionsForTarget(target: Target, screenPosition: Vector2?): { Action }
+	local actions = self:resolveActionsForTarget(target)
+	self.menu:open(
+		actions,
+		screenPosition or UserInputService:GetMouseLocation(),
+		self:_targetLabel(target)
 	)
-	self.PickResolved:Fire(actorId, method, selected, hitName)
-	if selected then
-		print(string.format("[RVTT WorldToken] event=selected actor=%s method=%s", actorId, method))
-	end
-	return selected
+	self.ActionMenuChanged:Fire(self.menu:isOpen(), actions, target)
+	return actions
 end
 
-function Controller:_moveSelected(hit: RaycastResult): boolean
-	local actorId = self.renderer:getSelectedActorId()
-	if actorId == nil or not Contract.isMoveSurface(hit.Instance) then
-		return false
+function Controller:_executeAction(action: Action): string?
+	local selectedActorId = self.renderer:getSelectedActorId()
+	if selectedActorId == nil then
+		return nil
 	end
-	local actor = Contract.actor(self.replica.payload, actorId)
-	if not Contract.canControl(self.replica.payload, actor, Players.LocalPlayer.UserId) then
-		self.renderer:setSelected(nil)
-		diagnostic("move", "result=denied actor=" .. actorId)
-		return false
-	end
-	local destinationVector = hit.Position
-	local destination = Contract.toDestination(destinationVector)
 	local baseRevision = self.replica.revision
-	local commandId = self.command:submit("movement.commit", {
-		actorId = actorId,
-		destination = destination,
-	})
-	self.pendingMoves[commandId] = {
-		actorId = actorId,
-		destination = destination,
+	local commandId = self.command:submit(action.commandType, action.payload)
+	self.pending[commandId] = {
+		action = action,
 		baseRevision = baseRevision,
 	}
-	self.renderer:showDestination(actorId, destinationVector, commandId)
-	self.MoveRequested:Fire(actorId, destination, commandId, baseRevision)
-	print(
-		string.format(
-			"[RVTT WorldToken Command] event=submitted commandId=%s actor=%s baseRevision=%d destination=(%.2f,%.2f,%.2f)",
-			commandId,
-			actorId,
-			baseRevision,
-			destination.x,
-			destination.y,
-			destination.z
-		)
-	)
-	return true
+	if action.kind == "move" then
+		local destination = action.payload.destination
+		local position = Vector3.new(destination.x, destination.y, destination.z)
+		self.renderer:showDestination(selectedActorId, position, commandId)
+		self.MoveRequested:Fire(selectedActorId, destination, commandId, baseRevision)
+	end
+	self.ContextActionRequested:Fire(action, commandId, baseRevision)
+	return commandId
 end
 
-function Controller:_handlePrimary(input: InputObject)
-	local screen = screenPosition(input)
-	local viewport = viewportPosition(screen)
-	local camera = Workspace.CurrentCamera
-	local hit = raycastFromViewport(viewport)
-	local rayActorId = if hit ~= nil then self.renderer:actorIdFromInstance(hit.Instance) else nil
-	local screenActorId = if camera ~= nil
-		then self.renderer:actorIdFromViewportPoint(camera, viewport, nil)
-		else nil
-	local actorId, method = InteractionMath.resolvePick(rayActorId, screenActorId)
-	local hitName = instanceName(if hit ~= nil then hit.Instance else nil)
-
-	if actorId ~= nil then
-		self:_selectActor(actorId, method, hitName)
-		return
-	end
-	if hit ~= nil and self:_moveSelected(hit) then
-		diagnostic(
-			"move",
-			string.format(
-				"result=submitted screen=(%.1f,%.1f) viewport=(%.1f,%.1f) hit=%s",
-				screen.X,
-				screen.Y,
-				viewport.X,
-				viewport.Y,
-				hitName
-			)
-		)
-		return
-	end
-	diagnostic(
-		"pick",
-		string.format(
-			"result=none screen=(%.1f,%.1f) viewport=(%.1f,%.1f) hit=%s tokens=%d",
-			screen.X,
-			screen.Y,
-			viewport.X,
-			viewport.Y,
-			hitName,
-			self.renderer:tokenCount()
-		)
-	)
+function Controller:executeAction(action: Action): string?
+	return self:_executeAction(action)
 end
 
-function Controller:_handleReceipt(message: any)
-	if
-		type(message) ~= "table"
-		or message.phase ~= "terminal"
-		or type(message.commandId) ~= "string"
-	then
+function Controller:_onReceipt(message: any)
+	local commandId, result = terminalResult(message)
+	if commandId == nil then
 		return
 	end
-	local commandId = message.commandId
-	local pending = self.pendingMoves[commandId]
+	local pending = self.pending[commandId]
 	if pending == nil then
 		return
 	end
-	self.pendingMoves[commandId] = nil
-	local result = message.result
+	self.pending[commandId] = nil
+	local action = pending.action
 	local ok = type(result) == "table" and result.ok == true
-	local revision = terminalRevision(result)
-	local code = terminalCode(result)
-	self.renderer:resolveDestination(
-		commandId,
-		if ok then "accepted" else "rejected",
-		revision,
-		code
-	)
-	self.MoveResolved:Fire(
-		pending.actorId,
-		pending.destination,
-		commandId,
-		ok,
-		code,
-		revision,
-		pending.baseRevision
-	)
-	print(
-		string.format(
-			"[RVTT WorldToken Command] event=terminal commandId=%s actor=%s ok=%s code=%s revision=%s baseRevision=%d",
+	local code = if type(result) == "table" and type(result.error) == "table"
+		then result.error.code
+		else nil
+	local revision = if type(result) == "table" and type(result.value) == "table"
+		then result.value.revision
+		else nil
+	if action.kind == "move" then
+		self.renderer:resolveDestination(
 			commandId,
-			pending.actorId,
-			tostring(ok),
-			tostring(code),
-			tostring(revision),
+			if ok then "accepted" else "rejected",
+			revision,
+			code
+		)
+		self.MoveResolved:Fire(
+			action.payload.actorId,
+			action.payload.destination,
+			commandId,
+			ok,
+			code,
+			revision,
 			pending.baseRevision
 		)
-	)
+	end
+	self.ContextActionResolved:Fire(action, commandId, ok, code, revision, result)
 end
 
-function Controller.start(self: Controller)
-	if self.inputConnection ~= nil then
+function Controller:_pick(actorId: string, method: string, instance: Instance?): boolean
+	local selected = self.renderer:setSelected(actorId)
+	self.PickResolved:Fire(
+		actorId,
+		method,
+		selected,
+		if instance ~= nil then instance:GetFullName() else "screen"
+	)
+	return selected
+end
+
+function Controller:_leftClick()
+	if self.menu:isOpen() then
+		self.menu:close("world-left-click")
+		self.ActionMenuChanged:Fire(false, {}, { kind = "none" })
+	end
+	local target = self:_raycastTarget()
+	local selectedActorId = self.renderer:getSelectedActorId()
+	if selectedActorId == nil then
+		if target.actorId ~= nil then
+			self:_pick(target.actorId, "ray", target.instance)
+		end
 		return
 	end
-	self.receiptConnection = self.command.remotes.receipt.OnClientEvent:Connect(function(message)
-		self:_handleReceipt(message)
-	end)
-	self.inputConnection = UserInputService.InputBegan:Connect(function(input, processed)
-		local primary = input.UserInputType == Enum.UserInputType.MouseButton1
-			or input.UserInputType == Enum.UserInputType.Touch
-		if processed then
-			if primary then
-				local screen = screenPosition(input)
-				diagnostic(
-					"ignored",
-					string.format("reason=processed screen=(%.1f,%.1f)", screen.X, screen.Y)
-				)
-			end
-			return
-		end
-		if primary then
-			self:_handlePrimary(input)
-		elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
-			self.renderer:setSelected(nil)
-			diagnostic("selection", "result=cleared method=secondary")
-		end
-	end)
+
+	local actions = self:resolveActionsForTarget(target)
+	local defaultAction = self.resolver:defaultAction(actions)
+	if defaultAction ~= nil then
+		self:_executeAction(defaultAction)
+		return
+	end
+	if target.actorId ~= nil and target.actorId == selectedActorId then
+		self:_pick(target.actorId, "ray", target.instance)
+	end
 end
 
-function Controller.destroy(self: Controller)
-	if self.inputConnection ~= nil then
-		self.inputConnection:Disconnect()
-		self.inputConnection = nil
+function Controller:_rightClick()
+	if self.renderer:getSelectedActorId() == nil then
+		local target = self:_raycastTarget()
+		if target.actorId ~= nil then
+			self:_pick(target.actorId, "ray", target.instance)
+		end
+		return
 	end
-	if self.receiptConnection ~= nil then
-		self.receiptConnection:Disconnect()
-		self.receiptConnection = nil
+	self:openActionsForTarget(self:_raycastTarget(), UserInputService:GetMouseLocation())
+end
+
+function Controller:_escape()
+	if self.menu:isOpen() then
+		self.menu:close("escape")
+		self.ActionMenuChanged:Fire(false, {}, { kind = "none" })
+		return
 	end
-	table.clear(self.pendingMoves)
+	self.renderer:clearDestination(nil)
+	self.renderer:setSelected(nil)
+end
+
+function Controller:_onInputBegan(input: InputObject, processed: boolean)
+	if processed then
+		return
+	end
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		self:_leftClick()
+	elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
+		self:_rightClick()
+	elseif input.KeyCode == Enum.KeyCode.Escape then
+		self:_escape()
+	end
+end
+
+function Controller:start()
+	if self.started then
+		return
+	end
+	self.started = true
+	table.insert(self.connections, UserInputService.InputBegan:Connect(function(input, processed)
+		self:_onInputBegan(input, processed)
+	end))
+	table.insert(self.connections, self.command.remotes.receipt.OnClientEvent:Connect(function(message)
+		self:_onReceipt(message)
+	end))
+	table.insert(self.connections, self.menu.ActionInvoked:Connect(function(action)
+		self:_executeAction(action)
+	end))
+	table.insert(self.connections, self.menu.Opened:Connect(function(actions)
+		self.ActionMenuChanged:Fire(true, actions, nil)
+	end))
+	table.insert(self.connections, self.menu.Closed:Connect(function(reason)
+		self.ActionMenuChanged:Fire(false, {}, reason)
+	end))
+end
+
+function Controller:destroy()
+	if not self.started then
+		return
+	end
+	self.started = false
+	for _, connection in self.connections do
+		connection:Disconnect()
+	end
+	self.connections = {}
+	self.pending = {}
 	self.PickResolved:Destroy()
 	self.MoveRequested:Destroy()
 	self.MoveResolved:Destroy()
+	self.ContextActionRequested:Destroy()
+	self.ContextActionResolved:Destroy()
+	self.ActionMenuChanged:Destroy()
 end
 
 return Controller
