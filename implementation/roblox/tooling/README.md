@@ -17,6 +17,8 @@ Grand Acceptance Campaign의 기본 Runner다.
 - `-NoOpen`으로 Build·Report 준비만 수행
 - `-SelfTest`로 Manifest·Project·Phase 계약 검사
 
+Windows PowerShell Parser와 Manifest SelfTest는 GitHub Actions에서 검증한다. 실제 사용자 PC에서의 순차 Studio 실행과 Log 수집은 아직 수행하지 않았다.
+
 ### `run-studio-acceptance-batch.ps1`
 
 기존 단일 Acceptance Batch용 일반 Runner다. Grand Campaign 이전 호환 경로로 유지한다.
