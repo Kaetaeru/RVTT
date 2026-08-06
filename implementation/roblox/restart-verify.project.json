@@ -1,0 +1,28 @@
+{
+  "name": "RVTTRestartVerifyAcceptance",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "RVTT": {"$path": "src/ReplicatedStorage/RVTT"},
+      "RVTT_TestMode": {
+        "$className": "StringValue",
+        "$properties": {"Value": "restart-acceptance"}
+      },
+      "RVTT_RestartPhase": {
+        "$className": "StringValue",
+        "$properties": {"Value": "verify"}
+      }
+    },
+    "ServerScriptService": {
+      "RVTT": {
+        "$className": "Folder",
+        "Server": {"$path": "src/ServerScriptService/RVTT/Server"}
+      },
+      "RVTTRestartTests": {
+        "$className": "Folder",
+        "ServerRunner": {"$path": "tests/RestartAcceptance/ServerRunner.server.lua"}
+      }
+    },
+    "ServerStorage": {"RVTT": {"$path": "src/ServerStorage/RVTT"}}
+  }
+}
