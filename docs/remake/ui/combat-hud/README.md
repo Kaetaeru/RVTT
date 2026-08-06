@@ -1,23 +1,26 @@
 # Combat HUD UI
 
-Baldur's Gate형 이니셔티브, PartyRail, Hotbar, 대상·범위 Preview, Reaction과 Turn UI를 다룬다.
+Baldur's Gate형 Initiative, Party Rail, Character Console, Action Matrix, 대상·범위 Preview, Reaction과 Turn UI를 다룬다.
 
-## 최상위 직접 플레이 결정
+## 최상위 결정
 
+- [`ADR-0090`](../../decisions/ADR-0090-multi-row-action-matrices-and-modular-dm-tool-windows.md)
+  - 공격·행동과 주문을 별도 Matrix로 표시
+  - 사용자 설정 1–4행
+  - Hover·Focus Action Description Panel
+  - Console 상단 Resource Rail
+  - 직업별 기억·준비 수와 주문 슬롯 분리
+- [`ADR-0089`](../../decisions/ADR-0089-observer-first-session-and-ui-surface-realignment.md)
+  - Owned Actor 기본 선택
+  - 하단 통합 Character Console
+  - Objective·Map·Minimap 제거
 - [`ADR-0088`](../../decisions/ADR-0088-direct-play-pointer-grammar-and-feedback.md)
-  - Left Click: 선택 또는 표시된 기본 행동
-  - Right Click: Capability Context Action Table
-  - Middle Click Drag: Camera Orbit
-  - Q: 최상위 Context 한 단계 취소
-  - ESC: Gameplay 의미 없음
+  - Left 기본 행동, Right Context, Middle Orbit, Q Cancel, ESC No-op
 
-## 구현 직전 화면 명세
+## 구현 직전 명세
 
+- [`Character Console Action Matrix와 Resource Rail`](character-console-action-matrix-and-resource-rail.md)
 - [`Full UI·UX and Settings Specification`](../shared/implementation-ready-ui-ux-and-settings-spec.md)
-  - Exploration 셸에서 Encounter HUD로 전환되는 구성
-  - Hotbar 기본 2행·사용자 1–4
-  - EndTurn Disabled Reason, Soft Turn Focus, HP 0·Death Save
-  - Tooltip·Settings·Role·Recovery·Acceptance 기본값
 
 ## 관련 Main System Guide
 
@@ -33,8 +36,9 @@ Baldur's Gate형 이니셔티브, PartyRail, Hotbar, 대상·범위 Preview, Rea
 ## 고정 경계
 
 - Combat HUD는 Exploration 셸을 교체하는 별도 Client가 아니라 동일 Shared Shell의 Encounter Composition이다.
+- Action Matrix Row 설정은 1–4이며 공격·주문 Matrix에 동시에 적용한다.
+- Action Icon 위치는 사용자가 명시적으로 바꿀 때만 변경한다.
+- Disabled Action은 Icon을 유지하고 Hover·Focus 이유를 제공한다.
+- 기억·준비 수와 Spell Slot은 다른 Projection Field다.
 - Turn 전환은 Camera를 강제로 이동하지 않는다.
-- 조작 가능한 Initiative·Party Entry Left Click은 Actor 선택 전환을 우선한다.
 - 권한에 없는 Action은 Slot·Count·Disabled 자리도 만들지 않는다.
-- 현재 불가능 Action은 비활성색과 Hover·Focus Reason을 가진다.
-- UI Ribbon·Hotbar·EndTurn은 Authority 원본이 아니라 같은 Projection Revision의 View다.
