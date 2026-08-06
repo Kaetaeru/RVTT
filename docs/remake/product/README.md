@@ -2,6 +2,7 @@
 
 - 상태: ACTIVE
 - 문서 종류: Product Index
+- 최종 갱신일: 2026-08-06
 
 RVTT가 무엇을 만들고 무엇을 지원하지 않는지 정의하는 권위 문서를 안내한다.
 
@@ -30,8 +31,39 @@ User Guide는 사용자 경험을 설명하는 비권위 문서다. 제품 범�
    - Executable·Guided·Assisted 자동화
    - Rollback·Chunk 저장
    - NPC 대화와 Audio 비목표
-3. [`캠페인 Material Component 정책`](campaign-material-component-policy.md)
+3. [`캠페인 규칙·생존 보급·DM 저작 Actor 제품 범위`](campaign-rules-survival-and-authored-actor-scope.md)
+   - Narrative·Standard·Survival·Custom Campaign Rule Profile
+   - 식량·물·탈것 사료와 선택적 세부 Module
+   - Time Advance와 Supply Settlement의 원자적 연결
+   - Actor Model Registry·Strict Stat Block·AI Prompt Builder
+   - Campaign-local Actor Template Publish·SceneNpc Migration
+4. [`캠페인 Material Component 정책`](campaign-material-component-policy.md)
    - 캠페인 수준 물질 구성요소 정책과 규칙 적용 범위
+
+## Campaign Rule Profile의 공통 해석
+
+캠페인 수준 규칙은 Definition 원본을 수정하는 Boolean 모음이 아니다.
+
+```text
+Ruleset·Source Pack Definition
++ Campaign Policy Binding
+→ Frozen Policy Snapshot
+→ 새 Execution·Settlement에서 사용
+```
+
+- 정확한 공식 수치는 Content Definition이 소유한다.
+- 진행 중 실행은 생성 당시 Snapshot을 유지한다.
+- DM 변경은 Candidate Snapshot·Impact Preview·Safe Boundary를 사용한다.
+- 기본 변경은 비소급이며 과거 Item·Effect·Ledger를 조용히 재작성하지 않는다.
+
+## Campaign-authored Content의 공통 해석
+
+Campaign-authored Actor·Token은 신뢰된 Registry를 참조하는 순수 데이터다.
+
+- 외부 AI 결과는 Untrusted Draft다.
+- 임의 Script·Remote·URL Callback을 실행하지 않는다.
+- Core Definition을 직접 수정하지 않는다.
+- Publish와 기존 Actor Migration은 DM의 명시적 검토를 요구한다.
 
 ## 사용자 흐름 책임
 
@@ -48,7 +80,9 @@ User Guide는 사용자 경험을 설명하는 비권위 문서다. 제품 범�
 - 제품 목표와 비목표
 - 지원 플랫폼과 입력 범위
 - 공식 콘텐츠 지원 범위
-- 캠페인 수준 정책
+- 캠페인 수준 정책과 Profile
+- 생존·보급의 최종 제품 범위
+- Campaign-authored Actor·Token의 신뢰 경계
 - 사용자 경험에 영향을 주는 고정 제품 경계
 
 ## 제외 범위
@@ -64,6 +98,7 @@ User Guide는 사용자 경험을 설명하는 비권위 문서다. 제품 범�
 ## 연결
 
 - 현재 작업 순서: [`../CURRENT-WORK-ORDER.md`](../CURRENT-WORK-ORDER.md)
+- ADR-0092 Slice Sync: [`../specs/ADR-0092-SLICE-SYNC-PLAN.md`](../specs/ADR-0092-SLICE-SYNC-PLAN.md)
 - Main System Guides: [`../guides/README.md`](../guides/README.md)
 - Architecture: [`../architecture/README.md`](../architecture/README.md)
 - Systems: [`../systems/README.md`](../systems/README.md)
