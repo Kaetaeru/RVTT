@@ -594,12 +594,9 @@ end)
 worldTokens.Camera.InputResolved:Connect(function(action, source, applied, changed, processed)
 	local id = if action == "frame"
 		then "camera-frame"
-		elseif action == "pan" and source == "keyboard-wasd"
-		then "camera-wasd-pan"
-		elseif action == "pan"
-		then "camera-pan"
-		elseif action == "zoom"
-		then "camera-zoom"
+		elseif action == "pan" and source == "keyboard-wasd" then "camera-wasd-pan"
+		elseif action == "pan" then "camera-pan"
+		elseif action == "zoom" then "camera-zoom"
 		else nil
 	if id == nil then
 		return

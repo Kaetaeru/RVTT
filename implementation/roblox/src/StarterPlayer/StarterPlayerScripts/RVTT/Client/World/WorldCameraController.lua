@@ -233,12 +233,7 @@ function Controller.panPixels(self: Controller, delta: Vector2): boolean
 end
 
 function Controller.panKeyboard(self: Controller, axis: Vector2, deltaTime: number): boolean
-	if
-		not self.enabled
-		or self.movementModeActive
-		or axis.Magnitude <= 0
-		or deltaTime <= 0
-	then
+	if not self.enabled or self.movementModeActive or axis.Magnitude <= 0 or deltaTime <= 0 then
 		return false
 	end
 	local currentCamera = camera()
