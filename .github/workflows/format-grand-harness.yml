@@ -55,4 +55,5 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add implementation/roblox/tests
           git commit -m "format Grand cross-slice scenarios"
+          git pull --rebase origin planning/rvtt-remake
           git push origin HEAD:planning/rvtt-remake
