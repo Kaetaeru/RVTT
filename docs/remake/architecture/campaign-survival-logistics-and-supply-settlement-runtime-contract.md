@@ -4,6 +4,7 @@
 - 문서 종류: Architecture
 - 즉시 구현 명세 가능성: `READY_WITH_DEFAULTS`
 - 작성일: 2026-08-06
+- 최종 갱신일: 2026-08-07
 - 상위 결정: [`ADR-0092`](../decisions/ADR-0092-campaign-survival-logistics-and-dm-authored-actor-tokens.md)
 - 관련 계약:
   - [`Ruleset Policy Runtime`](ruleset-policy-registry-composition-and-frozen-snapshot-runtime-contract.md)
@@ -44,6 +45,8 @@ survival.shortage_disclosure
 ```
 
 `survival.logistics.enabled=false`는 하위 Module의 미래 자동 Settlement를 차단한다. 하위 Binding과 Ledger를 삭제하지 않는다.
+
+`survival.source_priority`는 공급원 순서의 유일한 권위다. Slice 06 Inventory는 Supply Source의 membership·ACL·disclosure·revision을 소유하지만 독립적으로 변경 가능한 priority를 저장하지 않는다. 순서 변경은 Candidate Policy Snapshot을 Compile하고 Safe Boundary에서 활성화한다.
 
 Preset:
 
@@ -173,6 +176,7 @@ LogisticsSettlementPlan
 ├─ fromInstant
 ├─ toInstant
 ├─ policySnapshotRef
+├─ sourceOrderDigest
 ├─ ruleContentVersionSet
 ├─ consumerPlans[]
 ├─ sourceAllocationPlans[]
@@ -199,6 +203,8 @@ ConsumerSupplyPlan
 └─ consequenceRecipeRef?
 ```
 
+`sourceOrderDigest`는 `policySnapshotRef`, 활성 Supply Source membership revision과 Stable 정렬 결과를 반영한다. Plan과 Reservation은 이 Digest를 고정한다.
+
 ## 8. 공급원 탐색과 우선순위
 
 기본 후보:
@@ -212,6 +218,22 @@ accessible campaign storage
 ```
 
 Campaign Policy는 순서를 교체할 수 있다.
+
+권위 분리:
+
+```text
+Slice 06 Inventory
+→ Source membership·ACL·disclosure·revision
+
+Slice 07 Frozen Campaign Policy
+→ orderedSourceBindingIds·fallbackSourceKinds
+→ sourceOrderDigest
+
+둘을 결합
+→ SupplyAllocationContext
+```
+
+Slice 06은 `SupplyAllocationContext`가 제공한 순위를 사용해 Candidate를 결정적으로 정렬한다. UI Drag 순서나 별도 `priority` 필드는 권위가 아니다.
 
 후보 조건:
 
@@ -254,6 +276,8 @@ Blocking Warning이 없으면 Time Advance Transaction과 함께 Commit한다.
 
 Time Advance 전에 기간, Consumer별 요구량, 선택된 공급원, 소비 Stack, 예상 남은 일수, 부족량과 결과를 표시한다. DM은 `Confirm`, `Adjust Sources`, `Exclude Consumer`, `Cancel Time Advance`를 선택한다.
 
+`Adjust Sources`가 지속 Policy 순서를 바꾸는 경우 즉시 Inventory priority를 수정하지 않는다. `ProposeSupplySourcePriorityChange`를 통해 Candidate Policy Snapshot을 만든다. 현재 Plan에만 적용되는 일회성 Override는 Plan Hash와 Mandatory Audit에 별도로 기록한다.
+
 ### manual_record_only
 
 자동 차감과 결핍 Recipe 실행 없이 Ledger에 필요한 양과 DM의 수동 처리 결과만 기록한다.
@@ -279,6 +303,8 @@ Atomic Commit 대상:
 - Shortage Effect·RuleExecution 생성
 - Audit Ledger
 
+Commit 직전에 `policySnapshotRef`, `sourceOrderDigest`, Source Binding Revision을 모두 재검증한다.
+
 Time Commit이 실패하면 Supply를 소비하지 않는다. Supply Reservation이 실패하면 Time Advance Plan을 재계산하거나 중단한다.
 
 ## 11. 여러 날 Advance
@@ -293,7 +319,7 @@ Time Commit이 실패하면 Supply를 소비하지 않는다. Supply Reservation
 
 각 Blocking Checkpoint까지 순차 처리한다. 3일째 사건이 여행을 중단하면 4–8일 소비를 확정하지 않는다.
 
-반복 Settlement는 `settlementId + boundaryInstant + policySnapshotRef` 기반 Idempotency Key를 사용한다.
+반복 Settlement는 `settlementId + boundaryInstant + policySnapshotRef + sourceOrderDigest` 기반 Idempotency Key를 사용한다.
 
 ## 12. Shortage
 
@@ -356,6 +382,14 @@ Toggle On:
 - 과거 구간 자동 소급 없음
 - 선택적 Retroactive Reconcile은 별도 Preview·확인 필요
 
+Supply Source 순서 변경:
+
+- `ProposeSupplySourcePriorityChange`가 Candidate Snapshot과 새 `sourceOrderDigest`를 만든다.
+- 이전 Digest를 참조하는 Pending Plan·Reservation은 `SETTLEMENT_PLAN_STALE`로 전환한다.
+- 활성 Commit 중 Snapshot을 교체하지 않는다.
+- Safe Boundary 활성화 후 Retry·Restart는 새 Snapshot으로 Allocation을 재생성한다.
+- 이미 Commit된 Ledger의 Digest와 Allocation은 변경하지 않는다.
+
 활성 Transaction이나 고정된 Travel·Rest Scope의 Snapshot을 중간 교체하지 않는다.
 
 ## 14. Projection과 UI
@@ -373,6 +407,7 @@ DM Projection:
 - 전체 Consumer와 Supply Source
 - 숨은 NPC·Follower·Mount 요구량
 - Policy Snapshot과 변경 영향
+- Source Order Diff와 stale Plan
 - 자동 제외 이유
 - Shortage Consequence Preview
 - Settlement Ledger와 Override Audit
@@ -391,7 +426,7 @@ logistics.policy_changed
 logistics.reconciliation_committed
 ```
 
-Event에는 `correlationId`, `policySnapshotRef`, `timeAdvanceTransactionId`, `authorityRevision`, `authorityEpoch`를 포함한다.
+Event에는 `correlationId`, `policySnapshotRef`, `sourceOrderDigest`, `timeAdvanceTransactionId`, `authorityRevision`, `authorityEpoch`를 포함한다.
 
 ## 16. 실패 코드
 
@@ -400,6 +435,7 @@ LOGISTICS_DISABLED
 NO_ACTIVE_REQUIREMENT_DEFINITION
 RULE_CONTENT_VERSION_MISMATCH
 STALE_POLICY_SNAPSHOT
+STALE_SOURCE_ORDER
 STALE_INVENTORY_REVISION
 SUPPLY_RESERVED
 SUPPLY_SOURCE_INACCESSIBLE
@@ -417,6 +453,9 @@ RETROACTIVE_RECONCILIATION_REQUIRED
 - 부분 날짜가 누락되거나 중복 소비되지 않는다.
 - 여러 날 Advance가 중간 Schedule과 Settlement를 건너뛰지 않는다.
 - 다중 Consumer와 여러 Container의 Allocation이 Stable 순서로 결정된다.
+- Supply Source 순서의 유일한 권위는 Frozen Policy Snapshot이다.
+- Pending Settlement 중 Source 순서 변경 시 기존 Plan·Reservation이 stale 처리된다.
+- Safe Boundary 활성화 후 Retry·Restart가 동일 Snapshot에서 동일 Allocation을 재생성한다.
 - 보호된 Item을 자동 소비하지 않는다.
 - 같은 Settlement Retry가 Item을 두 번 소비하지 않는다.
 - Toggle On·Off가 과거 State를 조용히 재작성하지 않는다.
