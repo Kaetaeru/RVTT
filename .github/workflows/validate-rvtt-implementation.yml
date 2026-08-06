@@ -153,9 +153,21 @@ jobs:
         working-directory: implementation/roblox
         run: rojo build multi-client.project.json --output /tmp/RVTT-multi-client.rbxlx
 
+      - name: Build real transport place with Rojo
+        working-directory: implementation/roblox
+        run: rojo build real-transport.project.json --output /tmp/RVTT-real-transport.rbxlx
+
       - name: Build persistence acceptance place with Rojo
         working-directory: implementation/roblox
         run: rojo build persistence-acceptance.project.json --output /tmp/RVTT-persistence-acceptance.rbxlx
+
+      - name: Build restart seed place with Rojo
+        working-directory: implementation/roblox
+        run: rojo build restart-seed.project.json --output /tmp/RVTT-restart-seed.rbxlx
+
+      - name: Build restart verify place with Rojo
+        working-directory: implementation/roblox
+        run: rojo build restart-verify.project.json --output /tmp/RVTT-restart-verify.rbxlx
 
       - name: Build Slice 01 acceptance place with Rojo
         working-directory: implementation/roblox
@@ -253,7 +265,10 @@ jobs:
             implementation/roblox/grand-single-client.project.json
             implementation/roblox/live-datastore.project.json
             implementation/roblox/multi-client.project.json
+            implementation/roblox/real-transport.project.json
             implementation/roblox/persistence-acceptance.project.json
+            implementation/roblox/restart-seed.project.json
+            implementation/roblox/restart-verify.project.json
             implementation/roblox/slice01-acceptance.project.json
             implementation/roblox/stylua.toml
             implementation/roblox/selene.toml
