@@ -37,6 +37,9 @@
         "RVTTUI": {"$path": "src/StarterGui/RVTT"},
         "RVTTWorldTokenAcceptance": {
           "$path": "tests/WorldTokenAcceptance/WorldTokenAcceptance.client.lua"
+        },
+        "RVTTContextInputAcceptance": {
+          "$path": "tests/ContextInputAcceptance/ContextInputAcceptance.client.lua"
         }
       }
     }
