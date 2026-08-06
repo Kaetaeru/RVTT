@@ -1,6 +1,6 @@
 --!strict
 
-return function(harness)
+return function(harness: any)
 	local ScenarioRuntime = require(script.Parent.ScenarioRuntime)
 	local scenario = ScenarioRuntime.new(1010, "dm")
 
@@ -115,13 +115,14 @@ return function(harness)
 		3,
 		"recompiled candidate uses current source revision"
 	)
-	harness:equal(
-		if recompileOutcome.objects["object:slice-10-door"] ~= nil
-			then 1
-			else 0 + if recompileOutcome.objects["object:slice-10-floor"] ~= nil then 1 else 0,
-		2,
-		"recompiled candidate contains both stable objects"
-	)
+	local compiledObjectCount = 0
+	if recompileOutcome.objects["object:slice-10-door"] ~= nil then
+		compiledObjectCount += 1
+	end
+	if recompileOutcome.objects["object:slice-10-floor"] ~= nil then
+		compiledObjectCount += 1
+	end
+	harness:equal(compiledObjectCount, 2, "recompiled candidate contains both stable objects")
 
 	local publish = scenario:execute("authoring.publish", {
 		sceneId = sceneId,
