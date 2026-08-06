@@ -59,11 +59,7 @@ return function(harness: any)
 		harness:equal(fenceResult.value.fencingToken, 1, "write fence keeps coordinator token")
 	end
 
-	coordinator.renewResult = Result.err(
-		"PERSISTENCE_FAILED",
-		"error.persistence.failed",
-		true
-	)
+	coordinator.renewResult = Result.err("PERSISTENCE_FAILED", "error.persistence.failed", true)
 	local transientRenew = ownership:renewOnce()
 	harness:expect(not transientRenew.ok, "transient renew failure is surfaced")
 	harness:expect(
