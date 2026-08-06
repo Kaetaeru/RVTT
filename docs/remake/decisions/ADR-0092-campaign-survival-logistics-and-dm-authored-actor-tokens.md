@@ -119,7 +119,9 @@ Actor Inventory
 → 접근 가능한 Camp·Campaign Storage
 ```
 
-DM은 Campaign 단위로 우선순위를 변경할 수 있다.
+DM은 Campaign 단위로 우선순위를 변경할 수 있다. 공급원 순서는 `survival.source_priority` Campaign Policy Family가 소유하며 Frozen Policy Snapshot에 포함된다.
+
+Slice 06 Inventory는 공급원의 membership, ACL, disclosure와 revision만 소유한다. `SupplySourceBinding`에 독립적으로 변경 가능한 `priority`를 저장하지 않는다. 순서 변경은 Slice 07의 Candidate Policy Snapshot을 생성하고 영향 Preview와 Safe Boundary Activation을 거쳐야 한다. 이미 작성된 Settlement Plan은 기존 Snapshot을 유지하거나 stale 처리되며, 같은 Snapshot 안에서 순서만 조용히 바뀌지 않는다.
 
 Item은 명시적인 `supplyKind`, `supplyUnits`, `consumptionPolicy`를 가져야 한다. 이름이나 Thumbnail만 보고 음식처럼 보이는 Item을 자동 소비하지 않는다.
 
@@ -175,10 +177,16 @@ Prompt에는 다음을 넣는다.
 
 Actor Model 이름은 문서에 고정 목록으로 복사하지 않는다. Prompt 생성 시 `ActorModelCatalogProjection`을 Stable Asset ID 순으로 열거한다.
 
-현재 Registry가 비어 있으면 다음을 넣는다.
+현재 Registry가 비어 있으면 다음 canonical 구조를 넣는다.
 
 ```json
-{"models": []}
+{
+  "schemaVersion": "rvtt.actor-model-catalog.v1",
+  "catalogRevision": 0,
+  "packageVersionSet": [],
+  "models": [],
+  "disclosureDigest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}
 ```
 
 AI는 존재하지 않는 Model ID를 발명할 수 없으며, DM이 Model을 등록하거나 명시적 Placeholder를 선택하기 전에는 Publish할 수 없다.
@@ -190,7 +198,8 @@ AI는 존재하지 않는 Model ID를 발명할 수 없으며, DM이 Model을 �
 - Actor Model Import 시 Script 계열 Instance는 거부하거나 제거한다.
 - Model·Texture·Audio의 Rights와 Provenance가 필수다.
 - 공식 Stat Block이라고 표시하려면 활성 Rule Package의 Stable Source Anchor가 필요하다.
-- 출처가 없는 항목은 `homebrew` 또는 `campaign_custom`으로 표시한다.
+- 출처가 없는 항목의 canonical `sourceType`은 `campaign_homebrew` 또는 `unknown_draft`다.
+- `homebrew`와 `campaign_custom`은 legacy alias이며 Strict Schema에서 거부한다.
 - 공식 수치와 CR을 자동으로 재조정하지 않는다.
 - Automation은 `manual` 또는 신뢰된 `recipeRef`만 허용한다.
 - Validation을 통과해도 DM의 명시적 Publish 전에는 Scene에서 사용할 수 없다.
@@ -216,6 +225,7 @@ Actor Preview
 
 - Campaign 생성 시 Narrative·Standard·Survival·Custom을 선택할 수 있다.
 - Campaign 진행 중 Module 변경은 Candidate Snapshot과 영향 Preview를 사용한다.
+- Supply Source 순서 변경도 Candidate Snapshot과 Safe Boundary를 사용하며 Pending Plan을 stale 처리한다.
 - Toggle이 과거 Item·Effect를 조용히 재작성하지 않는다.
 - 여러 날 Time Advance가 중간 사건과 Supply Settlement Checkpoint를 건너뛰지 않는다.
 - 식량·물 정산은 명시적 Supply Metadata가 있는 ItemInstance만 소비한다.
@@ -223,7 +233,9 @@ Actor Preview
 - Rollback·Retry 후 같은 Settlement가 중복 소비되지 않는다.
 - DM이 Actor Model을 등록하고 Stat Block JSON과 결합할 수 있다.
 - Prompt Builder가 현재 Actor Model Catalog의 모든 보이는 Entry를 Stable 순서로 포함한다.
+- Empty Catalog는 단일 versioned JSON Schema와 canonical fixture를 사용한다.
 - 존재하지 않는 `actorModelAssetId`를 Import하지 못한다.
+- `sourceType` canonical ID와 legacy alias 거부가 Schema fixture로 검증된다.
 - JSON Schema가 임의 Script와 미등록 Recipe를 허용하지 않는다.
 - AI Draft는 자동 Publish되지 않는다.
 - Campaign-local Actor Template이 원본 Core Content를 직접 변경하지 않는다.
