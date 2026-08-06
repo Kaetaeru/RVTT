@@ -2,6 +2,7 @@
 
 local ContextActionService = game:GetService("ContextActionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
 local Signal = require(ReplicatedStorage.RVTT.Shared.Core.Signal)
@@ -9,6 +10,7 @@ local Signal = require(ReplicatedStorage.RVTT.Shared.Core.Signal)
 local FRAME_ACTION = "RVTTWorldCameraFrame"
 local PAN_ACTION = "RVTTWorldCameraPan"
 local INPUT_PRIORITY = Enum.ContextActionPriority.High.Value
+local MIN_POINTER_DELTA = 0.01
 
 export type Controller = {
 	renderer: any,
@@ -18,6 +20,7 @@ export type Controller = {
 	yaw: number,
 	elevation: number,
 	dragging: boolean,
+	lastPointerPosition: Vector2?,
 	connections: { RBXScriptConnection },
 	previousType: Enum.CameraType?,
 	previousCFrame: CFrame?,
@@ -73,6 +76,7 @@ function Controller.new(renderer: any, enabled: boolean): Controller
 		yaw = math.rad(45),
 		elevation = math.rad(38),
 		dragging = false,
+		lastPointerPosition = nil,
 		connections = {},
 		previousType = nil,
 		previousCFrame = nil,
@@ -164,7 +168,7 @@ function Controller.frameAll(self: Controller): boolean
 end
 
 function Controller.panPixels(self: Controller, delta: Vector2): boolean
-	if not self.enabled or delta.Magnitude <= 0 then
+	if not self.enabled or delta.Magnitude < MIN_POINTER_DELTA then
 		return false
 	end
 	local currentCamera = camera()
@@ -218,12 +222,14 @@ function Controller.start(self: Controller)
 		function(_actionName: string, inputState: Enum.UserInputState): Enum.ContextActionResult
 			if inputState == Enum.UserInputState.Begin then
 				self.dragging = true
+				self.lastPointerPosition = UserInputService:GetMouseLocation()
 				print("[RVTT WorldCamera Input] action=pan-start source=mouse-middle")
 			elseif
 				inputState == Enum.UserInputState.End
 				or inputState == Enum.UserInputState.Cancel
 			then
 				self.dragging = false
+				self.lastPointerPosition = nil
 				print("[RVTT WorldCamera Input] action=pan-end source=mouse-middle")
 			end
 			return Enum.ContextActionResult.Sink
@@ -236,21 +242,42 @@ function Controller.start(self: Controller)
 	table.insert(
 		self.connections,
 		UserInputService.InputChanged:Connect(function(input, processed)
+			if input.UserInputType ~= Enum.UserInputType.MouseWheel then
+				return
+			end
 			local current = camera()
 			local before = if current ~= nil then current.CFrame else nil
-			if input.UserInputType == Enum.UserInputType.MouseWheel then
-				local applied = self:zoomBy(-input.Position.Z)
-				self:_reportInput("zoom", "mouse-wheel", processed, before, applied)
-			elseif self.dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-				local applied = self:panPixels(Vector2.new(input.Delta.X, input.Delta.Y))
-				self:_reportInput("pan", "mouse-middle-drag", processed, before, applied)
+			local applied = self:zoomBy(-input.Position.Z)
+			self:_reportInput("zoom", "mouse-wheel", processed, before, applied)
+		end)
+	)
+	table.insert(
+		self.connections,
+		RunService.RenderStepped:Connect(function()
+			if not self.dragging then
+				return
 			end
+			local pointerPosition = UserInputService:GetMouseLocation()
+			local previousPointerPosition = self.lastPointerPosition
+			self.lastPointerPosition = pointerPosition
+			if previousPointerPosition == nil then
+				return
+			end
+			local delta = pointerPosition - previousPointerPosition
+			if delta.Magnitude < MIN_POINTER_DELTA then
+				return
+			end
+			local current = camera()
+			local before = if current ~= nil then current.CFrame else nil
+			local applied = self:panPixels(delta)
+			self:_reportInput("pan", "mouse-middle-screen-delta", false, before, applied)
 		end)
 	)
 	table.insert(
 		self.connections,
 		UserInputService.WindowFocusReleased:Connect(function()
 			self.dragging = false
+			self.lastPointerPosition = nil
 		end)
 	)
 end
@@ -263,6 +290,7 @@ function Controller.destroy(self: Controller)
 	end
 	table.clear(self.connections)
 	self.dragging = false
+	self.lastPointerPosition = nil
 	local currentCamera = camera()
 	if currentCamera ~= nil then
 		if self.previousType ~= nil then
