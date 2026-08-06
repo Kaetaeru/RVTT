@@ -8,6 +8,7 @@ local CommandRouter = {}
 CommandRouter.__index = CommandRouter
 
 type PlayerIdResolver = (Player) -> number
+type CommandGuard = (any, any) -> any
 
 local function defaultPlayerIdResolver(player: Player): number
 	return player.UserId
@@ -20,7 +21,8 @@ function CommandRouter.new(
 	roleResolver,
 	projectionPublisher,
 	diagnostics,
-	playerIdResolver: PlayerIdResolver?
+	playerIdResolver: PlayerIdResolver?,
+	commandGuard: CommandGuard?
 )
 	return setmetatable({
 		runtime = runtime,
@@ -30,6 +32,7 @@ function CommandRouter.new(
 		projectionPublisher = projectionPublisher,
 		diagnostics = diagnostics,
 		playerIdResolver = playerIdResolver or defaultPlayerIdResolver,
+		commandGuard = commandGuard,
 	}, CommandRouter)
 end
 
@@ -76,7 +79,17 @@ function CommandRouter:start()
 			commandId = envelope.commandId,
 			correlationId = envelope.correlationId,
 		}
-		local terminalResult = self.runtime:execute(context, envelope)
+		local terminalResult = nil
+		if self.commandGuard ~= nil then
+			local guardResult = self.commandGuard(context, envelope)
+			if not guardResult.ok then
+				terminalResult = guardResult
+			end
+		end
+		if terminalResult == nil then
+			terminalResult = self.runtime:execute(context, envelope)
+		end
+
 		self.remotes.receipt:FireClient(
 			player,
 			receipt(envelope.commandId, "terminal", terminalResult)
