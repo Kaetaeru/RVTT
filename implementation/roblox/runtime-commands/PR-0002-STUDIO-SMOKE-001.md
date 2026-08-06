@@ -77,6 +77,17 @@ studio.read_output
 
 Core Required는 반드시 `MCP_AUTOMATED`여야 한다. 하나라도 `HUMAN_MANUAL` 또는 `NOT_AVAILABLE`이면 이 MCP Smoke Runtime은 `BLOCKED`다. 사람이 대신 Play·Stop·Output Read를 수행해 MCP 자동화 PASS로 기록하지 않는다.
 
+Core Required의 `MCP_AUTOMATED` 선언은 분류 문자열만으로 성립하지 않는다. 각 Mapping에 연결 시점에 실제로 노출된 비어 있지 않은 `actualToolName`과 성공한 호출 Evidence가 있어야 한다.
+
+```text
+studio.start_play_solo: successful invocationEvidence 1개 이상
+studio.stop_play: successful invocationEvidence 1개 이상
+studio.read_output: successful invocationEvidence 2개 이상
+                    (running Output 1개 + post-stop Output 1개)
+```
+
+논리 Capability ID 자체를 `actualToolName`으로 복사하거나, `available` 같은 일반 문자열만 기록한 항목은 실제 Tool Mapping Evidence가 아니며 `BLOCKED`다.
+
 ### Required With Manual Fallback
 
 ```text
@@ -128,12 +139,64 @@ Optional은 `MCP_AUTOMATED`, `HUMAN_MANUAL`, `NOT_AVAILABLE`로 기록할 수 �
 ```text
 logicalCapability
 classification
-actualToolName?
+actualToolName
 manualActionId?
 checkedAt
 checker
 result
+invocationEvidence[]
 ```
+
+조건부 필수 규칙:
+
+- `classification == MCP_AUTOMATED`이면 `actualToolName`은 비어 있지 않아야 하고, 연결된 MCP가 실제 노출한 Tool 이름과 정확히 일치해야 한다.
+- `classification == MCP_AUTOMATED`이면 `invocationEvidence[]`는 비어 있으면 안 된다.
+- `classification == HUMAN_MANUAL`이면 `actualToolName`과 `invocationEvidence[]`를 자동화 증거로 사용하지 않고, 완전한 `manualActionId`를 요구한다.
+- `classification == NOT_AVAILABLE`이면 `result`는 누락 상태를 명확히 기록하고 Required 항목은 `BLOCKED`다.
+
+각 `invocationEvidence[]` 항목은 다음을 가진다.
+
+```text
+invocationId
+logicalCapability
+actualToolName
+invokedAt
+finishedAt
+invocationResult: SUCCESS | FAILURE | TIMEOUT | DISCONNECTED
+requestSummary
+responseSummary
+evidenceFiles[]
+```
+
+`evidenceFiles[]`는 실제 호출 결과와 연결된 파일을 가리킨다. 예:
+
+```text
+start_play_solo → play-start-invocation.json, S02-play-solo-running.png
+read_output(running) → output-running-invocation.json, studio-output-running.log
+stop_play → play-stop-invocation.json, S03-post-stop-edit-mode.png
+read_output(post-stop) → output-final-invocation.json, studio-output-final.log
+```
+
+호출 실패 Evidence를 보존할 수 있지만 성공 Evidence로 세지 않는다.
+
+## Capability Mapping Fixture Checks
+
+Build 또는 Play 전에 다음 세 Fixture 판정을 수행하고 `capability-mapping-validation.json`에 기록한다.
+
+```text
+F01 classification=MCP_AUTOMATED + actualToolName 누락
+    → BLOCKED_EXPECTED
+
+F02 classification=MCP_AUTOMATED + invocationEvidence 누락
+    → BLOCKED_EXPECTED
+
+F03 classification=MCP_AUTOMATED + 실제 actualToolName
+    + 최소 성공 호출 수
+    + timestamp/result/evidenceFiles 완전
+    → ELIGIBLE_EXPECTED
+```
+
+Core Required 세 Capability 각각에 F01·F02를 적용한다. `studio.read_output`의 F03은 running과 post-stop 두 성공 호출이 모두 있어야 한다. Fixture 판정이 예상과 다르면 Runtime을 시작하지 않고 `BLOCKED`로 기록한다.
 
 ## Manual Action Record
 
@@ -177,20 +240,21 @@ Output Read
 2. 저장소 밖 `executionEvidenceRoot`를 만든다.
 3. Pin된 Rojo를 확인한다.
 4. 승인된 Static Gate Evidence를 기록한다.
-5. 다음 Build를 실행한다.
+5. MCP Tool 목록을 수집하고 Capability Mapping Fixture Checks를 수행한다.
+6. 다음 Build를 실행한다.
 
 ```bash
 cd implementation/roblox
 rojo build default.project.json --output /tmp/RVTT-studio-smoke.rbxlx
 ```
 
-6. Build exit code와 SHA-256을 `executionEvidenceRoot/build-manifest.txt`에 기록한다.
-7. MCP 자동화 또는 M01 절차로 `/tmp/RVTT-studio-smoke.rbxlx`를 연다.
-8. 실제 열린 Place와 Target SHA의 관계를 확인한다.
-9. 지원되면 Output을 Clear한다.
-10. Source-clean Predicate를 다시 실행한다.
+7. Build exit code와 SHA-256을 `executionEvidenceRoot/build-manifest.txt`에 기록한다.
+8. MCP 자동화 또는 M01 절차로 `/tmp/RVTT-studio-smoke.rbxlx`를 연다.
+9. 실제 열린 Place와 Target SHA의 관계를 확인한다.
+10. 지원되면 Output을 Clear한다.
+11. Source-clean Predicate를 다시 실행한다.
 
-Build 실패, Place 불일치, Target SHA mismatch 또는 저장소 Source 변경이면 즉시 중단한다.
+Build 실패, Place 불일치, Target SHA mismatch, Capability Mapping Fixture 실패 또는 저장소 Source 변경이면 즉시 중단한다.
 
 ## Automated Actions
 
@@ -198,15 +262,15 @@ MCP가 지원하는 범위에서 순서대로 수행한다.
 
 1. Place가 Edit Mode로 열린 상태의 Screenshot을 저장한다. MCP Screenshot이 없으면 M02로 수행한다.
 2. 지원되면 핵심 Root Instance Snapshot을 저장한다.
-3. MCP Tool로 Play Solo를 시작한다.
+3. Mapping에 기록된 실제 MCP Tool로 Play Solo를 시작하고 Invocation Evidence를 저장한다.
 4. Studio가 Running 상태가 될 때까지 최대 30초 대기한다.
 5. Running 상태 확인 후 최소 5초 동안 유지한다.
-6. MCP Tool로 Output 전체를 읽어 `studio-output-running.log`에 저장한다.
+6. Mapping에 기록된 실제 MCP Tool로 Output 전체를 읽고 호출 Evidence와 `studio-output-running.log`를 저장한다.
 7. Running 상태 Screenshot을 저장한다. MCP Screenshot이 없으면 M02로 수행한다.
 8. 지원되면 `Players`, `Workspace`, `ReplicatedStorage`, `ServerScriptService`, `StarterGui`의 고수준 Snapshot을 저장한다. Private value나 대용량 Source 본문은 제외한다.
-9. MCP Tool로 Play를 중지한다.
+9. Mapping에 기록된 실제 MCP Tool로 Play를 중지하고 Invocation Evidence를 저장한다.
 10. Edit Mode 복귀를 최대 30초 기다린다.
-11. MCP Tool로 Stop 이후 Output을 `studio-output-final.log`에 저장한다.
+11. Mapping에 기록된 실제 MCP Tool로 Stop 이후 Output을 읽고 호출 Evidence와 `studio-output-final.log`를 저장한다.
 12. Post-stop Screenshot을 저장한다. MCP Screenshot이 없으면 M02로 수행한다.
 13. MCP Export 또는 M03 절차로 Evidence를 `executionEvidenceRoot`에 완성한다.
 14. Source-clean Predicate를 다시 실행한다.
@@ -231,18 +295,24 @@ A01 targetSha == PR HEAD at runtime start
 A02 localHead == targetSha
 A03 sourceWorkingTreeCleanBefore == true
 A04 staticGateApproved == true
-A05 coreRequiredCapabilities are all MCP_AUTOMATED
-A06 manual-fallback Required capability is not NOT_AVAILABLE
-A07 each HUMAN_MANUAL mapping has a complete linked manual-action record and evidence
-A08 rojoBuildExitCode == 0
-A09 openedPlace matches build manifest
-A10 playSolo reached running state within 30s through MCP
-A11 output logs were captured through MCP while running and after stop
-A12 forbidden log occurrences are zero or exactly bounded by log-allowlist.json
-A13 running screenshot exists and is readable
-A14 stop returned Studio to edit state within 30s through MCP
-A15 evidence bundle metadata references exact targetSha and commandId
-A16 sourceWorkingTreeCleanAfter == true
+A05 each Core Required mapping is MCP_AUTOMATED
+    and has a non-empty real actualToolName
+    and complete successful invocationEvidence at the required count
+A06 each MCP_AUTOMATED mapping has matching actualToolName in the exposed Tool list
+    and every invocation has timestamps, result and evidenceFiles
+A07 capability fixture F01 and F02 are BLOCKED_EXPECTED
+    and F03 is ELIGIBLE_EXPECTED for every Core Required capability
+A08 manual-fallback Required capability is not NOT_AVAILABLE
+A09 each HUMAN_MANUAL mapping has a complete linked manual-action record and evidence
+A10 rojoBuildExitCode == 0
+A11 openedPlace matches build manifest
+A12 playSolo reached running state within 30s through the mapped MCP Tool
+A13 output logs were captured through the mapped MCP Tool while running and after stop
+A14 forbidden log occurrences are zero or exactly bounded by log-allowlist.json
+A15 running screenshot exists and is readable
+A16 stop returned Studio to edit state within 30s through the mapped MCP Tool
+A17 evidence bundle metadata references exact targetSha and commandId
+A18 sourceWorkingTreeCleanAfter == true
 ```
 
 모든 Assertion이 충족돼야 `PASS`다. Optional Capability만 빠진 경우에 한해 `PARTIAL`을 사용할 수 있다. Core Required 또는 Hard Precondition이 빠지면 `BLOCKED`다.
@@ -339,6 +409,9 @@ Wrong Place or Project
 MCP disconnect
 Studio crash
 Core Required Capability not MCP_AUTOMATED
+MCP_AUTOMATED mapping missing real actualToolName
+MCP_AUTOMATED mapping missing required successful invocationEvidence
+Capability Mapping Fixture result differs from expected disposition
 Required With Manual Fallback capability unavailable
 Incomplete manual-action record
 Forbidden log occurrence outside bounded allowlist
@@ -349,7 +422,7 @@ Evidence target mismatch
 
 ## Cleanup Steps
 
-1. Play 중이면 반드시 MCP Stop을 시도한다.
+1. Play 중이면 반드시 Mapping에 기록된 MCP Stop Tool 호출을 시도한다.
 2. Studio와 MCP 연결 상태를 기록한다.
 3. 임시 `/tmp/RVTT-studio-smoke.rbxlx`는 Evidence Hash 기록 후 삭제할 수 있다.
 4. 저장소 Source와 PR 파일은 Runtime 과정에서 수정하지 않는다.
@@ -364,10 +437,15 @@ Evidence target mismatch
 /tmp/rvtt-studio-evidence/<targetSha>/RVTT-PR2-STUDIO-SMOKE-001/attempt-001/
 ├─ run-metadata.json
 ├─ capability-handshake.json
+├─ capability-mapping-validation.json
 ├─ manual-action-records.json
 ├─ build-manifest.txt
 ├─ source-clean-before.txt
 ├─ source-clean-after.txt
+├─ play-start-invocation.json
+├─ output-running-invocation.json
+├─ play-stop-invocation.json
+├─ output-final-invocation.json
 ├─ studio-output-running.log
 ├─ studio-output-final.log
 ├─ log-allowlist.json
@@ -424,8 +502,9 @@ ABORTED_STALE_HEAD
 
 ```text
 정확한 SHA의 Place를 Build·Open할 수 있음
-MCP로 Play Solo Start·Stop이 가능함
-MCP로 Output을 읽을 수 있음
+실제 Mapping된 MCP Tool로 Play Solo Start·Stop이 가능함
+실제 Mapping된 MCP Tool로 Output을 읽을 수 있음
+각 Core 호출이 timestamp·result·Evidence에 연결됨
 Screenshot과 최소 Evidence를 저장할 수 있음
 ```
 
