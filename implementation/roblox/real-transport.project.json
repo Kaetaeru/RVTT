@@ -1,0 +1,28 @@
+{
+  "name": "RVTTRealTransportAcceptance",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "RVTT": {"$path": "src/ReplicatedStorage/RVTT"},
+      "RVTT_TestMode": {
+        "$className": "StringValue",
+        "$properties": {"Value": "real-transport"}
+      }
+    },
+    "ServerScriptService": {
+      "RVTT": {
+        "$className": "Folder",
+        "Server": {"$path": "src/ServerScriptService/RVTT/Server"}
+      },
+      "RVTTRealTransportTests": {
+        "$className": "Folder",
+        "ServerRunner": {"$path": "tests/RealTransport/ServerRunner.server.lua"}
+      }
+    },
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "RVTTRealTransportClient": {"$path": "tests/RealTransport/ClientRunner.client.lua"}
+      }
+    }
+  }
+}
