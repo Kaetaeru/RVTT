@@ -71,7 +71,8 @@
       "project": "live-datastore.project.json",
       "persistence": true,
       "summaryToken": "[RVTT Live DataStore]",
-      "passRegex": "\\[RVTT Live DataStore\\].*failed=0"
+      "passRegex": "\\[RVTT Live DataStore\\].*failed=0",
+      "blocker": "Deferred until the dedicated persistence grand milestone"
     },
     {
       "order": 50,
@@ -83,7 +84,8 @@
       "project": "persistence-acceptance.project.json",
       "persistence": true,
       "summaryToken": "[RVTT Persistence Batch Summary]",
-      "passRegex": "\\[RVTT Persistence Batch Summary\\].*result=PASS.*failed=0"
+      "passRegex": "\\[RVTT Persistence Batch Summary\\].*result=PASS.*failed=0",
+      "blocker": "Persistence summary harness and published restart flow are not complete"
     },
     {
       "order": 100,
@@ -92,7 +94,8 @@
       "status": "planned",
       "execution": "studio-campaign",
       "group": "slice",
-      "persistence": false
+      "persistence": false,
+      "blocker": "Slice 02 acceptance harness and summary are not implemented"
     },
     {
       "order": 110,
@@ -101,7 +104,8 @@
       "status": "planned",
       "execution": "studio-campaign",
       "group": "slice",
-      "persistence": false
+      "persistence": false,
+      "blocker": "Slice 03 acceptance harness and summary are not implemented"
     },
     {
       "order": 120,
@@ -110,7 +114,8 @@
       "status": "planned",
       "execution": "studio-campaign",
       "group": "slice",
-      "persistence": false
+      "persistence": false,
+      "blocker": "Slice 04 acceptance harness and summary are not implemented"
     },
     {
       "order": 130,
@@ -119,7 +124,8 @@
       "status": "planned",
       "execution": "studio-campaign",
       "group": "slice",
-      "persistence": false
+      "persistence": false,
+      "blocker": "Slice 05 acceptance harness and summary are not implemented"
     },
     {
       "order": 140,
@@ -128,7 +134,8 @@
       "status": "planned",
       "execution": "studio-campaign",
       "group": "slice",
-      "persistence": false
+      "persistence": false,
+      "blocker": "Slice 06 acceptance harness and summary are not implemented"
     },
     {
       "order": 150,
@@ -137,7 +144,8 @@
       "status": "planned",
       "execution": "studio-campaign",
       "group": "slice",
-      "persistence": false
+      "persistence": false,
+      "blocker": "Slice 07 acceptance harness and summary are not implemented"
     },
     {
       "order": 160,
@@ -146,7 +154,8 @@
       "status": "planned",
       "execution": "studio-campaign",
       "group": "slice",
-      "persistence": false
+      "persistence": false,
+      "blocker": "Slice 08 acceptance harness and summary are not implemented"
     },
     {
       "order": 170,
@@ -155,7 +164,8 @@
       "status": "planned",
       "execution": "studio-campaign",
       "group": "slice",
-      "persistence": false
+      "persistence": false,
+      "blocker": "Slice 09 acceptance harness and summary are not implemented"
     },
     {
       "order": 180,
@@ -164,7 +174,8 @@
       "status": "planned",
       "execution": "studio-campaign",
       "group": "slice",
-      "persistence": false
+      "persistence": false,
+      "blocker": "Slice 10 acceptance harness and summary are not implemented"
     },
     {
       "order": 190,
@@ -173,7 +184,8 @@
       "status": "planned",
       "execution": "studio-campaign",
       "group": "slice",
-      "persistence": false
+      "persistence": false,
+      "blocker": "Slice 11 acceptance harness and summary are not implemented"
     },
     {
       "order": 200,
@@ -182,7 +194,8 @@
       "status": "planned",
       "execution": "studio-campaign",
       "group": "slice",
-      "persistence": false
+      "persistence": false,
+      "blocker": "Slice 12 acceptance harness and summary are not implemented"
     },
     {
       "order": 210,
@@ -221,7 +234,8 @@
       "status": "planned",
       "execution": "studio-human-review",
       "group": "quality",
-      "persistence": false
+      "persistence": false,
+      "blocker": "Human review capture and visual redesign are not implemented"
     },
     {
       "order": 250,
@@ -230,7 +244,8 @@
       "status": "planned",
       "execution": "automated-and-studio",
       "group": "quality",
-      "persistence": true
+      "persistence": true,
+      "blocker": "Network and storage fault injection host is not implemented"
     },
     {
       "order": 260,
@@ -239,7 +254,8 @@
       "status": "planned",
       "execution": "studio-soak",
       "group": "quality",
-      "persistence": true
+      "persistence": true,
+      "blocker": "Performance budgets and soak host are not implemented"
     },
     {
       "order": 270,
@@ -248,7 +264,8 @@
       "status": "planned",
       "execution": "grand-campaign",
       "group": "release",
-      "persistence": true
+      "persistence": true,
+      "blocker": "Slices 02 through 15 and release evidence are incomplete"
     }
   ]
 }
