@@ -7,82 +7,138 @@ if testMode == nil or not testMode:IsA("StringValue") or testMode.Value ~= "unit
 end
 
 local Harness = require(script.Parent.TestHarness)
-local harness = Harness.new()
+local aggregate = Harness.new()
 
 type Spec = {
+	id: string,
 	name: string,
 	runner: (any) -> (),
 }
 
 local specs: { Spec } = {
-	{ name = "Core.spec", runner = require(script.Parent.Unit["Core.spec"]) :: any },
 	{
+		id = "unit-core",
+		name = "Core.spec",
+		runner = require(script.Parent.Unit["Core.spec"]) :: any,
+	},
+	{
+		id = "unit-accent-theme",
 		name = "AccentTheme.spec",
 		runner = require(script.Parent.Unit["AccentTheme.spec"]) :: any,
 	},
-	{ name = "Envelope.spec", runner = require(script.Parent.Unit["Envelope.spec"]) :: any },
 	{
+		id = "unit-envelope",
+		name = "Envelope.spec",
+		runner = require(script.Parent.Unit["Envelope.spec"]) :: any,
+	},
+	{
+		id = "unit-world-token-contract",
 		name = "WorldTokenContract.spec",
 		runner = require(script.Parent.Unit["WorldTokenContract.spec"]) :: any,
 	},
 	{
+		id = "unit-world-interaction-math",
 		name = "WorldInteractionMath.spec",
 		runner = require(script.Parent.Unit["WorldInteractionMath.spec"]) :: any,
 	},
 	{
+		id = "unit-batch-summary",
 		name = "BatchSummary.spec",
 		runner = require(script.Parent.Unit["BatchSummary.spec"]) :: any,
 	},
 	{
+		id = "unit-remote-bootstrap",
 		name = "RemoteBootstrap.spec",
 		runner = require(script.Parent.Unit["RemoteBootstrap.spec"]) :: any,
 	},
-	{ name = "Persistence.spec", runner = require(script.Parent.Unit["Persistence.spec"]) :: any },
 	{
+		id = "unit-persistence",
+		name = "Persistence.spec",
+		runner = require(script.Parent.Unit["Persistence.spec"]) :: any,
+	},
+	{
+		id = "unit-profile-store",
 		name = "ProfileStore.spec",
 		runner = require(script.Parent.Unit["ProfileStore.spec"]) :: any,
 	},
 	{
+		id = "integration-domain-registration",
 		name = "DomainRegistration.spec",
 		runner = require(script.Parent.Integration["DomainRegistration.spec"]) :: any,
 	},
 	{
+		id = "integration-authority-flow",
 		name = "AuthorityFlow.spec",
 		runner = require(script.Parent.Integration["AuthorityFlow.spec"]) :: any,
 	},
 	{
+		id = "integration-security-boundary",
 		name = "SecurityBoundary.spec",
 		runner = require(script.Parent.Integration["SecurityBoundary.spec"]) :: any,
 	},
 	{
+		id = "integration-projection-disclosure",
 		name = "ProjectionDisclosure.spec",
 		runner = require(script.Parent.Integration["ProjectionDisclosure.spec"]) :: any,
 	},
 	{
+		id = "integration-ui-preference",
 		name = "UiPreferenceFlow.spec",
 		runner = require(script.Parent.Integration["UiPreferenceFlow.spec"]) :: any,
 	},
 	{
+		id = "integration-multi-viewer",
 		name = "MultiViewerFlow.spec",
 		runner = require(script.Parent.Integration["MultiViewerFlow.spec"]) :: any,
 	},
 	{
+		id = "slice01-session-flow",
 		name = "Slice01Flow.spec",
 		runner = require(script.Parent.Integration["Slice01Flow.spec"]) :: any,
+	},
+	{
+		id = "slice02-core-rules",
+		name = "Slice02CoreRules.spec",
+		runner = require(script.Parent.Integration["Slice02CoreRules.spec"]) :: any,
+	},
+	{
+		id = "slice03-exploration",
+		name = "Slice03Exploration.spec",
+		runner = require(script.Parent.Integration["Slice03Exploration.spec"]) :: any,
+	},
+	{
+		id = "slice04-encounter",
+		name = "Slice04Encounter.spec",
+		runner = require(script.Parent.Integration["Slice04Encounter.spec"]) :: any,
 	},
 }
 
 for _, spec in specs do
+	local specHarness = Harness.new()
 	local ran, errorMessage = xpcall(function()
-		spec.runner(harness)
+		spec.runner(specHarness)
 	end, debug.traceback)
 	if not ran then
-		harness:expect(false, spec.name .. ": " .. tostring(errorMessage))
+		specHarness:expect(false, spec.name .. ": " .. tostring(errorMessage))
+	end
+
+	local result = if specHarness.failed == 0 then "PASS" else "FAIL"
+	print(string.format(
+		"[RVTT Spec Summary] id=%s result=%s passed=%d failed=%d",
+		spec.id,
+		result,
+		specHarness.passed,
+		specHarness.failed
+	))
+
+	aggregate.passed += specHarness.passed
+	aggregate.failed += specHarness.failed
+	for _, failure in specHarness.failures do
+		local scopedFailure = spec.id .. ": " .. failure
+		table.insert(aggregate.failures, scopedFailure)
+		warn("[RVTT Spec Failure]", scopedFailure)
 	end
 end
 
-print(string.format("[RVTT Tests] passed=%d failed=%d", harness.passed, harness.failed))
-for _, failure in harness.failures do
-	warn("[RVTT Tests]", failure)
-end
-assert(harness.failed == 0, "RVTT tests failed")
+print(string.format("[RVTT Tests] passed=%d failed=%d", aggregate.passed, aggregate.failed))
+assert(aggregate.failed == 0, "RVTT tests failed")
