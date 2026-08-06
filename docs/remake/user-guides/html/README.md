@@ -120,6 +120,7 @@ AnchorPoint
 
 - HTML parse: PASS
 - JavaScript syntax: PASS
+- 압축 CSS·Renderer와 원본 Byte 일치: PASS
 - 28개 Renderer smoke test: PASS
 - Screen ID unique: PASS
 - Action Matrix Rows contract: `1,2,3,4`
