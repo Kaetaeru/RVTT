@@ -1,22 +1,25 @@
 # RVTT Implementation Specs 현재 작업 순서
 
-- 상태: COMPLETE_WITH_IMPLEMENTATION_HANDOFF
+- 상태: `COMPLETE_WITH_ADDITIVE_ADR_0092_SYNC`
 - 문서 종류: Implementation Spec Work Order
-- 최종 갱신일: 2026-08-05
+- 최종 갱신일: 2026-08-06
 - 상위 작업 순서: [`../CURRENT-WORK-ORDER.md`](../CURRENT-WORK-ORDER.md)
 - 전체 Slice Roadmap: [`SLICE-ROADMAP.md`](SLICE-ROADMAP.md)
 - Slice Package Index: [`slices/README.md`](slices/README.md)
+- ADR-0092 Sync Plan: [`ADR-0092-SLICE-SYNC-PLAN.md`](ADR-0092-SLICE-SYNC-PLAN.md)
 - 전체 명세 완료 감사: [`All-slice Specification Checkpoint Completion Audit`](../audits/all-slice-specification-checkpoint-completion-audit.md)
 - UI·UX Policy: [`UI·UX Global Policies`](../ui/policies/README.md)
 - Production Workspace: [`implementation/roblox`](../../../implementation/roblox/README.md)
 - 현재 Production Work Order: [`Roblox Implementation Work Order`](../../../implementation/roblox/CURRENT-WORK-ORDER.md)
 
-이 문서는 16개 Slice의 통합 명세 완료와 Production Workspace 인계를 기록한다. 실제 Script 작성 순서는 `implementation/roblox/CURRENT-WORK-ORDER.md`가 소유한다.
+이 문서는 16개 Slice의 Baseline 통합 명세 완료와 Production Workspace 인계를 기록한다. 실제 Script 작성 순서는 `implementation/roblox/CURRENT-WORK-ORDER.md`가 소유한다.
+
+ADR-0092는 완료된 Baseline을 폐기하지 않고 Additive Delta로 단계적으로 흡수한다.
 
 ## 1. 현재 상태
 
 ```text
-16개 Slice 정의
+16개 Slice Baseline 정의
 → DONE
 
 16개 Work Order·Integration Contract·Checkpoint Audit
@@ -28,19 +31,25 @@
 UI·UX Global Policy·Checklist
 → DONE
 
-Greenfield Production Root 결정
+Greenfield Production Root와 Baseline Source
 → DONE
 
-Roblox Service Folder Bootstrap
+현재 Production 작업
+→ Full UI·UX Source·Acceptance 정합화
+
+ADR-0092 Upper Planning Sync
 → DONE
 
-현재 구현 작업
-→ Slice 01 Script Manifest
+ADR-0092 Slice 06·07 Delta
+→ DONE
+
+ADR-0092 Slice 11·12·15·16 Contract Absorption
+→ QUEUED
 ```
 
 ## 2. Greenfield 구현 결정
 
-사용자 결정에 따라 기존 Production Source Tree를 계속 탐색해 연결하는 방식 대신 다음 Root에서 새 구현을 시작한다.
+실제 Production Source와 Test는 다음 Root에서 관리한다.
 
 ```text
 implementation/roblox/
@@ -59,11 +68,11 @@ manifests/
 
 - 기존 문서·명세는 `docs/remake/`에 유지한다.
 - 실제 Production Source와 Test는 `implementation/`에만 둔다.
-- Script는 Slice Manifest 순서대로 하나씩 추가한다.
-- 전체 Framework의 빈 Script를 한 번에 생성하지 않는다.
-- Toolchain·Package·최종 Script 경로는 Manifest에서 실제 필요를 검증하며 확정한다.
+- Script는 현재 Production Work Order와 Manifest 순서대로 추가·수정한다.
+- 새 ADR이 생겨도 관련 Slice 전체의 빈 Script를 한 번에 생성하지 않는다.
+- Toolchain·Package·최종 Script 경로는 실제 Source Mapping과 Test에서 확정한다.
 
-## 3. 완료된 작업
+## 3. 완료된 Baseline 작업
 
 | 순서 | 상태 | 작업 |
 |---:|---|---|
@@ -74,61 +83,104 @@ manifests/
 | 5 | DONE | Slices 13–16 명세·Checkpoint D |
 | 6 | DONE | All-slice Specification Completion Audit |
 | 7 | DONE | UI·UX Global Policy와 Completion Audit |
-| 8 | DONE | Greenfield `implementation/roblox/` Workspace Bootstrap |
-| 9 | HANDOFF | Slice 01 Script Manifest와 Production 구현 |
+| 8 | DONE | Greenfield `implementation/roblox/` Workspace Bootstrap·Baseline |
+| 9 | HANDOFF | Production UI·UX 정합화와 Acceptance |
 
-## 4. Slice 01 인계 대상
+## 4. ADR-0092 Delta 상태
 
-- [`Slice 01 Work Order`](slices/01-first-session-walking-skeleton/CURRENT-WORK-ORDER.md)
-- [`Slice 01 Integration Contract`](slices/01-first-session-walking-skeleton/implementation-contract.md)
-- [`Core Authority 세부 초안`](runtime/001-core-authority-identity-version-and-result.md)
-- [`Slice 01 Checkpoint Audit`](../audits/slices/01-first-session-walking-skeleton-spec-checkpoint-audit.md)
-- [`UI·UX Review Checklist`](../ui/policies/UI-UX-REVIEW-CHECKLIST.md)
-- [`Roblox Implementation Work Order`](../../../implementation/roblox/CURRENT-WORK-ORDER.md)
+| Phase | 상태 | Slice | 책임 |
+|---:|---|---:|---|
+| 0 | DONE | Product·Roadmap | Campaign Rule Profile·Survival·Actor Authoring 제품 범위 연결 |
+| 1 | DONE | 06 | Supply Metadata·Protection·Source·Allocation·Reservation Delta |
+| 2 | DONE | 07 | Policy·Boundary·Requirement·Atomic Settlement·Ledger Delta |
+| 3 | QUEUED | 11 | Campaign Rules·Supply Preview·Ledger·Reconcile DM Tool |
+| 4 | QUEUED | 12 | Requirement·Schema·Trusted Recipe·Model Catalog Content Platform |
+| 5 | QUEUED | 15 | Model Registry·Strict JSON·Prompt·Template Publish·SceneNpc Migration |
+| 6 | QUEUED | 16 | Full-session Fault·Disclosure·Performance·Runbook Gate |
 
-## 5. 다음 구현 순서
+현재 작성된 Delta:
+
+- [`Slice 06 Supply Metadata·Allocation·Reservation`](slices/06-inventory-equipment-world-items/ADR-0092-DELTA.md)
+- [`Slice 07 Campaign Policy·Supply Settlement·Ledger`](slices/07-rest-time-downtime-progression/ADR-0092-DELTA.md)
+
+## 5. Production 순서 보호
+
+현재 Production Lane을 ADR-0092가 선점하지 않는다.
 
 ```text
-Slice 01 Script Manifest
-→ Toolchain·Service Mapping
-→ Shared ID·Version·Result·Stable Error Script
-→ Protocol·Server·Client·Session·Scene·Movement Script
-→ Persistence·Reconnect
-→ Roblox Integration Scenario
-→ Slice 01 Build Acceptance Audit
+Full UI·UX Source 정합화
+→ Static Gate
+→ Exploration·Context Input Studio Retest
+→ Role·Recovery·Accessibility Evidence
 ```
 
-Script별 정확한 경로와 API는 Manifest에서 확정한다. Integration Contract의 의미를 구현 편의로 변경하지 않는다.
+ADR-0092 Production Lane은 다음 순서를 사용한다.
 
-## 6. 남은 Blocker
+```text
+Slice 06 실제 Source Mapping
+→ Supply Metadata·Reservation 구현
+→ Slice 07 Policy·Settlement·Ledger 구현
+→ Slice 11 DM Tool
+→ Slice 12 Content Registry
+→ Slice 15 Actor·Token Pipeline
+→ Slice 16 통합 Evidence
+```
 
-명세 의미는 완료됐지만 Production Script 착수 전에 다음을 Manifest에서 해결한다.
+각 단계는 앞 단계의 Source Mapping·Authority Test·Static Gate가 준비된 후 시작한다.
 
-- Rojo 사용 여부와 Project Mapping
-- Formatter·Linter·Luau Type Check
-- Test Runner와 Studio Integration 방식
-- Package·Registry 실제 Script 분할
+## 6. Slice 06·07 인계 대상
+
+### Slice 06
+
+- [`Work Order`](slices/06-inventory-equipment-world-items/CURRENT-WORK-ORDER.md)
+- [`Baseline Integration Contract`](slices/06-inventory-equipment-world-items/implementation-contract.md)
+- [`ADR-0092 Delta`](slices/06-inventory-equipment-world-items/ADR-0092-DELTA.md)
+
+### Slice 07
+
+- [`Work Order`](slices/07-rest-time-downtime-progression/CURRENT-WORK-ORDER.md)
+- [`Baseline Integration Contract`](slices/07-rest-time-downtime-progression/implementation-contract.md)
+- [`ADR-0092 Delta`](slices/07-rest-time-downtime-progression/ADR-0092-DELTA.md)
+
+Delta는 실제 Source Mapping이 완료되면 Baseline Integration Contract와 Script Manifest에 흡수한다.
+
+## 7. 남은 Blocker
+
+공통:
+
+- 실제 Package·Schema·Test Mapping
 - 저장 Schema·Migration Version Index
-- UI Design Token의 실제 Roblox 표현
 - 측정형 Timeout·Queue·Payload·Render Budget
+- Roblox Studio 다중 Client Runtime Evidence
+
+ADR-0092:
+
+- Item Supply Metadata·Reservation 실제 구조
+- Campaign Time·Policy Snapshot·Ledger 실제 구조
+- Consumption Requirement·Shortage Recipe Content
+- Actor Model Registry·Rights·Asset Pipeline
+- Campaign-local Package Publish·SceneNpc Migration
 
 Slices 13–15는 실제 공식 Data·Source Version·Rights Review가 추가로 필요하다.
 
-## 7. 인계 판정
+## 8. 인계 판정
 
 ```text
-통합 명세
+16 Slice Baseline Spec
 → COMPLETE
 
-UI·UX Policy Foundation
+ADR-0092 Upper Planning
 → COMPLETE
 
-Production Workspace
-→ BOOTSTRAPPED
+Slice 06·07 Delta Spec
+→ COMPLETE
 
-현재 실행 기준
+Slice 11·12·15·16 Delta
+→ QUEUED
+
+현재 Production 실행 기준
 → implementation/roblox/CURRENT-WORK-ORDER.md
 
-Production Luau Script
-→ NOT STARTED
+ADR-0092 Production Runtime
+→ NOT IMPLEMENTED BY THIS SYNC
 ```
