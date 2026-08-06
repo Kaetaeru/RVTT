@@ -19,6 +19,14 @@ for project in (
     except Exception as exc:
         errors.append(f"{project}: {exc}")
 
+try:
+    slice_project = json.loads((ROOT / "slice01-acceptance.project.json").read_text(encoding="utf-8"))
+    persistence_flag = slice_project["tree"]["ServerStorage"]["RVTT"]["EnableStudioPersistence"]["$properties"]["Value"]
+    if persistence_flag is not False:
+        errors.append("slice01-acceptance.project.json: regular acceptance must disable Studio persistence")
+except Exception as exc:
+    errors.append(f"slice01-acceptance.project.json persistence contract: {exc}")
+
 acceptance_manifest_path = ROOT / "acceptance-batch.json"
 try:
     acceptance_manifest = json.loads(acceptance_manifest_path.read_text(encoding="utf-8"))
@@ -117,13 +125,47 @@ if execution_rules_path.exists():
     execution_rules = execution_rules_path.read_text(encoding="utf-8")
     for required_phrase in (
         "Batch Acceptance Gate",
-        "단일 실행 스크립트",
-        "Invoke-RestMethod",
-        "WT-PICK-01",
+        "완전한 다중 행 Windows PowerShell 블록",
+        '$ErrorActionPreference = "Stop"',
+        "git switch planning/rvtt-remake",
+        "git pull --ff-only origin planning/rvtt-remake",
+        '$head = (git rev-parse --short HEAD).Trim()',
+        "rojo build slice01-acceptance.project.json --output $output",
+        "Start-Process $output",
+        "EnableStudioPersistence=false",
+        "Persistence 전용 Batch",
         "Batch Summary",
     ):
         if required_phrase not in execution_rules:
             errors.append(f"EXECUTION-TEST-RULES.md: missing policy phrase {required_phrase}")
+
+camera_path = ROOT / "src/StarterPlayer/StarterPlayerScripts/RVTT/Client/World/WorldCameraController.lua"
+if camera_path.exists():
+    camera_text = camera_path.read_text(encoding="utf-8")
+    for required_phrase in (
+        "setMovementModeActive",
+        "keyboard-wasd",
+        "keyboardPanAxis",
+        "mouse-middle-screen-delta",
+        "GetFocusedTextBox",
+    ):
+        if required_phrase not in camera_text:
+            errors.append(f"WorldCameraController.lua: missing input contract {required_phrase}")
+
+world_acceptance_path = ROOT / "tests/WorldTokenAcceptance/WorldTokenAcceptance.client.lua"
+if world_acceptance_path.exists():
+    world_acceptance = world_acceptance_path.read_text(encoding="utf-8")
+    for required_phrase in (
+        'id = "camera-wasd-pan"',
+        'source == "keyboard-wasd"',
+        "persistence=disabled",
+        "이 Build는 DataStore를 사용하지 않습니다",
+    ):
+        if required_phrase not in world_acceptance:
+            errors.append(f"WorldTokenAcceptance.client.lua: missing contract {required_phrase}")
+    for forbidden_phrase in ("state-restore", "detectInitialRestore"):
+        if forbidden_phrase in world_acceptance:
+            errors.append(f"WorldTokenAcceptance.client.lua: regular acceptance contains {forbidden_phrase}")
 
 batch_runner_path = ROOT / "tooling/run-studio-acceptance-batch.ps1"
 if batch_runner_path.exists():
