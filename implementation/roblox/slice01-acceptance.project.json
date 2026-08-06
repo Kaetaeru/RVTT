@@ -23,7 +23,7 @@
         "$path": "src/ServerStorage/RVTT",
         "EnableStudioPersistence": {
           "$className": "BoolValue",
-          "$properties": {"Value": true}
+          "$properties": {"Value": false}
         },
         "Slice01AcceptanceMode": {
           "$className": "BoolValue",
