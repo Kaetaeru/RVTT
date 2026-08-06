@@ -42,6 +42,32 @@ function ScenarioRuntime.new(playerId: number, role: string?): any
 	return self
 end
 
+function ScenarioRuntime._nextCommandId(self: any, context: any, commandType: string): string
+	self.sequence += 1
+	return string.format("scenario:%d:%03d:%s", context.playerId, self.sequence, commandType)
+end
+
+function ScenarioRuntime._executeEnvelope(
+	self: any,
+	context: any,
+	commandType: string,
+	payload: any,
+	commandId: string,
+	expectedRevision: number?,
+	authorityEpoch: string?
+): any
+	context.commandId = commandId
+	context.correlationId = commandId
+	return self.runtime:execute(context, {
+		commandId = commandId,
+		commandType = commandType,
+		correlationId = commandId,
+		authorityEpoch = authorityEpoch,
+		expectedRevision = expectedRevision,
+		payload = payload,
+	})
+end
+
 function ScenarioRuntime._executeWithContext(
 	self: any,
 	context: any,
@@ -49,20 +75,16 @@ function ScenarioRuntime._executeWithContext(
 	payload: any,
 	commandIdOverride: string?
 ): any
-	self.sequence += 1
-	local commandId = commandIdOverride
-		or string.format("scenario:%d:%03d:%s", context.playerId, self.sequence, commandType)
-	context.commandId = commandId
-	context.correlationId = commandId
+	local commandId = commandIdOverride or self:_nextCommandId(context, commandType)
 	local snapshot = self.runtime:snapshot()
-	return self.runtime:execute(context, {
-		commandId = commandId,
-		commandType = commandType,
-		correlationId = commandId,
-		authorityEpoch = snapshot.authorityEpoch,
-		expectedRevision = snapshot.revision,
-		payload = payload,
-	})
+	return self:_executeEnvelope(
+		context,
+		commandType,
+		payload,
+		commandId,
+		snapshot.revision,
+		snapshot.authorityEpoch
+	)
 end
 
 function ScenarioRuntime.execute(self: any, commandType: string, payload: any): any
@@ -91,6 +113,26 @@ function ScenarioRuntime.executeDuplicate(
 ): any
 	local context = table.clone(self.context)
 	return self:_executeWithContext(context, commandType, payload, commandId)
+end
+
+function ScenarioRuntime.executeAtAuthority(
+	self: any,
+	commandType: string,
+	payload: any,
+	expectedRevision: number?,
+	authorityEpoch: string?,
+	commandIdOverride: string?
+): any
+	local context = table.clone(self.context)
+	local commandId = commandIdOverride or self:_nextCommandId(context, commandType)
+	return self:_executeEnvelope(
+		context,
+		commandType,
+		payload,
+		commandId,
+		expectedRevision,
+		authorityEpoch
+	)
 end
 
 function ScenarioRuntime.snapshot(self: any): any
