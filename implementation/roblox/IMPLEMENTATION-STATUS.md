@@ -1,9 +1,9 @@
 # RVTT Production Implementation Status
 
-- 상태: `GRAND_DETERMINISTIC_FAULT_HOST_STATIC_VERIFIED`
+- 상태: `GRAND_REAL_TRANSPORT_RESTART_HOST_STATIC_VERIFIED`
 - 작성일: 2026-08-05
 - 최종 갱신일: 2026-08-06
-- 범위: 16개 Slice Runtime baseline, Grand Acceptance Campaign, Slices 02–12 자동 Authority Scenario와 Deterministic Fault Host
+- 범위: 16개 Slice Runtime baseline, Grand Acceptance Campaign, Slices 02–12 자동 Authority Scenario, Deterministic Fault Host, Real Transport와 Two-run Restart Host
 - Grand Campaign: [`GRAND-ACCEPTANCE-CAMPAIGN.md`](GRAND-ACCEPTANCE-CAMPAIGN.md)
 - 실행 테스트 규칙: [`EXECUTION-TEST-RULES.md`](EXECUTION-TEST-RULES.md)
 
@@ -19,6 +19,9 @@
 - 지연된 이전 AuthorityEpoch Projection 폐기
 - Terminal Receipt 유실 Bounded Retry·Timeout·Pending 정리
 - Migration·DataStore Adapter·Persistence Coordinator
+- Shutdown-only Dirty Snapshot과 Bounded `BindToClose` Retry
+- 실제 Player Lifecycle 기반 Disconnect·Reconnect Acceptance Host
+- 두 Studio Server 실행을 잇는 Restart Seed·Verify Host
 - Semantic Input·Client Runtime·Token 기반 UI Shell
 - Roblox 기본 Avatar와 RVTT Token 분리
 - 16개 Slice Domain Command baseline
@@ -74,11 +77,17 @@ Grand Single-client Place
 Grand Multi-client Place
 → REGISTERED
 
+Real Transport Local Server Place
+→ REGISTERED · STUDIO NOT EXECUTED
+
+Restart Seed·Verify Places
+→ REGISTERED · PERSISTENCE MILESTONE ONLY · STUDIO NOT EXECUTED
+
 Actual Grand Campaign Runtime
 → NOT YET EXECUTED
 ```
 
-현재 Runner는 첫 실패에서 중단하지 않고 가능한 모든 선택 Phase를 끝까지 실행한다. 결과는 `pass`, `fail`, `incomplete`, `prepared`, `blocked`로 분리한다.
+Runner는 첫 실패에서 중단하지 않고 가능한 모든 선택 Phase를 끝까지 실행한다. 결과는 `pass`, `fail`, `incomplete`, `prepared`, `blocked`로 분리한다.
 
 ## Grand Single-client 자동 Scenario
 
@@ -126,17 +135,78 @@ Actual Grand Campaign Runtime
 - 더 높은 Revision으로 Reconcile
 - Invalid Load Revision의 Saved Revision 승격 방지
 
-각 Spec은 다음 구조화 로그를 출력한다.
+### Persistence retry scenario
+
+- Shutdown-only Dirty Snapshot
+- Retryable Save Failure 뒤 성공
+- 최대 Attempt 제한
+- Deadline과 지수 Backoff
+- Non-retryable Failure 즉시 종료
+- Retry Exhaustion 시 Dirty State 보존
+
+구조화 로그:
 
 ```text
 [RVTT Spec Summary] id=<id> result=PASS|FAIL passed=<n> failed=<n>
 [RVTT Spec Failure] <id>: <failure>
 [RVTT Fault Host] kind=network ...
 [RVTT Fault Host] kind=storage ...
+[RVTT Persistence Retry] result=RETRYING|PASS|EXHAUSTED ...
 [RVTT Tests] passed=<n> failed=<n>
 ```
 
-Capacity Sample은 같은 `[RVTT Spec Summary]` 증거 토큰으로 측정값을 보고한다.
+## Real Transport Acceptance
+
+`real-transport.project.json`은 Production ServerBoot를 복제하지 않고 같은 Production Runtime·CommandRouter·ProjectionPublisher를 직접 조립한다.
+
+검사 흐름:
+
+```text
+Local Server + 3 Clients
+→ DM·Player·Observer 논리 사용자 배정
+→ 실제 Player Client 종료
+→ PlayerRemoving
+→ Connection=disconnected
+→ Replacement Client 추가
+→ PlayerAdded
+→ 같은 논리 사용자 재가입
+→ Full Sync 검증
+```
+
+완료 계약:
+
+- Physical Player Instance 교체
+- Membership 수 3 유지
+- Connection State 복구
+- 같은 서버 AuthorityEpoch 유지
+- Projection Sequence 증가
+- 중복 Membership 없음
+- `[RVTT Real Transport] result=PASS ... reconnects=1`
+
+## Two-run Restart Acceptance
+
+### Seed
+
+- 전용 DataStore Key 초기화
+- Membership·Connection State 생성
+- 자동 5초 Flush 없이 Dirty Snapshot 유지
+- Studio 종료 시 `BindToClose`
+- Retry Policy를 사용해 Shutdown Checkpoint 저장
+- `[RVTT Restart Seed] result=PASS ...`
+
+### Verify
+
+- 새 Studio Server가 같은 DataStore 문서 Load
+- Authority Runtime Restore
+- Revision 유지
+- AuthorityEpoch 교체
+- 이전 Epoch Command `STALE_EPOCH`
+- 현재 Epoch Command 1회 Commit
+- Post-restart Snapshot 저장
+- Test Key 정리
+- `[RVTT Restart Verify] result=PASS ...`
+
+이 두 Phase는 게시된 Experience와 Studio API Access가 필요한 Grand Persistence Milestone에서만 선택한다.
 
 ## Production 복구 보강
 
@@ -154,22 +224,30 @@ Capacity Sample은 같은 `[RVTT Spec Summary]` 증거 토큰으로 측정값을
 - 제출 후 8초가 지나면 retryable `CLIENT_TIMEOUT` Terminal 상태를 생성한다.
 - 실제 Terminal Receipt 또는 Timeout 뒤 Pending 상태를 제거한다.
 
+### Persistence Coordinator
+
+- 기본 종료 Retry는 최대 5회다.
+- Backoff는 0.25초에서 시작해 최대 2초다.
+- 전체 Deadline은 25초다.
+- Retryable Failure만 재시도한다.
+- Non-retryable Failure와 Attempt·Deadline 고갈은 명시적으로 종료한다.
+- 실패 시 Dirty Snapshot을 유지한다.
+- `scheduleFlush=false`로 Shutdown-only Snapshot을 만들 수 있다.
+
 ## 완료 의미
 
 현재 자동 Harness 상태는 다음과 같다.
 
 ```text
-SLICES 02–12 + DETERMINISTIC FAULT BASELINE
+SLICES 02–12 + DETERMINISTIC FAULT + REAL TRANSPORT/RESTART HOST
 → SOURCE·FORMAT·LINT·BUILD·TYPE VERIFIED
-→ STUDIO RUNTIME NOT YET EXECUTED
-→ FULL SLICE·REAL TRANSPORT·PERSISTENCE ACCEPTANCE NOT COMPLETE
+→ NEW STUDIO RUNTIME NOT YET EXECUTED
+→ FORCED OUTAGE·CROSS-SERVER LEASE·FULL ACCEPTANCE NOT COMPLETE
 ```
 
-자동 Scenario는 Domain Command·Authorization·State·Restore와 결정적 Fault 경로를 검증한다. 실제 Roblox Transport Throttle, Disconnect·Reconnect, Server Restart, DataStore Outage, Human Accessibility와 Soak Evidence는 남은 Gate다.
+실제 Player Disconnect·Reconnect와 Server Restart 검증 환경은 등록됐지만 Studio Runtime PASS는 아직 없다. Roblox Remote Throttle, 강제 DataStore Outage, Cross-server Lease·Conflict, Human Accessibility와 Soak Evidence는 남은 Gate다.
 
 ## 일반 기능과 Persistence 분리
-
-`grand-single-client.project.json`과 `slice01-acceptance.project.json`은 `EnableStudioPersistence=false`를 사용한다.
 
 일반 Grand Run:
 
@@ -177,13 +255,14 @@ SLICES 02–12 + DETERMINISTIC FAULT BASELINE
 - Token 선택·이동
 - Slices 02–12 메모리 내 Authority Scenario
 - Cross-slice·Authority Fault·Deterministic Network/Storage Fault·Capacity Sample
-- Multi-client Projection
+- 기존 Multi-client Projection
+- Real Player Disconnect·Reconnect Local Server Host
 
 Persistence Grand Run:
 
-- 실제 Load·Save·Dirty·Flush
-- Stop·Play Restore
-- Server Restart·Reconnect
+- Live DataStore Baseline
+- Restart Seed `BindToClose` Save
+- Fresh Server Restart Verify
 - Migration·Lease·Conflict
 - DataStore Throttle·Outage Recovery
 
@@ -208,7 +287,7 @@ Slices 13–15는 Runtime과 Rights Gate Source는 존재하지만 공식 데이
 - Runner SelfTest: PASS
 - StyLua: PASS
 - Selene: PASS
-- Production·Test·Grand Single-client·Multi-client·Persistence·Slice01 Rojo Build: PASS
+- Production·Test·Grand Single-client·Multi-client·Real Transport·Persistence·Restart Seed·Restart Verify·Slice01 Rojo Build: PASS
 - Production·Test Luau Type Analysis: PASS
 - Documentation Validation: PASS
 
@@ -219,8 +298,10 @@ Slices 13–15는 Runtime과 Rights Gate Source는 존재하지만 공식 데이
 - 최신 Slice 01 Camera WASD·Middle-button·Frame 실제 입력
 - Grand Runner의 실제 사용자 PC 순차 Studio 실행과 Log 수집
 - Slices 02–12 전체 사용자·Disclosure·Recovery Scenario
-- Roblox 실제 Remote 지연·제한·Disconnect·Reconnect
-- DataStore Restart·Outage·Cross-server Lease·Migration·Conflict Grand Phase
+- Real Transport Host의 실제 Player 창 종료·Replacement Client 추가
+- Restart Seed·Verify의 게시 Experience DataStore 실행
+- Roblox 실제 Remote 지연·제한·대역폭 Throttle
+- 강제 DataStore Outage·Cross-server Lease·동시 Conflict
 - Slices 13–15 공식 데이터·권리·Asset
 - Navigation·Physics·Streaming·Large Scene
 - UI Visual Redesign·Accessibility Human Review
@@ -230,13 +311,13 @@ Slices 13–15는 Runtime과 Rights Gate Source는 존재하지만 공식 데이
 ## 현재 Gate
 
 ```text
-Grand Deterministic Fault Harness Static Gate
+Grand Real Transport·Restart Host Static Gate
 → PASS
 
 Grand Runtime
 → USER EXECUTION DEFERRED
 
-Real Transport·Restart Fault Host
+Forced DataStore Outage·Cross-server Lease Host
 → IMPLEMENTATION IN PROGRESS
 
 Persistence·Human UI·Soak
