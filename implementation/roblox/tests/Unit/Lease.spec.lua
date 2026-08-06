@@ -39,7 +39,8 @@ return function(harness: any)
 	local dataStore = FakeDataStore.new()
 	local store = LeaseStore.new("unused", Diagnostics.new(), dataStore)
 	local holder = LeaseCoordinator.new(store, "campaign", "server-a", 10, Diagnostics.new(), clock)
-	local contender = LeaseCoordinator.new(store, "campaign", "server-b", 10, Diagnostics.new(), clock)
+	local contender =
+		LeaseCoordinator.new(store, "campaign", "server-b", 10, Diagnostics.new(), clock)
 
 	local acquired = holder:acquire()
 	harness:expect(acquired.ok, "first server acquires an empty lease")
