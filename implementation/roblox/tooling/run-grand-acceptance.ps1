@@ -22,6 +22,20 @@ function Write-Step {
     Write-Host "[RVTT Grand] $Text" -ForegroundColor Cyan
 }
 
+function Get-OptionalProperty {
+    param(
+        [object]$Object,
+        [string]$Name,
+        $DefaultValue = $null
+    )
+
+    $property = $Object.PSObject.Properties[$Name]
+    if ($null -eq $property -or $null -eq $property.Value) {
+        return $DefaultValue
+    }
+    return $property.Value
+}
+
 function Resolve-ApplicationPath {
     param([string[]]$Names)
 
@@ -87,13 +101,30 @@ function Wait-ForStudioExit {
     }
 }
 
+function Get-PhaseTokens {
+    param([object]$Phase)
+
+    $tokens = New-Object System.Collections.Generic.List[string]
+    $summaryToken = [string](Get-OptionalProperty $Phase "summaryToken" "")
+    if (-not [string]::IsNullOrWhiteSpace($summaryToken)) {
+        $tokens.Add($summaryToken)
+    }
+    foreach ($tokenValue in @((Get-OptionalProperty $Phase "evidenceTokens" @()))) {
+        $token = [string]$tokenValue
+        if (-not [string]::IsNullOrWhiteSpace($token)) {
+            $tokens.Add($token)
+        }
+    }
+    return @($tokens | Select-Object -Unique)
+}
+
 function Get-RecentStudioLines {
     param(
         [datetime]$StartedAt,
-        [string]$SummaryToken
+        [string[]]$Tokens
     )
 
-    if ([string]::IsNullOrWhiteSpace($env:LOCALAPPDATA)) {
+    if ($Tokens.Count -eq 0 -or [string]::IsNullOrWhiteSpace($env:LOCALAPPDATA)) {
         return @()
     }
     $logsRoot = Join-Path $env:LOCALAPPDATA "Roblox\logs"
@@ -109,7 +140,14 @@ function Get-RecentStudioLines {
     foreach ($log in $logs) {
         foreach ($line in @(Get-Content -LiteralPath $log.FullName -ErrorAction SilentlyContinue)) {
             $text = [string]$line
-            if ($text.Contains($SummaryToken)) {
+            $matched = $false
+            foreach ($token in $Tokens) {
+                if ($text.Contains($token)) {
+                    $matched = $true
+                    break
+                }
+            }
+            if ($matched) {
                 $results.Add($text.Trim())
             }
         }
@@ -123,11 +161,13 @@ function New-PhaseResult {
         [string]$Name,
         [string]$Status,
         [string]$Detail,
-        [string[]]$Evidence = @()
+        [string[]]$Evidence = @(),
+        [string]$RunId = ""
     )
 
     return [pscustomobject][ordered]@{
         id = $Id
+        runId = $RunId
         name = $Name
         status = $Status
         detail = $Detail
@@ -172,17 +212,32 @@ function Invoke-SelfTest {
         }
     }
 
+    $runContracts = @{}
     foreach ($phase in @($manifest.phases)) {
         if ([string]$phase.status -eq "ready" -and [string]$phase.execution -ne "automated") {
-            if ([string]::IsNullOrWhiteSpace([string]$phase.project)) {
-                throw "ready Studio phase에 project가 없습니다: $($phase.id)"
+            $phaseId = [string]$phase.id
+            $project = [string](Get-OptionalProperty $phase "project" "")
+            $summaryToken = [string](Get-OptionalProperty $phase "summaryToken" "")
+            $passRegex = [string](Get-OptionalProperty $phase "passRegex" "")
+            $runId = [string](Get-OptionalProperty $phase "runId" "")
+            if ([string]::IsNullOrWhiteSpace($project)) {
+                throw "ready Studio phase에 project가 없습니다: $phaseId"
             }
-            if ([string]::IsNullOrWhiteSpace([string]$phase.summaryToken)) {
-                throw "ready Studio phase에 summaryToken이 없습니다: $($phase.id)"
+            if ([string]::IsNullOrWhiteSpace($summaryToken)) {
+                throw "ready Studio phase에 summaryToken이 없습니다: $phaseId"
             }
-            if ([string]::IsNullOrWhiteSpace([string]$phase.passRegex)) {
-                throw "ready Studio phase에 passRegex가 없습니다: $($phase.id)"
+            if ([string]::IsNullOrWhiteSpace($passRegex)) {
+                throw "ready Studio phase에 passRegex가 없습니다: $phaseId"
             }
+            if ([string]::IsNullOrWhiteSpace($runId)) {
+                throw "ready Studio phase에 runId가 없습니다: $phaseId"
+            }
+
+            $contract = "$project|$([string]$phase.execution)"
+            if ($runContracts.ContainsKey($runId) -and [string]$runContracts[$runId] -ne $contract) {
+                throw "같은 runId의 project 또는 execution이 다릅니다: $runId"
+            }
+            $runContracts[$runId] = $contract
         }
     }
 
@@ -256,6 +311,8 @@ if ($buildFailures.Count -eq 0) {
 
 $studioPath = Resolve-StudioPath
 $phases = @($manifest.phases | Sort-Object { [int]$_.order })
+$runGroups = [ordered]@{}
+
 foreach ($phase in $phases) {
     $phaseId = [string]$phase.id
     if ($phaseId -eq "static-build") {
@@ -265,74 +322,113 @@ foreach ($phase in $phases) {
     $phaseStatus = [string]$phase.status
     $isPersistence = $phase.persistence -eq $true
     $selected = $phaseStatus -eq "ready" -or ($IncludePersistence -and $isPersistence -and $phaseStatus -eq "deferred")
+    $runId = [string](Get-OptionalProperty $phase "runId" $phaseId)
 
     if (-not $selected) {
-        $blocker = if (-not [string]::IsNullOrWhiteSpace([string]$phase.blocker)) {
-            [string]$phase.blocker
+        $blockerValue = Get-OptionalProperty $phase "blocker" ""
+        $blocker = if (-not [string]::IsNullOrWhiteSpace([string]$blockerValue)) {
+            [string]$blockerValue
         } elseif ($phaseStatus -eq "deferred") {
             "deferred until the dedicated persistence milestone"
         } else {
             "phase harness or production evidence is not implemented"
         }
-        $results.Add((New-PhaseResult $phaseId ([string]$phase.name) "blocked" $blocker))
+        $results.Add((New-PhaseResult $phaseId ([string]$phase.name) "blocked" $blocker @() $runId))
         continue
     }
 
-    $project = [string]$phase.project
+    if ([string]$phase.execution -eq "automated") {
+        continue
+    }
+
+    $project = [string](Get-OptionalProperty $phase "project" "")
     if (-not $buildOutputs.ContainsKey($project)) {
         $detail = if ($buildFailures.ContainsKey($project)) {
             [string]$buildFailures[$project]
         } else {
             "project was not registered in staticProjects"
         }
-        $results.Add((New-PhaseResult $phaseId ([string]$phase.name) "fail" $detail))
+        $results.Add((New-PhaseResult $phaseId ([string]$phase.name) "fail" $detail @() $runId))
         continue
     }
 
+    if (-not $runGroups.Contains($runId)) {
+        $runGroups[$runId] = [pscustomobject]@{
+            id = $runId
+            project = $project
+            execution = [string]$phase.execution
+            phases = New-Object System.Collections.Generic.List[object]
+        }
+    }
+    $group = $runGroups[$runId]
+    if ([string]$group.project -ne $project -or [string]$group.execution -ne [string]$phase.execution) {
+        throw "runId contract mismatch: $runId"
+    }
+    $group.phases.Add($phase)
+}
+
+foreach ($runId in @($runGroups.Keys)) {
+    $group = $runGroups[$runId]
+    $project = [string]$group.project
     $place = [string]$buildOutputs[$project]
+    $groupPhases = @($group.phases)
+
     if ($NoOpen) {
-        $results.Add((New-PhaseResult $phaseId ([string]$phase.name) "prepared" "place built; Studio launch disabled" @($place)))
+        foreach ($phase in $groupPhases) {
+            $results.Add((New-PhaseResult ([string]$phase.id) ([string]$phase.name) "prepared" "shared Place built; Studio launch disabled" @($place) $runId))
+        }
         continue
     }
 
     if ([string]::IsNullOrWhiteSpace([string]$studioPath)) {
-        $results.Add((New-PhaseResult $phaseId ([string]$phase.name) "fail" "RobloxStudioBeta.exe was not found"))
+        foreach ($phase in $groupPhases) {
+            $results.Add((New-PhaseResult ([string]$phase.id) ([string]$phase.name) "fail" "RobloxStudioBeta.exe was not found" @() $runId))
+        }
         continue
     }
 
+    $phaseIds = @($groupPhases | ForEach-Object { [string]$_.id })
     Write-Host ""
     Write-Host "============================================================" -ForegroundColor Yellow
-    Write-Host "Grand phase: $phaseId" -ForegroundColor Yellow
+    Write-Host "Grand run: $runId" -ForegroundColor Yellow
+    Write-Host "Phases: $($phaseIds -join ', ')"
     Write-Host "Project: $project"
-    Write-Host "Studio에서 이 Phase를 끝까지 실행한 뒤 Studio를 닫으세요."
-    if ([string]$phase.execution -eq "studio-multi-client") {
+    Write-Host "Studio에서 이 Run의 모든 Phase를 끝까지 실행한 뒤 Studio를 닫으세요."
+    if ([string]$group.execution -eq "studio-single-client") {
+        Write-Host "Play를 시작하세요. 자동 Spec이 실행되는 동안 화면의 수동 Acceptance 항목도 완료하세요."
+    }
+    if ([string]$group.execution -eq "studio-multi-client") {
         Write-Host "Test 탭에서 Server 1개와 Client 3개를 시작하고 최종 Summary를 확인하세요."
     }
-    if ([string]$phase.execution -eq "studio-published") {
-        Write-Host "이 Phase는 게시된 Experience와 Studio API Access가 필요합니다."
+    if ([string]$group.execution -eq "studio-published") {
+        Write-Host "이 Run은 게시된 Experience와 Studio API Access가 필요합니다."
     }
-    Write-Host "Studio를 닫으면 다음 Phase가 자동으로 시작됩니다."
+    Write-Host "Studio를 닫으면 다음 Run이 자동으로 시작됩니다."
     Write-Host "============================================================" -ForegroundColor Yellow
 
     $startedAt = Get-Date
     Start-Process -FilePath $studioPath -ArgumentList "`"$place`"" | Out-Null
     Wait-ForStudioExit
 
-    $evidence = Get-RecentStudioLines $startedAt ([string]$phase.summaryToken)
-    $passed = $false
-    foreach ($line in $evidence) {
-        if ($line -match [string]$phase.passRegex) {
-            $passed = $true
-            break
+    foreach ($phase in $groupPhases) {
+        $phaseId = [string]$phase.id
+        $tokens = Get-PhaseTokens $phase
+        $evidence = Get-RecentStudioLines $startedAt $tokens
+        $passed = $false
+        foreach ($line in $evidence) {
+            if ($line -match [string]$phase.passRegex) {
+                $passed = $true
+                break
+            }
         }
-    }
 
-    if ($passed) {
-        $results.Add((New-PhaseResult $phaseId ([string]$phase.name) "pass" "expected PASS summary found" $evidence))
-    } elseif ($evidence.Count -gt 0) {
-        $results.Add((New-PhaseResult $phaseId ([string]$phase.name) "fail" "summary found but PASS contract did not match" $evidence))
-    } else {
-        $results.Add((New-PhaseResult $phaseId ([string]$phase.name) "incomplete" "expected summary was not found in recent Studio logs"))
+        if ($passed) {
+            $results.Add((New-PhaseResult $phaseId ([string]$phase.name) "pass" "expected PASS summary found" $evidence $runId))
+        } elseif ($evidence.Count -gt 0) {
+            $results.Add((New-PhaseResult $phaseId ([string]$phase.name) "fail" "summary found but PASS contract did not match" $evidence $runId))
+        } else {
+            $results.Add((New-PhaseResult $phaseId ([string]$phase.name) "incomplete" "expected summary was not found in recent Studio logs" @() $runId))
+        }
     }
 }
 
@@ -396,11 +492,11 @@ $markdown.Add("- Incomplete: ``$incompleteCount``")
 $markdown.Add("- Prepared: ``$preparedCount``")
 $markdown.Add("- Blocked: ``$blockedCount``")
 $markdown.Add("")
-$markdown.Add("| Phase | Status | Detail |")
-$markdown.Add("|---|---|---|")
+$markdown.Add("| Run | Phase | Status | Detail |")
+$markdown.Add("|---|---|---|---|")
 foreach ($result in $results) {
     $detail = ([string]$result.detail).Replace("|", "\\|")
-    $markdown.Add("| ``$($result.id)`` | ``$($result.status)`` | $detail |")
+    $markdown.Add("| ``$($result.runId)`` | ``$($result.id)`` | ``$($result.status)`` | $detail |")
     if (@($result.evidence).Count -gt 0) {
         $markdown.Add("")
         $markdown.Add("### $($result.id) evidence")
