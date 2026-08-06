@@ -290,7 +290,6 @@ if grand_runner_path.exists():
         "Get-RecentStudioLines",
         "Get-PhaseTokens",
         "runId",
-        "grand-single-client",
         "Wait-ForStudioExit",
         "RVTT Grand Summary",
         "RVTT-grand-acceptance-report.json",
