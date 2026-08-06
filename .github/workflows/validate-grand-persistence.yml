@@ -1,0 +1,48 @@
+name: Validate Grand persistence
+
+on:
+  push:
+    branches:
+      - planning/rvtt-remake
+    paths:
+      - "implementation/roblox/grand-acceptance-manifest.json"
+      - "implementation/roblox/grand-persistence-config.example.json"
+      - "implementation/roblox/GRAND-PERSISTENCE-MILESTONE.md"
+      - "implementation/roblox/tooling/run-grand-persistence.ps1"
+      - "implementation/roblox/tooling/validate_grand_persistence.py"
+      - ".github/workflows/validate-grand-persistence.yml"
+  pull_request:
+    paths:
+      - "implementation/roblox/grand-acceptance-manifest.json"
+      - "implementation/roblox/grand-persistence-config.example.json"
+      - "implementation/roblox/GRAND-PERSISTENCE-MILESTONE.md"
+      - "implementation/roblox/tooling/run-grand-persistence.ps1"
+      - "implementation/roblox/tooling/validate_grand_persistence.py"
+      - ".github/workflows/validate-grand-persistence.yml"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate Grand persistence contract
+        run: python implementation/roblox/tooling/validate_grand_persistence.py
+      - name: Parse PowerShell runner
+        shell: pwsh
+        run: |
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            (Resolve-Path "implementation/roblox/tooling/run-grand-persistence.ps1"),
+            [ref]$null,
+            [ref]$errors
+          ) | Out-Null
+          if ($errors.Count -gt 0) {
+            $errors | ForEach-Object { Write-Error $_.Message }
+            exit 1
+          }
+      - name: Runner self-test
+        shell: pwsh
+        run: implementation/roblox/tooling/run-grand-persistence.ps1 -SelfTest
