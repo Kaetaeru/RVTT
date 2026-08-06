@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "rvtt.actor-source-type-fixtures.v1",
+  "canonicalAllowed": [
+    "rules_package",
+    "campaign_homebrew",
+    "imported_reference",
+    "unknown_draft"
+  ],
+  "legacyRejected": [
+    "homebrew",
+    "campaign_custom"
+  ]
+}
