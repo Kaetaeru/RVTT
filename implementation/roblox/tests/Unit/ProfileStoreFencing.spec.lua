@@ -35,6 +35,18 @@ return function(harness: any)
 		token = "lease-a",
 		fencingToken = 1,
 	}
+	local fenceTwo = {
+		ownerId = "server-b",
+		token = "lease-b",
+		fencingToken = 2,
+	}
+	local initialDocument = {
+		schemaVersion = 1,
+		revision = 0,
+		authorityEpoch = "epoch:initial",
+		domains = {},
+	}
+
 	local first = store:save("campaign", {
 		schemaVersion = 1,
 		revision = 5,
@@ -81,23 +93,20 @@ return function(harness: any)
 		"same fencing token with another identity is rejected"
 	)
 
-	local fenceTwo = {
-		ownerId = "server-b",
-		token = "lease-b",
-		fencingToken = 2,
-	}
-	local takeover = store:save("campaign", {
-		schemaVersion = 1,
-		revision = 5,
-		authorityEpoch = "epoch:b",
-		domains = {},
-	}, fenceTwo)
-	harness:expect(takeover.ok, "higher fencing token supersedes a stale higher revision and epoch")
-	harness:equal(fakeStore.value.revision, 5, "takeover stores the new owner snapshot")
+	local claimed = store:loadFenced("campaign", initialDocument, fenceTwo)
+	harness:expect(claimed.ok, "higher fencing token atomically claims the existing document")
+	if claimed.ok then
+		harness:equal(claimed.value.revision, 6, "fence claim preserves the latest stored revision")
+		harness:equal(claimed.value.authorityEpoch, "epoch:a", "fence claim preserves stored state")
+		harness:expect(
+			claimed.value.persistenceFence == nil,
+			"claimed load strips persistence metadata from authority state"
+		)
+	end
 	harness:equal(
 		fakeStore.value.persistenceFence.fencingToken,
 		2,
-		"takeover stores the higher fencing token"
+		"fence claim updates backing ownership before returning the document"
 	)
 
 	local delayedOldOwner = store:save("campaign", {
@@ -108,9 +117,9 @@ return function(harness: any)
 	}, fenceOne)
 	harness:expect(
 		not delayedOldOwner.ok and delayedOldOwner.error.code == "PERSISTENCE_FENCED",
-		"delayed previous owner cannot overwrite with a larger revision"
+		"claim blocks a delayed previous owner even with a larger revision"
 	)
-	harness:equal(fakeStore.value.revision, 5, "rejected stale write does not mutate backing state")
+	harness:equal(fakeStore.value.revision, 6, "rejected stale write does not mutate backing state")
 
 	local unfenced = store:save("campaign", {
 		schemaVersion = 1,
@@ -120,19 +129,45 @@ return function(harness: any)
 	})
 	harness:expect(
 		not unfenced.ok and unfenced.error.code == "PERSISTENCE_FENCED",
-		"unfenced writer cannot overwrite a fenced document"
+		"unfenced writer cannot overwrite a claimed document"
 	)
 
 	local lowerRevisionSameFence = store:save("campaign", {
 		schemaVersion = 1,
-		revision = 4,
-		authorityEpoch = "epoch:b",
+		revision = 5,
+		authorityEpoch = "epoch:a",
 		domains = {},
 	}, fenceTwo)
 	harness:expect(
 		not lowerRevisionSameFence.ok
 			and lowerRevisionSameFence.error.code == "PERSISTENCE_CONFLICT",
-		"same owner still obeys monotonic revision rules"
+		"current owner still obeys monotonic revision rules"
+	)
+
+	local lowerFenceClaim = store:loadFenced("campaign", initialDocument, fenceOne)
+	harness:expect(
+		not lowerFenceClaim.ok and lowerFenceClaim.error.code == "PERSISTENCE_FENCED",
+		"lower fencing token cannot reclaim the authority document"
+	)
+
+	local currentOwnerSave = store:save("campaign", {
+		schemaVersion = 1,
+		revision = 7,
+		authorityEpoch = "epoch:b",
+		domains = {},
+	}, fenceTwo)
+	harness:expect(currentOwnerSave.ok, "claimed owner advances revision under a new epoch")
+
+	fakeStore.value = nil
+	local created = store:loadFenced("campaign", initialDocument, fenceOne)
+	harness:expect(created.ok, "fenced load creates an initial document when none exists")
+	if created.ok then
+		harness:equal(created.value.revision, 0, "initial fence claim returns the baseline revision")
+	end
+	harness:equal(
+		fakeStore.value.persistenceFence.fencingToken,
+		1,
+		"initial document is created with the active fencing token"
 	)
 
 	fakeStore.value = {
@@ -142,9 +177,9 @@ return function(harness: any)
 		domains = {},
 		persistenceFence = { fencingToken = "broken" },
 	}
-	local invalidFence = store:load("campaign")
+	local invalidFence = store:loadFenced("campaign", initialDocument, fenceTwo)
 	harness:expect(
 		not invalidFence.ok and invalidFence.error.code == "PERSISTENCE_INVALID",
-		"invalid stored fencing metadata fails closed"
+		"invalid stored fencing metadata fails closed during claim"
 	)
 end
