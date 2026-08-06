@@ -17,6 +17,9 @@
     "persistence-acceptance.project.json",
     "restart-seed.project.json",
     "restart-verify.project.json",
+    "datastore-outage.project.json",
+    "lease-holder.project.json",
+    "lease-contender.project.json",
     "slice01-acceptance.project.json"
   ],
   "phases": [
@@ -144,6 +147,60 @@
       ],
       "passRegex": "\\[RVTT Restart Verify\\].*result=PASS.*failed=0",
       "blocker": "Runs after the restart seed in the dedicated published persistence milestone"
+    },
+    {
+      "order": 70,
+      "id": "persistence-forced-outage",
+      "name": "Injected DataStore outage retry exhaustion and recovery",
+      "status": "deferred",
+      "execution": "studio-published",
+      "runId": "grand-persistence-outage",
+      "group": "persistence",
+      "project": "datastore-outage.project.json",
+      "persistence": true,
+      "summaryToken": "[RVTT DataStore Outage]",
+      "evidenceTokens": [
+        "[RVTT Persistence Retry]",
+        "[RVTT Persistence]"
+      ],
+      "passRegex": "\\[RVTT DataStore Outage\\].*result=PASS.*failed=0.*injectedFailures=[1-9][0-9]*.*recoveredRevision=1",
+      "blocker": "Runs in the dedicated published persistence milestone; outage is injected before actual DataStore calls"
+    },
+    {
+      "order": 80,
+      "id": "cross-server-lease-holder",
+      "name": "Cross-server lease holder renewal expiry and stale fencing",
+      "status": "deferred",
+      "execution": "studio-published-pair",
+      "runId": "grand-persistence-lease-pair",
+      "group": "persistence",
+      "project": "lease-holder.project.json",
+      "persistence": true,
+      "summaryToken": "[RVTT Lease Holder]",
+      "evidenceTokens": [
+        "[RVTT Lease Pair Prompt]",
+        "[RVTT Lease Pair]"
+      ],
+      "passRegex": "\\[RVTT Lease Holder\\].*result=PASS.*failed=0.*renewals=1.*takeovers=1",
+      "blocker": "Runs concurrently with the contender Place in the dedicated published persistence milestone"
+    },
+    {
+      "order": 81,
+      "id": "cross-server-lease-contender",
+      "name": "Cross-server lease contender conflict and fencing takeover",
+      "status": "deferred",
+      "execution": "studio-published-pair",
+      "runId": "grand-persistence-lease-pair",
+      "group": "persistence",
+      "project": "lease-contender.project.json",
+      "persistence": true,
+      "summaryToken": "[RVTT Lease Contender]",
+      "evidenceTokens": [
+        "[RVTT Lease Pair Prompt]",
+        "[RVTT Lease Pair]"
+      ],
+      "passRegex": "\\[RVTT Lease Contender\\].*result=PASS.*failed=0.*blocked=2.*takeovers=1",
+      "blocker": "Runs concurrently with the holder Place in the dedicated published persistence milestone"
     },
     {
       "order": 100,
@@ -303,7 +360,7 @@
       "execution": "automated-and-studio",
       "group": "quality",
       "persistence": true,
-      "blocker": "Deterministic network and storage faults, real Player disconnect/reconnect, bounded shutdown retry and two-run restart recovery hosts are registered; Roblox transport throttling, forced DataStore outage, cross-server lease and runtime Studio evidence remain"
+      "blocker": "Deterministic faults, real Player reconnect, bounded shutdown retry, restart recovery, injected outage and paired cross-server lease hosts are registered; Roblox transport throttling and runtime Studio evidence remain"
     },
     {
       "order": 260,
