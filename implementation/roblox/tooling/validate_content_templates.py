@@ -12,6 +12,20 @@ TEMPLATES = ROOT / "content-templates"
 ADR_RELATIVE = "docs/remake/decisions/ADR-0092-campaign-survival-logistics-and-dm-authored-actor-tokens.md"
 RUNTIME_RELATIVE = "docs/remake/architecture/dm-authored-actor-token-and-statblock-import-runtime-contract.md"
 WORKFLOW_RELATIVE = ".github/workflows/validate-rvtt-content-templates.yml"
+WORKFLOW_EVENTS = ("pull_request", "push")
+WORKFLOW_AUTHORITY_PATHS = (ADR_RELATIVE, RUNTIME_RELATIVE)
+
+EXPECTED_CATALOG_KEYS = [
+    "schemaVersion",
+    "catalogRevision",
+    "packageVersionSet",
+    "models",
+    "disclosureDigest",
+]
+EXPECTED_EMPTY_DIGEST = (
+    "sha256:e3b0c44298fc1c149afbf4c8996fb924"
+    "27ae41e4649b934ca495991b7852b855"
+)
 
 errors: list[str] = []
 
@@ -95,14 +109,83 @@ def authority_doc_errors(
     return findings
 
 
+def event_section_bounds(lines: list[str], event_name: str) -> tuple[int, int] | None:
+    marker = f"  {event_name}:"
+    try:
+        start = lines.index(marker)
+    except ValueError:
+        return None
+
+    end = len(lines)
+    for index in range(start + 1, len(lines)):
+        line = lines[index]
+        if line and not line.startswith(" "):
+            end = index
+            break
+        if line.startswith("  ") and not line.startswith("    ") and line.endswith(":"):
+            end = index
+            break
+    return start, end
+
+
+def extract_event_paths(workflow_text: str, event_name: str) -> list[str] | None:
+    lines = workflow_text.splitlines()
+    bounds = event_section_bounds(lines, event_name)
+    if bounds is None:
+        return None
+
+    start, end = bounds
+    paths_index: int | None = None
+    for index in range(start + 1, end):
+        if lines[index] == "    paths:":
+            paths_index = index
+            break
+    if paths_index is None:
+        return None
+
+    paths: list[str] = []
+    for index in range(paths_index + 1, end):
+        line = lines[index]
+        if not line.startswith("      - "):
+            if line.strip():
+                break
+            continue
+        value = line[len("      - ") :].strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in {'"', "'"}:
+            value = value[1:-1]
+        paths.append(value)
+    return paths
+
+
 def workflow_trigger_errors(workflow_text: str) -> list[str]:
     findings: list[str] = []
-    for required_path in (ADR_RELATIVE, RUNTIME_RELATIVE):
-        if f'- "{required_path}"' not in workflow_text:
-            findings.append(
-                f"WORKFLOW_TRIGGER_DRIFT: content-template workflow must watch {required_path}"
-            )
+    for event_name in WORKFLOW_EVENTS:
+        event_paths = extract_event_paths(workflow_text, event_name)
+        if event_paths is None:
+            findings.append(f"WORKFLOW_TRIGGER_DRIFT:{event_name}: paths section missing")
+            continue
+        for required_path in WORKFLOW_AUTHORITY_PATHS:
+            if required_path not in event_paths:
+                findings.append(
+                    f"WORKFLOW_TRIGGER_DRIFT:{event_name}:{required_path}: missing path"
+                )
     return findings
+
+
+def remove_event_path(workflow_text: str, event_name: str, path: str) -> str:
+    lines = workflow_text.splitlines()
+    bounds = event_section_bounds(lines, event_name)
+    if bounds is None:
+        return workflow_text
+
+    start, end = bounds
+    target_lines = {f'      - "{path}"', f"      - '{path}'", f"      - {path}"}
+    for index in range(start + 1, end):
+        if lines[index] in target_lines:
+            del lines[index]
+            suffix = "\n" if workflow_text.endswith("\n") else ""
+            return "\n".join(lines) + suffix
+    return workflow_text
 
 
 statblock_schema = load_json("actor-statblock.schema.json")
@@ -123,51 +206,39 @@ if isinstance(statblock_schema, dict) and isinstance(source_fixtures, dict):
         rejected = source_fixtures.get("legacyRejected")
         if source_fixtures.get("schemaVersion") != "rvtt.actor-source-type-fixtures.v1":
             errors.append("actor-statblock-source-type-fixtures.json: unexpected schemaVersion")
-        if source_enum != canonical:
-            errors.append(
-                "actor source types: schema enum must exactly match canonicalAllowed in stable order"
-            )
-        if isinstance(canonical, list) and all(isinstance(value, str) for value in canonical):
-            canonical_source_types = canonical
-        else:
+        if not isinstance(source_enum, list) or not all(isinstance(value, str) for value in source_enum):
+            errors.append("actor-statblock.schema.json: sourceType enum must be a string list")
+            source_enum = []
+        if not isinstance(canonical, list) or not all(isinstance(value, str) for value in canonical):
             errors.append("actor source types: canonicalAllowed must be a string list")
-        if not isinstance(rejected, list) or not rejected:
-            errors.append("actor source types: legacyRejected must contain at least one alias")
         else:
-            legacy_aliases = [value for value in rejected if isinstance(value, str)]
-            if len(legacy_aliases) != len(rejected):
-                errors.append("actor source types: legacyRejected must contain strings only")
-            overlap = sorted(set(source_enum).intersection(rejected))
+            canonical_source_types = canonical
+            if source_enum != canonical_source_types:
+                errors.append(
+                    "actor source types: schema enum must exactly match canonicalAllowed in stable order"
+                )
+        if not isinstance(rejected, list) or not rejected or not all(
+            isinstance(value, str) for value in rejected
+        ):
+            errors.append("actor source types: legacyRejected must contain strings only")
+        else:
+            legacy_aliases = rejected
+            overlap = sorted(set(source_enum).intersection(legacy_aliases))
             if overlap:
                 errors.append(f"actor source types: legacy aliases accepted by schema: {overlap}")
             for expected_alias in ("homebrew", "campaign_custom"):
-                if expected_alias not in rejected:
+                if expected_alias not in legacy_aliases:
                     errors.append(f"actor source types: missing rejected alias {expected_alias}")
-
-EXPECTED_CATALOG_KEYS = [
-    "schemaVersion",
-    "catalogRevision",
-    "packageVersionSet",
-    "models",
-    "disclosureDigest",
-]
-EXPECTED_EMPTY_DIGEST = (
-    "sha256:e3b0c44298fc1c149afbf4c8996fb924"
-    "27ae41e4649b934ca495991b7852b855"
-)
 
 if isinstance(catalog_schema, dict):
     if catalog_schema.get("$schema") != "https://json-schema.org/draft/2020-12/schema":
         errors.append("actor-model-catalog.schema.json: must use JSON Schema draft 2020-12")
-    required = catalog_schema.get("required")
-    if required != EXPECTED_CATALOG_KEYS:
+    if catalog_schema.get("required") != EXPECTED_CATALOG_KEYS:
         errors.append("actor-model-catalog.schema.json: required fields or stable order mismatch")
     properties = catalog_schema.get("properties", {})
-    schema_version = properties.get("schemaVersion", {}).get("const")
-    if schema_version != "rvtt.actor-model-catalog.v1":
+    if properties.get("schemaVersion", {}).get("const") != "rvtt.actor-model-catalog.v1":
         errors.append("actor-model-catalog.schema.json: unexpected schemaVersion const")
-    digest_pattern = properties.get("disclosureDigest", {}).get("pattern")
-    if digest_pattern != "^sha256:[0-9a-f]{64}$":
+    if properties.get("disclosureDigest", {}).get("pattern") != "^sha256:[0-9a-f]{64}$":
         errors.append("actor-model-catalog.schema.json: disclosureDigest pattern mismatch")
 
 if isinstance(catalog_example, dict):
@@ -262,10 +333,16 @@ if canonical_source_types and legacy_aliases and isinstance(catalog_example, dic
     if not any(item.startswith("RUNTIME_EMPTY_CATALOG_DRIFT:") for item in negative_runtime_errors):
         errors.append("negative regression self-test: Runtime empty Catalog drift was not detected")
 
-    mutated_workflow = workflow_text.replace(f'- "{ADR_RELATIVE}"', "", 1)
-    negative_workflow_errors = workflow_trigger_errors(mutated_workflow)
-    if not any(item.startswith("WORKFLOW_TRIGGER_DRIFT:") for item in negative_workflow_errors):
-        errors.append("negative regression self-test: Workflow authority path drift was not detected")
+    for event_name in WORKFLOW_EVENTS:
+        for required_path in WORKFLOW_AUTHORITY_PATHS:
+            mutated_workflow = remove_event_path(workflow_text, event_name, required_path)
+            expected_prefix = f"WORKFLOW_TRIGGER_DRIFT:{event_name}:{required_path}:"
+            negative_workflow_errors = workflow_trigger_errors(mutated_workflow)
+            if not any(item.startswith(expected_prefix) for item in negative_workflow_errors):
+                errors.append(
+                    "negative regression self-test: "
+                    f"{event_name} path drift was not detected for {required_path}"
+                )
 
 if errors:
     print("RVTT content template validation failed:")
