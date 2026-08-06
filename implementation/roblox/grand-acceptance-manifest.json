@@ -10,6 +10,7 @@
   "staticProjects": [
     "default.project.json",
     "test.project.json",
+    "grand-single-client.project.json",
     "multi-client.project.json",
     "live-datastore.project.json",
     "persistence-acceptance.project.json",
@@ -28,13 +29,18 @@
     {
       "order": 10,
       "id": "unit-integration-baseline",
-      "name": "Unit and integration baseline",
+      "name": "Unit integration and Slices 02-04 automated baseline",
       "status": "ready",
       "execution": "studio-single-client",
+      "runId": "grand-single-client",
       "group": "core",
-      "project": "test.project.json",
+      "project": "grand-single-client.project.json",
       "persistence": false,
       "summaryToken": "[RVTT Tests]",
+      "evidenceTokens": [
+        "[RVTT Spec Summary]",
+        "[RVTT Spec Failure]"
+      ],
       "passRegex": "\\[RVTT Tests\\].*failed=0"
     },
     {
@@ -43,10 +49,15 @@
       "name": "Slice 01 world interaction",
       "status": "ready",
       "execution": "studio-single-client",
+      "runId": "grand-single-client",
       "group": "core",
-      "project": "slice01-acceptance.project.json",
+      "project": "grand-single-client.project.json",
       "persistence": false,
       "summaryToken": "[RVTT Batch Summary]",
+      "evidenceTokens": [
+        "[RVTT Batch Check]",
+        "[RVTT Batch Camera]"
+      ],
       "passRegex": "\\[RVTT Batch Summary\\].*batch=slice01-world-interaction.*result=PASS.*failed=0.*pending=0"
     },
     {
@@ -55,6 +66,7 @@
       "name": "DM Player Observer authority and projection",
       "status": "ready",
       "execution": "studio-multi-client",
+      "runId": "grand-multi-client",
       "group": "core",
       "project": "multi-client.project.json",
       "persistence": false,
@@ -67,6 +79,7 @@
       "name": "Live DataStore baseline",
       "status": "deferred",
       "execution": "studio-published",
+      "runId": "grand-persistence-live",
       "group": "persistence",
       "project": "live-datastore.project.json",
       "persistence": true,
@@ -80,6 +93,7 @@
       "name": "Persistence restart migration and conflict recovery",
       "status": "deferred",
       "execution": "studio-published",
+      "runId": "grand-persistence-recovery",
       "group": "persistence",
       "project": "persistence-acceptance.project.json",
       "persistence": true,
@@ -95,7 +109,7 @@
       "execution": "studio-campaign",
       "group": "slice",
       "persistence": false,
-      "blocker": "Slice 02 acceptance harness and summary are not implemented"
+      "blocker": "Automated authority baseline is included in grand-single-client; full user, disclosure, recovery and content coverage remains"
     },
     {
       "order": 110,
@@ -105,7 +119,7 @@
       "execution": "studio-campaign",
       "group": "slice",
       "persistence": false,
-      "blocker": "Slice 03 acceptance harness and summary are not implemented"
+      "blocker": "Automated interaction, search, fog and restore baseline is included in grand-single-client; input, navigation and disclosure coverage remains"
     },
     {
       "order": 120,
@@ -115,7 +129,7 @@
       "execution": "studio-campaign",
       "group": "slice",
       "persistence": false,
-      "blocker": "Slice 04 acceptance harness and summary are not implemented"
+      "blocker": "Automated lifecycle, turn, action and rollback baseline is included in grand-single-client; reaction, objective and recovery coverage remains"
     },
     {
       "order": 130,
