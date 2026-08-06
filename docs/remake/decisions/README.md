@@ -4,7 +4,18 @@
 - 문서 종류: ADR Index
 - 최종 갱신일: 2026-08-06
 
-## 현재 UI·Content 권위 결정
+## 현재 UI·Content·Campaign Detail 권위 결정
+
+### [`ADR-0092 Campaign Survival Logistics와 DM-authored Actor Token`](ADR-0092-campaign-survival-logistics-and-dm-authored-actor-tokens.md)
+
+- 식량·물·탈것 사료·환경·탄약·휴식 품질을 Campaign Policy Module로 제공한다.
+- Campaign 생성 시 Narrative·Standard·Survival·Custom Preset을 선택한다.
+- Campaign 진행 중 Toggle은 Candidate Frozen Snapshot과 안전 경계에서 적용한다.
+- 정확한 소비량·면제·결핍 결과는 활성 Ruleset·Source Pack이 제공한다.
+- Time·Inventory·Shortage Result를 하나의 Supply Settlement Transaction으로 Commit한다.
+- DM이 Actor Model, Strict Stat Block JSON과 Token Presentation을 결합해 Campaign-local Actor Template을 Publish할 수 있다.
+- AI Prompt Builder는 Strict Schema와 현재 보이는 Actor Model Catalog 전체를 포함한다.
+- AI 출력은 Untrusted Draft이며 임의 Script·Luau·Remote와 미등록 Recipe를 허용하지 않는다.
 
 ### [`ADR-0091 개발 에셋 레지스트리·상호작용형 2024 시트·Dice Slot Reveal·프로필 분리형 Core Rules Reader`](ADR-0091-asset-registry-interactive-sheet-dice-and-core-rules.md)
 
@@ -15,7 +26,6 @@
 - Journal에 Module·Chunk 기반 Core Rules Collection을 제공한다.
 - 개발·테스트 기본은 비공개 한국어 통합판 12 Class·48 Subclass·16 Background·10 Species·75 Feat·391 Spell이다.
 - Public·Release 기본은 `rvtt.core.rules` SRD 5.2.1 범위이며 Private Rule Content 누출을 Build Gate로 차단한다.
-- Final UI Gap Audit로 Invite, Onboarding, Missing Asset, Rule Profile, License, Conflict 상태를 폐쇄한다.
 
 ### [`ADR-0090 Character Console 다중 행 Action Matrix와 Modular DM Tool Window`](ADR-0090-multi-row-action-matrices-and-modular-dm-tool-windows.md)
 
@@ -43,11 +53,12 @@
 
 ```text
 CURRENT-WORK-ORDER
+→ ADR-0092
 → ADR-0091
 → ADR-0090
 → ADR-0089
 → ADR-0088
-→ 상세 UI·System 계약
+→ 상세 Architecture·UI·System 계약
 → High-Fidelity HTML
 → Production Source·Runtime Evidence
 ```
