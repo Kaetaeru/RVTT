@@ -22,11 +22,7 @@ local function nonNegative(value: number?, fallback: number): number
 	return value
 end
 
-function LeaseOwnership.new(
-	coordinator: any,
-	diagnostics: any,
-	options: Options?
-): any
+function LeaseOwnership.new(coordinator: any, diagnostics: any, options: Options?): any
 	local resolved = if options ~= nil then options else {}
 	return setmetatable({
 		coordinator = coordinator,
