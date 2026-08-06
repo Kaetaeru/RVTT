@@ -1,6 +1,6 @@
 # RVTT Roblox Implementation 현재 작업 순서
 
-- 상태: `GRAND_SLICES_02_12_AUTOMATED_BASELINE_STATIC_VERIFIED`
+- 상태: `GRAND_DETERMINISTIC_FAULT_HOST_STATIC_VERIFIED`
 - 문서 종류: Production Implementation Work Order
 - 최종 갱신일: 2026-08-06
 - Grand Campaign: [`GRAND-ACCEPTANCE-CAMPAIGN.md`](GRAND-ACCEPTANCE-CAMPAIGN.md)
@@ -35,11 +35,14 @@ Grand Manifest·Runner·Grouped Studio Runs·Report
 Slices 02–12 Automated Authority Baseline
 → IMPLEMENTED · STATIC VERIFIED · STUDIO NOT EXECUTED
 
-Grand Cross-slice Session·Authority Fault·Capacity Sample
+Cross-slice Session·Authority Fault·Capacity Sample
+→ IMPLEMENTED · STATIC VERIFIED · STUDIO NOT EXECUTED
+
+Deterministic Network·Storage Fault Host
 → IMPLEMENTED · STATIC VERIFIED · STUDIO NOT EXECUTED
 
 현재 작업
-→ Full Grand Campaign에 남은 Persistence·Human UI·Fault Host·Soak Gate 연결
+→ 실제 Roblox Disconnect·Reconnect·Server Restart·DataStore Outage Host 연결
 ```
 
 ## 2. 테스트 운영 방식
@@ -70,8 +73,11 @@ Grand Cross-slice Session·Authority Fault·Capacity Sample
 - Slices 02–12 서버 권위 자동 Scenario
 - Cross-slice Full-session 자동 Scenario
 - Stale Revision·Stale Epoch·Duplicate·Invalid Payload·Corrupt Restore Scenario
+- 결정적 Network Drop·Duplicate·Hold·Reorder·Delayed Epoch Scenario
+- Terminal Receipt 유실·동일 Command ID 재전송·Bounded Timeout Scenario
+- Storage Load·Save Failure·Commit Ack Loss·Revision Conflict·External Winner Scenario
 - Capacity Sample: Scene Object 32, Item 32, Journal Document 16
-- `[RVTT Spec Summary]`, `[RVTT Spec Failure]`, `[RVTT Tests]`, Slice 01 Batch Summary
+- `[RVTT Spec Summary]`, `[RVTT Spec Failure]`, `[RVTT Tests]`, `[RVTT Fault Host]`, Slice 01 Batch Summary
 - Capacity `elapsedMs`·`restoreMs` 측정값
 
 ### `grand-multi-client`
@@ -141,6 +147,39 @@ Character·Session·Scene
 - Restore 후 AuthorityEpoch 갱신
 - 이전 Epoch Command 폐기
 
+### Deterministic Network Fault Host
+
+- Projection Drop 뒤 Sequence Gap 감지와 Full Resync
+- Duplicate Projection 무시와 False Gap 방지
+- Hold·Reorder·Release 뒤 연속 Sequence 복구
+- 새 AuthorityEpoch 전환 뒤 지연된 이전 Epoch Packet 폐기
+- Terminal Receipt 유실 시 원본 Command ID로 최대 3회 전송
+- 8초 이내 Terminal Receipt 미수신 시 retryable `CLIENT_TIMEOUT`
+- Timeout 또는 Terminal Receipt 뒤 Pending Command 정리
+
+Production 보강:
+
+- `ProjectionReplica`는 최근 AuthorityEpoch 이력을 유지하고 이전 Epoch rollback을 거부한다.
+- `CommandClient`는 Terminal Receipt 유실에 대해 bounded retry와 timeout terminal 상태를 제공한다.
+
+### Deterministic Storage Fault Host
+
+- Transient Load Failure 뒤 재시도
+- Commit 전 Save Failure에서 Dirty Snapshot 보존
+- Commit 뒤 Ack Loss에서 동일 Revision·Epoch 재저장 멱등성
+- Revision Conflict에서 저장된 Winner 보존
+- 외부 최신 Revision 뒤 더 높은 Revision으로 Reconcile
+- 잘못된 Load Revision을 Saved Revision으로 인정하지 않음
+
+### 아직 남은 실제 Fault Host
+
+- Roblox 실제 Remote 지연·제한·연결 끊김
+- Client Disconnect·Reconnect
+- Studio Server Restart
+- 실제 DataStore Throttle·Outage
+- Cross-server Lease·Conflict
+- 운영자 Recovery Runbook
+
 ### Capacity Sample
 
 임의 성능 PASS 기준은 아직 두지 않는다. 다음 구조적 정합성과 실제 측정값만 수집한다.
@@ -174,7 +213,10 @@ Camera Zoom
 Camera WASD·Middle-button·Frame
 → LATEST CORRECTION STUDIO RETEST PENDING
 
-Slices 02–12·Cross-slice·Fault·Capacity
+Slices 02–12·Cross-slice·Authority Fault·Capacity
+→ NEW STUDIO EVIDENCE NONE
+
+Deterministic Network·Storage Fault Host
 → NEW STUDIO EVIDENCE NONE
 ```
 
@@ -205,24 +247,28 @@ Slices 02–12·Cross-slice·Fault·Capacity
 | 3 | DONE | Cross-slice Authority Scenario | Full-session State 연결과 Restore 검사 |
 | 4 | DONE | Authority Fault Baseline | Stale·Duplicate·Epoch·Corrupt Restore 검사 |
 | 5 | DONE | Capacity Measurement Sample | 구조적 개수와 시간 Evidence 출력 |
-| 6 | IN_PROGRESS | Full Fault Host | Network Drop·Delay·Reorder·Storage Failure Injection |
-| 7 | QUEUED | Persistence Grand Phase | DataStore 변경 축적 후 일괄 Harness·Summary |
-| 8 | QUEUED | UI·Accessibility Evidence | Human Checklist와 Screenshot Reference 수집 |
-| 9 | BLOCKED | Slices 13–15 Content | Source Version·Rights·Distribution·Asset 승인 |
-| 10 | QUEUED | Performance·Soak Host | 측정 Budget·다중 Client·장시간 Session |
-| 11 | QUEUED | Slice 16 Release Campaign | 전체 Phase·Migration·Runbook Gate |
+| 6 | DONE | Deterministic Fault Host | Network Drop·Duplicate·Reorder·Receipt Loss·Storage Failure·Ack Loss·Conflict |
+| 7 | IN_PROGRESS | Real Transport·Restart Fault Host | Disconnect·Reconnect·Server Restart·DataStore Outage Evidence |
+| 8 | QUEUED | Persistence Grand Phase | DataStore 변경 축적 후 일괄 Harness·Summary |
+| 9 | QUEUED | UI·Accessibility Evidence | Human Checklist와 Screenshot Reference 수집 |
+| 10 | BLOCKED | Slices 13–15 Content | Source Version·Rights·Distribution·Asset 승인 |
+| 11 | QUEUED | Performance·Soak Host | 측정 Budget·다중 Client·장시간 Session |
+| 12 | QUEUED | Slice 16 Release Campaign | 전체 Phase·Migration·Runbook Gate |
 
 ## 9. 다음 Gate
 
 ```text
-Grand Harness 자동 Gate
+Deterministic Fault Host 자동 Gate
 → PASS
+
+실제 Roblox Transport·Restart Fault Host
+→ 구현 진행
 
 현재 Grand Runtime
 → 사용자 실행 보류
 
-Persistence·Human UI·Full Fault·Soak Phase
-→ 구현 진행
+Persistence·Human UI·Soak Phase
+→ 이후 연결
 
 Full Grand Campaign
 → 실행할 모든 대상 Phase가 READY인 Milestone에서 한 번 실행
