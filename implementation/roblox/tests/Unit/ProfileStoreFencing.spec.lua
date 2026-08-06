@@ -92,10 +92,7 @@ return function(harness: any)
 		authorityEpoch = "epoch:b",
 		domains = {},
 	}, fenceTwo)
-	harness:expect(
-		takeover.ok,
-		"higher fencing token supersedes a stale higher revision and epoch"
-	)
+	harness:expect(takeover.ok, "higher fencing token supersedes a stale higher revision and epoch")
 	harness:equal(fakeStore.value.revision, 5, "takeover stores the new owner snapshot")
 	harness:equal(
 		fakeStore.value.persistenceFence.fencingToken,
