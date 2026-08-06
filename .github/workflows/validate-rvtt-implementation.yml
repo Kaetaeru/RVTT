@@ -1,0 +1,291 @@
+name: Validate RVTT implementation
+
+concurrency:
+  group: rvtt-implementation-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+    paths:
+      - "implementation/roblox/**"
+      - ".github/workflows/validate-rvtt-implementation.yml"
+  push:
+    branches:
+      - planning/rvtt-remake
+    paths:
+      - "implementation/roblox/**"
+      - ".github/workflows/validate-rvtt-implementation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  ROJO_VERSION: "7.7.0"
+  STYLUA_VERSION: "2.5.2"
+  SELENE_VERSION: "0.31.0"
+  LUAU_LSP_VERSION: "1.69.0"
+
+jobs:
+  structure-and-policy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate implementation structure and policies
+        run: python implementation/roblox/tooling/validate_implementation.py
+
+  toolchain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Add local tool directory to PATH
+        run: |
+          mkdir -p "${HOME}/.local/bin"
+          echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
+
+      - name: Restore pinned Roblox tools
+        id: tool-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.cargo/bin/rojo
+            ~/.cargo/bin/stylua
+            ~/.cargo/bin/selene
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.local/bin/luau-lsp
+          key: rvtt-tools-v5-${{ runner.os }}-rojo-${{ env.ROJO_VERSION }}-stylua-${{ env.STYLUA_VERSION }}-selene-${{ env.SELENE_VERSION }}-luau-lsp-${{ env.LUAU_LSP_VERSION }}
+          restore-keys: |
+            rvtt-tools-v4-${{ runner.os }}-rojo-${{ env.ROJO_VERSION }}-stylua-${{ env.STYLUA_VERSION }}-selene-${{ env.SELENE_VERSION }}-luau-lsp-${{ env.LUAU_LSP_VERSION }}
+            rvtt-tools-v3-${{ runner.os }}-rojo-${{ env.ROJO_VERSION }}-stylua-${{ env.STYLUA_VERSION }}-selene-${{ env.SELENE_VERSION }}-luau-lsp-${{ env.LUAU_LSP_VERSION }}
+            rvtt-rust-tools-v2-${{ runner.os }}-rojo-${{ env.ROJO_VERSION }}-stylua-${{ env.STYLUA_VERSION }}-selene-${{ env.SELENE_VERSION }}
+
+      - name: Install pinned Rust tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v rojo >/dev/null 2>&1; then
+            cargo install rojo --version "${ROJO_VERSION}" --locked
+          fi
+          if ! command -v stylua >/dev/null 2>&1; then
+            cargo install stylua --version "${STYLUA_VERSION}" --features luau --locked
+          fi
+          if ! command -v selene >/dev/null 2>&1; then
+            cargo install selene --version "${SELENE_VERSION}" --locked
+          fi
+
+      - name: Install pinned luau-lsp
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if command -v luau-lsp >/dev/null 2>&1; then
+            exit 0
+          fi
+          release_json="$(curl --connect-timeout 15 --max-time 60 -fsSL \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            "https://api.github.com/repos/JohnnyMorganz/luau-lsp/releases/tags/${LUAU_LSP_VERSION}")"
+          asset_url="$(printf '%s' "${release_json}" | jq -r \
+            '.assets[] | select(.name | test("linux-x86_64\\.zip$")) | .browser_download_url' | head -n 1)"
+          test -n "${asset_url}" && test "${asset_url}" != "null"
+          curl --connect-timeout 15 --max-time 120 -fsSL "${asset_url}" -o /tmp/luau-lsp.zip
+          rm -rf /tmp/luau-lsp
+          mkdir -p /tmp/luau-lsp
+          unzip -q /tmp/luau-lsp.zip -d /tmp/luau-lsp
+          binary="$(find /tmp/luau-lsp -type f -name luau-lsp | head -n 1)"
+          test -n "${binary}"
+          install -m 755 "${binary}" "${HOME}/.local/bin/luau-lsp"
+
+      - name: Save pinned Roblox tools
+        if: steps.tool-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.cargo/bin/rojo
+            ~/.cargo/bin/stylua
+            ~/.cargo/bin/selene
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.local/bin/luau-lsp
+          key: rvtt-tools-v5-${{ runner.os }}-rojo-${{ env.ROJO_VERSION }}-stylua-${{ env.STYLUA_VERSION }}-selene-${{ env.SELENE_VERSION }}-luau-lsp-${{ env.LUAU_LSP_VERSION }}
+
+      - name: Verify pinned toolchain
+        run: |
+          set -euo pipefail
+          rojo --version
+          stylua --version
+          selene --version
+          timeout 10s luau-lsp analyze --help >/dev/null
+
+      - name: Check Luau formatting
+        working-directory: implementation/roblox
+        run: stylua --check src tests
+
+      - name: Lint Luau source
+        working-directory: implementation/roblox
+        run: selene src tests
+
+      - name: Build production place with Rojo
+        working-directory: implementation/roblox
+        run: rojo build default.project.json --output /tmp/RVTT.rbxlx
+
+      - name: Build test place with Rojo
+        working-directory: implementation/roblox
+        run: rojo build test.project.json --output /tmp/RVTT-tests.rbxlx
+
+      - name: Build Grand single-client place with Rojo
+        working-directory: implementation/roblox
+        run: rojo build grand-single-client.project.json --output /tmp/RVTT-grand-single-client.rbxlx
+
+      - name: Build multi-client place with Rojo
+        working-directory: implementation/roblox
+        run: rojo build multi-client.project.json --output /tmp/RVTT-multi-client.rbxlx
+
+      - name: Build real transport place with Rojo
+        working-directory: implementation/roblox
+        run: rojo build real-transport.project.json --output /tmp/RVTT-real-transport.rbxlx
+
+      - name: Build persistence acceptance place with Rojo
+        working-directory: implementation/roblox
+        run: rojo build persistence-acceptance.project.json --output /tmp/RVTT-persistence-acceptance.rbxlx
+
+      - name: Build restart seed place with Rojo
+        working-directory: implementation/roblox
+        run: rojo build restart-seed.project.json --output /tmp/RVTT-restart-seed.rbxlx
+
+      - name: Build restart verify place with Rojo
+        working-directory: implementation/roblox
+        run: rojo build restart-verify.project.json --output /tmp/RVTT-restart-verify.rbxlx
+
+      - name: Build DataStore outage place with Rojo
+        working-directory: implementation/roblox
+        run: rojo build datastore-outage.project.json --output /tmp/RVTT-datastore-outage.rbxlx
+
+      - name: Build lease holder place with Rojo
+        working-directory: implementation/roblox
+        run: rojo build lease-holder.project.json --output /tmp/RVTT-lease-holder.rbxlx
+
+      - name: Build lease contender place with Rojo
+        working-directory: implementation/roblox
+        run: rojo build lease-contender.project.json --output /tmp/RVTT-lease-contender.rbxlx
+
+      - name: Build Slice 01 acceptance place with Rojo
+        working-directory: implementation/roblox
+        run: rojo build slice01-acceptance.project.json --output /tmp/RVTT-slice01-acceptance.rbxlx
+
+      - name: Generate production Rojo sourcemap
+        working-directory: implementation/roblox
+        run: rojo sourcemap default.project.json --output sourcemap.json
+
+      - name: Generate test Rojo sourcemap
+        working-directory: implementation/roblox
+        run: rojo sourcemap test.project.json --output test-sourcemap.json
+
+      - name: Generate multi-client Rojo sourcemap
+        working-directory: implementation/roblox
+        run: rojo sourcemap multi-client.project.json --output multi-client-sourcemap.json
+
+      - name: Download pinned Roblox type definitions
+        working-directory: implementation/roblox
+        run: |
+          curl --connect-timeout 15 --max-time 60 -fsSL \
+            "https://raw.githubusercontent.com/JohnnyMorganz/luau-lsp/${LUAU_LSP_VERSION}/scripts/globalTypes.d.luau" \
+            -o globalTypes.d.luau
+
+      - name: Analyze Luau types
+        working-directory: implementation/roblox
+        shell: bash
+        run: |
+          set +e
+          : > typecheck.log
+          luau-lsp analyze \
+            --platform=roblox \
+            --defs=globalTypes.d.luau \
+            --sourcemap=sourcemap.json \
+            --no-strict-dm-types \
+            src 2>&1 | tee -a typecheck.log
+          production_status=${PIPESTATUS[0]}
+          luau-lsp analyze \
+            --platform=roblox \
+            --defs=globalTypes.d.luau \
+            --sourcemap=test-sourcemap.json \
+            --no-strict-dm-types \
+            tests 2>&1 | tee -a typecheck.log
+          test_status=${PIPESTATUS[0]}
+          status=0
+          if [ "${production_status}" -ne 0 ] || [ "${test_status}" -ne 0 ]; then
+            status=1
+          fi
+          export TYPECHECK_STATUS="${status}"
+          python - <<'PY'
+          import os
+          import re
+          from pathlib import Path
+
+          def escape(value: str) -> str:
+              return value.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+
+          patterns = (
+              re.compile(r"^(?P<path>.+?)\((?P<line>\d+),(?P<column>\d+)\):\s*(?P<message>.+)$"),
+              re.compile(r"^(?P<path>.+?):(?P<line>\d+):(?P<column>\d+):\s*(?P<message>.+)$"),
+          )
+          lines = Path("typecheck.log").read_text(encoding="utf-8", errors="replace").splitlines()
+          emitted = 0
+          for raw in lines:
+              match = next((candidate.match(raw) for candidate in patterns if candidate.match(raw)), None)
+              if match is None:
+                  continue
+              path = match.group("path").split(" [", 1)[0].replace("\\", "/")
+              marker = "/implementation/roblox/"
+              if marker in path:
+                  path = path.split(marker, 1)[1]
+              path = path.removeprefix("./")
+              line = match.group("line")
+              column = match.group("column")
+              message = escape(match.group("message"))
+              print(f"::error file=implementation/roblox/{path},line={line},col={column}::{message}")
+              emitted += 1
+          if int(os.environ["TYPECHECK_STATUS"]) != 0 and emitted == 0:
+              tail = escape(" | ".join(lines[-20:])[:4000] or "luau-lsp failed without diagnostic output")
+              print(f"::error file=.github/workflows/validate-rvtt-implementation.yml::{tail}")
+          PY
+          exit "${status}"
+
+      - name: Upload Luau type analysis output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: luau-type-analysis-${{ github.run_id }}
+          path: |
+            implementation/roblox/typecheck.log
+            implementation/roblox/src
+            implementation/roblox/tests
+            implementation/roblox/default.project.json
+            implementation/roblox/test.project.json
+            implementation/roblox/grand-single-client.project.json
+            implementation/roblox/live-datastore.project.json
+            implementation/roblox/multi-client.project.json
+            implementation/roblox/real-transport.project.json
+            implementation/roblox/persistence-acceptance.project.json
+            implementation/roblox/restart-seed.project.json
+            implementation/roblox/restart-verify.project.json
+            implementation/roblox/datastore-outage.project.json
+            implementation/roblox/lease-holder.project.json
+            implementation/roblox/lease-contender.project.json
+            implementation/roblox/slice01-acceptance.project.json
+            implementation/roblox/stylua.toml
+            implementation/roblox/selene.toml
+          if-no-files-found: error
+          retention-days: 7

@@ -1,0 +1,371 @@
+# RVTT Remake Agent Planning Addendum
+
+이 문서는 `docs/remake/`에서 기획·ADR·구현명세를 작성하는 에이전트가 루트 `AGENTS.md`와 `docs/remake/AGENTS.md`에 추가로 따라야 하는 규약이다.
+
+## 1. 모든 기획 문서에 구현명세 준비도를 표시한다
+
+새 기획 문서 또는 기존 기획 문서를 실질적으로 수정할 때 문서 상단에 다음 필드를 반드시 둔다.
+
+```markdown
+- 즉시 구현 명세 가능성: READY | READY_WITH_DEFAULTS | BLOCKED
+```
+
+### READY
+
+중대한 제품 결정이 모두 끝나 곧바로 구현명세를 작성할 수 있다.
+
+문서에는 최소한 다음이 확정되어 있어야 한다.
+
+- 사용자 흐름
+- 권위 상태와 소유자
+- 정상 상태 전이
+- 취소·실패·재접속 흐름
+- 저장 여부
+- 다른 시스템과의 경계
+
+### READY_WITH_DEFAULTS
+
+구조와 의미는 확정됐고, 수치·시간·표시 방식 같은 기본값만 남았다.
+
+반드시 남은 기본값을 바로 아래에 적는다.
+
+```markdown
+- 남은 기본값: 자동 저장 간격, 패널 기본 폭
+```
+
+기본값은 구현명세 작성 중 측정 또는 프로토타입으로 정할 수 있지만 제품 의미를 바꾸면 안 된다.
+
+### BLOCKED
+
+둘 이상의 제품 동작이 가능하거나 다른 문서와 충돌해 구현명세를 만들면 추측이 필요한 상태다.
+
+반드시 차단 이유와 결정 질문을 적는다.
+
+```markdown
+- 차단 이유: 전투 중 이동 확정 시점 미정
+- 결정 질문: 클릭 시 전체 경로를 확정하는가, 이동 구간마다 확정하는가
+```
+
+`BLOCKED` 문서를 근거로 프로덕션 구현을 시작하지 않는다.
+
+## 2. 연속 작업 전에 체크리스트를 작성한다
+
+한 요청을 완료하기 위해 두 번 이상의 연속 작업 또는 둘 이상의 독립 문서·파일 수정이 예상되면, 작업 시작 전에 사용자에게 짧은 체크리스트를 먼저 제시한다.
+
+체크리스트는 다음을 포함한다.
+
+- 수정할 큰 영역
+- 확인할 충돌이나 전제
+- 최종 검증 항목
+
+예시:
+
+```text
+- 관련 ADR과 기존 문서 확인
+- 상세 기획과 상태 전이 작성
+- 에이전트 규약·README 참조 갱신
+- 최신 브랜치와 문서 상태 검증
+```
+
+체크리스트는 내부 도구 호출 목록이 아니다. `파일 열기`, `API 호출` 같은 저수준 작업을 나열하지 않는다.
+
+작업 중 범위가 달라지면 체크리스트를 갱신해 사용자에게 알린다.
+
+## 3. 문서 완료 전 준비도 재평가
+
+문서를 작성한 직후 처음 표시한 준비도를 그대로 두지 않는다. 다음을 다시 확인한다.
+
+1. 구현자가 사용자 결정을 다시 물어야 하는가
+2. 서버·클라이언트 권위가 모호한가
+3. 실패 후 남아야 할 상태가 모호한가
+4. 저장·재접속·롤백 영향이 빠졌는가
+5. 기존 확정 문서와 충돌하는가
+6. 비목표가 명확한가
+
+하나라도 중대한 추측이 필요하면 `READY`로 표시하지 않는다.
+
+## 4. 최신 고정 전제
+
+리메이크 문서 작성 시 다음을 기본 전제로 사용한다.
+
+- 권위 이동은 연속 무격자 좌표다.
+- 월드 비율은 `5 ft = 4 studs`다.
+- 전투에서 토큰 WASD 이동을 지원하지 않는다.
+- 초기 지원 플랫폼은 PC 키보드·마우스다.
+- NPC 대화 시스템을 만들지 않는다.
+- 음악과 모든 사운드 이펙트를 만들지 않는다.
+- PresentationRecipe는 VFX, 토큰 모션, 카메라와 화면 효과만 다룬다.
+- 2024 기본 규칙의 플레이어 캐릭터 콘텐츠 전체가 최종 지원 범위다.
+- 저장 한도 초과 데이터는 manifest와 chunk로 나눈다.
+
+기존 문서가 이 전제와 충돌하면 새 기능을 덧붙이기 전에 충돌을 표시하고 수정 대상으로 등록한다.
+
+## 5. 공통 런타임 아키텍처 게이트
+
+기획과 구현명세를 작성하기 전에 [`Runtime Architecture Principles`](architecture/runtime-architecture-principles.md)와 [`ADR-0054`](decisions/ADR-0054-compiled-semantic-runtime-and-query-authority-principles.md)를 확인한다.
+
+### 사용자 경험이 상위 제약이다
+
+내부 계산, Compiler와 Index는 복잡해질 수 있다. 다만 다음을 요구하는 설계는 채택하지 않는다.
+
+- DM이 일반 에셋 내부에 기술용 Attribute나 Value를 직접 추가
+- DM이 내비게이션 Polygon, Portal 폭과 Clearance를 일상적으로 관리
+- 플레이어가 내부 계산 때문에 눈에 띄는 입력 지연과 불안정한 이동을 경험
+- Scene 제작자가 엔진 내부 Graph와 Cache를 이해해야 함
+
+복잡성은 Compiler와 Runtime이 소유한다.
+
+### 권위와 계층을 명시한다
+
+새 문서는 최소한 다음 질문에 답해야 한다.
+
+1. 저장 원본은 무엇인가
+2. 어떤 Compiled Runtime 데이터가 생성되는가
+3. 어느 Layer와 Provider가 책임지는가
+4. 어떤 Snapshot과 revision을 읽는가
+5. 조회는 어떤 Query를 사용하는가
+6. 변경은 어떤 Command 또는 CommitGroup을 사용하는가
+7. Cache와 Index는 무엇에 의해 무효화되는가
+8. 롤백·재접속·중도 참여 시 무엇을 복구하는가
+9. Roblox Instance와 Physics를 어디까지 사용하는가
+10. DM과 플레이어에게 추가되는 조작 부담은 무엇인가
+
+중요한 답이 빠져 있으면 `READY`로 표시하지 않는다.
+
+### 직접 Workspace 조회를 권위 판정에 사용하지 않는다
+
+Rules, Recipe, UI와 일반 기능 서비스는 `Workspace` 탐색, Raycast와 overlap을 직접 호출해 권위 결과를 만들지 않는다.
+
+필요한 Roblox 공간 API는 다음 경계 안에 둔다.
+
+- Scene Compiler Geometry Adapter
+- 등록된 Spatial Provider
+- 비권위 Presentation
+- 검증·진단 도구
+
+### Legacy Attribute 관례를 복원하지 않는다
+
+리메이크의 권위 데이터로 다음 모델 내부 관례를 다시 도입하지 않는다.
+
+```text
+Walkable
+Deniable
+IsDeniable
+DifficultTerrain
+IsDifficultTerrain
+```
+
+Semantic Profile은 Asset Definition, Content Pack, Scene Metadata 또는 명시적 Override에 저장한다. 원본 Model은 Attribute와 Value가 없어도 등록 가능해야 한다.
+
+### Query와 Mutation을 분리한다
+
+- Query는 Snapshot-bound, 읽기 전용, 결정적이며 불변 결과를 반환한다.
+- 상태 변경은 서버 권위 Command, transaction 또는 CommitGroup만 수행한다.
+- Presentation, Query와 Step Handler는 권위 상태를 직접 변경하지 않는다.
+- Recipe의 BindingStore는 실행 범위 Blackboard이며 전역 월드 상태를 소유하지 않는다.
+
+### 확장은 신뢰된 Registry로 제한한다
+
+Builder, Provider, Step Handler와 Presentation Module은 고정 ID, 버전, Schema와 Budget을 가진 신뢰된 모듈만 등록한다.
+
+사용자 콘텐츠가 임의 Luau, 무제한 반복, 전체 Workspace 접근과 권위 Command 우회를 제공하도록 설계하지 않는다.
+
+### 한 결정에는 하나의 권위 문서만 둔다
+
+하위 문서는 전체 원칙을 다시 정의하지 않는다. 해당 개념의 권위 문서를 링크하고, 자신의 범위에서 추가되는 계약만 기록한다.
+
+## 6. Runtime Object와 Entity Lifecycle 게이트
+
+Actor, 문, 함정, 상자, 소환체, 지속 영역, 임시 장애물과 기타 Scene Presence를 다루는 문서는 [`Runtime Object System과 Entity Lifecycle 계약`](architecture/runtime-object-system-and-entity-lifecycle-contract.md)과 [`ADR-0058`](decisions/ADR-0058-stable-runtime-object-identity-and-command-driven-lifecycle.md)를 확인한다.
+
+### ID 의미를 섞지 않는다
+
+최소한 다음을 구분한다.
+
+```text
+SceneObjectId
+→ Authoring Source ID
+
+RuntimeObjectBlueprintId
+→ Compiled Build Definition ID
+
+RuntimeObjectId
+→ Live Scene Presence ID
+
+CharacterId / ItemInstanceId / EffectInstanceId
+→ 각 도메인 영구 원본 ID
+```
+
+SceneObjectId와 Workspace Instance 경로를 Live Runtime 참조처럼 사용하지 않는다.
+
+### Runtime Object 범위를 과도하게 넓히지 않는다
+
+정적 Geometry, Character 원본, 인벤토리 안 ItemInstance, Scene Presence가 없는 EffectInstance, UI와 VFX를 억지로 Runtime Object로 만들지 않는다.
+
+Scene 안에서 독립된 Identity, Lifecycle, 공간 점유, 선택, 상호작용 또는 안정적 참조가 필요한 경우에만 Runtime Object를 사용한다.
+
+### Lifecycle Mutation은 Command만 사용한다
+
+Spawn, Suspend, Resume, Archive, Restore, Destroy와 Reconfigure는 서버 권위 Lifecycle Command와 원자적 CommitGroup을 사용한다.
+
+다음을 금지한다.
+
+- `Model:Destroy()`를 권위 Destroy로 취급
+- Workspace에 Model을 먼저 만든 뒤 Spawn 성공으로 처리
+- Component Store와 Index를 각각 따로 변경
+- Destroyed ID를 새 Object에 재사용
+- Archived와 Destroyed를 같은 상태로 취급
+
+### 오래된 참조를 검증한다
+
+Runtime Object를 비동기로 참조하는 기능은 필요에 따라 다음을 확인한다.
+
+- RuntimeObjectId
+- RuntimeIncarnation
+- AuthorityEpoch 또는 Branch
+- SceneId
+- Object Revision
+
+Rollback, 서버 복구, Archive Restore와 Build Rebind 이후 오래된 작업이 자동으로 새 Object에 적용되지 않게 한다.
+
+### Streaming과 Presentation을 Lifecycle과 분리한다
+
+Client Model의 `loading`, `ready`, `evicted`, `failed`와 Runtime Object의 `active`, `suspended`, `archived`, `destroyed`를 같은 상태 기계로 만들지 않는다.
+
+Chunk가 보이지 않거나 Model 생성에 실패해도 서버 권위 Object를 삭제하거나 Suspend하지 않는다.
+
+### Ownership과 Link를 구분한다
+
+소환체와 Effect-owned Object의 Cleanup 관계는 Runtime Ownership Edge로 기록한다.
+
+레버와 문, Journal과 Object, Trigger와 대상의 연결은 일반 Link이며 Cleanup Ownership과 동일하지 않다.
+
+Gameplay Owner, Character Owner, Control Assignment와 Runtime Cleanup Owner를 하나의 `ownerId`로 합치지 않는다.
+
+### 준비도 확인 항목
+
+Runtime Object를 추가하거나 변경하는 문서는 다음을 명시해야 한다.
+
+1. Blueprint와 Live Identity 정책
+2. 필요한 Component와 각 권위 Store
+3. 허용 Lifecycle 상태와 전이
+4. Spawn·Cleanup의 Transaction 경계
+5. Ownership·Link 무효화 정책
+6. Persistence Class와 Snapshot 포함 방식
+7. Rollback·복구 시 Identity와 Incarnation 처리
+8. Disclosure와 Client Materialization 경계
+9. Build 교체 시 Rebind 또는 Migration 정책
+10. 실패 후 남아야 할 안전 상태
+
+중요한 항목이 빠져 있으면 `READY`로 표시하지 않는다.
+
+## 7. Networking, Command와 Client Synchronization 게이트
+
+Remote, Client 입력, Command, Read Request, 서버 Event, 중도 참여, 재접속 또는 Client Ready를 다루는 문서는 [`Networking Command, Event와 Client Synchronization 계약`](architecture/networking-command-event-and-client-synchronization-contract.md)과 [`ADR-0059`](decisions/ADR-0059-versioned-command-protocol-and-projection-stream-synchronization.md)를 확인한다.
+
+### Remote를 기능 계약으로 사용하지 않는다
+
+Roblox RemoteEvent와 RemoteFunction은 Protocol Message를 전달하는 Adapter다.
+
+다음을 금지한다.
+
+- 기능마다 Schema 없는 임의 Remote와 Payload Table 추가
+- Remote 도착 순서를 Authority 순서로 사용
+- RemoteFunction 호출 Stack을 장기 권위 Mutation의 생명주기로 사용
+- UI 코드가 Remote를 호출한 뒤 직접 권위 Store를 갱신
+
+### Command와 Read Request를 분리한다
+
+상태를 바꿀 가능성이 있는 입력은 Versioned Command Registry를 사용한다.
+
+Preview, Query와 상세 조회는 Read Request Registry를 사용하고 상태를 변경하지 않는다.
+
+Read Result를 이후 Mutation의 권위 증거로 그대로 신뢰하지 않고 Commit 시 최신 상태를 재검증한다.
+
+### 멱등성과 연결 세대를 명시한다
+
+권위 Command는 최소한 다음을 가진다.
+
+- requestId
+- idempotencyKey
+- clientCommandSequence
+- connectionSessionId
+- connectionEpoch
+- commandTypeId와 Schema Version
+- 필요한 타입 있는 Precondition
+
+같은 Idempotency Key에 다른 Payload를 허용하지 않는다. 이전 Connection Epoch의 Command와 Ready 신호를 현재 연결에 적용하지 않는다.
+
+### 전역 Revision과 Client Projection을 구분한다
+
+Server 내부 AuthorityRevision과 Player Client의 Projection Cursor를 같은 값으로 사용하지 않는다.
+
+Player는 Role, Control, Perception, Fog와 Disclosure가 적용된 Projection Snapshot과 Event Stream을 받는다.
+
+Raw Domain Event와 숨겨진 Runtime Object를 모든 Client에 Broadcast한 뒤 UI에서만 숨기지 않는다.
+
+### Event Gap을 조용히 무시하지 않는다
+
+Client는 `projectionEpoch + viewSequence`의 연속성을 검사한다.
+
+Gap, Epoch 변경 또는 Integrity 실패가 발생하면 다음을 수행한다.
+
+```text
+권위 State 적용과 Gameplay Command 일시 중지
+→ Event Catch-up 또는 Full Projection Resync
+→ 연속성 검증
+→ 입력 재활성화
+```
+
+최신 Event부터 임의로 적용해 계속 플레이하지 않는다.
+
+### Client Ready를 사용자 Ready와 분리한다
+
+Lobby Ready는 사용자의 시작 의사다.
+
+Client Ready는 Protocol, Snapshot, Catch-up과 Presentation 준비 상태다.
+
+Command별 Readiness Scope를 정하고 `authority_ready` 이전에 권위 Gameplay Command를 허용하지 않는다.
+
+### 권위 Event와 Presentation Signal을 분리한다
+
+HP, 문 상태, 이동 Checkpoint, Action Execution과 Roll 공개는 Authority Projection이다.
+
+토큰 보간 Sample, VFX, Camera Cue와 Animation 시작은 Presentation Signal이며 병합·만료할 수 있다.
+
+Presentation 실패가 Authority State를 변경하거나 복구 Journal을 되돌리지 않는다.
+
+### Rate, Budget와 실패 정책을 명시한다
+
+새 Network Message는 최소한 다음을 정의한다.
+
+- Payload Schema와 최대 크기
+- Authorization과 Disclosure
+- Idempotency와 Ordering Policy
+- Rate Limit과 Compute Budget
+- Receipt·Result 또는 Read Result
+- Retryable 여부와 Retry Budget
+- Event Projection과 Catch-up 영향
+- Client Ready Scope
+- 감사와 Trace 필드
+
+권위 Event를 조용히 Drop하지 않는다. Client가 따라오지 못하면 Catch-up 또는 Snapshot Resync를 사용한다.
+
+### 준비도 확인 항목
+
+Network를 사용하는 문서는 다음을 명시해야 한다.
+
+1. Command인지 Read Request인지
+2. Message Type·Schema Version과 Registry 소유자
+3. Client가 제출하는 Intent와 Server가 다시 계산하는 값
+4. Idempotency Key와 중복 Result 정책
+5. Ordering Key와 Concurrency Policy
+6. 필요한 Object Incarnation·Epoch·Revision Precondition
+7. Receipt·Terminal Result·Error 계약
+8. 사용자별 Projection Event와 공개 정책
+9. Event Gap·Reconnect·Snapshot Resync 흐름
+10. Client Ready Scope와 Authority 전 입력 차단
+11. Rate Limit·Payload·Compute Budget
+12. Presentation Signal과 권위 Event의 경계
+
+중요한 항목이 빠져 있으면 `READY`로 표시하지 않는다.

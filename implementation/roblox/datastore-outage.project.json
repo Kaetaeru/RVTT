@@ -1,0 +1,21 @@
+{
+  "name": "RVTTDataStoreOutageAcceptance",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "RVTT": {"$path": "src/ReplicatedStorage/RVTT"},
+      "RVTT_TestMode": {
+        "$className": "StringValue",
+        "$properties": {"Value": "datastore-outage"}
+      }
+    },
+    "ServerScriptService": {
+      "RVTT": {
+        "$className": "Folder",
+        "Server": {"$path": "src/ServerScriptService/RVTT/Server"}
+      },
+      "RVTTDataStoreOutageTests": {"$path": "tests/OutageAcceptance"}
+    },
+    "ServerStorage": {"RVTT": {"$path": "src/ServerStorage/RVTT"}}
+  }
+}

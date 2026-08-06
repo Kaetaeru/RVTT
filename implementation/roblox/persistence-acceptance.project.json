@@ -1,0 +1,29 @@
+{
+  "name": "RVTTPersistenceAcceptance",
+  "tree": {
+    "$className": "DataModel",
+    "Players": {
+      "$properties": {
+        "CharacterAutoLoads": false
+      }
+    },
+    "ReplicatedFirst": {"RVTT": {"$path": "src/ReplicatedFirst/RVTT"}},
+    "ReplicatedStorage": {"RVTT": {"$path": "src/ReplicatedStorage/RVTT"}},
+    "ServerScriptService": {"RVTT": {"$path": "src/ServerScriptService/RVTT"}},
+    "ServerStorage": {
+      "RVTT": {
+        "$path": "src/ServerStorage/RVTT",
+        "EnableStudioPersistence": {
+          "$className": "BoolValue",
+          "$properties": {"Value": true}
+        }
+      }
+    },
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "RVTT": {"$path": "src/StarterPlayer/StarterPlayerScripts/RVTT"},
+        "RVTTUI": {"$path": "src/StarterGui/RVTT"}
+      }
+    }
+  }
+}

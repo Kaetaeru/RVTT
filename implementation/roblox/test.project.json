@@ -1,0 +1,29 @@
+{
+  "name": "RVTTTest",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "RVTT": {"$path": "src/ReplicatedStorage/RVTT"},
+      "RVTT_TestMode": {
+        "$className": "StringValue",
+        "$properties": {"Value": "unit"}
+      }
+    },
+    "ServerScriptService": {
+      "RVTT": {"$path": "src/ServerScriptService/RVTT"},
+      "RVTTTests": {
+        "$className": "Folder",
+        "TestHarness": {"$path": "tests/TestHarness.lua"},
+        "TestRunner": {"$path": "tests/TestRunner.server.lua"},
+        "Unit": {"$path": "tests/Unit"},
+        "Integration": {"$path": "tests/Integration"}
+      }
+    },
+    "ServerStorage": {"RVTT": {"$path": "src/ServerStorage/RVTT"}},
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "RVTT": {"$path": "src/StarterPlayer/StarterPlayerScripts/RVTT"}
+      }
+    }
+  }
+}

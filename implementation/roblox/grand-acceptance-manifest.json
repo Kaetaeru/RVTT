@@ -1,0 +1,428 @@
+{
+  "schemaVersion": 1,
+  "campaignId": "rvtt-grand-acceptance",
+  "branch": "planning/rvtt-remake",
+  "runner": "tooling/run-grand-acceptance.ps1",
+  "report": {
+    "json": "RVTT-grand-acceptance-report.json",
+    "markdown": "RVTT-grand-acceptance-report.md"
+  },
+  "staticProjects": [
+    "default.project.json",
+    "test.project.json",
+    "grand-single-client.project.json",
+    "multi-client.project.json",
+    "real-transport.project.json",
+    "live-datastore.project.json",
+    "persistence-acceptance.project.json",
+    "restart-seed.project.json",
+    "restart-verify.project.json",
+    "datastore-outage.project.json",
+    "lease-holder.project.json",
+    "lease-contender.project.json",
+    "production-lease-seed.project.json",
+    "production-lease-verify.project.json",
+    "slice01-acceptance.project.json"
+  ],
+  "phases": [
+    {
+      "order": 0,
+      "id": "static-build",
+      "name": "Static and Rojo build gate",
+      "status": "ready",
+      "execution": "automated",
+      "group": "core",
+      "persistence": false
+    },
+    {
+      "order": 10,
+      "id": "unit-integration-baseline",
+      "name": "Unit integration, Slices 02-12 and deterministic fault baseline",
+      "status": "ready",
+      "execution": "studio-single-client",
+      "runId": "grand-single-client",
+      "group": "core",
+      "project": "grand-single-client.project.json",
+      "persistence": false,
+      "summaryToken": "[RVTT Tests]",
+      "evidenceTokens": [
+        "[RVTT Spec Summary]",
+        "[RVTT Spec Failure]",
+        "[RVTT Fault Host]",
+        "[RVTT Persistence Retry]"
+      ],
+      "passRegex": "\\[RVTT Tests\\].*failed=0"
+    },
+    {
+      "order": 20,
+      "id": "slice01-world-interaction",
+      "name": "Slice 01 world interaction",
+      "status": "ready",
+      "execution": "studio-single-client",
+      "runId": "grand-single-client",
+      "group": "core",
+      "project": "grand-single-client.project.json",
+      "persistence": false,
+      "summaryToken": "[RVTT Batch Summary]",
+      "evidenceTokens": [
+        "[RVTT Batch Check]",
+        "[RVTT Batch Camera]"
+      ],
+      "passRegex": "\\[RVTT Batch Summary\\].*batch=slice01-world-interaction.*result=PASS.*failed=0.*pending=0"
+    },
+    {
+      "order": 30,
+      "id": "multi-client-authority",
+      "name": "DM Player Observer authority and projection",
+      "status": "ready",
+      "execution": "studio-multi-client",
+      "runId": "grand-multi-client",
+      "group": "core",
+      "project": "multi-client.project.json",
+      "persistence": false,
+      "summaryToken": "[RVTT MultiClient]",
+      "passRegex": "\\[RVTT MultiClient\\].*failed=0"
+    },
+    {
+      "order": 35,
+      "id": "real-transport-reconnect",
+      "name": "Real Player disconnect reconnect and full resync",
+      "status": "ready",
+      "execution": "studio-multi-client",
+      "runId": "grand-real-transport",
+      "group": "quality",
+      "project": "real-transport.project.json",
+      "persistence": false,
+      "summaryToken": "[RVTT Real Transport]",
+      "evidenceTokens": [
+        "[RVTT Real Transport Prompt]",
+        "[RVTT Real Transport Client]"
+      ],
+      "passRegex": "\\[RVTT Real Transport\\].*result=PASS.*failed=0.*reconnects=1"
+    },
+    {
+      "order": 40,
+      "id": "live-datastore-baseline",
+      "name": "Live DataStore baseline",
+      "status": "deferred",
+      "execution": "studio-published",
+      "runId": "grand-persistence-live",
+      "group": "persistence",
+      "project": "live-datastore.project.json",
+      "persistence": true,
+      "summaryToken": "[RVTT Live DataStore]",
+      "passRegex": "\\[RVTT Live DataStore\\].*failed=0",
+      "blocker": "Deferred until the dedicated persistence grand milestone"
+    },
+    {
+      "order": 50,
+      "id": "persistence-restart-seed",
+      "name": "BindToClose restart checkpoint seed",
+      "status": "deferred",
+      "execution": "studio-published",
+      "runId": "grand-persistence-restart-seed",
+      "group": "persistence",
+      "project": "restart-seed.project.json",
+      "persistence": true,
+      "summaryToken": "[RVTT Restart Seed]",
+      "evidenceTokens": [
+        "[RVTT Restart Prompt]",
+        "[RVTT Persistence Retry]"
+      ],
+      "passRegex": "\\[RVTT Restart Seed\\].*result=PASS.*failed=0",
+      "blocker": "Runs only in the dedicated published persistence milestone"
+    },
+    {
+      "order": 60,
+      "id": "persistence-restart-verify",
+      "name": "Fresh server restore epoch rotation and stale command rejection",
+      "status": "deferred",
+      "execution": "studio-published",
+      "runId": "grand-persistence-restart-verify",
+      "group": "persistence",
+      "project": "restart-verify.project.json",
+      "persistence": true,
+      "summaryToken": "[RVTT Restart Verify]",
+      "evidenceTokens": [
+        "[RVTT Persistence]",
+        "[RVTT Persistence Retry]"
+      ],
+      "passRegex": "\\[RVTT Restart Verify\\].*result=PASS.*failed=0",
+      "blocker": "Runs after the restart seed in the dedicated published persistence milestone"
+    },
+    {
+      "order": 70,
+      "id": "persistence-forced-outage",
+      "name": "Injected DataStore outage retry exhaustion and recovery",
+      "status": "deferred",
+      "execution": "studio-published",
+      "runId": "grand-persistence-outage",
+      "group": "persistence",
+      "project": "datastore-outage.project.json",
+      "persistence": true,
+      "summaryToken": "[RVTT DataStore Outage]",
+      "evidenceTokens": [
+        "[RVTT Persistence Retry]",
+        "[RVTT Persistence]"
+      ],
+      "passRegex": "\\[RVTT DataStore Outage\\].*result=PASS.*failed=0.*injectedFailures=[1-9][0-9]*.*recoveredRevision=1",
+      "blocker": "Runs in the dedicated published persistence milestone; outage is injected before actual DataStore calls"
+    },
+    {
+      "order": 80,
+      "id": "cross-server-lease-holder",
+      "name": "Cross-server lease holder renewal expiry and stale fencing",
+      "status": "deferred",
+      "execution": "studio-published-pair",
+      "runId": "grand-persistence-lease-pair",
+      "group": "persistence",
+      "project": "lease-holder.project.json",
+      "persistence": true,
+      "summaryToken": "[RVTT Lease Holder]",
+      "evidenceTokens": [
+        "[RVTT Lease Pair Prompt]",
+        "[RVTT Lease Pair]"
+      ],
+      "passRegex": "\\[RVTT Lease Holder\\].*result=PASS.*failed=0.*renewals=1.*takeovers=1",
+      "blocker": "Runs concurrently with the contender Place in the dedicated published persistence milestone"
+    },
+    {
+      "order": 81,
+      "id": "cross-server-lease-contender",
+      "name": "Cross-server lease contender conflict and fencing takeover",
+      "status": "deferred",
+      "execution": "studio-published-pair",
+      "runId": "grand-persistence-lease-pair",
+      "group": "persistence",
+      "project": "lease-contender.project.json",
+      "persistence": true,
+      "summaryToken": "[RVTT Lease Contender]",
+      "evidenceTokens": [
+        "[RVTT Lease Pair Prompt]",
+        "[RVTT Lease Pair]"
+      ],
+      "passRegex": "\\[RVTT Lease Contender\\].*result=PASS.*failed=0.*blocked=2.*takeovers=1",
+      "blocker": "Runs concurrently with the holder Place in the dedicated published persistence milestone"
+    },
+    {
+      "order": 90,
+      "id": "production-lease-seed",
+      "name": "Production ServerBoot fenced persistence seed",
+      "status": "deferred",
+      "execution": "studio-published",
+      "runId": "grand-production-lease-seed",
+      "group": "persistence",
+      "project": "production-lease-seed.project.json",
+      "persistence": true,
+      "summaryToken": "[RVTT Production Lease Seed]",
+      "evidenceTokens": [
+        "[RVTT Production Lease Prompt]",
+        "[RVTT Production Lease Client]",
+        "[RVTT Lease]",
+        "[RVTT Persistence Retry]"
+      ],
+      "passRegex": "\\[RVTT Production Lease Seed\\].*result=PASS.*failed=0.*checks=true.*flush=true.*metadata=true.*release=true",
+      "blocker": "Runs before production lease verify in the dedicated published persistence milestone"
+    },
+    {
+      "order": 91,
+      "id": "production-lease-verify",
+      "name": "Production ServerBoot higher fence restore and stale writer rejection",
+      "status": "deferred",
+      "execution": "studio-published",
+      "runId": "grand-production-lease-verify",
+      "group": "persistence",
+      "project": "production-lease-verify.project.json",
+      "persistence": true,
+      "summaryToken": "[RVTT Production Lease Verify]",
+      "evidenceTokens": [
+        "[RVTT Production Lease Prompt]",
+        "[RVTT Production Lease Client]",
+        "[RVTT Lease]",
+        "[RVTT Persistence Retry]"
+      ],
+      "passRegex": "\\[RVTT Production Lease Verify\\].*result=PASS.*failed=0.*checks=true.*flush=true.*release=true.*cleanup=true.*staleBlocked=true",
+      "blocker": "Runs after production lease seed in the dedicated published persistence milestone"
+    },
+    {
+      "order": 100,
+      "id": "slice02-core-rules",
+      "name": "Slice 02 core rules and D20",
+      "status": "planned",
+      "execution": "studio-campaign",
+      "group": "slice",
+      "persistence": false,
+      "blocker": "Automated ability check, save, attack, HP, authorization and idempotency baseline is included in grand-single-client; full user flow, disclosure, recovery and content coverage remains"
+    },
+    {
+      "order": 110,
+      "id": "slice03-exploration",
+      "name": "Slice 03 exploration interaction and perception",
+      "status": "planned",
+      "execution": "studio-campaign",
+      "group": "slice",
+      "persistence": false,
+      "blocker": "Automated interaction, locked and hidden object, search, knowledge, fog, authorization and restore baseline is included in grand-single-client; input, navigation and projection disclosure coverage remains"
+    },
+    {
+      "order": 120,
+      "id": "slice04-encounter",
+      "name": "Slice 04 encounter core loop",
+      "status": "planned",
+      "execution": "studio-campaign",
+      "group": "slice",
+      "persistence": false,
+      "blocker": "Automated lifecycle, initiative, turn ownership, action opportunity, rollback, end and restore baseline is included in grand-single-client; reaction, objective, death and restart coverage remains"
+    },
+    {
+      "order": 130,
+      "id": "slice05-character",
+      "name": "Slice 05 character creation and foundation",
+      "status": "planned",
+      "execution": "studio-campaign",
+      "group": "slice",
+      "persistence": false,
+      "blocker": "Automated draft validation, ownership, activation, level-up and restore baseline is included in grand-single-client; compiler, review, sheet, actor binding and migration coverage remains"
+    },
+    {
+      "order": 140,
+      "id": "slice06-inventory",
+      "name": "Slice 06 inventory equipment and world items",
+      "status": "planned",
+      "execution": "studio-campaign",
+      "group": "slice",
+      "persistence": false,
+      "blocker": "Automated item creation, quantity clamp, ownership, move, equip, drop and restore baseline is included in grand-single-client; slot conflict, stack, streaming, world presence and UI coverage remains"
+    },
+    {
+      "order": 150,
+      "id": "slice07-time-progression",
+      "name": "Slice 07 rest time downtime and progression",
+      "status": "planned",
+      "execution": "studio-campaign",
+      "group": "slice",
+      "persistence": false,
+      "blocker": "Automated campaign clock, schedule, activity ownership, completion, duplicate suppression and restore baseline is included in grand-single-client; rest, resource, level-up, crafting, travel and restart coverage remains"
+    },
+    {
+      "order": 160,
+      "id": "slice08-ui-camera",
+      "name": "Slice 08 player UI camera and presentation",
+      "status": "planned",
+      "execution": "studio-campaign",
+      "group": "slice",
+      "persistence": false,
+      "blocker": "Automated preference validation, per-user isolation and restore baseline is included in grand-single-client; projection replica, semantic input, command reconciliation, presentation and human accessibility evidence remains"
+    },
+    {
+      "order": 170,
+      "id": "slice09-journal",
+      "name": "Slice 09 journal ping and knowledge navigation",
+      "status": "planned",
+      "execution": "studio-campaign",
+      "group": "slice",
+      "persistence": false,
+      "blocker": "Automated document ownership, edit, structured link, point ping and restore baseline is included in grand-single-client; Markdown compiler, ACL search, backlink and safe navigation coverage remains"
+    },
+    {
+      "order": 180,
+      "id": "slice10-scene-authoring",
+      "name": "Slice 10 scene authoring compile and publish",
+      "status": "planned",
+      "execution": "studio-campaign",
+      "group": "slice",
+      "persistence": false,
+      "blocker": "Automated source, stable object, candidate invalidation, compile, atomic publish and restore baseline is included in grand-single-client; editor tools, diagnostics, test play and large-scene coverage remains"
+    },
+    {
+      "order": 190,
+      "id": "slice11-live-dm",
+      "name": "Slice 11 live DM workspace and recovery",
+      "status": "planned",
+      "execution": "studio-campaign",
+      "group": "slice",
+      "persistence": false,
+      "blocker": "Automated control assignment, quick action audit, runtime patch, recovery request and restore baseline is included in grand-single-client; player-view preview, pause, transition, live patch and operator recovery coverage remains"
+    },
+    {
+      "order": 200,
+      "id": "slice12-content-platform",
+      "name": "Slice 12 content pack localization and trusted extension",
+      "status": "planned",
+      "execution": "studio-campaign",
+      "group": "slice",
+      "persistence": false,
+      "blocker": "Automated pack registration, rights gate, dependency activation, localization, authorization and restore baseline is included in grand-single-client; signing, trust host, budget, migration, removal and catalog-load coverage remains"
+    },
+    {
+      "order": 210,
+      "id": "slice13-character-content",
+      "name": "Slice 13 character options content",
+      "status": "blocked",
+      "execution": "rights-and-studio",
+      "group": "content",
+      "persistence": false,
+      "blocker": "Official data rights and distribution approval"
+    },
+    {
+      "order": 220,
+      "id": "slice14-spell-item-content",
+      "name": "Slice 14 spell equipment and rules content",
+      "status": "blocked",
+      "execution": "rights-and-studio",
+      "group": "content",
+      "persistence": false,
+      "blocker": "Official data rights and distribution approval"
+    },
+    {
+      "order": 230,
+      "id": "slice15-npc-monster-content",
+      "name": "Slice 15 NPC monster and campaign content",
+      "status": "blocked",
+      "execution": "rights-and-studio",
+      "group": "content",
+      "persistence": false,
+      "blocker": "Statblock data rights assets and production catalog"
+    },
+    {
+      "order": 240,
+      "id": "ui-visual-accessibility",
+      "name": "UI visual redesign and accessibility",
+      "status": "planned",
+      "execution": "studio-human-review",
+      "group": "quality",
+      "persistence": false,
+      "blocker": "Human review capture and visual redesign are not implemented"
+    },
+    {
+      "order": 250,
+      "id": "fault-injection",
+      "name": "Network storage and restart fault injection",
+      "status": "planned",
+      "execution": "automated-and-studio",
+      "group": "quality",
+      "persistence": true,
+      "blocker": "Deterministic faults, real Player disconnect/reconnect, bounded shutdown retry, restart recovery, injected outage, paired cross-server lease, and production ServerBoot fenced persistence hosts are registered; Roblox transport throttling and runtime Studio evidence remain"
+    },
+    {
+      "order": 260,
+      "id": "performance-soak-capacity",
+      "name": "Performance soak and capacity",
+      "status": "planned",
+      "execution": "studio-soak",
+      "group": "quality",
+      "persistence": true,
+      "blocker": "Performance budgets and soak host are not implemented"
+    },
+    {
+      "order": 270,
+      "id": "slice16-full-session-release",
+      "name": "Slice 16 full session and release hardening",
+      "status": "planned",
+      "execution": "grand-campaign",
+      "group": "release",
+      "persistence": true,
+      "blocker": "Slices 02 through 15 and release evidence are incomplete"
+    }
+  ]
+}

@@ -1,0 +1,106 @@
+name: Validate production lease
+
+concurrency:
+  group: rvtt-production-lease-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+    paths:
+      - "implementation/roblox/src/ServerScriptService/RVTT/ServerBoot.server.lua"
+      - "implementation/roblox/src/ServerScriptService/RVTT/Server/Networking/CommandRouter.lua"
+      - "implementation/roblox/src/ServerScriptService/RVTT/Server/Persistence/**"
+      - "implementation/roblox/tests/TestRunner.server.lua"
+      - "implementation/roblox/tests/ProductionLeaseAcceptance/**"
+      - "implementation/roblox/tests/Unit/CommandRouterGuard.spec.lua"
+      - "implementation/roblox/tests/Unit/Lease*.spec.lua"
+      - "implementation/roblox/tests/Unit/ProfileStore*.spec.lua"
+      - "implementation/roblox/production-lease-seed.project.json"
+      - "implementation/roblox/production-lease-verify.project.json"
+      - "implementation/roblox/grand-acceptance-manifest.json"
+      - "implementation/roblox/tooling/validate_production_lease.py"
+      - ".github/workflows/validate-production-lease.yml"
+  push:
+    branches:
+      - planning/rvtt-remake
+    paths:
+      - "implementation/roblox/src/ServerScriptService/RVTT/ServerBoot.server.lua"
+      - "implementation/roblox/src/ServerScriptService/RVTT/Server/Networking/CommandRouter.lua"
+      - "implementation/roblox/src/ServerScriptService/RVTT/Server/Persistence/**"
+      - "implementation/roblox/tests/TestRunner.server.lua"
+      - "implementation/roblox/tests/ProductionLeaseAcceptance/**"
+      - "implementation/roblox/tests/Unit/CommandRouterGuard.spec.lua"
+      - "implementation/roblox/tests/Unit/Lease*.spec.lua"
+      - "implementation/roblox/tests/Unit/ProfileStore*.spec.lua"
+      - "implementation/roblox/production-lease-seed.project.json"
+      - "implementation/roblox/production-lease-verify.project.json"
+      - "implementation/roblox/grand-acceptance-manifest.json"
+      - "implementation/roblox/tooling/validate_production_lease.py"
+      - ".github/workflows/validate-production-lease.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  ROJO_VERSION: "7.7.0"
+
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate production lease contracts
+        run: python implementation/roblox/tooling/validate_production_lease.py
+
+  acceptance-place-builds:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Restore Rojo
+        id: rojo-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.cargo/bin/rojo
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: rvtt-production-lease-${{ runner.os }}-rojo-${{ env.ROJO_VERSION }}
+
+      - name: Install Rojo
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v rojo >/dev/null 2>&1; then
+            cargo install rojo --version "${ROJO_VERSION}" --locked
+          fi
+          rojo --version
+
+      - name: Save Rojo
+        if: steps.rojo-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.cargo/bin/rojo
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: rvtt-production-lease-${{ runner.os }}-rojo-${{ env.ROJO_VERSION }}
+
+      - name: Build production lease seed place
+        working-directory: implementation/roblox
+        run: rojo build production-lease-seed.project.json --output /tmp/RVTT-production-lease-seed.rbxlx
+
+      - name: Build production lease verify place
+        working-directory: implementation/roblox
+        run: rojo build production-lease-verify.project.json --output /tmp/RVTT-production-lease-verify.rbxlx

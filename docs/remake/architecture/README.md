@@ -1,0 +1,199 @@
+# Architecture 문서
+
+여러 기능이 공유하는 권위, 데이터와 실행 계약을 정의한다.
+
+## 최상위 권위 문서
+
+- [`Runtime Architecture Principles`](runtime-architecture-principles.md)
+- [`Compiled Build와 Authoritative State 분리 패턴`](compiled-build-and-authoritative-state-pattern.md)
+- [`Ruleset Policy Registry, Composition과 Frozen Snapshot Runtime 계약`](ruleset-policy-registry-composition-and-frozen-snapshot-runtime-contract.md)
+  - Policy Family·Implementation·Merger Registry와 Version
+  - Gameplay·Disclosure·Operational·Presentation Policy Plane
+  - Ruleset·Source Pack·Campaign·Scope Binding의 결정적 Composition
+  - Campaign·Scope Frozen Snapshot과 Execution Effective Policy View
+  - Conflict, Hard Invariant, DM Override, Hot Swap와 Migration
+- [`Session Play Mode, Context, Overlay와 Transition 계약`](session-play-mode-context-overlay-and-transition-contract.md)
+  - Exploration·Encounter·Downtime Base Play Mode
+  - Stealth·Travel·Hazard 등의 겹칠 수 있는 Context
+  - Selection·DM Authoring·Pause·Presentation·Rollback Review Overlay
+  - Scene Transition·Join·Reconnect·Recovery·Build Migration Gate
+  - Role·Mode·Overlay·Transition을 결합한 Effective Command Policy
+- [`UI Projection, ViewModel, Input Context와 Recovery Runtime 계약`](ui-projection-view-model-input-context-and-recovery-runtime-contract.md)
+  - Permission-aware Projection의 원자적 Client Replica 적용
+  - Projection→ViewModel→Component→Semantic Input→UI Intent 흐름
+  - Panel·Modal·Prompt, Focus와 Q/E Input Context
+  - Command Result와 Projection Reconciliation
+  - Reconnect·Resync·Rollback·Role Change 후 Epoch-safe UI 복구
+- [`Diagnostics, Observability, Correlated Trace와 Incident Runtime 계약`](diagnostics-observability-correlated-trace-and-incident-runtime-contract.md)
+  - Command→RuleExecution→Transaction→Event→Projection→UI Correlated Trace
+  - Policy·Rule·Authorization Decision Record와 Stable Error Code
+  - Permission-aware Diagnostic Projection, Redaction과 Support Reference
+  - Sampling, Retention, Performance Budget, Health와 Incident Bundle
+  - Recovery Journal·Mandatory Audit·Observability 분리와 Epoch-safe 복구
+- [`Deterministic Simulation, Scenario와 Test Harness Runtime 계약`](deterministic-simulation-scenario-and-test-harness-runtime-contract.md)
+  - 생산 Command·RuleExecution·Transaction·Projection을 그대로 실행하는 Headless Harness
+  - Versioned Scenario·Fixture와 Frozen Ruleset·Policy·Build Reference
+  - Deterministic RNG·Clock·ID·Task·Network·Storage Adapter
+  - Fault Injection, Restart·Reconnect·Rollback과 Bounded Interleaving Exploration
+  - State·Event·Projection·UI·Trace·Budget와 Negative Disclosure Assertion
+- [`Journal Document, Section, Anchor, Permission, Search와 Projection Runtime 계약`](journal-document-section-anchor-permission-search-and-projection-runtime-contract.md)
+  - 제목·경로와 분리된 안정적 Document·Section Identity와 Revision
+  - Markdown Source→Compiled Document→Permission-aware Projection
+  - World Anchor 수명주기, Source Object·Runtime Incarnation과 명시적 Retarget
+  - Permission-partitioned Search·Backlink·Outline과 비밀 정보 차단
+  - 안전한 Journal Navigation Capability와 Camera·Selection·Scene Transition 연결
+- [`Cross-Domain Outcome Cascade와 Integration Boundary Runtime 계약`](cross-domain-outcome-cascade-and-integration-boundary-runtime-contract.md)
+  - Immediate Closure와 Deferred Consequence의 공통 분류
+  - Domain Provider Contribution, Cross-Domain Outcome Plan과 Invariant
+  - Damage·Healing·Vital·Death·Encounter 통합
+  - Runtime Object·Scene·Derived Index와 Downtime·Build·Inventory 통합
+  - Follow-up Consequence Ledger, Integration Gate와 Projection Barrier
+- [`Exploration 실시간 이동, 행동과 Encounter 전환 Runtime 계약`](exploration-real-time-movement-action-and-encounter-transition-runtime-contract.md)
+  - 클릭 이동과 WASD 토큰 이동의 공통 권위 경계
+  - Actor별 Movement·RuleExecution·Interaction 실행 슬롯
+  - 이동 중 상호작용·공격·주문·장시간 행동 정책
+  - Hazard Trigger, Freeze Scope와 동시 실행 경쟁 해결
+  - 진행 중 실행을 분류하는 원자적 Encounter 전환
+- [`Encounter Timeline, Turn, Opportunity와 Objective Runtime 계약`](encounter-timeline-turn-opportunity-and-objective-runtime-contract.md)
+  - Combat·Chase·Hazard·Escape와 Objective Encounter의 공통 기반
+  - Policy 기반 Initiative, Timeline, Turn, Opportunity와 종료
+  - 안정적 Timeline Entry·Occurrence·Cursor와 중도 삽입
+  - Reaction은 RuleExecution Graph, Pause는 Overlay로 분리
+  - D&D 2024 기본 1 Round = 6초와 개별 Turn 시간 추가 금지
+- [`Encounter–Game Time Temporal Boundary와 Scheduler 통합 계약`](encounter-game-time-temporal-boundary-and-scheduler-integration-contract.md)
+  - Round Boundary와 Campaign Time Advance의 원자적 Transaction
+  - `TemporalBoundaryCandidate`, `EncounterTimeAdvanceContribution`과 RoundTimeLedger
+  - Scheduler Due Occurrence와 멱등 Event→Command Encounter Bridge
+  - Blocking Boundary Gate, Rollback과 다중 Encounter Chronology Guard
+- [`Selection, Targeting, Preview와 Frozen Binding Runtime 계약`](selection-targeting-preview-and-frozen-binding-runtime-contract.md)
+  - Input Context와 Intent에서 Selection Session으로 이어지는 공통 입력 경계
+  - Exploration과 Encounter의 서로 다른 Selection Policy
+  - Spatial Query 기반 Candidate, Hover·Focus·Selection·Target 분리
+  - Client Preview와 서버 FrozenSelectionBinding 분리
+  - Q Universal Back·Reject와 E Universal Confirm·Approve 계약
+  - DM Hidden Selection·Journal Link·Authoring 권한 경계
+- [`Interaction Capability, Contextual Command와 Adjudication 계약`](interaction-capability-contextual-command-and-adjudication-contract.md)
+  - 행위자·대상·아이템·효과가 기여하는 Interaction Capability Query
+  - Exploration 실시간 상호작용과 Encounter Action Economy 결합
+  - E 기본 상호작용, Q 취소·거절과 DM 승인 문맥
+  - Player Command와 DM Override의 분리
+  - 문·상자·아이템·함정·환경 행동의 RuleExecution·Transaction 경계
+- [`Visibility, Knowledge, Detection과 Hover Information Runtime 계약`](visibility-knowledge-detection-and-hover-information-runtime-contract.md)
+  - Visible·Detected·Known·Disclosed의 독립 권위 상태
+  - Observer별 Sense·Stealth·Search·Knowledge Relation
+  - Fog 지형 공개와 Actor·Secret Detection의 분리
+  - Player·DM·Observer 정보 Projection과 Knowledge Scope
+  - Hover Information Projection과 비밀 HP·AC·Identity 차단
+- [`Camera Policy, Focus, Follow와 Presentation Runtime 계약`](camera-policy-focus-follow-and-presentation-runtime-contract.md)
+  - Gameplay Authority와 사용자별 Camera Projection 분리
+  - CameraRequest 우선순위와 이전 상태 복원
+  - Follow Target과 Focus Target의 독립 관리
+  - Exploration Free Camera와 Encounter Follow + Free Override
+  - DM Observe, Bookmark, Replay, Rollback과 Scene Transition
+- [`Presentation Recipe, Playback Priority와 Extension Runtime 계약`](presentation-recipe-playback-priority-and-extension-runtime-contract.md)
+  - 데이터 기반 Compiled Presentation Recipe와 버전 고정 Playback
+  - 공격·주문·주사위·UI·VFX의 공통 PresentationIntent
+  - Slot·Module·Augment·Registry 기반 확장
+  - 플레이테스트 Hot Swap, 이전 버전 복원과 프리셋
+  - Queue·Budget·Marker·Fallback·오류 격리와 접근성
+- [`Domain Event, Outbox, Subscription과 Projection Runtime 계약`](domain-event-outbox-subscription-and-projection-runtime-contract.md)
+  - Rule Event·Domain Event·Projection Event·Presentation Signal·Journal Record 분리
+  - Authority State와 Event Outbox의 원자적 Commit
+  - 멱등 Subscriber, Retry·Dead Letter와 Correlation Chain
+  - 관찰자별 Projection Event와 공개 가능한 PresentationIntent
+  - Subscriber 실패 격리와 Event→Command 순환 방지
+- [`Game Time, Calendar, Duration과 Scheduler Runtime 계약`](game-time-calendar-duration-and-scheduler-runtime-contract.md)
+  - Campaign Game Time과 Wall·Monotonic·Presentation Time 분리
+  - D&D 2024 기본 1 Round = 약 6초, 개별 Turn은 6초 추가 금지
+  - Turn·Round Boundary Duration과 고정 시간 Duration 분리
+  - Time Consumption, 병렬 활동과 대규모 Advance Checkpoint
+  - DurationHandle, Scheduler, Calendar와 Rollback 복구
+- [`Downtime Activity, Time Coordination과 Atomic Completion Runtime 계약`](downtime-activity-time-coordination-and-atomic-completion-runtime-contract.md)
+  - Rest·Level Up·Spell Preparation·Spellbook·Crafting·Training·Travel의 공통 조정
+  - 참가자별 Activity와 하나의 Campaign Time Window
+  - Domain Reservation, Progress, Interruption과 Checkpoint
+  - Domain-owned Completion Plan과 원자적 결과 Commit
+  - 재접속·복구·Rollback과 Registry 기반 확장
+- [`Scene Compiler와 Compiled Runtime Scene 계약`](scene-compiler-and-compiled-runtime-scene-contract.md)
+- [`Character Runtime과 Compiled Character Build 계약`](character-runtime-and-compiled-character-build-contract.md)
+- [`Character Action Opportunity와 2024 Core Action Runtime 계약`](character-action-opportunity-and-2024-core-action-runtime-contract.md)
+- [`Spell Casting Route와 2024 Spell Runtime 계약`](spell-casting-route-and-2024-spell-runtime-contract.md)
+- [`Dice Roll, Check, Save, Attack과 Resolution Runtime 계약`](dice-roll-check-save-attack-and-resolution-runtime-contract.md)
+- [`Effect, Condition과 Ongoing Runtime 계약`](effect-condition-and-ongoing-runtime-contract.md)
+- [`Inventory, ItemInstance와 World Presence Runtime 계약`](inventory-item-instance-and-world-presence-runtime-contract.md)
+- [`Runtime Object System과 Entity Lifecycle 계약`](runtime-object-system-and-entity-lifecycle-contract.md)
+- [`Networking Command, Event와 Client Synchronization 계약`](networking-command-event-and-client-synchronization-contract.md)
+- [`Command Ordering, Logical Time와 Transaction Coordinator 계약`](command-ordering-logical-time-and-transaction-coordinator-contract.md)
+- [`Scene Streaming, Client Interest와 Ready Activation 계약`](scene-streaming-client-interest-and-ready-activation-contract.md)
+- [`Spatial Query Engine과 Provider 계약`](spatial-query-engine-and-provider-contract.md)
+- [`Runtime Navigation, Path Planning과 Movement Execution 계약`](runtime-navigation-path-planning-and-movement-execution-contract.md)
+- [`Rule Runtime Orchestrator와 Pending Execution 계약`](rule-runtime-orchestrator-and-pending-execution-contract.md)
+- [`Persistence와 Session Recovery 모델`](persistence-and-session-recovery-model.md)
+
+## 포함 범위
+
+- 서버·클라이언트 책임
+- Source, Compiler, Immutable Build, Authoritative State, Migration과 Projection
+- Ruleset·Source Pack·Campaign·Scope Policy Composition과 Frozen Snapshot
+- Session Base Mode, Context, Overlay, Transition과 Command Gate
+- Permission-aware Projection Replica, ViewModel, Panel·Modal·Focus·Input Context와 UI Recovery
+- Correlated Authority Trace, Decision Record, Error·Incident, Health, Budget와 Diagnostic Projection
+- Versioned Scenario·Fixture, Deterministic Adapter, Fault Injection, Concurrency·Recovery·Disclosure Test Harness
+- Journal Document·Section Identity, Permission, Anchor Lifecycle, Search·Backlink와 Navigation Projection
+- Cross-Domain Outcome, Immediate Closure, Deferred Consequence, Integration Gate와 Projection Barrier
+- Exploration 실시간 이동, Actor별 실행 충돌, Hazard와 Encounter 전환
+- Encounter Participant, Initiative Timeline, Turn, Opportunity, Objective와 종료
+- Encounter Temporal Boundary, Campaign Time Atomic Commit, Scheduler Due Bridge와 Boundary Gate
+- Downtime Participant Activity, Campaign Time Window, Progress, Reservation과 Completion
+- Input Context, Intent, Selection Session, Candidate, Preview와 Frozen Binding
+- Interaction Capability, Contextual Option, DM Adjudication과 Override
+- Visibility, Detection, Knowledge, Disclosure와 Hover Information Projection
+- CameraRequest, Focus, Follow, Bookmark, DM Observe와 Presentation Priority
+- PresentationIntent, Compiled Recipe, Module Registry, Playback Queue와 품질·접근성 Profile
+- Rule Event, Domain Event Outbox, Subscriber, Projection Event와 Presentation Signal
+- Campaign Game Time, Calendar, Encounter Boundary Duration, Time Consumption과 Scheduler
+- Command, revision, transaction, Ordering, Reservation과 Journal
+- Scene Source, Runtime Scene, Spatial Query, Navigation과 Streaming
+- Character, Character Action, Spell, Roll Resolution, Effect, ItemInstance와 Runtime Object의 권위 경계
+- Action·Bonus Action·Reaction·Movement Opportunity와 2024 기본 행동
+- Spell Route, Payment, Components, Targeting, Ritual, Ready와 Concentration
+- RollPlan, RollRecord, Attack·Check·Save·Damage Outcome과 Presentation Gate
+- Inventory·Equipment·Container와 Scene Ground Item Presence
+- Capability, RuleExecution, Recipe, TimingWindow와 PendingEffect
+- 저장·복구·재접속·롤백과 Presentation 확장 계약
+
+기능별 사용자 흐름은 `../systems/`, 화면 구조는 `../ui/`, 실제 파일 계약은 `../specs/`에 둔다.
+
+## 작성 원칙
+
+- 모든 Architecture 문서는 [`Runtime Architecture Principles`](runtime-architecture-principles.md)를 따른다.
+- Source·Build·State·Migration을 다루면 [`Compiled Build 패턴`](compiled-build-and-authoritative-state-pattern.md)을 따른다.
+- 교체 가능한 규칙 방식, Ruleset·Campaign·Scope 설정, Policy 우선순위·충돌·Version과 진행 중 실행의 규칙 고정을 다루면 [`Ruleset Policy Runtime 계약`](ruleset-policy-registry-composition-and-frozen-snapshot-runtime-contract.md)을 따른다.
+- Exploration·Encounter·Downtime, Context, UI·Authoring Overlay, Scene Transition·Join·Recovery를 다루면 [`Session Runtime 계약`](session-play-mode-context-overlay-and-transition-contract.md)을 따른다.
+- Projection Replica, ViewModel, Panel·Modal·Prompt, Focus, Q/E Input Context, Command Reconciliation과 Client UI 복구를 다루면 [`UI Runtime 계약`](ui-projection-view-model-input-context-and-recovery-runtime-contract.md)을 따른다.
+- Trace Context, Decision Record, Error·Incident, 성능 Budget, Diagnostic Query와 역할별 Redaction을 다루면 [`Diagnostics Runtime 계약`](diagnostics-observability-correlated-trace-and-incident-runtime-contract.md)을 따른다.
+- Scenario, Fixture, Seed, Virtual Clock·Network·Storage, Fault Injection, Interleaving, Golden·Digest와 Disclosure Regression을 다루면 [`Deterministic Simulation과 Test Harness 계약`](deterministic-simulation-scenario-and-test-harness-runtime-contract.md)을 따른다.
+- Journal Document·Section Identity, Markdown Compile, Permission, Search·Backlink, World Anchor와 Camera·Selection Navigation을 다루면 [`Journal Runtime 계약`](journal-document-section-anchor-permission-search-and-projection-runtime-contract.md)을 따른다.
+- 여러 Domain의 결과, Damage·Vital·Death·Encounter 연쇄, Immediate Closure·Deferred Consequence, Index Invalidation과 Projection Barrier를 다루면 [`Cross-Domain Integration 계약`](cross-domain-outcome-cascade-and-integration-boundary-runtime-contract.md)을 따른다.
+- 탐험 WASD·클릭 이동, 실시간 행동 충돌, Hazard와 Encounter 진입을 다루면 [`Exploration Runtime 계약`](exploration-real-time-movement-action-and-encounter-transition-runtime-contract.md)을 따른다.
+- Initiative, Timeline, Turn·Round, Opportunity, Participant, Objective와 Encounter 종료를 다루면 [`Encounter Runtime 계약`](encounter-timeline-turn-opportunity-and-objective-runtime-contract.md)을 따른다.
+- Encounter Round Boundary와 Campaign Time, Scheduler Due와 다음 Round Gate의 통합을 다루면 [`Encounter–Game Time 통합 계약`](encounter-game-time-temporal-boundary-and-scheduler-integration-contract.md)을 따른다.
+- 휴식·레벨업·주문 준비·주문책·제작·훈련·여행의 장기 활동과 결과 Commit을 다루면 [`Downtime Runtime 계약`](downtime-activity-time-coordination-and-atomic-completion-runtime-contract.md)을 따른다.
+- 클릭·Hover·Focus·대상 지정·범위 Preview·DM Hidden Selection·Q/E 승인과 취소를 다루면 [`Selection Runtime 계약`](selection-targeting-preview-and-frozen-binding-runtime-contract.md)을 따른다.
+- 선택된 대상의 Open·Utilize·Pick Up·Inspect·Force Command와 DM 판정을 다루면 [`Interaction Capability 계약`](interaction-capability-contextual-command-and-adjudication-contract.md)을 따른다.
+- 시야·감각·은신·Fog·발견·식별·Hover 공개 정보를 다루면 [`Visibility, Knowledge와 Detection Runtime 계약`](visibility-knowledge-detection-and-hover-information-runtime-contract.md)을 따른다.
+- 자유 카메라·Follow·Focus·DM Observe·Bookmark·Replay·연출 프레이밍을 다루면 [`Camera Runtime 계약`](camera-policy-focus-follow-and-presentation-runtime-contract.md)을 따른다.
+- VFX·Animation·Floating Text·Screen Effect·Presentation Camera·Recipe Hot Swap을 다루면 [`Presentation Runtime 계약`](presentation-recipe-playback-priority-and-extension-runtime-contract.md)을 따른다.
+- Commit 이후 변경 전달, Subscriber, Projection Event, Presentation Signal과 Journal 연계를 다루면 [`Domain Event Runtime 계약`](domain-event-outbox-subscription-and-projection-runtime-contract.md)을 따른다.
+- Campaign Time, Calendar, Turn·Round Duration, 휴식·여행 시간과 미래 예약 실행을 다루면 [`Game Time Runtime 계약`](game-time-calendar-duration-and-scheduler-runtime-contract.md)을 따른다.
+- 기본 행동과 Action Economy는 [`Character Action Runtime`](character-action-opportunity-and-2024-core-action-runtime-contract.md)을 따른다.
+- 주문 시전은 [`Spell Runtime`](spell-casting-route-and-2024-spell-runtime-contract.md)을 따른다.
+- 주사위, 공격 판정, 능력 판정, 내성, 이니셔티브, 죽음 내성과 피해·회복 굴림은 [`Dice와 Resolution Runtime`](dice-roll-check-save-attack-and-resolution-runtime-contract.md)을 따른다.
+- 상태·집중·변신은 [`Effect Runtime`](effect-condition-and-ongoing-runtime-contract.md)을 따른다.
+- ItemInstance와 바닥 Presence는 [`Inventory Runtime`](inventory-item-instance-and-world-presence-runtime-contract.md)을 따른다.
+- Scene Presence Lifecycle은 [`Runtime Object System`](runtime-object-system-and-entity-lifecycle-contract.md)을 따른다.
+- 원자적 상태 변경은 [`Transaction Coordinator`](command-ordering-logical-time-and-transaction-coordinator-contract.md)를 따른다.
+- 공간 판정은 [`Spatial Query`](spatial-query-engine-and-provider-contract.md), 이동은 [`Runtime Navigation`](runtime-navigation-path-planning-and-movement-execution-contract.md)을 따른다.
+- Capability·Recipe·TimingWindow·PendingEffect는 [`Rule Runtime Orchestrator`](rule-runtime-orchestrator-and-pending-execution-contract.md)을 따른다.
+
+동일한 결정을 여러 문서에 반복하지 않는다. 각 하위 문서는 자신의 데이터·상태·실패·성능 계약만 추가한다.

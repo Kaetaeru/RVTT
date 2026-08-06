@@ -1,0 +1,68 @@
+name: Validate acceptance bootstrap
+
+concurrency:
+  group: rvtt-acceptance-bootstrap-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+    paths:
+      - "implementation/roblox/acceptance-batch.json"
+      - "implementation/roblox/grand-acceptance-manifest.json"
+      - "implementation/roblox/tooling/run-studio-acceptance-batch.ps1"
+      - "implementation/roblox/tooling/run-local-acceptance.ps1"
+      - "implementation/roblox/tooling/run-grand-acceptance.ps1"
+      - "implementation/roblox/tooling/validate_implementation.py"
+      - ".github/workflows/validate-acceptance-bootstrap.yml"
+  push:
+    branches:
+      - planning/rvtt-remake
+    paths:
+      - "implementation/roblox/acceptance-batch.json"
+      - "implementation/roblox/grand-acceptance-manifest.json"
+      - "implementation/roblox/tooling/run-studio-acceptance-batch.ps1"
+      - "implementation/roblox/tooling/run-local-acceptance.ps1"
+      - "implementation/roblox/tooling/run-grand-acceptance.ps1"
+      - "implementation/roblox/tooling/validate_implementation.py"
+      - ".github/workflows/validate-acceptance-bootstrap.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-bootstrap:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Parse PowerShell runners
+        shell: pwsh
+        run: |
+          foreach ($relative in @(
+            "implementation/roblox/tooling/run-studio-acceptance-batch.ps1",
+            "implementation/roblox/tooling/run-local-acceptance.ps1",
+            "implementation/roblox/tooling/run-grand-acceptance.ps1"
+          )) {
+            $tokens = $null
+            $errors = $null
+            $path = Resolve-Path $relative
+            [System.Management.Automation.Language.Parser]::ParseFile(
+              $path,
+              [ref]$tokens,
+              [ref]$errors
+            ) | Out-Null
+            if ($errors.Count -gt 0) {
+              $errors | ForEach-Object { Write-Error "$relative · $($_.Message)" }
+              exit 1
+            }
+          }
+
+      - name: Run bootstrap SelfTests
+        shell: pwsh
+        run: |
+          & ./implementation/roblox/tooling/run-studio-acceptance-batch.ps1 -SelfTest -NoOpen
+          & ./implementation/roblox/tooling/run-local-acceptance.ps1 -SelfTest -NoOpen
+          & ./implementation/roblox/tooling/run-grand-acceptance.ps1 -SelfTest -NoOpen

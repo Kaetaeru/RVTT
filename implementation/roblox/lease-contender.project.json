@@ -1,0 +1,24 @@
+{
+  "name": "RVTTLeaseContenderAcceptance",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "RVTT": {"$path": "src/ReplicatedStorage/RVTT"},
+      "RVTT_TestMode": {
+        "$className": "StringValue",
+        "$properties": {"Value": "lease-acceptance"}
+      },
+      "RVTT_LeaseRole": {
+        "$className": "StringValue",
+        "$properties": {"Value": "contender"}
+      }
+    },
+    "ServerScriptService": {
+      "RVTT": {
+        "$className": "Folder",
+        "Server": {"$path": "src/ServerScriptService/RVTT/Server"}
+      },
+      "RVTTLeaseTests": {"$path": "tests/LeaseAcceptance"}
+    }
+  }
+}

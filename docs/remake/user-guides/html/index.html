@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>RVTT High-Fidelity UI Production Guide</title>
+  <link rel="stylesheet" href="rvtt-ui.css">
+</head>
+<body>
+  <svg class="svg-sprite" aria-hidden="true" focusable="false">
+    <symbol id="i-sword" viewBox="0 0 24 24"><path d="M14.7 3.2 20.8 3l-.2 6.1-2.1-2.1-8.6 8.6 1.9 1.9-1.7 1.7-2.2-2.2-2.5 2.5-1.9-1.9 2.5-2.5-2.2-2.2 1.7-1.7 1.9 1.9L16 4.5l-1.3-1.3Z"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 2.2 20 5v6.2c0 5.1-3.2 8.8-8 10.6-4.8-1.8-8-5.5-8-10.6V5l8-2.8Zm0 3L7 7v4.1c0 3.4 1.9 5.9 5 7.4V5.2Z"/></symbol>
+    <symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 1.8 1.9 6.3 6.3 1.9-6.3 1.9-1.9 6.3-1.9-6.3L3.8 10l6.3-1.9L12 1.8Zm7 13.4.9 2.9 2.9.9-2.9.9-.9 2.9-.9-2.9-2.9-.9 2.9-.9.9-2.9Z"/></symbol>
+    <symbol id="i-potion" viewBox="0 0 24 24"><path d="M9 2h6v2h-1v3.1l4.2 7.1A5 5 0 0 1 13.9 22h-3.8a5 5 0 0 1-4.3-7.8L10 7.1V4H9V2Zm1.2 10-2.6 4.2A2.7 2.7 0 0 0 10.1 20h3.8a2.7 2.7 0 0 0 2.5-3.8L13.8 12h-3.6Z"/></symbol>
+    <symbol id="i-bag" viewBox="0 0 24 24"><path d="M8 3h8l1 4h2.5L21 21H3L4.5 7H7l1-4Zm2 4h4l-.5-2h-3L10 7Zm-3.4 2L5.5 19h13L17.4 9H6.6Z"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M3 4.5C6.7 3.6 9.7 4 12 5.7 14.3 4 17.3 3.6 21 4.5v15c-3.5-.7-6.4-.4-9 1.3-2.6-1.7-5.5-2-9-1.3v-15Zm2 2.1v10.6c2.3-.2 4.3.1 6 1V7.5c-1.7-1.1-3.7-1.4-6-.9Zm14 0c-2.3-.5-4.3-.2-6 .9v10.7c1.7-.9 3.7-1.2 6-1V6.6Z"/></symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24"><path d="m10.8 2 2.4 0 .7 2.2c.6.2 1.2.4 1.7.7l2.1-1.1 1.7 1.7-1.1 2.1c.3.5.5 1.1.7 1.7l2.2.7v2.4l-2.2.7c-.2.6-.4 1.2-.7 1.7l1.1 2.1-1.7 1.7-2.1-1.1c-.5.3-1.1.5-1.7.7l-.7 2.2h-2.4l-.7-2.2c-.6-.2-1.2-.4-1.7-.7l-2.1 1.1-1.7-1.7 1.1-2.1a8 8 0 0 1-.7-1.7L3 12.4V10l2.2-.7c.2-.6.4-1.2.7-1.7L4.8 5.5l1.7-1.7 2.1 1.1c.5-.3 1.1-.5 1.7-.7l.5-2.2ZM12 8.2a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M12 4.2c5.2 0 9 4.5 10.4 7.8C21 15.3 17.2 19.8 12 19.8S3 15.3 1.6 12C3 8.7 6.8 4.2 12 4.2Zm0 2.5c-3.3 0-6 2.5-7.6 5.3 1.6 2.8 4.3 5.3 7.6 5.3s6-2.5 7.6-5.3C18 9.2 15.3 6.7 12 6.7Zm0 1.8a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7Z"/></symbol>
+    <symbol id="i-move" viewBox="0 0 24 24"><path d="m12 1 4 4h-3v6h6V8l4 4-4 4v-3h-6v6h3l-4 4-4-4h3v-6H5v3l-4-4 4-4v3h6V5H8l4-4Z"/></symbol>
+    <symbol id="i-door" viewBox="0 0 24 24"><path d="M5 2h13v20H5V2Zm2 2v16h9V4H7Zm6.5 7a1.2 1.2 0 1 1 0 2.4 1.2 1.2 0 0 1 0-2.4Z"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><path d="M10.5 3a7.5 7.5 0 1 1-4.7 13.4L2.2 20 4 21.8l3.6-3.6A7.5 7.5 0 0 1 10.5 3Zm0 2.4a5.1 5.1 0 1 0 0 10.2 5.1 5.1 0 0 0 0-10.2Z"/></symbol>
+    <symbol id="i-skull" viewBox="0 0 24 24"><path d="M12 2.2a8.5 8.5 0 0 1 8.5 8.5c0 3-1.5 5.5-3.8 7v3H14v-2h-1v2h-2v-2h-1v2H7.3v-3a8.5 8.5 0 0 1 4.7-15.5Zm-3.2 7A2.2 2.2 0 1 0 8.8 13.6a2.2 2.2 0 0 0 0-4.4Zm6.4 0a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4ZM12 14l-1.5 2h3L12 14Z"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 21S2.5 15.2 2.5 8.7A5.7 5.7 0 0 1 12 4.5a5.7 5.7 0 0 1 9.5 4.2C21.5 15.2 12 21 12 21Z"/></symbol>
+    <symbol id="i-dice" viewBox="0 0 24 24"><path d="m12 1.8 9 5.1v10.2l-9 5.1-9-5.1V6.9l9-5.1Zm0 2.8L6 8l6 3.4L18 8l-6-3.4Zm-7 5.7v5.6l6 3.4v-5.6l-6-3.4Zm8 3.4v5.6l6-3.4v-5.6l-6 3.4Z"/></symbol>
+    <symbol id="i-fog" viewBox="0 0 24 24"><path d="M4 6h11a3 3 0 0 1 0 6H9v-2h6a1 1 0 0 0 0-2H4V6Zm0 5h5v2H4v-2Zm0 4h13a3 3 0 0 1 0 6h-5v-2h5a1 1 0 0 0 0-2H4v-2Z"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 1 0 20 10 10 0 0 1 0-20Zm0 2.4a7.6 7.6 0 1 0 0 15.2 7.6 7.6 0 0 0 0-15.2Zm1.2 2.2v4.8l3.4 2-1.2 2.1-4.6-2.7V6.6h2.4Z"/></symbol>
+    <symbol id="i-combat" viewBox="0 0 24 24"><path d="m5.2 2 6.2 6.2-2 2L7.9 8.7 4.6 12 2 9.4l3.3-3.3-2-2L5.2 2Zm13.6 0 2 2-2 2 3.3 3.3-2.6 2.6-3.3-3.3-1.5 1.5-2-2L18.8 2ZM12 11l2 2-6.2 6.2-2 2-2-2 2-2L12 11Zm4.2 4.2 2 2 2 2-2 2-2-2-2-2 2-2Z"/></symbol>
+    <symbol id="i-scene" viewBox="0 0 24 24"><path d="M3 3h18v18H3V3Zm2 2v10.4l4.3-4.3 3.2 3.2 2.2-2.2L19 16.4V5H5Zm3 2.3a2 2 0 1 1 0 4 2 2 0 0 1 0-4Z"/></symbol>
+    <symbol id="i-save" viewBox="0 0 24 24"><path d="M3 3h15l3 3v15H3V3Zm3 2v5h10V5H6Zm0 9v5h12v-5H6Zm7-8h2v3h-2V6Z"/></symbol>
+    <symbol id="i-publish" viewBox="0 0 24 24"><path d="M12 2 7 7h3v7h4V7h3l-5-5ZM4 12h4v2H6v6h12v-6h-2v-2h4v10H4V12Z"/></symbol>
+    <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 5 3 11l6 6v-4h5a5 5 0 0 1 5 5v2h2v-2a7 7 0 0 0-7-7H9V5Z"/></symbol>
+    <symbol id="i-redo" viewBox="0 0 24 24"><path d="m15 5 6 6-6 6v-4h-5a5 5 0 0 0-5 5v2H3v-2a7 7 0 0 1 7-7h5V5Z"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><path d="M12 2.5a5 5 0 1 1 0 10 5 5 0 0 1 0-10ZM3 22a9 9 0 0 1 18 0H3Z"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><path d="M7 10V7a5 5 0 0 1 10 0v3h2v12H5V10h2Zm2 0h6V7a3 3 0 0 0-6 0v3Zm3 4a2 2 0 0 0-1 3.7V20h2v-2.3A2 2 0 0 0 12 14Z"/></symbol>
+    <symbol id="i-warning" viewBox="0 0 24 24"><path d="M12 2 23 21H1L12 2Zm0 5-6.8 12h13.6L12 7Zm-1 3h2v5h-2v-5Zm0 6.5h2v2h-2v-2Z"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m9.3 17.4-5-5 1.8-1.8 3.2 3.2 8.6-8.6L19.7 7 9.3 17.4Z"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m5 6.8 1.8-1.8L12 10.2 17.2 5 19 6.8 13.8 12l5.2 5.2-1.8 1.8-5.2-5.2L6.8 19 5 17.2l5.2-5.2L5 6.8Z"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M11 4h2v7h7v2h-7v7h-2v-7H4v-2h7V4Z"/></symbol>
+  </svg>
+
+  <div class="guide-shell">
+    <aside class="guide-sidebar">
+      <div class="brand-block">
+        <div class="brand-mark">RV</div>
+        <div><p>RVTT PRODUCT UI</p><h1>고정밀 제작 가이드</h1></div>
+      </div>
+      <p class="guide-intro">Runtime 화면 26개와 제작 기준 화면 2개. 공격·주문 1–4행 Action Matrix와 독립 DM Window Module까지 Roblox UI 구현에 직접 사용합니다.</p>
+      <div class="guide-status"><strong>HIGH-FIDELITY TARGET</strong><span>정적 프로토타입 · Runtime Evidence 아님</span></div>
+      <nav id="screenNav" aria-label="UI 화면 목록"></nav>
+    </aside>
+
+    <main class="guide-main">
+      <header class="guide-toolbar">
+        <label>Accent<select id="accentSelect"><option value="gold">Gold</option><option value="azure">Azure</option><option value="emerald">Emerald</option><option value="amethyst">Amethyst</option><option value="teal">Teal</option><option value="silver">Silver</option></select></label>
+        <label>Viewport<select id="viewportSelect"><option value="16:9">1920 × 1080</option><option value="compact">1440 × 900</option><option value="wide">2560 × 1080</option></select></label>
+        <label>UI Scale<select id="uiScaleSelect"><option value="0.8">0.80</option><option value="1" selected>1.00</option><option value="1.2">1.20</option><option value="1.4">1.40</option></select></label>
+        <label>Text Scale<select id="textScaleSelect"><option value="0.9">0.90</option><option value="1" selected>1.00</option><option value="1.15">1.15</option><option value="1.3">1.30</option></select></label><label>Action Rows<select id="actionRowsSelect"><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option><option value="4">4</option></select></label>
+        <div class="toolbar-spacer"></div>
+        <button id="motionButton" class="guide-button" type="button">Motion · Full</button>
+        <button id="gridButton" class="guide-button" type="button">Grid · Off</button>
+        <a class="guide-button" href="../README.md">User Guide Hub</a>
+      </header>
+
+      <section class="screen-heading">
+        <div><p id="screenEyebrow"></p><h2 id="screenTitle"></h2><p id="screenDescription"></p></div>
+        <div id="screenBadges" class="screen-badges"></div>
+      </section>
+
+      <section class="stage-viewport" aria-label="RVTT UI 화면 예시">
+        <div id="stageScaler" class="stage-scaler">
+          <div id="rvttStage" class="rvtt-stage" tabindex="-1" aria-live="polite"></div>
+        </div>
+      </section>
+
+      <section class="implementation-panel">
+        <article><h3>레이아웃 규격</h3><div id="layoutMetrics" class="spec-list"></div></article>
+        <article><h3>입력·상태</h3><div id="interactionSpec" class="spec-list"></div></article>
+        <article><h3>구현 Acceptance</h3><div id="acceptanceSpec" class="spec-list"></div></article>
+      </section>
+    </main>
+  </div>
+
+  <script src="rvtt-ui.js"></script>
+</body>
+</html>
