@@ -28,13 +28,16 @@ end
 
 local function failure(step: FaultStep, fallbackCode: string): any
 	local code = step.code or fallbackCode
+	local details: { [string]: unknown } = {
+		reason = "fault host injected " .. step.kind,
+	}
 	return Result.err(
 		code,
 		if code == "PERSISTENCE_CONFLICT"
 			then "error.persistence.conflict"
 			else "error.persistence.failed",
 		if step.retryable == nil then true else step.retryable,
-		{ reason = "fault host injected " .. step.kind }
+		details
 	)
 end
 
