@@ -4,10 +4,7 @@
 - 문서 종류: Production Implementation Work Order
 - 최종 갱신일: 2026-08-06
 - 실행 테스트 규칙: [`EXECUTION-TEST-RULES.md`](EXECUTION-TEST-RULES.md)
-- Script Manifest: [`manifests/all-slices-script-manifest.md`](manifests/all-slices-script-manifest.md)
 - 구현 상태: [`IMPLEMENTATION-STATUS.md`](IMPLEMENTATION-STATUS.md)
-- Studio 검증 근거: [`Roblox Studio Runtime Baseline Validation Audit`](../../docs/remake/audits/roblox-studio-runtime-baseline-validation-audit.md)
-- UI·UX Policy: [`UI·UX Global Policies`](../../docs/remake/ui/policies/README.md)
 
 ## 1. 현재 상태
 
@@ -19,186 +16,144 @@ Shared·Server·Client·UI·Test Source
 → IMPLEMENTED
 
 Structure·Policy·Toolchain CI
-→ PASSED
+→ PASSED AT PREVIOUS HEAD
 
 Roblox Studio Runtime Baseline
 → VERIFIED
 
-Accent Theme Visual·Input·Persistence
+Slice 01 Token Pick·Move·Projection
 → VERIFIED IN STUDIO
 
-Roblox Avatar Auto-Spawn Disable
-→ VERIFIED IN STUDIO
+Middle-button Pointer Sampling
+→ IMPLEMENTED · STUDIO PENDING
 
-Slice 01 Authority·Persistence·Reconnect
-→ VERIFIED IN STUDIO
+WASD Camera Pan
+→ IMPLEMENTED · STUDIO PENDING
 
-Slice 01 World Interaction Batch
-→ PARTIAL STUDIO PASS · 14/16 USER-OBSERVED
+Regular Slice 01 DataStore
+→ DISABLED
+
+Dedicated Persistence Batch
+→ DEFERRED
 
 현재 작업
-→ Slice 01 Camera Input Correction Acceptance
+→ Slice 01 In-memory Camera Input Acceptance
 ```
-
-기존 Studio Evidence:
-
-```text
-Unit·Integration
-→ passed=173 failed=0
-
-Live DataStore
-→ passed=10 failed=0
-
-3-client MultiClient
-→ passed=56 failed=0 clients=3 staleRetries=3
-
-Persistence·Accent Restore
-→ PASS
-
-Character·Scene·Position Recovery
-→ PASS
-```
-
-2026-08-06 Slice 01 사용자 관측 Evidence:
-
-```text
-Token Pick·Highlight·Destination·Movement·Server Acceptance·Projection
-→ PASS
-
-Camera Zoom via Mouse Wheel
-→ PASS
-
-Camera Pan via Middle-button Drag
-→ FAIL
-
-Camera Frame via F / Token Frame
-→ FAIL
-```
-
-기존 Final Summary의 `passed=16 failed=0`은 Camera Harness가 실제 입력이 아니라 `frameAll()`, `panPixels()`, `zoomBy()` 메서드를 직접 호출해 생성한 허위 양성 결과였다. 따라서 해당 Summary를 전체 사용자 흐름 PASS 근거로 사용하지 않는다.
 
 ## 2. 실행 테스트 원칙
 
-Studio 수동 검사는 개별 수정마다 요청하지 않는다.
+### 일반 기능 반복
 
 ```text
-관련 기능 여러 개 구현
+관련 기능 구현
 → 자동 회귀 테스트와 정적 CI
-→ 구조화된 진단 로그와 Final Summary
-→ 단일 Acceptance Place Build
-→ 사용자 게시 1회
-→ 전체 Batch 검증 1회
+→ 전체 Windows PowerShell Build 블록
+→ 생성된 로컬 Place Play
+→ 입력·Camera·Command·Projection 검증
 ```
 
-Acceptance Check는 함수 호출 가능 여부가 아니라 실제 사용자 입력과 관측 가능한 상태 변화로 판정해야 한다. 카메라 입력은 실제 `F`, 중클릭 드래그, 휠 이벤트가 Controller까지 도달하고 Camera CFrame에 반영됐을 때만 PASS다.
+일반 기능 반복에서는 Experience 게시, DataStore 연결, 저장 대기, Stop·Play Restore를 수행하지 않는다.
 
-사용자에게 전달하는 Build 명령은 저장소에서 바로 실행 가능한 전체 Windows PowerShell 블록으로 제공한다.
+### Persistence 일괄 Gate
 
-## 3. 현재 작업 순서
+```text
+Persistence 관련 변경 축적
+→ persistence-acceptance.project.json Build
+→ 필요한 Experience 게시 1회
+→ Load·Save·Restore·Reconnect·Migration·Recovery 일괄 검증
+```
+
+일반 기능 Acceptance와 Persistence Acceptance의 Summary와 Evidence를 섞지 않는다.
+
+## 3. 사용자 Build 명령 계약
+
+사용자에게 전달하는 Build 명령은 반드시 다음 요소를 모두 포함한 완전한 다중 행 Windows PowerShell 블록이다.
+
+```text
+$ErrorActionPreference
+RobloxStudioBeta 종료
+$HOME\RVTT 저장소 경로
+planning/rvtt-remake fetch·switch·pull
+정확한 7자리 Head 검사
+slice01-acceptance.project.json Rojo Build
+생성된 rbxlx Start-Process
+```
+
+한 줄 명령, 원격 `Invoke-Expression`, 중첩 `powershell -Command`, 인수형 Runner만 단독으로 제공하지 않는다.
+
+## 4. 현재 작업 순서
 
 | 순서 | 상태 | 작업 | 완료 조건 |
 |---:|---|---|---|
 | 1 | DONE | 전체 Contract→Script Transfer | 16개 Slice Domain·Manifest·Test Source 존재 |
 | 2 | DONE | Authority·Security 보강 | Command Authorization과 서버 계산 경계 |
-| 3 | DONE | 정적 Implementation CI | Structure·Policy·Security Validator 성공 |
-| 4 | DONE | Luau·Rojo Toolchain 검증 | Build·Type Check·Formatter·Linter 성공 |
+| 3 | DONE | 정적 Implementation CI baseline | Structure·Policy·Security Validator 성공 |
+| 4 | DONE | Luau·Rojo Toolchain baseline | Build·Type Check·Formatter·Linter 성공 |
 | 5 | DONE | Roblox Studio Runtime Baseline | Unit·Integration·Live DataStore·3-client 성공 |
-| 6 | DONE | Accent Theme·Avatar·Persistence | Visual·Input·Save·Reload·Character Suppression 확인 |
+| 6 | DONE | Accent Theme·Avatar·Persistence baseline | Visual·Input·Save·Reload·Character Suppression 확인 |
 | 7 | DONE | Slice 01 Authority Acceptance | Join→Select→Ready→Scene→Move→Reconnect 상태 복구 |
-| 8 | DONE | Slice 01 3D World Token Baseline | Projection Renderer·Asset Resolver·월드 입력 연결 |
-| 9 | DONE | Slice 01 World Interaction Implementation | Picking·Selection·Destination·Camera·Move·Diagnostics·Recovery 구현·CI PASS |
-| 10 | IN_PROGRESS | Slice 01 Camera Input Correction Acceptance | 실제 F·중클릭 드래그·휠 입력으로 Camera Check 판정 |
-| 11 | BLOCKED | Slice 01 Production Build Acceptance Audit | Camera Input Gate 완료 후 Production 경계 판정 |
-| 12 | QUEUED | Slice 02 Rules·D20 Batch | 판정·Attack·Damage·Projection·복구를 한 묶음으로 구현·검증 |
-| 13 | QUEUED | Slices 03–16 Batch Acceptance | 관련 Slice를 Milestone 단위로 묶어 검증 |
-| 14 | QUEUED | DataStore·Restart Recovery Batch | Restart·Lease·Migration·Conflict 검증 |
-| 15 | QUEUED | UI Visual Redesign Batch | 전체 화면을 Token·공통 Component 기준으로 일괄 개편 |
-| 16 | QUEUED | UI Accessibility QA | Keyboard·Focus·Contrast·User Test |
-| 17 | QUEUED | Performance·Fault·Soak | 측정 Evidence와 Release Gate |
+| 8 | DONE | Slice 01 3D World Token Baseline | Projection Renderer·Picking·Selection·Move 확인 |
+| 9 | IN_PROGRESS | Slice 01 In-memory Camera Input Acceptance | 실제 WASD·중클릭·F·휠로 Camera 변화 확인 |
+| 10 | BLOCKED | Slice 01 Production Build Acceptance Audit | Camera Input Gate 완료 후 Production 경계 판정 |
+| 11 | QUEUED | Slice 02 Rules·D20 Batch | 판정·Attack·Damage·Projection를 한 묶음으로 검증 |
+| 12 | QUEUED | Slices 03–16 Batch Acceptance | 관련 Slice를 Milestone 단위로 묶어 검증 |
+| 13 | DEFERRED | DataStore·Restart Recovery Batch | Load·Save·Restart·Lease·Migration·Conflict 일괄 검증 |
+| 14 | QUEUED | UI Visual Redesign Batch | 전체 화면을 공통 Token·Component 기준으로 개편 |
+| 15 | QUEUED | UI Accessibility QA | Keyboard·Focus·Contrast·User Test |
+| 16 | QUEUED | Performance·Fault·Soak | 측정 Evidence와 Release Gate |
 
-## 4. Camera Input Correction
+## 5. Camera 입력 계약
 
-현재 Delta:
+### WASD
 
-```text
-SLICE_01_WORLD_INTERACTION_BATCH_CAMERA_INPUT_PENDING
-```
+WASD Character 이동 모드가 비활성화된 동안 World Camera가 W/A/S/D를 소비한다.
 
-원인:
+- W: Camera-relative forward
+- A: Camera-relative left
+- S: Camera-relative backward
+- D: Camera-relative right
+- 대각선 속도 정규화
+- TextBox 포커스 시 Pass
+- 이동 모드 활성 시 `setMovementModeActive(true)`로 Camera WASD 해제
+- 이동 모드 종료 시 `setMovementModeActive(false)`로 Camera WASD 복구
 
-```text
-Acceptance Harness
-→ Camera 메서드 직접 호출
-→ 실제 F·중클릭 입력 미검증
-→ camera-frame·camera-pan 허위 PASS
+### Middle-button
 
-WorldCameraController
-→ gameProcessedEvent=true 입력 조기 반환
-→ Roblox 기본 입력이 소비한 F·중클릭 경로 무시
-```
+- 중클릭 시작 시 화면 Pointer 위치 저장
+- `RenderStepped`에서 절대 Pointer 위치 차이 계산
+- 이동량 0인 Frame은 무시
+- 한 Drag 세션의 최초 성공만 구조화 로그 출력
 
-수정:
+### Frame·Zoom
 
-- `F`와 중클릭을 `ContextActionService` 고우선순위 Action으로 수신
-- MouseMovement는 `gameProcessedEvent`와 무관하게 활성 Drag 동안 처리
-- 실제 입력마다 `[RVTT WorldCamera Input]` 로그 출력
-- `InputResolved` Signal에 action·source·applied·changed·processed 전달
-- Acceptance Camera Check를 실제 입력 전까지 `pending`으로 유지
-- 실제 입력과 Camera 변화가 확인될 때만 PASS
-- `Token Frame` 버튼도 동일한 실제 입력 판정 경로 사용
+- `F` 또는 Token Frame으로 선택 Token 또는 전체 Token Frame
+- Mouse Wheel로 Zoom
+- 실제 Camera CFrame 변화 또는 Frame 적용 후에만 Acceptance PASS
 
-## 5. 사용자 관측상 검증된 범위
+## 6. 현재 Acceptance Check
+
+일반 Slice 01 Batch는 16개 Check를 유지한다. 기존 Persistence Restore Check는 제거하고 실제 WASD Camera Pan Check로 교체했다.
 
 ```text
-3D Token Projection
-→ PASS
-
-Raycast 실패 시 Screen-space Picking Fallback
-→ PASS
-
-Selection Highlight·Destination Marker
-→ PASS
-
-movement.commit 서버 권위 이동
-→ PASS
-
-Command Receipt·Revision·Projection
-→ PASS
-
-Persistence Save·Reconnect Restore
-→ PASS
-
-Roblox Avatar Suppression
-→ PASS
-
-Camera Zoom via Wheel
-→ PASS
-
-Camera Frame·Pan
-→ RETEST REQUIRED
+camera-frame
+camera-pan
+camera-wasd-pan
+camera-zoom
 ```
 
-`WT-PICK-01`은 해결 상태를 유지한다. World Raycast가 `Workspace.RVTT_AcceptanceBoard.MoveSurface`를 반환했지만 Screen-space Token Bounds가 Actor를 선택했고 서버 승인 revision 73과 Projection 이동이 확인됐다.
-
-## 6. UI 디자인 해석
-
-현재 Production UI와 Acceptance Panel은 기능 검증용 Placeholder다.
-
-- 현재 외형을 최종 디자인으로 확장하지 않는다.
-- 화면 로직과 시각 표현을 분리한다.
-- Production 색상·간격·Typography는 공통 Token을 사용한다.
-- Acceptance 화면은 테스트 조작면으로만 사용한다.
-- 전면 수정은 별도 `UI Visual Redesign` Batch에서 일괄 수행한다.
-- 기능 테스트는 상태·입력·서버 권위·Persistence 계약을 기준으로 유지한다.
+Persistence는 이 Summary에 포함하지 않는다.
 
 ## 7. 다음 Gate
 
 ```text
-Camera Input Correction 구현·자동 Gate
-→ IN PROGRESS
+WASD·중클릭·F·휠 자동 Gate
+→ CI PENDING
 
-실제 F·중클릭 드래그·휠 Acceptance
+실제 In-memory Camera Acceptance
 → PENDING
+
+Dedicated Persistence Batch
+→ DEFERRED
 
 Slice 01 Production Build Acceptance Audit
 → BLOCKED
