@@ -54,7 +54,12 @@ local function heldDetails(record: LeaseRecord): { [string]: unknown }
 	}
 end
 
-local function validateRequest(ownerId: string, token: string, ttlSeconds: number, now: number): boolean
+local function validateRequest(
+	ownerId: string,
+	token: string,
+	ttlSeconds: number,
+	now: number
+): boolean
 	return validText(ownerId)
 		and validText(token)
 		and ValueGuard.isFiniteNumber(ttlSeconds)
@@ -204,7 +209,13 @@ function LeaseStore.renew(
 	return Result.ok(record)
 end
 
-function LeaseStore.release(self: any, key: string, ownerId: string, token: string, now: number): any
+function LeaseStore.release(
+	self: any,
+	key: string,
+	ownerId: string,
+	token: string,
+	now: number
+): any
 	if not validText(ownerId) or not validText(token) or not validTime(now) then
 		return Result.err("LEASE_INVALID", "error.persistence.lease_invalid", false)
 	end
