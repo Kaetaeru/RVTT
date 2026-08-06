@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "universeId": 0,
+  "apiAccessConfirmed": false,
+  "placeIds": {
+    "live-datastore.project.json": 0,
+    "restart-seed.project.json": 0,
+    "restart-verify.project.json": 0,
+    "datastore-outage.project.json": 0,
+    "lease-holder.project.json": 0,
+    "lease-contender.project.json": 0,
+    "production-lease-seed.project.json": 0,
+    "production-lease-verify.project.json": 0
+  }
+}
