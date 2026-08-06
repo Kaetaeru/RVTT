@@ -7,7 +7,8 @@
 - targetMode: `CURRENT_PR_HEAD_AT_RUNTIME_START`
 - projectFile: `implementation/roblox/default.project.json`
 - placeMode: `PLAY_SOLO`
-- evidenceOutputPath: `implementation/roblox/evidence/<targetSha>/RVTT-PR2-STUDIO-SMOKE-001/attempt-001/`
+- executionEvidenceRoot: `/tmp/rvtt-studio-evidence/<targetSha>/RVTT-PR2-STUDIO-SMOKE-001/attempt-001/`
+- repositoryEvidenceArchive: `implementation/roblox/evidence/<targetSha>/RVTT-PR2-STUDIO-SMOKE-001/attempt-001/`
 - authority:
   - `implementation/roblox/ROBLOX-STUDIO-MCP-TEST-POLICY.md`
   - `implementation/roblox/CODEX-REVIEW-TEST-GATE.md`
@@ -40,29 +41,55 @@ Runtime 실행자는 다음을 모두 확인한다.
 
 1. PR #2의 정확한 40자 HEAD SHA를 Runtime 시작 직전에 조회한다.
 2. Local Checkout HEAD가 PR HEAD와 정확히 일치한다.
-3. Working Tree가 Clean이다.
+3. Source Working Tree가 Clean이다.
 4. 현재 SHA에 대한 Codex `STUDIO_PREFLIGHT` 결과가 존재하고 `CONFIRMED` BLOCKER·HIGH Finding이 없다.
 5. `Validate RVTT implementation`이 같은 SHA에서 `completed/success`이거나, ChatGPT Lead Reviewer와 사용자가 별도 Local Static Gate Evidence를 명시적으로 승인했다.
 6. 위 5번이 충족되지 않으면 Capability Handshake 문서화까지만 허용하고 Place Build·Play를 시작하지 않는다.
 7. 연결된 MCP의 실제 Tool 목록을 읽기 전에는 Capability가 존재한다고 가정하지 않는다.
 8. Credential, 실제 사용자 Save Data, 비공개 Rulebook 원문과 공개 불가 Asset 원문을 Evidence에 넣지 않는다.
+9. Runtime 중 Evidence는 저장소 밖 `executionEvidenceRoot`에만 기록한다. 저장소 내부 `repositoryEvidenceArchive`로의 복사는 Runtime 종료 후 별도 승인된 Archive 단계에서만 수행한다.
 
 Precondition 실패 결과는 `BLOCKED`이며 PASS가 아니다.
+
+## Source-clean Predicate
+
+Runtime 시작 전과 각 주요 단계 이후 다음을 기록한다.
+
+```text
+git status --porcelain=v1 --untracked-files=all
+```
+
+허용되는 Runtime 출력은 저장소 밖 `executionEvidenceRoot`와 `/tmp/RVTT-studio-smoke.rbxlx`뿐이다. 저장소 내부의 tracked 또는 untracked 변경은 모두 예상 밖 Source 변경이며 즉시 `BLOCKED` 또는 `FAIL`로 종료한다.
+
+`repositoryEvidenceArchive`에 Evidence를 복사하는 후속 Archive 단계는 Runtime Result 판정과 Source-clean 검사 이후에만 수행하며, 복사 전 사용자 승인과 별도 Commit 범위를 기록한다.
 
 ## Capability Handshake
 
 연결된 MCP의 실제 Tool 이름을 다음 논리 Capability에 Mapping한다.
 
-### Required
+### Core Required
 
 ```text
-studio.open_place 또는 studio.open_local_file
 studio.start_play_solo
 studio.stop_play
 studio.read_output
+```
+
+Core Required는 반드시 `MCP_AUTOMATED`여야 한다. 하나라도 `HUMAN_MANUAL` 또는 `NOT_AVAILABLE`이면 이 MCP Smoke Runtime은 `BLOCKED`다. 사람이 대신 Play·Stop·Output Read를 수행해 MCP 자동화 PASS로 기록하지 않는다.
+
+### Required With Manual Fallback
+
+```text
+studio.open_place 또는 studio.open_local_file
 studio.capture_screenshot
 studio.export_evidence 또는 동일한 파일 저장 수단
 ```
+
+위 항목은 `MCP_AUTOMATED`, `HUMAN_MANUAL`, `NOT_AVAILABLE` 중 하나로 분류한다.
+
+- `NOT_AVAILABLE`: `BLOCKED`
+- `HUMAN_MANUAL`: 아래 `Manual Action Record`와 연결된 실제 수행·시각·Evidence가 모두 있어야 허용
+- `MCP_AUTOMATED`: 실제 Tool 이름, 호출 시각과 결과 Evidence를 기록
 
 ### Optional
 
@@ -74,15 +101,7 @@ studio.set_test_flag
 studio.save_local_copy
 ```
 
-각 항목을 다음 중 하나로 분류한다.
-
-```text
-MCP_AUTOMATED
-HUMAN_MANUAL
-NOT_AVAILABLE
-```
-
-Required Capability가 `NOT_AVAILABLE`이면 Runtime 결과는 `BLOCKED`다. Required Capability를 메서드 직접 호출, 임의 Script 삽입 또는 근거 없는 수동 완료 주장으로 우회하지 않는다.
+Optional은 `MCP_AUTOMATED`, `HUMAN_MANUAL`, `NOT_AVAILABLE`로 기록할 수 있다. 누락을 PASS로 확대하지 않는다.
 
 `capability-handshake.json` 최소 필드:
 
@@ -100,77 +119,133 @@ Required Capability가 `NOT_AVAILABLE`이면 Runtime 결과는 `BLOCKED`다. Req
   "connectionScope": "<scope>",
   "capabilityMappings": [],
   "unavailableCapabilities": [],
-  "evidenceRoot": "implementation/roblox/evidence/<targetSha>/RVTT-PR2-STUDIO-SMOKE-001/attempt-001/"
+  "executionEvidenceRoot": "/tmp/rvtt-studio-evidence/<targetSha>/RVTT-PR2-STUDIO-SMOKE-001/attempt-001/"
 }
 ```
 
+각 `capabilityMappings[]` 항목은 최소 다음을 가진다.
+
+```text
+logicalCapability
+classification
+actualToolName?
+manualActionId?
+checkedAt
+checker
+result
+```
+
+## Manual Action Record
+
+`HUMAN_MANUAL`이 허용된 Required With Manual Fallback 항목은 `manual-action-records.json`에 다음을 기록한다.
+
+```text
+manualActionId
+logicalCapability
+operator
+startedAt
+finishedAt
+exactAction
+studioStateBefore
+studioStateAfter
+evidenceFiles[]
+result
+notes
+```
+
+허용 Manual Action:
+
+```text
+M01 — 승인된 exact build/place를 Roblox Studio에서 열기
+M02 — 지정 Screenshot checkpoint를 수동 저장하기
+M03 — executionEvidenceRoot로 Evidence 파일을 수동 Export하기
+```
+
+금지 Manual 대체:
+
+```text
+Play Solo Start
+Play Stop
+Output Read
+```
+
+금지 항목을 사람이 수행했더라도 MCP Smoke PASS에 사용하지 않으며 결과는 `BLOCKED`다.
+
 ## Setup Steps
 
-1. PR HEAD, Local HEAD와 Clean Working Tree Evidence를 기록한다.
-2. Pin된 Rojo를 확인한다.
-3. 승인된 Static Gate Evidence를 기록한다.
-4. 다음 Build를 실행한다.
+1. PR HEAD, Local HEAD와 Source-clean Evidence를 기록한다.
+2. 저장소 밖 `executionEvidenceRoot`를 만든다.
+3. Pin된 Rojo를 확인한다.
+4. 승인된 Static Gate Evidence를 기록한다.
+5. 다음 Build를 실행한다.
 
 ```bash
 cd implementation/roblox
 rojo build default.project.json --output /tmp/RVTT-studio-smoke.rbxlx
 ```
 
-5. Build exit code와 SHA-256을 `build-manifest.txt`에 기록한다.
-6. MCP로 `/tmp/RVTT-studio-smoke.rbxlx` 또는 동일 내용의 승인된 Local Place를 연다.
-7. 실제 열린 Place와 Target SHA의 관계를 확인한다.
-8. 지원되면 Output을 Clear한다.
+6. Build exit code와 SHA-256을 `executionEvidenceRoot/build-manifest.txt`에 기록한다.
+7. MCP 자동화 또는 M01 절차로 `/tmp/RVTT-studio-smoke.rbxlx`를 연다.
+8. 실제 열린 Place와 Target SHA의 관계를 확인한다.
+9. 지원되면 Output을 Clear한다.
+10. Source-clean Predicate를 다시 실행한다.
 
-Build 실패, Place 불일치 또는 Target SHA mismatch면 즉시 중단한다.
+Build 실패, Place 불일치, Target SHA mismatch 또는 저장소 Source 변경이면 즉시 중단한다.
 
 ## Automated Actions
 
 MCP가 지원하는 범위에서 순서대로 수행한다.
 
-1. Place가 Edit Mode로 열린 상태의 Screenshot을 저장한다.
+1. Place가 Edit Mode로 열린 상태의 Screenshot을 저장한다. MCP Screenshot이 없으면 M02로 수행한다.
 2. 지원되면 핵심 Root Instance Snapshot을 저장한다.
-3. Play Solo를 시작한다.
+3. MCP Tool로 Play Solo를 시작한다.
 4. Studio가 Running 상태가 될 때까지 최대 30초 대기한다.
 5. Running 상태 확인 후 최소 5초 동안 유지한다.
-6. Output 전체를 읽어 `studio-output-running.log`에 저장한다.
-7. Running 상태 Screenshot을 저장한다.
+6. MCP Tool로 Output 전체를 읽어 `studio-output-running.log`에 저장한다.
+7. Running 상태 Screenshot을 저장한다. MCP Screenshot이 없으면 M02로 수행한다.
 8. 지원되면 `Players`, `Workspace`, `ReplicatedStorage`, `ServerScriptService`, `StarterGui`의 고수준 Snapshot을 저장한다. Private value나 대용량 Source 본문은 제외한다.
-9. Play를 중지한다.
+9. MCP Tool로 Play를 중지한다.
 10. Edit Mode 복귀를 최대 30초 기다린다.
-11. Stop 이후 Output을 `studio-output-final.log`에 저장한다.
-12. Post-stop Screenshot을 저장한다.
-13. Evidence Bundle을 지정 경로로 Export한다.
+11. MCP Tool로 Stop 이후 Output을 `studio-output-final.log`에 저장한다.
+12. Post-stop Screenshot을 저장한다. MCP Screenshot이 없으면 M02로 수행한다.
+13. MCP Export 또는 M03 절차로 Evidence를 `executionEvidenceRoot`에 완성한다.
+14. Source-clean Predicate를 다시 실행한다.
 
 ## Human Actions
 
-MCP가 자동화하지 못하는 경우에만 수행하고 `human-observations.md`에 수동임을 명확히 기록한다.
+Human Action은 MCP Automated Action으로 표시하지 않는다.
 
-1. 실제 Roblox Studio 창과 올바른 Place가 열렸는지 확인한다.
-2. Play Solo 전후 상태 전환이 화면에서 확인되는지 기록한다.
-3. Running Screenshot에서 UI가 완전히 비어 있거나 치명적으로 깨져 보이는지 관찰한다.
-4. 자동 Screenshot 또는 Export가 불가능하면 수동 저장 경로와 수행자를 기록한다.
+1. M01이 필요한 경우 승인된 build manifest의 SHA-256과 실제 연 Place 경로를 대조하고 Edit Mode Screenshot과 함께 기록한다.
+2. M02가 필요한 경우 Screenshot마다 operator, timestamp, Studio state, checkpoint ID와 실제 파일 경로를 기록한다.
+3. M03이 필요한 경우 export 전후 파일 목록과 SHA-256 manifest를 기록한다.
+4. 실제 Roblox Studio 창과 올바른 Place가 열렸는지 확인한다.
+5. Play Solo 전후 상태 전환이 화면에서 확인되는지 관찰한다.
+6. Running Screenshot에서 UI가 완전히 비어 있거나 치명적으로 깨져 보이는지 관찰한다.
 
-Human Action은 MCP Automated Action으로 표시하지 않는다. 이 Smoke에서 재미, 입력 감각, 가독성 완성도 또는 전체 UX PASS를 판정하지 않는다.
+이 Smoke에서 재미, 입력 감각, 가독성 완성도 또는 전체 UX PASS를 판정하지 않는다.
 
 ## Assertions
 
 ```text
 A01 targetSha == PR HEAD at runtime start
 A02 localHead == targetSha
-A03 workingTreeClean == true
+A03 sourceWorkingTreeCleanBefore == true
 A04 staticGateApproved == true
-A05 requiredCapabilities contain no NOT_AVAILABLE
-A06 rojoBuildExitCode == 0
-A07 openedPlace matches build manifest
-A08 playSolo reached running state within 30s
-A09 output logs were captured while running and after stop
-A10 no unhandled error or stack trace exists without an explicit allowed explanation
-A11 running screenshot exists and is readable
-A12 stop returned Studio to edit state within 30s
-A13 evidence bundle metadata references the exact targetSha and commandId
+A05 coreRequiredCapabilities are all MCP_AUTOMATED
+A06 manual-fallback Required capability is not NOT_AVAILABLE
+A07 each HUMAN_MANUAL mapping has a complete linked manual-action record and evidence
+A08 rojoBuildExitCode == 0
+A09 openedPlace matches build manifest
+A10 playSolo reached running state within 30s through MCP
+A11 output logs were captured through MCP while running and after stop
+A12 forbidden log occurrences are zero or exactly bounded by log-allowlist.json
+A13 running screenshot exists and is readable
+A14 stop returned Studio to edit state within 30s through MCP
+A15 evidence bundle metadata references exact targetSha and commandId
+A16 sourceWorkingTreeCleanAfter == true
 ```
 
-모든 Assertion이 충족돼야 `PASS`다. 선택 Capability만 빠진 경우에 한해 `PARTIAL`을 사용할 수 있으며, Required Capability나 Hard Precondition이 빠지면 `BLOCKED`다.
+모든 Assertion이 충족돼야 `PASS`다. Optional Capability만 빠진 경우에 한해 `PARTIAL`을 사용할 수 있다. Core Required 또는 Hard Precondition이 빠지면 `BLOCKED`다.
 
 ## Expected Log Policy
 
@@ -180,9 +255,9 @@ A13 evidence bundle metadata references the exact targetSha and commandId
 expectedLogTokens: []
 ```
 
-Output에 로그가 없더라도 Play 상태와 Screenshot·State Evidence가 모두 있으면 Smoke를 평가할 수 있다. 다만 Output 읽기 자체는 반드시 성공해야 한다.
+Output에 로그가 없더라도 Play 상태와 Screenshot·State Evidence가 모두 있으면 Smoke를 평가할 수 있다. 다만 Output 읽기 자체는 MCP를 통해 반드시 성공해야 한다.
 
-다음은 기본 Forbidden Pattern이다.
+기본 Forbidden Pattern:
 
 ```text
 Script timeout
@@ -194,7 +269,31 @@ Unhandled
 Stack Begin
 ```
 
-`Stack Begin`이 정상적으로 처리된 의도적 테스트 오류에 속한다고 주장하려면 동일 Evidence Bundle에 명시적 Allowlist 근거가 있어야 한다. Allowlist 없는 Forbidden Pattern은 `FAIL`이다.
+Allowlist 기본값은 빈 배열이다. Allowlist가 필요한 경우 `log-allowlist.json`에 다음 구조를 사용한다.
+
+```json
+{
+  "commandId": "RVTT-PR2-STUDIO-SMOKE-001",
+  "targetSha": "<40-character SHA>",
+  "entries": [
+    {
+      "pattern": "Stack Begin",
+      "sourceLog": "studio-output-running.log",
+      "startLine": 10,
+      "endLine": 18,
+      "eventId": "<optional stable event id>",
+      "maxOccurrences": 1,
+      "actualOccurrences": 1,
+      "reason": "<specific intentional test reason>",
+      "authority": "<test or policy reference>",
+      "approvedBy": "<name>",
+      "approvedAt": "<ISO-8601>"
+    }
+  ]
+}
+```
+
+Allowlist는 exact pattern, exact log 범위 또는 stable event ID, 허용 횟수와 승인 근거를 모두 가져야 한다. 허용 범위 밖의 동일 Pattern이나 `maxOccurrences` 초과분은 `FAIL`이다. 자유형 설명만으로 Forbidden Log를 숨기지 않는다.
 
 ## Screenshot Checkpoints
 
@@ -204,7 +303,7 @@ S02-play-solo-running.png
 S03-post-stop-edit-mode.png
 ```
 
-각 Screenshot은 Target SHA, Command ID, Attempt와 촬영 시점을 Sidecar Metadata 또는 Summary에 연결한다.
+각 Screenshot은 Target SHA, Command ID, Attempt, 촬영 시점, 자동 또는 수동 수행 구분과 연결한다.
 
 ## State Snapshot Checkpoints
 
@@ -214,7 +313,7 @@ T02-running-root-snapshot.json
 T03-post-stop-root-snapshot.json
 ```
 
-Snapshot Capability가 없으면 `HUMAN_MANUAL` 또는 `NOT_AVAILABLE`로 기록한다. Snapshot은 Optional이므로 다른 Required Evidence가 충족된 경우에만 결과를 `PARTIAL`로 제한할 수 있다.
+Snapshot은 Optional이다. Capability가 없으면 `NOT_AVAILABLE`로 기록하며 필수 Runtime PASS 주장에 사용하지 않는다.
 
 ## Timeout Policy
 
@@ -234,13 +333,15 @@ Timeout은 Evidence를 보존하고 `FAIL` 또는 `BLOCKED`로 종료한다. 무
 
 ```text
 Target SHA mismatch
-Dirty working tree after setup
+Unexpected repository Source working-tree change
 Build failure
 Wrong Place or Project
 MCP disconnect
 Studio crash
-Required Capability unavailable
-Forbidden log pattern without allowlist
+Core Required Capability not MCP_AUTOMATED
+Required With Manual Fallback capability unavailable
+Incomplete manual-action record
+Forbidden log occurrence outside bounded allowlist
 Unhandled error
 Play start or stop timeout
 Evidence target mismatch
@@ -248,22 +349,28 @@ Evidence target mismatch
 
 ## Cleanup Steps
 
-1. Play 중이면 반드시 Stop을 시도한다.
+1. Play 중이면 반드시 MCP Stop을 시도한다.
 2. Studio와 MCP 연결 상태를 기록한다.
 3. 임시 `/tmp/RVTT-studio-smoke.rbxlx`는 Evidence Hash 기록 후 삭제할 수 있다.
 4. 저장소 Source와 PR 파일은 Runtime 과정에서 수정하지 않는다.
-5. 실패·중단 Evidence도 삭제하지 않는다.
+5. 실패·중단 Evidence도 `executionEvidenceRoot`에서 삭제하지 않는다.
 6. Credential과 Private Data가 포함됐는지 최종 점검한다.
+7. Source-clean Predicate 최종 결과를 기록한다.
+8. Runtime Result 판정 후 Evidence Archive가 필요하면 별도 승인된 작업으로 `repositoryEvidenceArchive`에 복사한다.
 
 ## Evidence Bundle
 
 ```text
-implementation/roblox/evidence/<targetSha>/RVTT-PR2-STUDIO-SMOKE-001/attempt-001/
+/tmp/rvtt-studio-evidence/<targetSha>/RVTT-PR2-STUDIO-SMOKE-001/attempt-001/
 ├─ run-metadata.json
 ├─ capability-handshake.json
+├─ manual-action-records.json
 ├─ build-manifest.txt
+├─ source-clean-before.txt
+├─ source-clean-after.txt
 ├─ studio-output-running.log
 ├─ studio-output-final.log
+├─ log-allowlist.json
 ├─ assertions.json
 ├─ screenshots/
 │  ├─ S01-edit-mode-open.png
@@ -271,6 +378,7 @@ implementation/roblox/evidence/<targetSha>/RVTT-PR2-STUDIO-SMOKE-001/attempt-001
 │  └─ S03-post-stop-edit-mode.png
 ├─ state-snapshots/
 ├─ human-observations.md
+├─ evidence-sha256.txt
 └─ summary.md
 ```
 
@@ -288,6 +396,7 @@ finishedAt
 serverCount
 clientRoles
 persistenceMode
+executionEvidenceRoot
 result
 ```
 
@@ -315,8 +424,8 @@ ABORTED_STALE_HEAD
 
 ```text
 정확한 SHA의 Place를 Build·Open할 수 있음
-Play Solo Start·Stop이 가능함
-Output을 읽을 수 있음
+MCP로 Play Solo Start·Stop이 가능함
+MCP로 Output을 읽을 수 있음
 Screenshot과 최소 Evidence를 저장할 수 있음
 ```
 
