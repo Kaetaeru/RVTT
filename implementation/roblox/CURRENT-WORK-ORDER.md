@@ -16,7 +16,7 @@ Shared·Server·Client·UI·Test Source
 → IMPLEMENTED
 
 Structure·Policy·Toolchain CI
-→ PASSED AT PREVIOUS HEAD
+→ PASSED
 
 Roblox Studio Runtime Baseline
 → VERIFIED
@@ -143,11 +143,32 @@ camera-zoom
 
 Persistence는 이 Summary에 포함하지 않는다.
 
-## 7. 다음 Gate
+## 7. 자동 Gate 결과
+
+```text
+Structure·Security·Policy Validator
+→ PASS
+
+StyLua·Selene
+→ PASS
+
+Production·Test·Multi-client·Persistence·Slice01 Rojo Build
+→ PASS
+
+Production·Test Luau Type Analysis
+→ PASS
+
+Documentation·Windows Bootstrap Validation
+→ PASS
+```
+
+Persistence Place는 정적 Build만 확인했다. 실제 DataStore 연결은 수행하지 않았다.
+
+## 8. 다음 Gate
 
 ```text
 WASD·중클릭·F·휠 자동 Gate
-→ CI PENDING
+→ PASSED
 
 실제 In-memory Camera Acceptance
 → PENDING
