@@ -1,0 +1,92 @@
+name: Apply WASD No-DataStore Acceptance
+
+on:
+  push:
+    paths:
+      - .github/workflows/apply-wasd-no-datastore-acceptance.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out planning branch
+        uses: actions/checkout@v4
+        with:
+          ref: planning/rvtt-remake
+          fetch-depth: 0
+
+      - name: Patch acceptance harness
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("implementation/roblox/tests/WorldTokenAcceptance/WorldTokenAcceptance.client.lua")
+          text = path.read_text(encoding="utf-8")
+
+          def replace_once(old: str, new: str) -> None:
+              global text
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"expected one match, got {count}: {old[:100]!r}")
+              text = text.replace(old, new, 1)
+
+          replace_once('local INITIAL_RESTORE_WAIT_SECONDS = 4\n', '')
+          replace_once(
+              '\t{ id = "state-restore", label = "Loaded Character Scene Position Restore" },\n',
+              '\t{ id = "camera-wasd-pan", label = "3D Camera WASD Pan" },\n',
+          )
+          replace_once(
+              '\t{ id = "camera-pan", label = "3D Camera Pan" },\n',
+              '\t{ id = "camera-pan", label = "3D Camera Middle-button Pan" },\n',
+          )
+          replace_once(
+              '\t"실제 입력 필수: 중클릭 드래그=Pan · Wheel=Zoom · F 또는 Token Frame=Frame. 이후 Token 선택·바닥 이동을 확인하세요."\n',
+              '\t"실제 입력 필수: WASD 또는 중클릭 드래그=Pan · Wheel=Zoom · F 또는 Token Frame=Frame. 이후 Token 선택·바닥 이동을 확인하세요. 이 Build는 DataStore를 사용하지 않습니다."\n',
+          )
+          replace_once(
+              '\t\t["camera-pan"] = "middle-click drag",\n\t\t["camera-zoom"] = "mouse wheel",\n',
+              '\t\t["camera-pan"] = "middle-click drag",\n\t\t["camera-wasd-pan"] = "press W/A/S/D outside WASD movement mode",\n\t\t["camera-zoom"] = "mouse wheel",\n',
+          )
+
+          start = text.index('local function detectInitialRestore()\n')
+          end = text.index('prepareButton.Activated:Connect(function()\n', start)
+          text = text[:start] + text[end:]
+
+          replace_once(
+              '''\tlocal id = if action == "frame"\n\t\tthen "camera-frame"\n\t\telseif action == "pan" then "camera-pan"\n\t\telseif action == "zoom" then "camera-zoom"\n\t\telse nil\n''',
+              '''\tlocal id = if action == "frame"\n\t\tthen "camera-frame"\n\t\telseif action == "pan" and source == "keyboard-wasd"\n\t\tthen "camera-wasd-pan"\n\t\telseif action == "pan"\n\t\tthen "camera-pan"\n\t\telseif action == "zoom"\n\t\tthen "camera-zoom"\n\t\telse nil\n''',
+          )
+          replace_once(
+              '\t\t\t\t"서버 Projection 이동 PASS · 저장 후 재실행 복구 상태도 Summary에 포함됩니다"\n',
+              '\t\t\t\t"서버 Projection 이동 PASS · 이 Build는 메모리 상태만 검증합니다"\n',
+          )
+          replace_once(
+              '\t\t"[RVTT Batch] event=ready batch=%s revision=%d mode=acceptance",\n',
+              '\t\t"[RVTT Batch] event=ready batch=%s revision=%d mode=acceptance persistence=disabled",\n',
+          )
+          replace_once(
+              '''task.spawn(function()\n\tdetectInitialRestore()\n\trun(function()\n\t\tprepareScene()\n\t\tinitializeCameraChecks()\n\tend)\nend)''',
+              '''task.spawn(function()\n\trun(function()\n\t\tprepareScene()\n\t\tinitializeCameraChecks()\n\tend)\nend)''',
+          )
+
+          if "state-restore" in text or "detectInitialRestore" in text:
+              raise SystemExit("persistence restore acceptance residue remains")
+          if 'id = "camera-wasd-pan"' not in text or 'source == "keyboard-wasd"' not in text:
+              raise SystemExit("WASD camera acceptance was not installed")
+
+          path.write_text(text, encoding="utf-8")
+          PY
+
+      - name: Commit patch and remove workflow
+        shell: bash
+        run: |
+          git config user.name "Kaetaeru"
+          git config user.email "131461278+Kaetaeru@users.noreply.github.com"
+          git rm .github/workflows/apply-wasd-no-datastore-acceptance.yml
+          git add implementation/roblox/tests/WorldTokenAcceptance/WorldTokenAcceptance.client.lua
+          git commit -m "test: add WASD in-memory camera acceptance"
+          git push origin HEAD:planning/rvtt-remake
