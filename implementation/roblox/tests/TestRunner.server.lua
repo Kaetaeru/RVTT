@@ -67,6 +67,11 @@ local specs: { Spec } = {
 		runner = require(script.Parent.Unit["PersistenceRetry.spec"]) :: any,
 	},
 	{
+		id = "unit-lease",
+		name = "Lease.spec",
+		runner = require(script.Parent.Unit["Lease.spec"]) :: any,
+	},
+	{
 		id = "unit-profile-store",
 		name = "ProfileStore.spec",
 		runner = require(script.Parent.Unit["ProfileStore.spec"]) :: any,
