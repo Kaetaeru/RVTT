@@ -4,6 +4,7 @@
 - 문서 종류: Architecture
 - 즉시 구현 명세 가능성: `READY_WITH_DEFAULTS`
 - 작성일: 2026-08-06
+- 최종 갱신일: 2026-08-07
 - 상위 결정: [`ADR-0092`](../decisions/ADR-0092-campaign-survival-logistics-and-dm-authored-actor-tokens.md)
 - 관련 결정:
   - [`ADR-0001`](../decisions/ADR-0001-authored-rules-content.md)
@@ -108,8 +109,15 @@ Client가 업로드한 Model Instance를 서버가 그대로 Workspace에 삽입
 
 Prompt Builder와 DM UI는 전체 Authority Asset Registry가 아니라 권한 필터링된 Projection을 사용한다.
 
+Schema 원본:
+
+```text
+implementation/roblox/content-templates/actor-model-catalog.schema.json
+```
+
 ```text
 ActorModelCatalogProjection
+├─ schemaVersion
 ├─ catalogRevision
 ├─ packageVersionSet
 ├─ models[]
@@ -134,11 +142,21 @@ ActorModelCatalogEntry
 
 Prompt에 넣을 때 `actorModelAssetId` 오름차순으로 Stable 정렬한다. 현재 권한으로 보이지 않는 Asset은 이름·개수·빈 슬롯도 노출하지 않는다.
 
-현재 Catalog가 비어 있으면 Prompt에는 정확히 다음 구조를 넣는다.
+`disclosureDigest`는 권한 필터링된 뒤의 canonical Model Entry 목록을 기준으로 계산한다. 같은 Viewer Context, Package Version Set과 Catalog Revision은 같은 Digest를 만들어야 한다.
+
+현재 Catalog가 비어 있으면 Prompt에는 정확히 다음 canonical 구조를 넣는다.
 
 ```json
-{"catalogRevision":0,"models":[]}
+{
+  "schemaVersion": "rvtt.actor-model-catalog.v1",
+  "catalogRevision": 0,
+  "packageVersionSet": [],
+  "models": [],
+  "disclosureDigest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}
 ```
+
+ADR 예시, Runtime Serializer, Prompt fixture와 테스트는 이 Schema를 공통 원본으로 사용한다. 축약형 `{"models":[]}` 또는 필드 일부가 빠진 별도 형식을 canonical output으로 사용하지 않는다.
 
 ## 5. Stat Block JSON
 
@@ -180,6 +198,8 @@ trusted_recipe
 
 ## 7. Source와 Official 표시
 
+Canonical `sourceType`:
+
 ```text
 sourceType
 ├─ rules_package
@@ -191,6 +211,8 @@ sourceType
 `rules_package`를 사용하려면 활성 Package ID, Stable Rule·Definition Anchor, Source Version, Content Hash 또는 Definition Ref가 필요하다.
 
 AI가 `official=true`를 자유롭게 생성하지 못한다. Source Anchor가 없으면 `campaign_homebrew` 또는 `unknown_draft`다.
+
+`homebrew`와 `campaign_custom`은 이전 문서에서 사용된 legacy alias이며 `actor-statblock.schema.json`은 이를 거부한다. Importer가 legacy alias를 자동으로 canonical 값으로 바꾸지 않는다. 명시적 Migration 또는 DM 수정이 필요하다.
 
 공식 Definition을 Import할 때 수치·CR·Action을 자동 조정하지 않는다. 변경하려면 Campaign-local Derived Template로 만들고 Diff와 이유를 기록한다.
 
@@ -225,6 +247,7 @@ Prompt 필수 지침:
 - 공식 수치 임의 변경 금지
 - `actorModelAssetId`는 Catalog에 있는 값만 사용
 - 적절한 Model이 없으면 `token.actorModelAssetId=null`
+- `sourceType`은 Strict Schema의 canonical enum만 사용
 - Script·Code·URL 생성 금지
 - 불확실한 값은 Import Warning으로 표시
 - Automation은 `manual` 우선
@@ -322,6 +345,7 @@ Actor Preview
 
 ```text
 ACTOR_MODEL_CATALOG_EMPTY
+ACTOR_MODEL_CATALOG_SCHEMA_MISMATCH
 ACTOR_MODEL_NOT_FOUND
 ACTOR_MODEL_NOT_VISIBLE
 ACTOR_MODEL_SCRIPT_FORBIDDEN
@@ -329,6 +353,7 @@ ACTOR_MODEL_RIGHTS_MISSING
 ACTOR_MODEL_BUDGET_EXCEEDED
 STATBLOCK_JSON_INVALID
 STATBLOCK_SCHEMA_MISMATCH
+STATBLOCK_SOURCE_TYPE_LEGACY_ALIAS
 STATBLOCK_SEMANTIC_INVALID
 RULE_REFERENCE_NOT_FOUND
 RECIPE_NOT_TRUSTED
@@ -342,8 +367,10 @@ TEMPLATE_MIGRATION_REQUIRED
 ## 14. Acceptance
 
 - Prompt Builder가 현재 보이는 Actor Model Entry 전부를 Stable 순서로 포함한다.
-- Catalog가 비어 있으면 Model ID를 발명하지 않고 Publish를 차단한다.
+- Catalog가 비어 있으면 canonical versioned JSON fixture를 사용하고 Model ID를 발명하지 않으며 Publish를 차단한다.
+- Actor Model Catalog Serializer와 fixture가 같은 JSON Schema를 사용한다.
 - JSON Schema 밖의 Field를 거부한다.
+- canonical Source Type 네 개를 허용하고 `homebrew`·`campaign_custom` legacy alias를 거부한다.
 - AI 결과가 Script·Luau·Remote를 등록하지 못한다.
 - 미등록 Recipe를 실행하지 못한다.
 - Rights·Provenance가 없는 Model을 Publish하지 못한다.
