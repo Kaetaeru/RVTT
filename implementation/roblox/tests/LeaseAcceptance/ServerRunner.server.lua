@@ -37,8 +37,11 @@ local leaseRawStore = DataStoreService:GetDataStore(LEASE_STORE_NAME)
 local coordinationStore = DataStoreService:GetDataStore(COORD_STORE_NAME)
 local diagnostics = Diagnostics.new()
 local leaseStore = LeaseStore.new(LEASE_STORE_NAME, diagnostics)
-local ownerId = role .. ":" .. (if game.JobId ~= "" then game.JobId else HttpService:GenerateGUID(false))
-local coordinator = LeaseCoordinator.new(leaseStore, LEASE_KEY, ownerId, LEASE_TTL_SECONDS, diagnostics)
+local ownerId = role
+	.. ":"
+	.. (if game.JobId ~= "" then game.JobId else HttpService:GenerateGUID(false))
+local coordinator =
+	LeaseCoordinator.new(leaseStore, LEASE_KEY, ownerId, LEASE_TTL_SECONDS, diagnostics)
 local startedAt = os.time()
 
 local passed = 0
