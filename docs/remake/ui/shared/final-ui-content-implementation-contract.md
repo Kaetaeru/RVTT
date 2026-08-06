@@ -214,20 +214,6 @@ RuleContentPackage
 → RuleChunk
 ```
 
-기본 SRD 5.2.1 Module 예시:
-
-```text
-srd521.playing-the-game
-srd521.character-creation
-srd521.classes
-srd521.feats
-srd521.equipment
-srd521.spells
-srd521.rules-glossary
-srd521.conditions
-srd521.creatures
-```
-
 Module 총 길이는 제한하지 않지만 Rule Chunk는 UTF-8 약 `4–16 KB`를 목표로 하고 표·목록·문단 중간에서 임의 분할하지 않는다.
 
 Journal UI:
@@ -243,7 +229,7 @@ Right
 → Outline · Source · Related Rules · Backlinks
 
 Top
-→ Search · Module Filter · Font Size · Copy Rule Link
+→ Search · Module Filter · Font Size · Copy Rule Link · Active Profile Badge
 ```
 
 Stable URI:
@@ -254,8 +240,6 @@ rvtt-rule://<packageId>/<moduleId>/<documentId>#<anchorId>
 
 Character Sheet, ActionHoverPanel, Condition, Spell, Dice Formula와 DM Tool은 정확한 Rule Section을 연다. Search 결과·Snippet·Backlink는 권한 있는 Module에서만 생성한다. Client는 현재 Viewport 주변 Chunk만 Lazy Load한다.
 
-Built-in 공개 본문은 SRD 5.2.1처럼 재배포 권리가 확인된 Source만 사용하고 Package Manifest에 License ID, Attribution, Source Version, Source URL·Hash를 기록한다. 비SRD 공식 서적 전체 본문은 공개 Repo·Builtin Package에 넣지 않는다. 별도 권리 Package는 Entitlement 검증 후 제공한다.
-
 Reader 상태:
 
 - Module Loading Skeleton
@@ -263,12 +247,117 @@ Reader 상태:
 - No Result
 - Package Missing
 - Dependency Broken
+- Private Source Missing
+- Source Revision Mismatch
+- Expected Count Mismatch
 - Entitlement Expired
 - License Attribution Required
 - Unsupported Locale
 - Offline Unavailable
 
-## 5. Acceptance
+## 5. Rule Content Profile Resolution
+
+Rule Package는 실행 목적에 따라 명시적으로 선택한다.
+
+```text
+development
+ test
+ studio-acceptance
+→ rvtt.test.rules.2024.integrated.ko
+
+public
+ release
+ artifact
+→ rvtt.core.rules
+```
+
+동일 Build가 두 프로필의 본문을 자동 병합하지 않는다. `RulePackageResolver`는 정확히 하나의 기본 Rule Package를 선택하고, 명시적으로 허용된 House Rule Overlay만 추가한다.
+
+### Integrated Korean Test Pack
+
+```text
+packageId
+→ rvtt.test.rules.2024.integrated.ko
+
+sourceRepository
+→ Kaetaeru/D-D-2024-
+
+sourceRevision
+→ d3d574725e0ecdfd05cb69fa32cf66196e3a8ee4
+
+sourceRoot
+→ 10-RULEBOOKS/integrated-2024
+
+sourceBindingKey
+→ RVTT_PRIVATE_DND2024_KO_SOURCE
+```
+
+기대 Content Count:
+
+```text
+classes       12
+subclasses    48
+backgrounds   16
+species       10
+feats         75
+spells        391
+```
+
+이 Package는 `developer_private`, `owner_only`, `redistributable=false`, `publicBuildAllowed=false`, `clientExportAllowed=false`다. 공개 Git Tree에는 Source 본문·변환 Chunk·Search Index를 저장하지 않는다.
+
+Private Import 단계:
+
+```text
+resolve private source binding
+→ verify repository and pinned revision
+→ enumerate integrated-2024 documents
+→ validate expected content counts
+→ normalize headings, tables and links
+→ assign stable document/section anchors
+→ create 4–16 KB semantic chunks
+→ create Korean search index
+→ emit temporary RuleContentPackage
+→ scan for forbidden public output
+```
+
+Importer 산출물은 Local Build Cache 또는 권한 제한 CI Workspace에만 존재한다. Roblox Client에는 현재 세션·현재 사용자에게 허용된 RuleReader View만 Projection한다. Source Credential·Repository URL Token·Raw Git Metadata는 Client에 보내지 않는다.
+
+Pin·Count·Hash가 다르면 Test Build는 Fail Closed한다. 개발자가 명시적으로 `allowSrdFallback=true`를 켠 경우에만 `rvtt.core.rules`로 대체하며, Rules Reader와 Test Report에 Fallback 상태를 지속 표시한다.
+
+### Public SRD Package
+
+`rvtt.core.rules`는 SRD 5.2.1 기반 공개·Release Package다.
+
+기본 Module 예시:
+
+```text
+srd521.playing-the-game
+srd521.character-creation
+srd521.classes
+srd521.feats
+srd521.equipment
+srd521.spells
+srd521.rules-glossary
+srd521.conditions
+srd521.creatures
+```
+
+Package Manifest에 License ID, Attribution, Source Version, Source URL·Hash를 기록한다. 공개 Release에서는 Private Test Pack의 Package ID·본문·검색 자료가 없어야 한다.
+
+## 6. Release Content Leak Gate
+
+공개 산출물 생성 전에 다음을 검사한다.
+
+- `rvtt.test.rules.2024.integrated.ko` Package ID가 Client·Server Output에 없음
+- `Kaetaeru/D-D-2024-` Source Path와 Private Commit Metadata가 Runtime Output에 없음
+- Private Rule Chunk·Search Index·Snippet Cache가 Artifact에 없음
+- 비-SRD 서브클래스·배경·재주·주문 본문이 없음
+- SRD Attribution과 CC BY 4.0 고지가 있음
+- 모든 `rvtt-rule://` Link가 공개 Package Anchor로 Resolve됨
+
+검사 실패 시 Release Build·Artifact Upload·Publish를 차단한다.
+
+## 7. Acceptance
 
 - Asset Source·Server Registry·Client-safe View가 분리된다.
 - 모든 Prefab이 Stable ID·Rights·Pivot·Bounds·Validation을 가진다.
@@ -278,4 +367,9 @@ Reader 상태:
 - Dice Natural 값이 Formula와 판정보다 먼저 보인다.
 - Advantage·Disadvantage와 Natural 1·20·Reduced Motion이 동작한다.
 - 200,000자 이상 Rule Package를 전체 String 없이 탐색한다.
+- 개발·테스트 기본 Profile이 통합 한국어 Package를 선택한다.
+- 통합 Package가 12/48/16/10/75/391 Count를 검증한다.
+- Private Source가 없거나 Pin이 다르면 Fail Closed한다.
+- Public·Release Profile은 SRD Package만 선택한다.
+- 공개 Artifact에 Private Rule Content·Source Metadata가 없다.
 - 권한 없는 Rule Module의 제목·Count·Snippet이 없다.
