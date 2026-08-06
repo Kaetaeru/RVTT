@@ -78,8 +78,7 @@ local function attackProfiles(allDomains: any, actorId: string): { string }
 	local attacks: any = actor.attacks
 	local characterDomain = allDomains.character
 	local characters = type(characterDomain) == "table" and characterDomain.characters or nil
-	local character = type(characters) == "table"
-		and characters[actor.sourceCharacterId or actorId]
+	local character = type(characters) == "table" and characters[actor.sourceCharacterId or actorId]
 		or nil
 	if type(character) == "table" then
 		attacks = character.attacks
