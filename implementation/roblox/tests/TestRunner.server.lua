@@ -116,6 +116,21 @@ local specs: { Spec } = {
 		name = "Slice04Encounter.spec",
 		runner = require(script.Parent.Integration["Slice04Encounter.spec"]) :: any,
 	},
+	{
+		id = "slice05-character",
+		name = "Slice05Character.spec",
+		runner = require(script.Parent.Integration["Slice05Character.spec"]) :: any,
+	},
+	{
+		id = "slice06-inventory",
+		name = "Slice06Inventory.spec",
+		runner = require(script.Parent.Integration["Slice06Inventory.spec"]) :: any,
+	},
+	{
+		id = "slice07-time-progression",
+		name = "Slice07TimeProgression.spec",
+		runner = require(script.Parent.Integration["Slice07TimeProgression.spec"]) :: any,
+	},
 }
 
 for _, spec in specs do
