@@ -2,9 +2,16 @@
 
 local DataStoreService = game:GetService("DataStoreService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local DeepCopy = require(ReplicatedStorage.RVTT.Shared.Core.DeepCopy)
 local Result = require(ReplicatedStorage.RVTT.Shared.Core.Result)
 local ValueGuard = require(ReplicatedStorage.RVTT.Shared.Core.ValueGuard)
 local PersistenceDocumentValidator = require(script.Parent.PersistenceDocumentValidator)
+
+export type FenceGuard = {
+	ownerId: string,
+	token: string,
+	fencingToken: number,
+}
 
 local ProfileStore = {}
 ProfileStore.__index = ProfileStore
@@ -20,8 +27,47 @@ local function revisionOf(value: any): number?
 	return revision
 end
 
+local function validText(value: any): boolean
+	return type(value) == "string" and #value > 0
+end
+
+local function asFence(value: any): FenceGuard?
+	if type(value) ~= "table" then
+		return nil
+	end
+	if
+		not validText(value.ownerId)
+		or not validText(value.token)
+		or not ValueGuard.isFiniteNumber(value.fencingToken)
+		or value.fencingToken < 1
+		or value.fencingToken % 1 ~= 0
+	then
+		return nil
+	end
+	return value :: FenceGuard
+end
+
+local function storedFence(value: any): (FenceGuard?, boolean)
+	if type(value) ~= "table" or value.persistenceFence == nil then
+		return nil, false
+	end
+	local fence = asFence(value.persistenceFence)
+	return fence, fence == nil
+end
+
 local function failureDetails(reason: string): { [string]: unknown }
 	return { reason = reason }
+end
+
+local function fenceDetails(
+	candidate: FenceGuard?,
+	current: FenceGuard?
+): { [string]: unknown }
+	return {
+		candidateFencingToken = if candidate ~= nil then candidate.fencingToken else nil,
+		currentFencingToken = if current ~= nil then current.fencingToken else nil,
+		currentOwnerId = if current ~= nil then current.ownerId else nil,
+	}
 end
 
 function ProfileStore.new(
@@ -64,7 +110,24 @@ function ProfileStore.load(self: any, key: string): any
 		return Result.ok(nil)
 	end
 
-	local valid, validationFailure = PersistenceDocumentValidator.validate(value)
+	local _, invalidFence = storedFence(value)
+	if invalidFence then
+		local reason = "stored persistence fence is invalid"
+		self.diagnostics:record("error", "DATASTORE_FENCE_INVALID", {
+			key = key,
+			reason = reason,
+		})
+		return Result.err(
+			"PERSISTENCE_INVALID",
+			"error.persistence.invalid",
+			false,
+			failureDetails(reason)
+		)
+	end
+
+	local document = DeepCopy(value)
+	document.persistenceFence = nil
+	local valid, validationFailure = PersistenceDocumentValidator.validate(document)
 	if not valid then
 		local reason = validationFailure or "stored document is invalid"
 		self.diagnostics:record("error", "DATASTORE_DOCUMENT_INVALID", {
@@ -78,13 +141,26 @@ function ProfileStore.load(self: any, key: string): any
 			failureDetails(reason)
 		)
 	end
-	return self.migrations:apply(value)
+	return self.migrations:apply(document)
 end
 
-function ProfileStore.save(self: any, key: string, value: any): any
+function ProfileStore.save(
+	self: any,
+	key: string,
+	value: any,
+	fenceGuard: FenceGuard?
+): any
 	local candidateRevision = revisionOf(value)
 	if candidateRevision == nil then
 		return Result.err("PERSISTENCE_INVALID", "error.persistence.invalid", false)
+	end
+
+	local candidateFence: FenceGuard? = nil
+	if fenceGuard ~= nil then
+		candidateFence = asFence(fenceGuard)
+		if candidateFence == nil then
+			return Result.err("PERSISTENCE_INVALID", "error.persistence.invalid", false)
+		end
 	end
 
 	local valid, validationFailure = PersistenceDocumentValidator.validate(value)
@@ -103,29 +179,73 @@ function ProfileStore.save(self: any, key: string, value: any): any
 		)
 	end
 
+	local storedCandidate = DeepCopy(value)
+	if candidateFence ~= nil then
+		storedCandidate.persistenceFence = DeepCopy(candidateFence)
+	end
+
 	local conflict = false
+	local fenced = false
+	local invalidCurrentFence = false
+	local currentFenceForDetails: FenceGuard? = nil
 	local ok, updateFailure = pcall(function()
 		self.store:UpdateAsync(key, function(current: any): any
 			conflict = false
-			local currentRevision = revisionOf(current)
-			if currentRevision ~= nil then
-				local currentEpoch = current.authorityEpoch
-				local candidateEpoch = value.authorityEpoch
-				if currentRevision > candidateRevision then
-					conflict = true
-					return nil
+			fenced = false
+			invalidCurrentFence = false
+			currentFenceForDetails = nil
+
+			local currentFence, currentFenceInvalid = storedFence(current)
+			currentFenceForDetails = currentFence
+			if currentFenceInvalid then
+				invalidCurrentFence = true
+				return nil
+			end
+
+			local higherFence = false
+			if candidateFence ~= nil then
+				if currentFence ~= nil then
+					if
+						currentFence.fencingToken > candidateFence.fencingToken
+						or (
+							currentFence.fencingToken == candidateFence.fencingToken
+							and (
+								currentFence.ownerId ~= candidateFence.ownerId
+								or currentFence.token ~= candidateFence.token
+							)
+						)
+					then
+						fenced = true
+						return nil
+					end
+					higherFence = candidateFence.fencingToken > currentFence.fencingToken
 				end
-				if
-					currentRevision == candidateRevision
-					and currentEpoch ~= nil
-					and candidateEpoch ~= nil
-					and currentEpoch ~= candidateEpoch
-				then
-					conflict = true
-					return nil
+			elseif currentFence ~= nil then
+				fenced = true
+				return nil
+			end
+
+			if not higherFence then
+				local currentRevision = revisionOf(current)
+				if currentRevision ~= nil then
+					local currentEpoch = current.authorityEpoch
+					local candidateEpoch = value.authorityEpoch
+					if currentRevision > candidateRevision then
+						conflict = true
+						return nil
+					end
+					if
+						currentRevision == candidateRevision
+						and currentEpoch ~= nil
+						and candidateEpoch ~= nil
+						and currentEpoch ~= candidateEpoch
+					then
+						conflict = true
+						return nil
+					end
 				end
 			end
-			return value
+			return storedCandidate
 		end)
 	end)
 	if not ok then
@@ -140,6 +260,37 @@ function ProfileStore.save(self: any, key: string, value: any): any
 			"error.persistence.failed",
 			true,
 			failureDetails(reason)
+		)
+	end
+	if invalidCurrentFence then
+		local reason = "stored persistence fence is invalid"
+		self.diagnostics:record("error", "DATASTORE_FENCE_INVALID", {
+			key = key,
+			reason = reason,
+		})
+		return Result.err(
+			"PERSISTENCE_INVALID",
+			"error.persistence.invalid",
+			false,
+			failureDetails(reason)
+		)
+	end
+	if fenced then
+		self.diagnostics:record("warning", "DATASTORE_FENCED_WRITE_REJECTED", {
+			key = key,
+			revision = candidateRevision,
+			candidateFencingToken = if candidateFence ~= nil
+				then candidateFence.fencingToken
+				else nil,
+			currentFencingToken = if currentFenceForDetails ~= nil
+				then currentFenceForDetails.fencingToken
+				else nil,
+		})
+		return Result.err(
+			"PERSISTENCE_FENCED",
+			"error.persistence.fenced",
+			false,
+			fenceDetails(candidateFence, currentFenceForDetails)
 		)
 	end
 	if conflict then
