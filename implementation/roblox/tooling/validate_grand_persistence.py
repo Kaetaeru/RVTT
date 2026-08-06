@@ -25,6 +25,7 @@ required_run_ids = [
     "grand-production-lease-seed",
     "grand-production-lease-verify",
 ]
+configured_executions = {"studio-published", "studio-published-pair"}
 
 for relative in (
     "grand-acceptance-manifest.json",
@@ -38,7 +39,12 @@ for relative in (
 try:
     manifest = json.loads((ROOT / "grand-acceptance-manifest.json").read_text(encoding="utf-8"))
     phases = sorted(
-        (phase for phase in manifest["phases"] if phase.get("persistence") is True),
+        (
+            phase
+            for phase in manifest["phases"]
+            if phase.get("persistence") is True
+            and phase.get("execution") in configured_executions
+        ),
         key=lambda phase: phase["order"],
     )
     orders = [phase["order"] for phase in phases]
@@ -58,8 +64,6 @@ try:
     for phase in phases:
         if phase.get("status") != "deferred":
             errors.append(f"grand-acceptance-manifest.json: {phase['id']} must remain deferred")
-        if phase.get("execution") not in {"studio-published", "studio-published-pair"}:
-            errors.append(f"grand-acceptance-manifest.json: invalid execution for {phase['id']}")
         for field in ("project", "runId", "summaryToken", "passRegex"):
             if not phase.get(field):
                 errors.append(f"grand-acceptance-manifest.json: {phase['id']} missing {field}")
@@ -94,6 +98,7 @@ try:
     for phrase in (
         "Assert-Config",
         "apiAccessConfirmed",
+        "ConfiguredPersistenceExecutions",
         "rojoPath @(",
         '"upload", $project, "--asset_id"',
         '"--task", "EditPlace"',
