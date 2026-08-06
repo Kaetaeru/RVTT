@@ -1,6 +1,6 @@
 # Slice 01 World Interaction Batch Acceptance
 
-This test-only client validates the production World Token runtime against the server-authoritative Scene, Movement, Projection, and Persistence path in one Studio session.
+This test-only client validates the production World Token Command and Projection path without connecting to Studio DataStore.
 
 ## Batch scope
 
@@ -12,35 +12,90 @@ This test-only client validates the production World Token runtime against the s
 - destination marker
 - `movement.commit` command Receipt and revision diagnostics
 - Projection-driven 3D movement
-- camera Frame, Pan, and Zoom
+- middle-button Camera Pan
+- WASD Camera Pan while WASD Character movement mode is inactive
+- mouse-wheel Zoom
+- `F` or Token Frame
 - Roblox avatar suppression
-- loaded Character, Scene, Position, and Token restore
 - structured Final Batch Summary
 
-## One-command launch
+## Persistence boundary
 
-Paste this single command into Windows PowerShell or Windows Terminal from any directory:
+`slice01-acceptance.project.json` sets `EnableStudioPersistence=false`.
+
+This regular interaction Build does not require:
+
+- Experience publishing
+- DataStore API access
+- waiting for a save
+- Stop and Play restore verification
+
+Load, Save, Restore, Reconnect, Migration, and recovery are validated later in one dedicated Persistence Batch using `persistence-acceptance.project.json`.
+
+## Windows PowerShell build
+
+Every user-facing Build command must be supplied as a complete block in this form. Replace the build name and expected Head with the values supplied for the current gate.
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-Expression (Invoke-RestMethod 'https://raw.githubusercontent.com/Kaetaeru/RVTT/planning/rvtt-remake/implementation/roblox/tooling/run-studio-acceptance-batch.ps1')"
+$ErrorActionPreference = "Stop"
+
+Get-Process RobloxStudioBeta -ErrorAction SilentlyContinue |
+    Stop-Process -Force
+
+$repo = Join-Path $HOME "RVTT"
+$roblox = Join-Path $repo "implementation\roblox"
+$output = Join-Path $env:TEMP "RVTT-<BUILD-NAME>-<EXPECTED-HEAD>.rbxlx"
+
+Set-Location $repo
+
+git fetch origin
+git switch planning/rvtt-remake
+git pull --ff-only origin planning/rvtt-remake
+
+$head = (git rev-parse --short HEAD).Trim()
+Write-Host "현재 Head: $head"
+
+if ($head -ne "<EXPECTED-HEAD>") {
+    throw "예상 Head는 <EXPECTED-HEAD>이지만 현재 Head는 $head입니다."
+}
+
+Set-Location $roblox
+
+Remove-Item $output -Force -ErrorAction SilentlyContinue
+rojo build slice01-acceptance.project.json --output $output
+
+Start-Process $output
 ```
 
-No arguments are required. The bootstrap reads the machine-readable `acceptance-batch.json`, downloads the verified source into an isolated cache, installs the pinned Rojo build when necessary, validates, builds, closes any existing Studio process, and opens the generated Place.
-
-The bootstrap does not require the current directory to be a repository and does not modify a local Dirty Worktree. Git is not required. Python is optional because the bootstrap contains a fallback validator. After the first successful online run, the same verified Head can be rebuilt from the Offline cache.
-
-Unavoidable prerequisites are Windows and Roblox Studio. The first uncached run also requires internet access.
+Do not replace this block with a one-line bootstrap, remote `Invoke-Expression`, nested `powershell -Command`, or a parameter-only Runner command.
 
 ## Interaction
 
-1. Run the one-command bootstrap above.
-2. Publish the generated Place to the designated persistence test Place once.
-3. Play. Session and Scene preparation run automatically.
-4. Click the visible 3D Token.
-5. Click a different point on the board.
-6. Optionally verify middle-button drag Pan, mouse-wheel Zoom, and `F` Frame.
-7. Wait for the final `[RVTT Batch Summary]` line.
-8. On a first clean run, wait for the persistence save, Stop, and Play once more so `state-restore` can pass.
+1. Run the complete PowerShell Build block supplied for the current Head.
+2. Play the generated local Place. Publishing is not required.
+3. Hold W, A, S, or D and confirm camera-relative movement.
+4. Hold the middle mouse button and drag to confirm Pan.
+5. Use the mouse wheel to confirm Zoom.
+6. Press `F` or use Token Frame to frame the selected Token or all Tokens.
+7. Click the visible 3D Token.
+8. Click a different point on the board.
+9. Check the final `[RVTT Batch Summary]` line.
+
+## WASD ownership boundary
+
+World Camera consumes WASD only while WASD Character movement mode is inactive. The movement-mode owner must call:
+
+```lua
+worldTokens.Camera:setMovementModeActive(true)
+```
+
+when Character movement starts, and:
+
+```lua
+worldTokens.Camera:setMovementModeActive(false)
+```
+
+when it ends. TextBox focus also releases WASD from Camera control.
 
 ## Picking boundary
 
@@ -60,6 +115,8 @@ The client selects an Actor and proposes a destination. It does not pivot the To
 
 Normal success reporting requires only the final summary line and its checks. On failure, report the final summary and the first related structured line from one of these prefixes:
 
+- `[RVTT WorldCamera Input]`
+- `[RVTT Batch Camera]`
 - `[RVTT WorldToken Input]`
 - `[RVTT WorldToken Command]`
 - `[RVTT WorldToken Projection]`
