@@ -60,6 +60,13 @@ function Math.resolvePick(rayActorId: string?, screenActorId: string?): (string?
 	return nil, "none"
 end
 
+function Math.keyboardPanAxis(w: boolean, a: boolean, s: boolean, d: boolean): Vector2
+	local x = (if d then 1 else 0) - (if a then 1 else 0)
+	local y = (if w then 1 else 0) - (if s then 1 else 0)
+	local axis = Vector2.new(x, y)
+	return if axis.Magnitude > 1 then axis.Unit else axis
+end
+
 function Math.boundsCorners(boundsCFrame: CFrame, boundsSize: Vector3): { Vector3 }
 	local half = boundsSize * 0.5
 	local corners = {}
