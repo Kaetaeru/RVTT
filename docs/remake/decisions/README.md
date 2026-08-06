@@ -8,6 +8,19 @@
 
 ## 현재 UI·직접 플레이 권위 결정
 
+### [`ADR-0090 Character Console Action Matrix와 Modular DM Tool Window`](ADR-0090-multi-row-action-matrices-and-modular-dm-tool-windows.md)
+
+- 공격·행동과 주문은 별도 Action Matrix로 표시한다.
+- 사용자는 Matrix 높이를 1–4행으로 설정한다.
+- 작은 Action Icon은 행을 채운 뒤 오른쪽으로 이어진다.
+- Hover·Keyboard Focus 시 Cursor 위에 행동 설명 Panel을 표시한다.
+- 핵심 자원은 Character Console 상단 전체 폭의 Resource Rail에 둔다.
+- 기억·준비 가능 주문 수와 실제 주문 슬롯을 분리한다.
+- ADR-0089의 Top Strip·Left Inspector는 기본 Layout이며 고정 단일 Panel 구조가 아니다.
+- ADR-0045에 따라 DM Tool은 독립 Module Window로 여러 개를 동시에 열고 Move·Resize·Dock·Close한다.
+
+ADR-0090은 ADR-0089의 Character Console·DM Workspace 표현을 보강하고 ADR-0045의 Dockable·Floating Workspace 계약을 재확인한다.
+
 ### [`ADR-0089 Observer 우선 세션 진입과 전술 콘솔 중심 UI 표면`](ADR-0089-observer-first-session-and-ui-surface-realignment.md)
 
 - 미배정 참가자는 Observer로 진입한다.
@@ -18,10 +31,9 @@
 - Context Action Table은 작고 세로 한 열이다.
 - 물리 주사위 뒤 상단 투명 Result Notice를 표시한다.
 - 공식형 Character Sheet와 VTT 관리형 Character Sheet를 모두 제공한다.
-- DM Inspector는 왼쪽, 주요 진행·편집 도구는 상단, Scene Editor Catalog는 하단이다.
 - DM Quick Action은 큰 창이 아니라 문맥 Popover다.
 
-ADR-0089는 ADR-0033·0039·0040·0041·0044·0045·0047·0049·0080·0088의 권위·도메인 구조는 유지하면서 충돌하는 화면 배치와 Session Entry 표현을 대체·구체화한다.
+ADR-0090이 Character Console 내부와 DM Window Modularity를 추가로 구체화한다.
 
 ### [`ADR-0088 직접 플레이 포인터 문법과 피드백 연속성`](ADR-0088-direct-play-pointer-grammar-and-feedback.md)
 
@@ -31,8 +43,6 @@ ADR-0089는 ADR-0033·0039·0040·0041·0044·0045·0047·0049·0080·0088의 �
 - Q: 최상위 문맥 하나만 닫기·취소
 - ESC: Gameplay 의미 없음
 - 비활성 행동: 비활성 색상과 Hover·Focus 불가능 사유
-
-ADR-0089가 Context Action Table의 작은 세로 표현과 Player Actor 기본 의미 선택을 추가한다.
 
 ## 기본 규칙
 
@@ -48,7 +58,7 @@ ADR-0089가 Context Action Table의 작은 세로 표현과 Player Actor 기본 
 ```text
 CURRENT-WORK-ORDER
 → Quick Flow와 User Guide
-→ ADR-0089·ADR-0088
+→ ADR-0090·ADR-0089·ADR-0088
 → 구현 직전 UI·UX 명세
 → 관련 Runtime·Domain 문서
 → Implementation Spec
@@ -56,8 +66,9 @@ CURRENT-WORK-ORDER
 
 - 현재 작업 순서: [`../CURRENT-WORK-ORDER.md`](../CURRENT-WORK-ORDER.md)
 - Quick Flow: [`../user-guides/QUICK-FLOW.md`](../user-guides/QUICK-FLOW.md)
-- UI·HTML 충돌 감사: [`../audits/ui-html-authority-conflict-and-realignment-audit.md`](../audits/ui-html-authority-conflict-and-realignment-audit.md)
 - 구현 직전 UI·UX: [`../ui/shared/implementation-ready-ui-ux-and-settings-spec.md`](../ui/shared/implementation-ready-ui-ux-and-settings-spec.md)
+- Character Console 상세: [`../ui/combat-hud/character-console-action-matrix-and-resource-rail.md`](../ui/combat-hud/character-console-action-matrix-and-resource-rail.md)
+- DM Window Module 상세: [`../ui/dm-workspace/modular-dm-tool-window-contract.md`](../ui/dm-workspace/modular-dm-tool-window-contract.md)
 - Architecture: [`../architecture/README.md`](../architecture/README.md)
 - Systems: [`../systems/README.md`](../systems/README.md)
 - Implementation Specs: [`../specs/README.md`](../specs/README.md)
@@ -65,6 +76,7 @@ CURRENT-WORK-ORDER
 ## 권위와 수명주기
 
 - 확정 ADR은 관련 Product·Architecture·System·UI보다 높은 결정 근거다.
-- 기존 문서와 ADR-0089가 충돌하면 ADR-0089를 따른다.
-- 오래된 문서는 삭제하지 않고 충돌 감사와 Git history로 결정 변화를 보존한다.
+- Character Console·DM Workspace 세부가 충돌하면 ADR-0090을 따른다.
+- Session Entry·Ownership·전체 UI Surface가 충돌하면 ADR-0089를 따른다.
+- 오래된 문서는 삭제하지 않고 Git history로 결정 변화를 보존한다.
 - 문서 완료를 Runtime PASS로 해석하지 않는다.
