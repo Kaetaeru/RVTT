@@ -6,14 +6,16 @@
 
 ## 현재 UI·Content 권위 결정
 
-### [`ADR-0091 개발 에셋 레지스트리·상호작용형 2024 시트·Dice Slot Reveal·Core Rules Reader`](ADR-0091-asset-registry-interactive-sheet-dice-and-core-rules.md)
+### [`ADR-0091 개발 에셋 레지스트리·상호작용형 2024 시트·Dice Slot Reveal·프로필 분리형 Core Rules Reader`](ADR-0091-asset-registry-interactive-sheet-dice-and-core-rules.md)
 
 - Token·Prop·Tile·Volume·UI Asset의 Authoring Source, Server Registry와 Client-safe Runtime 위치를 고정한다.
 - Official Sheet는 D&D 2024 2-page Portrait 비율을 따르고 Roll·Equip·Unequip·Prepare·Use를 실행한다.
 - Dice Notice는 Natural Slot Spin에서 Formula·Adjudication으로 단계적으로 확장한다.
 - Advantage·Disadvantage, Natural 1·20과 Reduced Motion을 정의한다.
 - Journal에 Module·Chunk 기반 Core Rules Collection을 제공한다.
-- Final UI Gap Audit로 Invite, Onboarding, Missing Asset, License, Conflict 상태를 폐쇄한다.
+- 개발·테스트 기본은 비공개 한국어 통합판 12 Class·48 Subclass·16 Background·10 Species·75 Feat·391 Spell이다.
+- Public·Release 기본은 `rvtt.core.rules` SRD 5.2.1 범위이며 Private Rule Content 누출을 Build Gate로 차단한다.
+- Final UI Gap Audit로 Invite, Onboarding, Missing Asset, Rule Profile, License, Conflict 상태를 폐쇄한다.
 
 ### [`ADR-0090 Character Console 다중 행 Action Matrix와 Modular DM Tool Window`](ADR-0090-multi-row-action-matrices-and-modular-dm-tool-windows.md)
 
