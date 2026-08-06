@@ -26,7 +26,7 @@ return function(harness: any)
 		self.executeCalls += 1
 		return Result.ok({ commandId = envelope.commandId })
 	end
-	local limiter = {}
+	local limiter: any = {}
 	function limiter:allow(_key: string): boolean
 		return true
 	end
@@ -41,7 +41,7 @@ return function(harness: any)
 
 	local guardResult: any = Result.err("LEASE_LOST", "error.persistence.lease_lost", false)
 	local guardCalls = 0
-	local router = CommandRouter.new(
+	local router: any = CommandRouter.new(
 		runtime,
 		remotes,
 		limiter,
