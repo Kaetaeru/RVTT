@@ -29,6 +29,10 @@ local function clamp(value: number, minimum: number, maximum: number): number
 	return math.max(minimum, math.min(maximum, value))
 end
 
+local function keyboardPanAxis(negative: boolean, positive: boolean): number
+	return (if positive then 1 else 0) - (if negative then 1 else 0)
+end
+
 local function isPointerOverVisibleUi(): boolean
 	local playerGui = Players.LocalPlayer:FindFirstChildOfClass("PlayerGui")
 	if playerGui == nil then
@@ -38,18 +42,31 @@ local function isPointerOverVisibleUi(): boolean
 	local function contains(position: Vector2, ignoreInset: boolean): boolean
 		for _, guiObject in playerGui:GetGuiObjectsAtPosition(position.X, position.Y) do
 			local screenGui = guiObject:FindFirstAncestorOfClass("ScreenGui")
-			if screenGui ~= nil and screenGui.Enabled and screenGui.IgnoreGuiInset == ignoreInset then
-				if guiObject:IsA("GuiButton")
+			if
+				screenGui ~= nil
+				and screenGui.Enabled
+				and screenGui.IgnoreGuiInset == ignoreInset
+			then
+				if
+					guiObject:IsA("GuiButton")
 					or guiObject:IsA("TextBox")
 					or guiObject:IsA("ScrollingFrame")
 					or guiObject.BackgroundTransparency < 1
 				then
 					return true
 				end
-				if guiObject:IsA("TextLabel") and guiObject.Text ~= "" and guiObject.TextTransparency < 1 then
+				if
+					guiObject:IsA("TextLabel")
+					and guiObject.Text ~= ""
+					and guiObject.TextTransparency < 1
+				then
 					return true
 				end
-				if guiObject:IsA("ImageLabel") and guiObject.Image ~= "" and guiObject.ImageTransparency < 1 then
+				if
+					guiObject:IsA("ImageLabel")
+					and guiObject.Image ~= ""
+					and guiObject.ImageTransparency < 1
+				then
 					return true
 				end
 			end
@@ -82,6 +99,7 @@ function Controller.new(renderer: any, acceptanceMode: boolean?): any
 		lastMousePosition = nil,
 		keyState = { W = false, A = false, S = false, D = false },
 		keyboardPanSuppressors = {},
+		movementModeActive = false,
 		connections = {},
 		started = false,
 		FrameRequested = Signal.new(),
@@ -93,9 +111,8 @@ function Controller:_cameraPosition(): Vector3
 	local finalYaw = BASE_YAW + self.currentYawOffset
 	local horizontalDistance = math.cos(self.currentPitch) * self.currentDistance
 	local verticalDistance = math.sin(self.currentPitch) * self.currentDistance
-	local offset = CFrame.Angles(0, finalYaw, 0):VectorToWorldSpace(
-		Vector3.new(0, verticalDistance, -horizontalDistance)
-	)
+	local offset = CFrame.Angles(0, finalYaw, 0)
+		:VectorToWorldSpace(Vector3.new(0, verticalDistance, -horizontalDistance))
 	return self.currentPivot + offset
 end
 
@@ -131,23 +148,17 @@ function Controller:_flatAxes(): (Vector3, Vector3)
 end
 
 function Controller:_updateKeyboard(deltaTime: number)
-	if next(self.keyboardPanSuppressors) ~= nil then
+	if
+		self.movementModeActive
+		or next(self.keyboardPanSuppressors) ~= nil
+		or UserInputService:GetFocusedTextBox() ~= nil
+	then
 		return
 	end
 	local right, forward = self:_flatAxes()
-	local move = Vector3.zero
-	if self.keyState.W then
-		move += forward
-	end
-	if self.keyState.S then
-		move -= forward
-	end
-	if self.keyState.A then
-		move += right
-	end
-	if self.keyState.D then
-		move -= right
-	end
+	local horizontal = keyboardPanAxis(self.keyState.D, self.keyState.A)
+	local vertical = keyboardPanAxis(self.keyState.S, self.keyState.W)
+	local move = right * horizontal + forward * vertical
 	if move.Magnitude <= 0 then
 		return
 	end
@@ -178,7 +189,8 @@ function Controller:requestFrame(source: string?, processed: boolean?): boolean
 	local previous = self.targetPivot
 	self.targetPivot = center
 	if size ~= nil then
-		self.targetDistance = clamp(math.max(size.X, size.Y, size.Z) * 4, MIN_DISTANCE, MAX_DISTANCE)
+		self.targetDistance =
+			clamp(math.max(size.X, size.Y, size.Z) * 4, MIN_DISTANCE, MAX_DISTANCE)
 	end
 	local changed = (previous - center).Magnitude > 0.001
 	self.FrameRequested:Fire(source or "api", center)
@@ -188,6 +200,16 @@ end
 
 function Controller:setFrameResolver(_: any)
 	-- Kept for compatibility. Framing is resolved from the selected renderer token.
+end
+
+function Controller:setMovementModeActive(active: boolean)
+	self.movementModeActive = active == true
+	if self.movementModeActive then
+		self.keyState.W = false
+		self.keyState.A = false
+		self.keyState.S = false
+		self.keyState.D = false
+	end
 end
 
 function Controller:setKeyboardPanSuppressed(ownerKey: string, suppressed: boolean): boolean
@@ -216,12 +238,12 @@ function Controller:getTargetPivot(): Vector3
 end
 
 function Controller:_onInputBegan(input: InputObject, processed: boolean)
-	if processed then
+	if processed or UserInputService:GetFocusedTextBox() ~= nil then
 		return
 	end
 	if input.UserInputType == Enum.UserInputType.MouseButton3 then
 		if isPointerOverVisibleUi() then
-			self.InputResolved:Fire("orbit", "mouse-middle", false, false, false)
+			self.InputResolved:Fire("orbit", "mouse-middle-screen-delta", false, false, false)
 			return
 		end
 		self.middleMouseDown = true
@@ -229,7 +251,10 @@ function Controller:_onInputBegan(input: InputObject, processed: boolean)
 		return
 	end
 	if input.KeyCode == Enum.KeyCode.Space or input.KeyCode == Enum.KeyCode.F then
-		self:requestFrame(if input.KeyCode == Enum.KeyCode.F then "keyboard-f" else "keyboard-space", false)
+		self:requestFrame(
+			if input.KeyCode == Enum.KeyCode.F then "keyboard-f" else "keyboard-space",
+			false
+		)
 		return
 	end
 	if input.KeyCode == Enum.KeyCode.W then
@@ -275,7 +300,8 @@ function Controller:_onInputChanged(input: InputObject, processed: boolean)
 		return
 	end
 	local previous = self.targetDistance
-	self.targetDistance = clamp(self.targetDistance - scroll * ZOOM_STEP, MIN_DISTANCE, MAX_DISTANCE)
+	self.targetDistance =
+		clamp(self.targetDistance - scroll * ZOOM_STEP, MIN_DISTANCE, MAX_DISTANCE)
 	self.InputResolved:Fire("zoom", "mouse-wheel", true, previous ~= self.targetDistance, false)
 end
 
@@ -286,12 +312,9 @@ function Controller:_render(deltaTime: number)
 		self.lastMousePosition = mousePosition
 		if delta.Magnitude > 0.01 then
 			self.targetYawOffset -= delta.X * ROTATE_SENSITIVITY
-			self.targetPitch = clamp(
-				self.targetPitch + delta.Y * ROTATE_SENSITIVITY,
-				MIN_PITCH,
-				MAX_PITCH
-			)
-			self.InputResolved:Fire("orbit", "mouse-middle", true, true, false)
+			self.targetPitch =
+				clamp(self.targetPitch + delta.Y * ROTATE_SENSITIVITY, MIN_PITCH, MAX_PITCH)
+			self.InputResolved:Fire("orbit", "mouse-middle-screen-delta", true, true, false)
 		end
 	end
 
@@ -311,18 +334,30 @@ function Controller:start()
 	self.started = true
 	self.camera = Workspace.CurrentCamera
 	self:_updateCamera()
-	table.insert(self.connections, UserInputService.InputBegan:Connect(function(input, processed)
-		self:_onInputBegan(input, processed)
-	end))
-	table.insert(self.connections, UserInputService.InputEnded:Connect(function(input)
-		self:_onInputEnded(input)
-	end))
-	table.insert(self.connections, UserInputService.InputChanged:Connect(function(input, processed)
-		self:_onInputChanged(input, processed)
-	end))
-	table.insert(self.connections, RunService.RenderStepped:Connect(function(deltaTime)
-		self:_render(deltaTime)
-	end))
+	table.insert(
+		self.connections,
+		UserInputService.InputBegan:Connect(function(input, processed)
+			self:_onInputBegan(input, processed)
+		end)
+	)
+	table.insert(
+		self.connections,
+		UserInputService.InputEnded:Connect(function(input)
+			self:_onInputEnded(input)
+		end)
+	)
+	table.insert(
+		self.connections,
+		UserInputService.InputChanged:Connect(function(input, processed)
+			self:_onInputChanged(input, processed)
+		end)
+	)
+	table.insert(
+		self.connections,
+		RunService.RenderStepped:Connect(function(deltaTime)
+			self:_render(deltaTime)
+		end)
+	)
 end
 
 function Controller:destroy()
