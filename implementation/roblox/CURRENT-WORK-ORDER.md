@@ -1,8 +1,10 @@
 # RVTT Roblox Implementation 현재 작업 순서
 
-- 상태: `IMPLEMENTED_STUDIO_BASELINE_VERIFIED`
+- 상태: `GRAND_ACCEPTANCE_FOUNDATION_IMPLEMENTED`
 - 문서 종류: Production Implementation Work Order
 - 최종 갱신일: 2026-08-06
+- Grand Campaign: [`GRAND-ACCEPTANCE-CAMPAIGN.md`](GRAND-ACCEPTANCE-CAMPAIGN.md)
+- Grand Manifest: [`grand-acceptance-manifest.json`](grand-acceptance-manifest.json)
 - 실행 테스트 규칙: [`EXECUTION-TEST-RULES.md`](EXECUTION-TEST-RULES.md)
 - 구현 상태: [`IMPLEMENTATION-STATUS.md`](IMPLEMENTATION-STATUS.md)
 
@@ -24,161 +26,117 @@ Roblox Studio Runtime Baseline
 Slice 01 Token Pick·Move·Projection
 → VERIFIED IN STUDIO
 
-Middle-button Pointer Sampling
+WASD·Middle-button·Frame Camera Correction
 → IMPLEMENTED · STUDIO PENDING
 
-WASD Camera Pan
-→ IMPLEMENTED · STUDIO PENDING
-
-Regular Slice 01 DataStore
-→ DISABLED
-
-Dedicated Persistence Batch
-→ DEFERRED
+Grand Acceptance Manifest·Runner·Report
+→ FOUNDATION IMPLEMENTED
 
 현재 작업
-→ Slice 01 In-memory Camera Input Acceptance
+→ Grand Campaign Phase Harness 확장
 ```
 
-## 2. 실행 테스트 원칙
+## 2. 테스트 운영 방식
 
-### 일반 기능 반복
+기능 하나나 버그 하나마다 Studio를 다시 실행하지 않는다.
 
 ```text
 관련 기능 구현
-→ 자동 회귀 테스트와 정적 CI
-→ 전체 Windows PowerShell Build 블록
-→ 생성된 로컬 Place Play
-→ 입력·Camera·Command·Projection 검증
+→ 자동 회귀 테스트·정적 CI
+→ 해당 기능을 Grand Phase에 등록
+→ 여러 Slice와 복구·보안 변경 축적
+→ Grand Acceptance Campaign 한 번 실행
+→ 전체 실패 수집
+→ Root Cause별 수정 Batch
+→ Grand Campaign 전체 재실행
 ```
 
-일반 기능 반복에서는 Experience 게시, DataStore 연결, 저장 대기, Stop·Play Restore를 수행하지 않는다.
+사용자는 하나의 완전한 Windows PowerShell 블록을 한 번 실행한다. Runner는 여러 Place를 Build하고 Studio Phase를 순서대로 열며, Studio를 닫으면 다음 Phase로 진행한다.
 
-### Persistence 일괄 Gate
+## 3. Grand Campaign 현재 실행 범위
 
-```text
-Persistence 관련 변경 축적
-→ persistence-acceptance.project.json Build
-→ 필요한 Experience 게시 1회
-→ Load·Save·Restore·Reconnect·Migration·Recovery 일괄 검증
-```
+| 순서 | 상태 | Phase | 완료 조건 |
+|---:|---|---|---|
+| 1 | READY | Static Build | 등록된 모든 Rojo Project Build 성공 |
+| 2 | READY | Unit·Integration Baseline | `[RVTT Tests] ... failed=0` 수집 |
+| 3 | READY | Slice 01 World Interaction | 실제 입력 기반 16개 Check PASS |
+| 4 | READY | Multi-client Authority | DM·Player·Observer Summary `failed=0` |
+| 5 | DEFERRED | Live DataStore Baseline | Grand Persistence Milestone에서 실행 |
+| 6 | DEFERRED | Persistence·Restart Recovery | Load·Save·Restart·Migration·Conflict 일괄 PASS |
+| 7 | PLANNED | Slices 02–12 | Slice별 Harness·Summary 연결 |
+| 8 | BLOCKED | Slices 13–15 Content | 공식 데이터·권리·Asset 승인 필요 |
+| 9 | PLANNED | UI·Accessibility | Human Review 결과 구조화 수집 |
+| 10 | PLANNED | Fault·Performance·Soak | 실제 Host와 측정 Evidence 필요 |
+| 11 | PLANNED | Slice 16 Full Session | 전체 Phase와 Release Gate PASS |
 
-일반 기능 Acceptance와 Persistence Acceptance의 Summary와 Evidence를 섞지 않는다.
+아직 구현되지 않은 Phase는 Grand Report에서 `blocked`로 표시한다. 현재 실행 가능한 Phase가 PASS하더라도 전체 Campaign 결과는 Blocked Phase가 남아 있으면 `PARTIAL`이다.
 
-## 3. 사용자 Build 명령 계약
-
-사용자에게 전달하는 Build 명령은 반드시 다음 요소를 모두 포함한 완전한 다중 행 Windows PowerShell 블록이다.
-
-```text
-$ErrorActionPreference
-RobloxStudioBeta 종료
-$HOME\RVTT 저장소 경로
-planning/rvtt-remake fetch·switch·pull
-정확한 7자리 Head 검사
-slice01-acceptance.project.json Rojo Build
-생성된 rbxlx Start-Process
-```
-
-한 줄 명령, 원격 `Invoke-Expression`, 중첩 `powershell -Command`, 인수형 Runner만 단독으로 제공하지 않는다.
-
-## 4. 현재 작업 순서
+## 4. 현재 구현 작업 순서
 
 | 순서 | 상태 | 작업 | 완료 조건 |
 |---:|---|---|---|
-| 1 | DONE | 전체 Contract→Script Transfer | 16개 Slice Domain·Manifest·Test Source 존재 |
-| 2 | DONE | Authority·Security 보강 | Command Authorization과 서버 계산 경계 |
-| 3 | DONE | 정적 Implementation CI baseline | Structure·Policy·Security Validator 성공 |
-| 4 | DONE | Luau·Rojo Toolchain baseline | Build·Type Check·Formatter·Linter 성공 |
-| 5 | DONE | Roblox Studio Runtime Baseline | Unit·Integration·Live DataStore·3-client 성공 |
-| 6 | DONE | Accent Theme·Avatar·Persistence baseline | Visual·Input·Save·Reload·Character Suppression 확인 |
-| 7 | DONE | Slice 01 Authority Acceptance | Join→Select→Ready→Scene→Move→Reconnect 상태 복구 |
-| 8 | DONE | Slice 01 3D World Token Baseline | Projection Renderer·Picking·Selection·Move 확인 |
-| 9 | IN_PROGRESS | Slice 01 In-memory Camera Input Acceptance | 실제 WASD·중클릭·F·휠로 Camera 변화 확인 |
-| 10 | BLOCKED | Slice 01 Production Build Acceptance Audit | Camera Input Gate 완료 후 Production 경계 판정 |
-| 11 | QUEUED | Slice 02 Rules·D20 Batch | 판정·Attack·Damage·Projection를 한 묶음으로 검증 |
-| 12 | QUEUED | Slices 03–16 Batch Acceptance | 관련 Slice를 Milestone 단위로 묶어 검증 |
-| 13 | DEFERRED | DataStore·Restart Recovery Batch | Load·Save·Restart·Lease·Migration·Conflict 일괄 검증 |
-| 14 | QUEUED | UI Visual Redesign Batch | 전체 화면을 공통 Token·Component 기준으로 개편 |
-| 15 | QUEUED | UI Accessibility QA | Keyboard·Focus·Contrast·User Test |
-| 16 | QUEUED | Performance·Fault·Soak | 측정 Evidence와 Release Gate |
+| 1 | DONE | Grand Manifest와 상태 모델 | READY·DEFERRED·PLANNED·BLOCKED Phase 등록 |
+| 2 | DONE | Windows Grand Runner Foundation | Build·Studio 순차 실행·Log 수집·통합 Report |
+| 3 | DONE | Runner Parser·SelfTest CI | Windows Parser와 Manifest SelfTest 성공 |
+| 4 | IN_PROGRESS | Slice 01 Grand Phase 안정화 | WASD·중클릭·F·휠 실제 입력 Summary 수집 |
+| 5 | QUEUED | Slice 02 Rules·D20 Harness | Check·Attack·Save·Damage·Healing·Disclosure |
+| 6 | QUEUED | Slice 03–12 Harness | 각 Slice 사용자·거부·복구 Scenario 연결 |
+| 7 | DEFERRED | Persistence Grand Phase | DataStore 변경 축적 후 한 번에 구현·실행 |
+| 8 | BLOCKED | Slices 13–15 Content Harness | Rights·Source Version·Distribution 승인 |
+| 9 | QUEUED | UI·Accessibility Evidence | Checklist 결과와 Screenshot Reference 수집 |
+| 10 | QUEUED | Fault·Performance Host | Drop·Duplicate·Restart·Soak·Capacity 측정 |
+| 11 | QUEUED | Slice 16 Release Campaign | Full Session·Migration·Runbook Release Gate |
 
-## 5. Camera 입력 계약
+## 5. Studio 실행 규칙
 
-### WASD
+- 자동 Gate가 실패한 상태에서는 Grand Campaign을 실행하지 않는다.
+- Grand Campaign은 첫 실패에서 중단하지 않는다.
+- 각 Studio Phase는 최종 Summary를 출력한 뒤 Studio를 닫는다.
+- Runner가 최근 Roblox Log에서 Phase Summary를 수집한다.
+- Summary 미발견은 PASS가 아니라 `incomplete`다.
+- 일반 기능과 Persistence는 같은 보고서 안에서도 별도 Phase로 기록한다.
+- Persistence는 `-IncludePersistence`가 명시된 Grand Milestone에서만 실행한다.
+- 사용자에게는 저장소 Update·정확한 Head 검사·Runner 실행이 포함된 전체 PowerShell 블록만 제공한다.
 
-WASD Character 이동 모드가 비활성화된 동안 World Camera가 W/A/S/D를 소비한다.
-
-- W: Camera-relative forward
-- A: Camera-relative left
-- S: Camera-relative backward
-- D: Camera-relative right
-- 대각선 속도 정규화
-- TextBox 포커스 시 Pass
-- 이동 모드 활성 시 `setMovementModeActive(true)`로 Camera WASD 해제
-- 이동 모드 종료 시 `setMovementModeActive(false)`로 Camera WASD 복구
-
-### Middle-button
-
-- 중클릭 시작 시 화면 Pointer 위치 저장
-- `RenderStepped`에서 절대 Pointer 위치 차이 계산
-- 이동량 0인 Frame은 무시
-- 한 Drag 세션의 최초 성공만 구조화 로그 출력
-
-### Frame·Zoom
-
-- `F` 또는 Token Frame으로 선택 Token 또는 전체 Token Frame
-- Mouse Wheel로 Zoom
-- 실제 Camera CFrame 변화 또는 Frame 적용 후에만 Acceptance PASS
-
-## 6. 현재 Acceptance Check
-
-일반 Slice 01 Batch는 16개 Check를 유지한다. 기존 Persistence Restore Check는 제거하고 실제 WASD Camera Pan Check로 교체했다.
+## 6. 현재 Studio Evidence
 
 ```text
-camera-frame
-camera-pan
-camera-wasd-pan
-camera-zoom
+Unit·Integration
+→ passed=173 failed=0
+
+Live DataStore
+→ passed=10 failed=0
+
+3-client MultiClient
+→ passed=56 failed=0 clients=3 staleRetries=3
+
+Slice 01 Token Pick·Move·Projection
+→ PASS
+
+Camera Zoom
+→ PASS
+
+Camera WASD·Middle-button·Frame
+→ 최신 Correction Studio 재검증 전
 ```
 
-Persistence는 이 Summary에 포함하지 않는다.
+기존 Camera 메서드 직접 호출로 생성된 Slice 01 `16/16 PASS`는 전체 사용자 흐름 Evidence로 사용하지 않는다.
 
-## 7. 자동 Gate 결과
-
-```text
-Structure·Security·Policy Validator
-→ PASS
-
-StyLua·Selene
-→ PASS
-
-Production·Test·Multi-client·Persistence·Slice01 Rojo Build
-→ PASS
-
-Production·Test Luau Type Analysis
-→ PASS
-
-Documentation·Windows Bootstrap Validation
-→ PASS
-```
-
-Persistence Place는 정적 Build만 확인했다. 실제 DataStore 연결은 수행하지 않았다.
-
-## 8. 다음 Gate
+## 7. 다음 Gate
 
 ```text
-WASD·중클릭·F·휠 자동 Gate
-→ PASSED
+Grand Runner 자동 Gate
+→ PASS 필요
 
-실제 In-memory Camera Acceptance
-→ PENDING
+현재 READY Phase를 Grand Campaign으로 실행
+→ 아직 요청하지 않음
 
-Dedicated Persistence Batch
-→ DEFERRED
+Slices 02–12 Harness 연결
+→ 구현 진행
 
-Slice 01 Production Build Acceptance Audit
-→ BLOCKED
+Persistence Grand Phase
+→ 충분한 변경 축적 전까지 DEFERRED
 
-Slice 02 Rules·D20 Batch
-→ QUEUED
+Full Grand Campaign
+→ 모든 Phase가 READY가 된 Milestone에서 한 번 실행
 ```
