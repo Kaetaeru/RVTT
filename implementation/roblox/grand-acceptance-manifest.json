@@ -1,0 +1,254 @@
+{
+  "schemaVersion": 1,
+  "campaignId": "rvtt-grand-acceptance",
+  "branch": "planning/rvtt-remake",
+  "runner": "tooling/run-grand-acceptance.ps1",
+  "report": {
+    "json": "RVTT-grand-acceptance-report.json",
+    "markdown": "RVTT-grand-acceptance-report.md"
+  },
+  "staticProjects": [
+    "default.project.json",
+    "test.project.json",
+    "multi-client.project.json",
+    "live-datastore.project.json",
+    "persistence-acceptance.project.json",
+    "slice01-acceptance.project.json"
+  ],
+  "phases": [
+    {
+      "order": 0,
+      "id": "static-build",
+      "name": "Static and Rojo build gate",
+      "status": "ready",
+      "execution": "automated",
+      "group": "core",
+      "persistence": false
+    },
+    {
+      "order": 10,
+      "id": "unit-integration-baseline",
+      "name": "Unit and integration baseline",
+      "status": "ready",
+      "execution": "studio-single-client",
+      "group": "core",
+      "project": "test.project.json",
+      "persistence": false,
+      "summaryToken": "[RVTT Tests]",
+      "passRegex": "\\[RVTT Tests\\].*failed=0"
+    },
+    {
+      "order": 20,
+      "id": "slice01-world-interaction",
+      "name": "Slice 01 world interaction",
+      "status": "ready",
+      "execution": "studio-single-client",
+      "group": "core",
+      "project": "slice01-acceptance.project.json",
+      "persistence": false,
+      "summaryToken": "[RVTT Batch Summary]",
+      "passRegex": "\\[RVTT Batch Summary\\].*batch=slice01-world-interaction.*result=PASS.*failed=0.*pending=0"
+    },
+    {
+      "order": 30,
+      "id": "multi-client-authority",
+      "name": "DM Player Observer authority and projection",
+      "status": "ready",
+      "execution": "studio-multi-client",
+      "group": "core",
+      "project": "multi-client.project.json",
+      "persistence": false,
+      "summaryToken": "[RVTT MultiClient]",
+      "passRegex": "\\[RVTT MultiClient\\].*failed=0"
+    },
+    {
+      "order": 40,
+      "id": "live-datastore-baseline",
+      "name": "Live DataStore baseline",
+      "status": "deferred",
+      "execution": "studio-published",
+      "group": "persistence",
+      "project": "live-datastore.project.json",
+      "persistence": true,
+      "summaryToken": "[RVTT Live DataStore]",
+      "passRegex": "\\[RVTT Live DataStore\\].*failed=0"
+    },
+    {
+      "order": 50,
+      "id": "persistence-restart-recovery",
+      "name": "Persistence restart migration and conflict recovery",
+      "status": "deferred",
+      "execution": "studio-published",
+      "group": "persistence",
+      "project": "persistence-acceptance.project.json",
+      "persistence": true,
+      "summaryToken": "[RVTT Persistence Batch Summary]",
+      "passRegex": "\\[RVTT Persistence Batch Summary\\].*result=PASS.*failed=0"
+    },
+    {
+      "order": 100,
+      "id": "slice02-core-rules",
+      "name": "Slice 02 core rules and D20",
+      "status": "planned",
+      "execution": "studio-campaign",
+      "group": "slice",
+      "persistence": false
+    },
+    {
+      "order": 110,
+      "id": "slice03-exploration",
+      "name": "Slice 03 exploration interaction and perception",
+      "status": "planned",
+      "execution": "studio-campaign",
+      "group": "slice",
+      "persistence": false
+    },
+    {
+      "order": 120,
+      "id": "slice04-encounter",
+      "name": "Slice 04 encounter core loop",
+      "status": "planned",
+      "execution": "studio-campaign",
+      "group": "slice",
+      "persistence": false
+    },
+    {
+      "order": 130,
+      "id": "slice05-character",
+      "name": "Slice 05 character creation and foundation",
+      "status": "planned",
+      "execution": "studio-campaign",
+      "group": "slice",
+      "persistence": false
+    },
+    {
+      "order": 140,
+      "id": "slice06-inventory",
+      "name": "Slice 06 inventory equipment and world items",
+      "status": "planned",
+      "execution": "studio-campaign",
+      "group": "slice",
+      "persistence": false
+    },
+    {
+      "order": 150,
+      "id": "slice07-time-progression",
+      "name": "Slice 07 rest time downtime and progression",
+      "status": "planned",
+      "execution": "studio-campaign",
+      "group": "slice",
+      "persistence": false
+    },
+    {
+      "order": 160,
+      "id": "slice08-ui-camera",
+      "name": "Slice 08 player UI camera and presentation",
+      "status": "planned",
+      "execution": "studio-campaign",
+      "group": "slice",
+      "persistence": false
+    },
+    {
+      "order": 170,
+      "id": "slice09-journal",
+      "name": "Slice 09 journal ping and knowledge navigation",
+      "status": "planned",
+      "execution": "studio-campaign",
+      "group": "slice",
+      "persistence": false
+    },
+    {
+      "order": 180,
+      "id": "slice10-scene-authoring",
+      "name": "Slice 10 scene authoring compile and publish",
+      "status": "planned",
+      "execution": "studio-campaign",
+      "group": "slice",
+      "persistence": false
+    },
+    {
+      "order": 190,
+      "id": "slice11-live-dm",
+      "name": "Slice 11 live DM workspace and recovery",
+      "status": "planned",
+      "execution": "studio-campaign",
+      "group": "slice",
+      "persistence": false
+    },
+    {
+      "order": 200,
+      "id": "slice12-content-platform",
+      "name": "Slice 12 content pack localization and trusted extension",
+      "status": "planned",
+      "execution": "studio-campaign",
+      "group": "slice",
+      "persistence": false
+    },
+    {
+      "order": 210,
+      "id": "slice13-character-content",
+      "name": "Slice 13 character options content",
+      "status": "blocked",
+      "execution": "rights-and-studio",
+      "group": "content",
+      "persistence": false,
+      "blocker": "Official data rights and distribution approval"
+    },
+    {
+      "order": 220,
+      "id": "slice14-spell-item-content",
+      "name": "Slice 14 spell equipment and rules content",
+      "status": "blocked",
+      "execution": "rights-and-studio",
+      "group": "content",
+      "persistence": false,
+      "blocker": "Official data rights and distribution approval"
+    },
+    {
+      "order": 230,
+      "id": "slice15-npc-monster-content",
+      "name": "Slice 15 NPC monster and campaign content",
+      "status": "blocked",
+      "execution": "rights-and-studio",
+      "group": "content",
+      "persistence": false,
+      "blocker": "Statblock data rights assets and production catalog"
+    },
+    {
+      "order": 240,
+      "id": "ui-visual-accessibility",
+      "name": "UI visual redesign and accessibility",
+      "status": "planned",
+      "execution": "studio-human-review",
+      "group": "quality",
+      "persistence": false
+    },
+    {
+      "order": 250,
+      "id": "fault-injection",
+      "name": "Network storage and restart fault injection",
+      "status": "planned",
+      "execution": "automated-and-studio",
+      "group": "quality",
+      "persistence": true
+    },
+    {
+      "order": 260,
+      "id": "performance-soak-capacity",
+      "name": "Performance soak and capacity",
+      "status": "planned",
+      "execution": "studio-soak",
+      "group": "quality",
+      "persistence": true
+    },
+    {
+      "order": 270,
+      "id": "slice16-full-session-release",
+      "name": "Slice 16 full session and release hardening",
+      "status": "planned",
+      "execution": "grand-campaign",
+      "group": "release",
+      "persistence": true
+    }
+  ]
+}
