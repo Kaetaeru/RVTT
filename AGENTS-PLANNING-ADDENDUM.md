@@ -20,6 +20,45 @@
 
 3. 문서 완료 전에 준비도를 다시 평가한다. 권위, 상태 전이, 실패, 저장, 재접속, 롤백과 비목표 중 하나라도 중대한 추측이 필요하면 `READY`로 표시하지 않는다.
 
+## Codex 감독형 검수
+
+기획, Slice 동기화, 구현명세와 테스트 계획을 실질적으로 변경하는 작업은 [`Codex 감독형 검수·테스트 정책`](docs/remake/product/codex-supervised-review-and-test-policy.md)을 따른다.
+
+역할:
+
+```text
+사용자
+→ 제품 결정·최종 수용
+
+ChatGPT Lead Reviewer
+→ Codex 명령 작성·권위 해석·Finding 분류·후속 지시
+
+Codex Reviewer
+→ 독립 검수·반례·Finding·재현·최소 수정안
+```
+
+필수 규칙:
+
+1. Codex 검수에는 정확한 PR·Target Commit SHA·검수 역할·권위 문서·비범위·출력 형식을 제공한다.
+2. Codex는 직접 PASS·Merge를 결정하지 않는다.
+3. Codex Finding은 `CONFIRMED`, `VALID_RISK`, `DESIGN_DECISION_REQUIRED`, `INTENTIONALLY_QUEUED`, `DUPLICATE`, `FALSE_POSITIVE`, `OUT_OF_SCOPE` 중 하나로 분류한다.
+4. `CONFIRMED` BLOCKER·HIGH Finding은 수정과 Delta Review 전까지 완료 처리하지 않는다.
+5. Codex 검수나 정적 CI를 Roblox Studio·Human Input·Multi-client·Persistence Runtime Evidence로 해석하지 않는다.
+6. 새 Batch Acceptance 또는 Merge Gate에는 Codex 명령문과 Finding Triage를 포함한다.
+7. Codex 접근 실패는 자동 면제가 아니다. `BLOCKED_CODEX_REVIEW_UNAVAILABLE`로 기록하거나 사용자의 명시적 면제를 받는다.
+
+명령문 템플릿:
+
+```text
+.github/CODEX-REVIEW-COMMAND-TEMPLATE.md
+```
+
+테스트 Gate:
+
+```text
+implementation/roblox/CODEX-REVIEW-TEST-GATE.md
+```
+
 ## 최신 고정 전제
 
 - 5피트 논리 이동 격자를 사용하지 않는다.
