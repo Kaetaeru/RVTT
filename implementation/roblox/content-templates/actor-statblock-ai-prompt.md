@@ -39,12 +39,15 @@
 - Source Text가 공식 Stat Block이고 정확한 수치가 제공되었다면 수치, 행동, CR과 피해식을 임의로 조정하지 않는다.
 - Source Anchor가 제공되지 않은 항목을 `rules_package`로 표시하지 않는다.
 - 출처가 없거나 DM이 직접 만든 경우 `campaign_homebrew` 또는 `unknown_draft`를 사용한다.
+- 허용된 canonical `sourceType`은 `rules_package`, `campaign_homebrew`, `imported_reference`, `unknown_draft`뿐이다.
+- `homebrew`와 `campaign_custom` legacy alias를 출력하지 않는다.
 - CR 밸런싱이나 난이도 조정은 하지 않는다.
 
 ## Actor Model 선택 정책
 
 아래 Actor Model Catalog에 있는 `actorModelAssetId`만 선택할 수 있다.
 
+- Catalog는 `rvtt.actor-model-catalog.v1` Schema를 따라야 한다.
 - 표시 이름이 비슷하다는 이유로 ID를 변형하거나 새 ID를 만들지 않는다.
 - Size Compatibility와 Footprint를 확인한다.
 - 적합한 Model이 없거나 Catalog가 비어 있으면 `token.actorModelAssetId`를 null로 둔다.
