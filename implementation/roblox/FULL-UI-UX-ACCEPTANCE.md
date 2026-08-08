@@ -95,7 +95,30 @@ RuleContentPackage
 - public repository에는 private 한국어 규칙 본문을 추가하지 않음
 - Studio `development` profile은 private readiness가 없으면 fail closed하며 implicit SRD fallback을 사용하지 않음
 
-현재 repository의 `rvtt.core.rules` Reader package에는 구조 검증용 공개-safe Reader Guide만 들어 있다. 전체 SRD corpus 또는 private 한국어 integrated corpus의 실제 content population/runtime evidence를 이 Static PASS로 확대하지 않는다.
+Private integrated positive-path repair의 추가 Static/Build 증거:
+
+```text
+BuiltinPackIndex pinned revision + integrated source-tree digest + expected counts
+→ build_private_rules_runtime.py
+→ revision / subtree digest / 12·48·16·10·75·391 count / dirty-source fail closed
+→ temporary RuleContentPackage + semantic chunks + localized search index
+→ prepare_private_rules_runtime.py explicit server-only authorizedUserIds
+→ temporary RVTTPrivateRuleContent/Readiness + RuleReaderPackage JSON Modules
+→ generated Rojo project overlay
+→ RuleRuntimePackageBinding
+→ RuleReaderBoot profileAccessResolver
+→ RuleReaderQuery nondisclosing owner-only access gate
+```
+
+- private integrated source subtree digest는 `BuiltinPackIndex.lua`에서 package authority와 함께 pin한다.
+- importer output은 RVTT public Git working tree 내부를 거부하고 OS temporary workspace에만 생성한다.
+- `run-private-rules-studio.ps1`은 `RVTT_PRIVATE_DND2024_KO_SOURCE`와 `RVTT_PRIVATE_RULES_AUTHORIZED_USER_IDS`가 모두 없으면 fail closed하며 base project를 직접 build하지 않고 generated private overlay project만 Rojo build한다.
+- public GitHub Actions는 private repository나 private rule body를 checkout하지 않는다.
+- `validate_private_rules_runtime_pipeline.py`는 공개-safe synthetic Git source를 만들어 동일 importer/preparer를 실행하고 generated `.rbxlx`에 `RVTTPrivateRuleContent`, `Readiness`, `RuleReaderPackage` ModuleScript binding이 실제 포함되는지 확인한다.
+- synthetic pipeline은 wrong revision, wrong source-tree digest, wrong content count, dirty source, missing source, missing viewer allowlist를 각각 fail-closed regression으로 검증한다.
+- private profile에서 allowlist에 없는 UserId는 RuleReader service에 도달하기 전에 `RULE_PROFILE_UNAVAILABLE`만 받고 manifest/search/open/chunk body를 얻지 못하도록 focused regression과 static validator에 연결한다.
+
+현재 repository의 `rvtt.core.rules` Reader package에는 구조 검증용 공개-safe Reader Guide만 들어 있다. 전체 SRD corpus 또는 private 한국어 integrated corpus의 실제 content population/runtime evidence를 이 Static PASS로 확대하지 않는다. 특히 public CI의 synthetic importer/overlay PASS는 **실제 private corpus Studio Runtime PASS가 아니다**.
 
 ## 남은 ADR-0091 Final Contract Gap
 
@@ -119,6 +142,7 @@ Validator는 최소 다음을 거부한다.
 - Asset Registry Production/focused evidence 없는 해제
 - Rules Profile/Release Leak Gate Production/focused evidence 없는 해제
 - Core Rules Reader lazy-load/nondisclosure evidence 없는 해제
+- private importer/overlay/owner-access positive path 누락 또는 base-project bypass
 - Session role→Reader permission marker wiring 누락
 - 남은 ADR-0091 2개 gap 누락 또는 거짓 해제
 - Player persistent Minimap·별도 Map·Objective Tracker 재등록과 Source 재도입
