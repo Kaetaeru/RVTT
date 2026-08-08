@@ -65,4 +65,5 @@ return function(harness)
 	-- requiring a second boot-time remote set in RVTT_TestMode.
 	require(script.Parent["CoreRulesReader.spec"])(harness)
 	require(script.Parent["RuleRuntimePackageBinding.spec"])(harness)
+	require(script.Parent["RuleReaderQueryAccess.spec"])(harness)
 end
