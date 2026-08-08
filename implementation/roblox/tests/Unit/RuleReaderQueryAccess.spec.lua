@@ -55,15 +55,24 @@ return function(h: any)
 	)
 	local player = ({ UserId = 90125 } :: any) :: Player
 
-	for _, request in {
-		{ action = "manifest" },
-		{ action = "search", query = "secret" },
-		{ action = "open", uri = "rvtt-rule://rvtt.test.rules.2024.integrated.ko/test/doc#anchor" },
-		{ action = "chunk", chunkId = "private.test.doc.anchor.1" },
-	} do
+	for _, request in
+		{
+			{ action = "manifest" },
+			{ action = "search", query = "secret" },
+			{
+				action = "open",
+				uri = "rvtt-rule://rvtt.test.rules.2024.integrated.ko/test/doc#anchor",
+			},
+			{ action = "chunk", chunkId = "private.test.doc.anchor.1" },
+		}
+	do
 		local denied = query:_handle(player, request)
 		h:expect(denied.ok == false, "unauthorized private query is denied")
-		h:equal(denied.error.code, "RULE_PROFILE_UNAVAILABLE", "denial does not reveal private package state")
+		h:equal(
+			denied.error.code,
+			"RULE_PROFILE_UNAVAILABLE",
+			"denial does not reveal private package state"
+		)
 		h:equal(denied.value, nil, "denial contains no private value")
 	end
 	h:equal(serviceCalls, 0, "unauthorized private viewer never reaches rule body service")
