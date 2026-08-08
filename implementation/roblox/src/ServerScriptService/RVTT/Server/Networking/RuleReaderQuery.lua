@@ -28,7 +28,7 @@ function RuleReaderQuery.new(
 end
 
 local function validationFailure(): any
-	return Result.err("VALIDATION_FAILED", "error.command.validation_failed", false)
+	return Result.err("VALIDATION_FAILED", "error.command.validation_failed", false, nil)
 end
 
 function RuleReaderQuery:_activePackage(): (any?, any)
@@ -37,21 +37,15 @@ function RuleReaderQuery:_activePackage(): (any?, any)
 		if type(profileResult) == "table" and profileResult.ok == false then
 			return nil, profileResult
 		end
-		return nil, Result.err("RULE_PROFILE_UNAVAILABLE", "error.rules.profile_unavailable", true)
+		return nil, Result.err("RULE_PROFILE_UNAVAILABLE", "error.rules.profile_unavailable", true, nil)
 	end
 	local status = profileResult.value
 	if type(status) ~= "table" or type(status.basePackageId) ~= "string" then
-		return nil, Result.err("RULE_PROFILE_UNAVAILABLE", "error.rules.profile_unavailable", true)
+		return nil, Result.err("RULE_PROFILE_UNAVAILABLE", "error.rules.profile_unavailable", true, nil)
 	end
 	local package = self.packageProvider(status.basePackageId)
 	if package == nil then
-		return nil,
-			Result.err(
-				"RULE_PACKAGE_UNAVAILABLE",
-				"error.rules.package_unavailable",
-				true,
-				{ basePackageId = status.basePackageId }
-			)
+		return nil, Result.err("RULE_PACKAGE_UNAVAILABLE", "error.rules.package_unavailable", true, nil)
 	end
 	return package, Result.ok(status)
 end
@@ -84,7 +78,8 @@ function RuleReaderQuery:_handle(player: Player, request: any): any
 			return Result.err(
 				code or "RULE_LINK_UNAVAILABLE",
 				"error.rules.link_unavailable",
-				false
+				false,
+				nil
 			)
 		end
 		return Result.ok(value)
@@ -95,7 +90,8 @@ function RuleReaderQuery:_handle(player: Player, request: any): any
 			return Result.err(
 				code or "RULE_CHUNK_UNAVAILABLE",
 				"error.rules.chunk_unavailable",
-				false
+				false,
+				nil
 			)
 		end
 		return Result.ok(value)
@@ -108,7 +104,7 @@ function RuleReaderQuery:start()
 		local now = self.clock()
 		local lastRequest = self.lastRequestByUserId[player.UserId]
 		if type(lastRequest) == "number" and now - lastRequest < REQUEST_INTERVAL_SECONDS then
-			return Result.err("RATE_LIMITED", "error.command.rate_limited", true)
+			return Result.err("RATE_LIMITED", "error.command.rate_limited", true, nil)
 		end
 		self.lastRequestByUserId[player.UserId] = now
 		return self:_handle(player, request)
