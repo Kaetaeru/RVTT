@@ -1,127 +1,174 @@
 # RVTT Codex Active Task
 
 - status: `READY_FOR_CODEX_EXECUTION`
-- commandId: `RVTT-PR2-PHASE9-CONTROL-REVISION-FIX-001`
+- commandId: `RVTT-PR2-FULL-UI-UX-ACCEPTANCE-IMPLEMENTATION-001`
 - repository: `Kaetaeru/RVTT`
 - pullRequest: `2`
 - branch: `agent/survival-logistics-token-authoring`
-- taskType: `IMPLEMENTATION_FIX`
-- phase: `FULL_UI_UX_ALIGNMENT_PHASE_9_CONTROL_REVISION_FIX`
-- commandPath: `.github/CODEX-FIX-PHASE9-CONTROL-REVISION-001.md`
+- taskType: `IMPLEMENTATION`
+- phase: `FULL_UI_UX_ALIGNMENT_PHASE_10`
+- commandPath: `.github/CODEX-IMPLEMENTATION-FULL-UI-UX-ACCEPTANCE-001.md`
 - targetMode: `CURRENT_PR_HEAD_AT_START`
 - expectedOutputChannel: `PR #2 Top-level Conversation Comment`
-- resultMarker: `<!-- RVTT_CODEX_PHASE9_REVISION_FIX_RESULT -->`
+- resultMarker: `<!-- RVTT_CODEX_IMPLEMENTATION_RESULT -->`
 - resultStatus: `PENDING`
-- previousFixCommand: `RVTT-PR2-PHASE9-QUEUE-RECONCILIATION-001`
-- previousFixReportedStatus: `PASS`
-- chatgptVerificationStatus: `PARTIAL_HOLD_EDGE_CASE`
-- phase9ApprovalState: `HOLD_PENDING_CONTROL_REVISION_FIX`
-- phase10State: `DO_NOT_ADVANCE_UNTIL_FINAL_VERIFICATION`
-- studioRuntimeState: `BLOCKED_UNTIL_PHASE10_AND_NEW_CURRENT_HEAD_STATIC_GATE`
+- previousCommand: `RVTT-PR2-PHASE9-CONTROL-REVISION-FIX-001`
+- previousCommandStatus: `PASS_VERIFIED_BY_CHATGPT`
+- phase9Status: `FINAL_PASS`
+- phase10Status: `IN_PROGRESS_READY_FOR_CODEX`
+- nextGateAfterSuccess: `NEW_CURRENT_HEAD_STATIC_GATE`
+- studioRuntimeState: `BLOCKED_UNTIL_PHASE10_AND_NEW_CURRENT_HEAD_STATIC_GATE_PASS`
 - userManualRuntimeState: `NOT_STARTED_CURRENT_CONTRACT`
 - updatedBy: `ChatGPT Lead Coordinator`
 - updatedAt: `2026-08-08`
 
 ## 현재 활성 작업
 
-Phase 9의 마지막 reconciliation edge case만 수정한다.
+Phase 10만 수행한다.
 
 ```text
-dm.assign_control
-→ success receipt alone는 confirmed 금지
-→ 제출 전부터 동일한 control 값이 있던 same/base revision projection도 confirmed 금지
-→ command baseRevision보다 새로운 authoritative projection
-   + expected actor/controller 일치
-→ projection_confirmed
+Full UI·UX Acceptance Expansion
+→ accepted authority 기반 machine-readable acceptance matrix
+→ existing test/evidence mapping
+→ G1/G2/G3/Human/deferred evidence separation
+→ stale player Minimap/Map/Objective requirements 제거 또는 supersede
+→ final ADR-0091 acceptance gap audit
+→ validator/static/CI
 ```
 
-새 DM 기능이나 Phase 10 Acceptance 구현은 시작하지 않는다.
+새 게임 기능을 임의로 넓히지 않는다.
 
-## ChatGPT 검수에서 확인된 마지막 blocker
+## 가장 중요한 Authority 예외
 
-이전 fix는 recovery duplicate, terminal failure viewer-safe feedback, 일반 control reconciliation을 수정했고 current-head Static/CI도 통과했다.
-
-하지만 현재 `DmWorkspaceViewModel`의 control confirmation은 accepted command의 expected actor/controller와 현재 `dm_workspace.control` 값 일치만 검사하고 projection revision freshness를 요구하지 않는다.
-
-따라서 다음 edge case에서 잘못된 조기 confirmation이 가능하다.
+현재 Player persistent UI에는 다음을 요구하지 않는다.
 
 ```text
-revision R에서 이미 actor:A → user:22
-→ 같은 actor:A → user:22를 다시 submit
-→ success receipt 수신
-→ 아직 새 projection은 오지 않음, 화면은 여전히 revision R
-→ 기존 값이 같다는 이유만으로 projection_confirmed 가능
+Minimap
+separate Player Map
+Objective Tracker
 ```
 
-이 경우 올바른 상태는 `accepted_awaiting_projection`이다.
+오래된 `UI-UX-REVIEW-CHECKLIST.md`, Work Order, status checklist에 이 항목이 남아 있더라도 accepted ADR/product direction보다 우선하지 않는다.
+
+Phase 10 Acceptance Matrix에서 위 항목을 required Player feature로 다시 살리지 않는다.
 
 ## 실행 규칙
 
 1. `commandPath`를 먼저 읽는다.
 2. PR #2 최신 remote HEAD를 `targetShaAtStart`로 기록한다.
-3. current source와 실제 receipt/revision 계약을 조사한다.
-4. pre-existing identical control assignment edge case를 재현 또는 정적으로 입증한다.
-5. 최소 수정만 한다.
-6. accepted control은 **baseRevision보다 새로운 authoritative projection** 또는 repository가 이미 제공하는 더 강한 committed-revision boundary를 만족해야만 confirmed할 수 있다.
-7. 같은/base revision의 matching control 값은 confirmed 금지.
-8. newer projection의 다른 controller도 confirmed 금지.
-9. newer matching authoritative projection만 confirmed.
-10. recovery dedup, terminal failure redaction/bounded history, role-loss/full-sync purge를 회귀시키지 않는다.
-11. Player/Observer negative disclosure와 Player View Preview no-live-sequence-mutation 경계를 유지한다.
-12. 새 gameplay-authority `dm.*` command를 추가하지 않는다.
-13. focused tests에 pre-existing identical assignment case를 반드시 추가한다.
-14. `CURRENT-WORK-ORDER.md`의 stale prose `DM Workspace와 Acceptance 정합화가 남아`를 성공 시 실제 상태에 맞게 최소 수정한다.
-15. validator/formatter/lint/Rojo/sourcemap/Luau analysis를 실행한다.
-16. Studio/Studio MCP/Human Playtest는 실행하지 않는다.
-17. current PR branch에 non-force 반영한다.
-18. push 후 새 current HEAD의 관련 GitHub Actions를 실제 확인한다.
-19. 원격 CI 하나라도 failure/pending이면 PASS 금지.
-20. 성공한 경우에만 Phase 9 final PASS를 보고하고 Phase 10을 IN_PROGRESS로 인정한다.
-21. 지정 Marker로 PR #2 top-level 결과 댓글을 남긴다.
+3. `AGENTS.md`, Work Order, AGENT-TEST-STATUS, ADR-0088~0091, final UI contract, Review Checklist, Execution Test Rules, Grand Acceptance/Manifest를 읽는다.
+4. Phase 9 final PASS와 Phase 10 IN_PROGRESS를 확인한다.
+5. current Source/Tests와 기존 ContextInputAcceptance/MultiClient/RealTransport/Grand harness를 조사한다.
+6. Acceptance 항목을 stable id와 evidence class로 등록한다.
+7. 문서 존재만으로 PASS를 만들지 않는다.
+8. Static / Studio Single / Studio Multi / Real Transport / Human UI / Human Accessibility / Deferred 범위를 분리한다.
+9. 기존 자동 테스트가 있는 항목은 실제 reference를 연결한다.
+10. 자동 테스트가 없지만 작은 static assertion으로 닫을 수 있을 때만 focused regression을 추가한다.
+11. Human visual/accessibility 판단을 Unit test로 가장하지 않는다.
+12. stale Minimap/Map/Objective checklist와 Work Order/AGENT status를 accepted direction에 맞게 최소 정정한다.
+13. ADR-0091 final contract Acceptance를 current Source와 대조한다.
+14. 큰 미구현 subsystem이 발견되면 이번 Phase에서 몰래 구현하지 말고 explicit `BLOCKED/DEFERRED/follow-up`으로 남긴다.
+15. machine-readable matrix drift validator를 추가/통합한다.
+16. G1/G2/G3와 Human evidence, P1-P7 deferred mapping을 유지한다.
+17. validator/formatter/lint/Rojo/sourcemap/Luau analysis를 실행한다.
+18. Studio/Studio MCP/Human Playtest는 실행하지 않는다.
+19. current PR branch에 non-force 반영한다.
+20. push 후 새 current HEAD의 관련 GitHub Actions를 실제 확인한다.
+21. 하나라도 failure/pending이면 PASS 금지.
+22. 성공 시 Phase 10을 DONE으로 바꾸되 Studio를 READY로 만들지 않는다. 다음은 별도 `NEW_CURRENT_HEAD_STATIC_GATE`다.
+23. 지정 Marker로 PR #2 top-level 결과 댓글을 남긴다.
 
-## 필수 focused regression
+## Evidence 상태 원칙
 
 ```text
-A. success receipt alone → accepted_awaiting_projection
-B. pre-existing matching control + same/base revision → accepted_awaiting_projection
-C. newer projection + conflicting controller → NOT confirmed
-D. newer projection + matching controller → projection_confirmed
+Document exists != Static PASS
+Static PASS != Studio Runtime PASS
+Studio Runtime PASS != Human UI/UX PASS
+Single-client PASS != Multi-client PASS
+Runtime PASS != Persistence PASS
+Runtime PASS != Performance/Soak PASS
 ```
 
-그리고 이전 fix의 recovery dedup / terminal failure safe-redaction/bounding 회귀 테스트를 유지한다.
+실행하지 않은 항목은 사실대로 `NOT_EXECUTED`, `BLOCKED`, `DEFERRED`, `PLANNED`를 사용한다.
+
+## Acceptance 핵심 범위
+
+### Direct Play
+- ESC no gameplay meaning
+- Q one-context-back
+- E semantic confirm only
+- left/right/middle pointer grammar
+- click-before-action preview
+- action availability/hidden disclosure
+- movement/attack/interaction preview
+- selection continuity/no forced recenter
+- pending/denied/stale/projection reconciliation
+
+### HUD / Management / Settings
+- Exploration/Encounter composition
+- Observer-safe projection
+- Inventory/Equipment/authorized transfer
+- Journal permission/navigation
+- Settings/preferences/binding-safe behavior
+- no Player persistent Minimap / separate Map / Objective Tracker
+
+### Entry / Recovery
+- Observer-first non-DM
+- authoritative assignment and role transition
+- owner/controller/session-role separation
+- reconnect/full-sync/epoch/revision recovery
+- invalid selection/pending cleanup
+- viewer-safe recovery/error boundary
+
+### DM Workspace
+- modular local window layout versus server authority
+- Player View Preview server-policy parity
+- no live target sequence mutation
+- existing DM command bindings only
+- projected queue reconciliation
+- newer-revision assign-control proof
+- terminal failure safe feedback
+- role-loss purge and negative disclosure
+
+### Final ADR-0091
+Asset Registry, Official 2024 Sheet, Dice Reveal, Core Rules Reader, private/public rules profile/leak gate를 current Source와 대조한다. 실제 gap이면 숨기지 않는다.
+
+## 성공 결과 상태
+
+모든 Phase 10 범위가 충족되면:
+
+```text
+Phase 10 Full UI·UX Acceptance Expansion = DONE
+next = NEW_CURRENT_HEAD_STATIC_GATE
+Studio Human Retest = BLOCKED
+Studio Runtime = NOT_EXECUTED
+Human UI/UX = NOT_EXECUTED
+```
+
+필수 final-contract implementation gap이 발견되면:
+
+```text
+Phase 10 = HOLD / PARTIAL
+next = focused implementation correction
+Studio = BLOCKED
+```
 
 ## 명시적 제외
 
-- Phase 10 Acceptance 구현
-- 새 DM Tool/feature
-- 새 gameplay-authority command
-- Full Scene Editor
-- ADR-0092 Runtime
+- Studio / Studio MCP / Human Runtime 실행
+- Phase 11 실행
 - Persistence Runtime
 - Performance/Soak
-- Studio / Human Runtime
-- Player Minimap / separate Map / Objective Tracker
-- test 삭제/skip/assertion 약화
-- validator/lint/CI bypass
+- ADR-0092 Runtime
+- Player persistent Minimap
+- separate Player Map
+- Objective Tracker
+- 새 gameplay-authority command
+- hidden/private placeholder/count leak
+- test deletion/skip/assertion weakening
+- validator/CI bypass
 - force push
 - PR Ready/Approve/Merge
-
-## 성공 조건
-
-```text
-same/base revision의 pre-existing identical control이 조기 confirmed 되지 않음
-+ success receipt alone confirmed 금지
-+ newer conflicting projection confirmed 금지
-+ newer matching projection confirmed
-+ previous reconciliation fixes 유지
-+ negative disclosure 유지
-+ Work Order stale prose 수정
-+ focused tests PASS
-+ local/static validation PASS
-+ new current HEAD related GitHub Actions SUCCESS
-→ Phase 9 FINAL PASS eligible
-→ Phase 10 IN_PROGRESS
-```
 
 ## 사용자가 Codex에 보낼 최소 지시
 
@@ -133,12 +180,14 @@ RVTT 저장소의 .github/CODEX-ACTIVE-TASK.md에서 ChatGPT가 작성한 최신
 
 사용자가 `확인` 또는 `확인해`라고 하면:
 
-1. PR #2 current HEAD를 다시 조회한다.
-2. 최신 `<!-- RVTT_CODEX_PHASE9_REVISION_FIX_RESULT -->` 댓글을 찾는다.
-3. target/result SHA와 실제 commit/files를 대조한다.
-4. revision-aware control confirmation과 cases A-D focused tests를 직접 확인한다.
-5. recovery/terminal failure regressions와 negative disclosure를 확인한다.
-6. Work Order stale prose가 정정됐는지 확인한다.
-7. 새 HEAD 관련 GitHub Actions를 직접 확인한다.
-8. 모두 성공한 경우에만 Phase 9 final PASS를 인정한다.
-9. 그 뒤에만 Phase 10 Acceptance로 진행한다.
+1. PR #2 current HEAD 재조회
+2. 최신 `RVTT-PR2-FULL-UI-UX-ACCEPTANCE-IMPLEMENTATION-001` 결과 댓글 확인
+3. target/result SHA와 실제 compare/files 대조
+4. Acceptance Matrix와 validator 직접 검수
+5. stale Minimap/Map/Objective required contract 재생성 여부 확인
+6. automated refs / G1-G3 / Human / deferred mapping 표본 대조
+7. ADR-0091 final-contract gap audit를 Source와 대조
+8. current HEAD GitHub Actions 직접 확인
+9. 모두 맞아야 Phase 10 승인
+10. 그 뒤 별도 new current-HEAD Static Gate로 진행
+11. Studio/Human PASS 확대 금지
