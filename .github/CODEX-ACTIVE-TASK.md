@@ -1,18 +1,18 @@
 # RVTT Codex Active Task
 
 - status: `READY_FOR_CODEX_EXECUTION`
-- commandId: `RVTT-PR2-INVENTORY-JOURNAL-SETTINGS-IMPLEMENTATION-001`
+- commandId: `RVTT-PR2-ENTRY-ROLE-RECOVERY-IMPLEMENTATION-001`
 - repository: `Kaetaeru/RVTT`
 - pullRequest: `2`
 - branch: `agent/survival-logistics-token-authoring`
 - taskType: `IMPLEMENTATION`
-- phase: `FULL_UI_UX_ALIGNMENT_PHASE_7`
-- commandPath: `.github/CODEX-IMPLEMENTATION-INVENTORY-JOURNAL-SETTINGS-001.md`
+- phase: `FULL_UI_UX_ALIGNMENT_PHASE_8`
+- commandPath: `.github/CODEX-IMPLEMENTATION-ENTRY-ROLE-RECOVERY-001.md`
 - targetMode: `CURRENT_PR_HEAD_AT_START`
 - expectedOutputChannel: `PR #2 Top-level Conversation Comment`
 - resultMarker: `<!-- RVTT_CODEX_IMPLEMENTATION_RESULT -->`
 - resultStatus: `PENDING`
-- previousCommand: `RVTT-PR2-EXPLORATION-ENCOUNTER-HUD-IMPLEMENTATION-001`
+- previousCommand: `RVTT-PR2-INVENTORY-JOURNAL-SETTINGS-IMPLEMENTATION-001`
 - previousCommandStatus: `PASS`
 - studioRuntimeState: `BLOCKED_UNTIL_UI_ALIGNMENT_AND_NEW_STATIC_GATE`
 - userManualRuntimeState: `NOT_STARTED_CURRENT_CONTRACT`
@@ -24,138 +24,60 @@
 다음 한 Phase만 수행한다.
 
 ```text
-Inventory · Journal · Settings
-→ Screen · Intent · Permission · Preference
+Entry · Role · Recovery
+→ Projection rebuild · Reconnect · Error Boundary
 ```
 
-Phase 4 Shared Shell·Preference Foundation, Phase 5 Input·Context Action, Phase 6 Exploration·Encounter HUD는 완료됐다.
-이번 Phase는 기존 Shared Shell/Projection/Command/Preference 경계를 재사용해 관리 화면을 정합화한다.
+Phase 4~7은 완료됐다. 이번 Phase는 기존 Session/Character/Projection/Networking/Client Runtime 권위 경계를 재사용해 Entry, Role 전환, Reconnect, Recovery UI와 상태를 정합화한다.
 
-## 현재 Authority
+## 핵심 계약
 
-```text
-AGENTS.md
-→ AGENT-TEST-STATUS.md
-→ implementation/roblox/CURRENT-WORK-ORDER.md
-→ ADR-0088 / ADR-0089 / ADR-0090 / ADR-0091
-→ final-ui-content-implementation-contract.md
-→ implementation-ready-ui-ux-and-settings-spec.md (상위 계약에 의해 superseded된 부분 제외)
-→ Inventory / Journal / Character / Settings 관련 Architecture·Slice·System Guide
-→ EXECUTION-TEST-RULES.md
-```
-
-중요: 최신 상위 계약에 따라 Player persistent UI에 Minimap·별도 Map·Objective Tracker를 추가하지 않는다.
-
-## 이번 Phase의 고정 계약
-
-### Inventory
-
-- Projection-backed inventory/equipment/item presentation을 사용한다.
-- 현재 Repository에 존재하는 loot/transfer/identification flow만 UI Intent로 연결한다.
-- UI가 Domain Store를 직접 변경하지 않는다.
-- 실제 변경은 기존 Command boundary와 Server authorize를 통과한다.
-- viewer에게 공개되지 않은 item/property/count/container/capability는 노출하거나 추측하지 않는다.
-
-### Journal
-
-- 기존 Journal Projection과 Permission을 따른다.
-- private/DM-only/hidden entry를 placeholder로도 누출하지 않는다.
-- 별도 Player Map이나 Objective Tracker를 새로 만들지 않는다.
-- navigation/selection은 권위 Command가 없는 한 local presentation state다.
-
-### Settings
-
-기존 다음 경로를 재사용한다.
-
-```text
-PreferenceSchema
-→ UiPreferenceStore
-→ ThemeContract / ThemeApplicator
-→ SettingsPanel
-```
-
-- schema가 실제 지원하는 설정만 노출한다.
-- reset은 기존 schema/store 계약을 따른다.
-- binding 편집이 현 계약에 포함돼 있으면 conflict를 감지·표시하며 조용히 덮어쓰지 않는다.
-- accent/ui scale/text scale/motion 등 기존 preference 변경 중 gameplay selection/focus를 불필요하게 제거하지 않는다.
-- 현재 architecture보다 강한 persistence 보장을 꾸며내지 않는다.
-
-### Availability / Permission
-
-```text
-viewer에게 비공개
-→ 미표시
-
-viewer에게 공개되지만 현재 불가능
-→ disabled + viewer-safe reason
-
-현재 가능
-→ enabled intent
-```
-
-stale projection/revision으로 권위 변경을 우회하지 않는다.
-
-## 작업 경계
-
-이번 Phase에서는 다음을 하지 않는다.
-
-- Roblox Studio 또는 Human Playtest
-- Phase 8 Entry·Role·Recovery
-- Phase 9 DM Live Workspace
-- Phase 10 Full Acceptance 완료
-- ADR-0092 Runtime
-- Persistence Runtime 확대
-- Touch·Controller 전용 UI
-- Player Minimap·별도 Map·Objective Tracker
-- Client Gameplay Authority 신설
-- Hidden 정보 placeholder
-- PR Ready·Approve·Merge
-
-Studio Human Retest는 Phase 4~10 정합화와 새 current-HEAD Static Gate 뒤에만 진행한다.
+- non-DM은 authoritative assignment 전 Observer-first다.
+- local selection/pending command만으로 Player 권위를 얻지 않는다.
+- Character Owner / Runtime Controller / Session Role을 분리한다.
+- 역할/캐릭터 전이는 서버 권위 + Projection 확인 뒤에만 UI/행동 권위를 바꾼다.
+- reconnect/full sync는 authoritative Projection에서 다시 구축한다.
+- stale preview/pending claim/revision-bound intent는 resync 후 재검증한다.
+- local preference는 기존 preference boundary 안에서만 유지한다.
+- 새 role에서 더 이상 보이지 않는 selection/private state/capability는 제거한다.
+- recoverable network/projection error와 fatal boundary를 구분한다.
+- Player/Observer에 DM-only 정보나 control을 placeholder로도 노출하지 않는다.
+- client-side role/gameplay authority를 만들지 않는다.
 
 ## 실행 절차
 
-1. `commandPath`의 Phase 7 명령을 읽는다.
-2. PR #2 최신 원격 HEAD와 현재 Branch를 확인한다.
-3. `AGENTS.md`, `AGENT-TEST-STATUS.md`, `implementation/roblox/CURRENT-WORK-ORDER.md`를 먼저 읽는다.
-4. Phase 6 `DONE`, Phase 7 `IN_PROGRESS`를 확인한다.
-5. 기존 Inventory/Journal/Settings UI·Projection·Domain·Permission·Command·Preference Source를 조사한다.
-6. Shared Shell, `PanelShell`, `ProjectionReplica`, `CommandClient`, `PreferenceSchema`, `UiPreferenceStore`, Theme 경계를 재사용한다.
-7. `RVTT-PR2-INVENTORY-JOURNAL-SETTINGS-IMPLEMENTATION-001` 범위만 구현한다.
-8. Screen composition, permission/negative disclosure, intent routing, preference validation/reset/conflict, revision handling 관련 test를 보강한다.
-9. Repository가 정의한 가능한 정적/자동 검증을 실행한다.
-10. 성공한 경우에만 Phase 7을 `DONE`, Phase 8을 `IN_PROGRESS`로 갱신하고 `AGENT-TEST-STATUS.md`도 실제 결과에 맞춘다.
-11. 현재 PR branch에 non-force 반영한다.
-12. 결과 게시 직전 원격 PR HEAD를 재확인한다.
-13. 지정 Marker를 포함한 PR #2 top-level 결과 댓글을 남긴다.
-14. Studio Runtime/Human PASS를 주장하지 않는다.
+1. `commandPath`를 읽는다.
+2. PR #2 최신 원격 HEAD를 `targetShaAtStart`로 기록한다.
+3. `AGENTS.md`, `AGENT-TEST-STATUS.md`, `implementation/roblox/CURRENT-WORK-ORDER.md`와 지정 Authority를 읽는다.
+4. Phase 7 `DONE`, Phase 8 `IN_PROGRESS`를 확인한다.
+5. 기존 `SessionDomain`, `CharacterDomain`, Projection, Networking/full-sync, `ProjectionReplica`, `CommandClient`, `ClientRuntime`, App/Shell과 error/recovery utility를 조사한다.
+6. 같은 책임의 기존 경로를 재사용하며 Phase 8 범위만 구현한다.
+7. observer-first, authoritative role/assignment, reconnect/full-sync rebuild, stale invalidation, recovery/error boundary, negative disclosure 관련 테스트를 보강한다.
+8. Repository가 정의한 정적/자동 검증을 실제 실행한다.
+9. 모두 PASS한 경우에만 Phase 8을 `DONE`, Phase 9를 `IN_PROGRESS`로 갱신하고 `AGENT-TEST-STATUS.md`도 갱신한다.
+10. 현재 PR branch에 non-force 반영한다.
+11. 지정 Marker의 PR #2 top-level 결과 댓글을 남긴다.
+12. Roblox Studio, Studio MCP, Human Playtest는 실행하지 않는다.
+13. PR Ready·Approve·Merge를 하지 않는다.
 
-## 결과 검수 기준
+## 범위 제외
 
-결과 댓글은 최소 다음을 포함한다.
+- Phase 9 DM Live Workspace 구현
+- Phase 10 Acceptance 완료
+- Studio/Human PASS
+- Persistence Runtime
+- ADR-0092 Runtime 확대
+- touch/controller 전용 UI
+- Player minimap·별도 map·objective tracker
+- client-side role/gameplay authority
+
+## 성공 시 상태
 
 ```text
-<!-- RVTT_CODEX_IMPLEMENTATION_RESULT -->
-commandId: RVTT-PR2-INVENTORY-JOURNAL-SETTINGS-IMPLEMENTATION-001
-targetShaAtStart: <sha>
-resultHeadSha: <sha or unchanged>
-resultStatus: PASS | FAIL | BLOCKED | PARTIAL | ABORTED_STALE_HEAD
-phase: FULL_UI_UX_ALIGNMENT_PHASE_7
-implementedScope: <concise list>
-changedFiles: <count and/or paths>
-testsRun: <commands/results>
-staticValidationStatus: <status>
-studioRuntimeStatus: NOT_EXECUTED
-humanPlaytestStatus: NOT_EXECUTED
-currentWorkOrderStatus: <phase 7/8 status>
-agentTestStatusUpdated: true | false
-failedChecks: <none or list>
-blockerReason: <none or reason>
-negativeDisclosure: <summary>
-notes: <limitations>
+Phase 8 Entry·Role·Recovery → DONE
+Phase 9 DM Live Workspace → IN_PROGRESS
+Studio Human Retest → 계속 BLOCKED
 ```
-
-PASS는 Phase 7 Source/Static 범위만 의미한다.
 
 ## 사용자가 Codex에 보낼 최소 지시
 
@@ -165,13 +87,4 @@ RVTT 저장소의 .github/CODEX-ACTIVE-TASK.md에서 ChatGPT가 작성한 최신
 
 ## ChatGPT 후속 확인
 
-사용자가 `확인` 또는 `확인해`라고 지시하면:
-
-1. PR #2 현재 HEAD를 조회한다.
-2. 최신 `<!-- RVTT_CODEX_IMPLEMENTATION_RESULT -->` 댓글을 찾는다.
-3. `commandId`가 `RVTT-PR2-INVENTORY-JOURNAL-SETTINGS-IMPLEMENTATION-001`인지 확인한다.
-4. `resultHeadSha`와 현재 PR HEAD가 일치하는지 확인한다.
-5. 실제 changed files/tests와 결과 보고를 대조한다.
-6. Screen·Intent·Permission·Preference 및 negative disclosure 경계를 확인한다.
-7. PASS면 Phase 7 완료만 인정하고 Phase 8로 이어간다.
-8. Studio Runtime/Human PASS로 확대 해석하지 않는다.
+사용자가 `확인` 또는 `확인해`라고 지시하면 현재 PR HEAD, Phase 8 결과 Marker, `commandId/resultHeadSha`, 실제 changed files/tests, Work Order와 AGENT-TEST-STATUS 전이를 대조한다. PASS면 Phase 8 Source/Static 완료만 인정한다.
