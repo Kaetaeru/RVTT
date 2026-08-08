@@ -37,15 +37,18 @@ function RuleReaderQuery:_activePackage(): (any?, any)
 		if type(profileResult) == "table" and profileResult.ok == false then
 			return nil, profileResult
 		end
-		return nil, Result.err("RULE_PROFILE_UNAVAILABLE", "error.rules.profile_unavailable", true, nil)
+		return nil,
+			Result.err("RULE_PROFILE_UNAVAILABLE", "error.rules.profile_unavailable", true, nil)
 	end
 	local status = profileResult.value
 	if type(status) ~= "table" or type(status.basePackageId) ~= "string" then
-		return nil, Result.err("RULE_PROFILE_UNAVAILABLE", "error.rules.profile_unavailable", true, nil)
+		return nil,
+			Result.err("RULE_PROFILE_UNAVAILABLE", "error.rules.profile_unavailable", true, nil)
 	end
 	local package = self.packageProvider(status.basePackageId)
 	if package == nil then
-		return nil, Result.err("RULE_PACKAGE_UNAVAILABLE", "error.rules.package_unavailable", true, nil)
+		return nil,
+			Result.err("RULE_PACKAGE_UNAVAILABLE", "error.rules.package_unavailable", true, nil)
 	end
 	return package, Result.ok(status)
 end
