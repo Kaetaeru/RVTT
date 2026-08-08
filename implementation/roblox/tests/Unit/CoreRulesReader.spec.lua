@@ -103,7 +103,11 @@ return function(h)
 	local manifest = Reader.manifest(package, player, profile)
 	h:equal(#manifest.modules, 1, "player manifest omits unauthorized module without placeholder")
 	h:equal(manifest.modules[1].title, "Public Module", "authorized module title remains visible")
-	h:equal(manifest.modules[1].documents[1].sections[1].chunkIds, nil, "manifest does not replicate chunk ids or body graph")
+	h:equal(
+		manifest.modules[1].documents[1].sections[1].chunkIds,
+		nil,
+		"manifest does not replicate chunk ids or body graph"
+	)
 	h:equal(manifest.chunks, nil, "manifest never includes the large rule body")
 
 	local totalBody = 0
@@ -135,7 +139,11 @@ return function(h)
 			#opened.chunk.text >= 4000 and #opened.chunk.text <= 16000,
 			"open returns one semantic chunk rather than the whole package"
 		)
-		h:equal(opened.chunk.nextChunkId, "public.chunk.2", "open exposes only the adjacent lazy-load cursor")
+		h:equal(
+			opened.chunk.nextChunkId,
+			"public.chunk.2",
+			"open exposes only the adjacent lazy-load cursor"
+		)
 		h:equal(#opened.chunk.relatedLinks, 1, "related links are permission filtered")
 	end
 
@@ -143,18 +151,30 @@ return function(h)
 	h:expect(second ~= nil and secondError == nil, "adjacent authorized chunk lazy-loads")
 	local hiddenChunk, hiddenChunkError = Reader.chunk(package, player, "hidden.chunk")
 	h:equal(hiddenChunk, nil, "unauthorized chunk returns no payload")
-	h:equal(hiddenChunkError, "RULE_CHUNK_UNAVAILABLE", "unauthorized chunk uses nondisclosing failure")
+	h:equal(
+		hiddenChunkError,
+		"RULE_CHUNK_UNAVAILABLE",
+		"unauthorized chunk uses nondisclosing failure"
+	)
 	local hiddenOpen, hiddenOpenError = Reader.open(
 		package,
 		player,
 		"rvtt-rule://rvtt.core.rules/hidden-module/hidden-document#secret"
 	)
 	h:equal(hiddenOpen, nil, "unauthorized stable URI returns no title or body")
-	h:equal(hiddenOpenError, "RULE_LINK_UNAVAILABLE", "unauthorized link uses nondisclosing failure")
+	h:equal(
+		hiddenOpenError,
+		"RULE_LINK_UNAVAILABLE",
+		"unauthorized link uses nondisclosing failure"
+	)
 
 	local state = ViewModel.initial()
 	ViewModel.applyManifest(state, { ok = true, value = manifest })
-	h:equal(ViewModel.profileBadge(manifest), "SRD RELEASE", "public package profile badge is explicit")
+	h:equal(
+		ViewModel.profileBadge(manifest),
+		"SRD RELEASE",
+		"public package profile badge is explicit"
+	)
 	ViewModel.applyOpen(state, { ok = true, value = opened })
 	h:equal(#state.chunkOrder, 1, "view model starts with one visible chunk")
 	ViewModel.appendChunk(state, { ok = true, value = second }, "next")
