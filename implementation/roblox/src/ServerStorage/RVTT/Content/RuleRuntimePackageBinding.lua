@@ -205,7 +205,8 @@ end
 
 function RuleRuntimePackageBinding.viewerCanAccessProfile(
 	profile: string,
-	userId: number,J	options: any?
+	userId: number,
+	options: any?
 ): boolean
 	if PRIVATE_PROFILES[profile] ~= true then
 		return true
