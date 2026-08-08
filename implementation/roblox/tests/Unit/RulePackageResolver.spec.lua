@@ -26,6 +26,7 @@ local function readiness(package: any): any
 		sourceBindingKey = package.sourceBindingKey,
 		revision = package.version,
 		sourceRoot = package.sourceRoot,
+		verifiedDigest = package.expectedSourceDigest,
 		contentCounts = copy(package.expectedContentCounts),
 	}
 end
@@ -85,6 +86,7 @@ return function(h)
 		{ field = "sourceBindingKey", value = "wrong", code = "SOURCE_BINDING_MISMATCH" },
 		{ field = "revision", value = "wrong", code = "SOURCE_REVISION_MISMATCH" },
 		{ field = "sourceRoot", value = "wrong", code = "SOURCE_ROOT_MISMATCH" },
+		{ field = "verifiedDigest", value = "wrong", code = "SOURCE_DIGEST_MISMATCH" },
 	}
 	for _, fixture in failureFixtures do
 		local evidence = readiness(privatePackage)
