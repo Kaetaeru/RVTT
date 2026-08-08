@@ -1,7 +1,7 @@
 # RVTT Agent Test Status
 
 - 상태: `ACTIVE`
-- 최종 갱신일: `2026-08-08`
+- 최종 갱신일: `2026-08-09`
 - 목적: 새 에이전트가 저장소를 열었을 때 현재 구현·테스트 진행 상태, 다음 Gate, 남은 사용자 Runtime 범위를 한눈에 확인하게 한다.
 - 적용 범위: RVTT 구현·Runtime·Acceptance·검증·Release 작업
 
@@ -28,16 +28,16 @@ RVTT에서 구현, 테스트, 검증, Acceptance, Release 관련 작업을 하�
 
 ---
 
-## 2. Codex와 사용자 수동 테스트 역할
+## 2. 현재 구현·검증 역할
 
 현재 운영 결정:
 
 ```text
-Codex
-→ 코드·문서 검수
-→ 구현 작업 중 반복 탐색·수정처럼 효율 이득이 큰 작업
-→ 구조·권한·회귀 위험 검수
-→ Static Gate와 자동 검증
+ChatGPT Direct GitHub Implementation
+→ Authority·Source 확인
+→ Production Source·Test·Validator 직접 수정
+→ current-head GitHub Actions 확인
+→ Static PASS/HOLD 판정
 
 사용자 직접 확인
 → Roblox Studio 실행
@@ -48,10 +48,9 @@ Codex
 → 기능 동작·플레이 감각
 ```
 
-기본적으로 **Codex ↔ Roblox Studio MCP 자동 Smoke를 필수 사용자 흐름으로 사용하지 않는다.**
-Studio MCP 자동화는 반복 작업 절감 효과가 명확하거나 사용자가 다시 명시적으로 요청할 때만 사용한다.
+Codex는 현재 token budget 때문에 활성 실행 경로에서 제외한다. 사용자가 다시 명시적으로 요청하기 전까지 `.github/CODEX-ACTIVE-TASK.md`는 `NO_ACTIVE_CODEX_TASK` 상태를 유지한다.
 
-이 결정은 Runtime 테스트를 생략한다는 뜻이 아니다. Studio Runtime 검증 책임을 Codex MCP 자동화에서 **Batch 기반 사용자 직접 확인**으로 옮긴 것이다.
+기본적으로 **Codex ↔ Roblox Studio MCP 자동 Smoke를 필수 사용자 흐름으로 사용하지 않는다.** Studio MCP 자동화는 반복 작업 절감 효과가 명확하거나 사용자가 다시 명시적으로 요청할 때만 사용한다. Runtime 테스트를 생략한다는 뜻은 아니며 Studio Runtime 검증은 Batch 기반 사용자 직접 확인으로 진행한다.
 
 ---
 
@@ -60,18 +59,19 @@ Studio MCP 자동화는 반복 작업 절감 효과가 명확하거나 사용자
 | 영역 | 상태 | 현재 판정 |
 |---|---|---|
 | ADR/설계 및 Studio Preflight 문서 검수 | `PASS` | 마지막 Codex Delta 결과 `NO_SUPPORTED_FINDINGS` |
-| 마지막 Implementation Static Gate | `PASS` | 검증 대상 `ef99a0740711b4f00fac0d5c8d0599f238ea48e9` |
-| Full UI·UX Source·Acceptance 정합화 | `PARTIAL` | Asset Registry·Rules Profile/Release Leak Gate STATIC_VERIFIED, ADR-0091 필수 구현 Gap 3개 |
+| 마지막 별도 Implementation Static Gate | `PASS` | 역사적 검증 대상 `ef99a0740711b4f00fac0d5c8d0599f238ea48e9` |
+| Full UI·UX Source·Acceptance 정합화 | `PARTIAL` | Asset Registry·Rules Profile/Release Gate·Core Rules Reader STATIC_VERIFIED, ADR-0091 필수 구현 Gap 2개 |
 | ADR-0091 Asset Registry foundation | `STATIC_VERIFIED` | Source·Server·Client-safe 경계, validation·negative disclosure focused regression |
 | ADR-0091 Rules Profile + Release Leak Gate | `STATIC_VERIFIED` | Builtin package single authority·private readiness·explicit fallback·actual filesystem staging·CI fail-closed regression |
+| ADR-0091 Core Rules Reader | `STATIC_VERIFIED` | stable anchor·lazy manifest/search/open/chunk·viewer nondisclosure·authoritative role marker·focused >200k corpus regression |
 | Shared Shell·Preference Foundation | `PASS` | `RVTT-PR2-UI-FOUNDATION-IMPLEMENTATION-002` 구현·로컬 정적 검증 완료 |
 | Input·Context Action 정합화 | `PASS` | `RVTT-PR2-INPUT-CONTEXT-IMPLEMENTATION-001` 구현·로컬 정적 검증 완료 |
 | Exploration·Encounter HUD | `PASS` | `RVTT-PR2-EXPLORATION-ENCOUNTER-HUD-IMPLEMENTATION-001` 구현·로컬 정적 검증 완료 |
 | Inventory·Journal·Settings | `PASS` | `RVTT-PR2-INVENTORY-JOURNAL-SETTINGS-IMPLEMENTATION-001` Source·Static 완료 |
 | Entry·Role·Recovery | `PASS` | `RVTT-PR2-ENTRY-ROLE-RECOVERY-IMPLEMENTATION-001` Source·Static 완료 |
 | DM Live Workspace | `PASS` | `RVTT-PR2-DM-LIVE-WORKSPACE-IMPLEMENTATION-001` Source·Static 완료 |
-| Full UI·UX Acceptance 확장 | `HOLD` | 49개 항목 등록, 남은 ADR-0091 correction 3개 필요 |
-| 현재 사용자 Studio Human Retest | `BLOCKED` | UI·UX Source·Acceptance 정합화 + 새 current-HEAD Static Gate가 먼저 |
+| Full UI·UX Acceptance 확장 | `HOLD` | 49개 항목 등록, 남은 ADR-0091 correction 2개 필요 |
+| 현재 사용자 Studio Human Retest | `BLOCKED` | 남은 2개 구현 + 새 current-HEAD Static Gate가 먼저 |
 | Codex Studio MCP Smoke | `NOT_DEFAULT` | 현재 운영에서는 사용자 수동 Runtime으로 대체 |
 | 일반 Runtime 실행 그룹 | `0 / 3 PASS` | G1도 아직 실행 가능 상태가 아님 |
 | Persistence 실행 그룹 | `0 / 7 PASS` | 전용 Milestone까지 `DEFERRED` |
@@ -85,7 +85,7 @@ Studio MCP 자동화는 반복 작업 절감 효과가 명확하거나 사용자
 PR: #2
 branch: agent/survival-logistics-token-authoring
 staticGateTargetSha: ef99a0740711b4f00fac0d5c8d0599f238ea48e9
-staticGate: PASS
+staticGate: PASS · HISTORICAL_SEPARATE_GATE
 phase4Implementation: PASS · RVTT-PR2-UI-FOUNDATION-IMPLEMENTATION-002
 phase4LocalStaticValidation: PASS
 phase5Implementation: PASS · RVTT-PR2-INPUT-CONTEXT-IMPLEMENTATION-001
@@ -113,7 +113,7 @@ newCurrentHeadStaticGate: REQUIRED_BEFORE_STUDIO
 studioManualRuntimeCurrentContract: NOT_EXECUTED
 humanPlaytestCurrentContract: NOT_EXECUTED
 phase10AcceptanceTargetShaAtStart: e20853c3bc1e36fb78a1888809e13a8c8577ebb0
-phase10AcceptanceRegistration: PARTIAL · 49 items · 12 batches · 3 final-contract blockers
+phase10AcceptanceRegistration: PARTIAL · 49 items · 12 batches · 2 final-contract blockers
 phase10AssetRegistryCommand: RVTT-PR2-ADR0091-ASSET-REGISTRY-IMPLEMENTATION-001
 phase10AssetRegistryTargetShaAtStart: 4321d104a597e530bf57748874ce42b13c42c1c4
 phase10AssetRegistryStaticValidation: PASS · empty production registry + source/server/client-safe boundary + 11 focused fixtures
@@ -123,12 +123,15 @@ phase10RulesProfileStaticValidation: SUPERSEDED_PARTIAL · in-memory gate existe
 phase10RulesReleaseEnforcementFixCommand: RVTT-PR2-ADR0091-RULES-PROFILE-RELEASE-ENFORCEMENT-FIX-001
 phase10RulesReleaseEnforcementTargetShaAtStart: d23b47b1ad6b8f8804e59b146b59eb1a68933c6c
 phase10RulesReleaseEnforcementStaticValidation: PASS · BuiltinPackIndex-derived readiness + injectable drift fixtures + deterministic filesystem staging inventory + CI nonzero gate
+phase10CoreRulesReaderExecutionMode: CHATGPT_DIRECT_GITHUB_IMPLEMENTATION
+phase10CoreRulesReaderStaticValidation: PASS · focused validator + StyLua + Selene + all required Rojo builds/sourcemaps + production/tests Luau analysis
+phase10CoreRulesReaderRuntime: NOT_EXECUTED
 phase10StudioRuntime: NOT_EXECUTED
 phase10HumanEvidence: NOT_EXECUTED
-phase10Next: CORE_RULES_READER_CORRECTION
+phase10Next: OFFICIAL_2024_CHARACTER_SHEET_CORRECTION
 ```
 
-`ef99a07...` Static PASS는 역사적 증거로 유지한다. 이후 Shared Shell·Preference Foundation, Input·Context Action, Exploration·Encounter HUD, Inventory·Journal·Settings, Entry·Role·Recovery Source가 변경됐고 각 구현 명령 범위의 로컬 Validator·Format·Lint·Rojo Build·Production/Test Luau 분석은 통과했다. Phase 10 Matrix 등록에서 확인된 ADR-0091 필수 구현 Gap 5개 중 Asset Registry foundation과 Rules Profile/Release Leak Gate는 정적으로 해제됐다. Rules Profile의 최초 in-memory gate 판정은 package metadata 중복과 filesystem/CI enforcement 부재 때문에 대체됐으며, 현재 판정은 actual staging gate까지 포함한다. Studio Human Retest 전에는 남은 3개 focused implementation correction을 완료하고 **새 구현 Head에서 current-HEAD Static Gate를 다시 통과해야 한다.**
+`ef99a07...` Static PASS는 역사적 증거로 유지한다. 이후 UI·UX Source가 계속 변경됐으므로 Studio Human Retest 전에는 남은 Official 2024 Character Sheet와 Dice Slot Reveal Notice를 완료하고 **별도의 새 current-HEAD Static Gate를 다시 통과해야 한다.** Core Rules Reader의 current-head CI 성공은 해당 correction의 Source/Static 증거이며 전체 제품 Runtime PASS가 아니다.
 
 ---
 
@@ -144,6 +147,8 @@ Shared Shell·Preference Foundation
 → Entry·Role·Recovery
 → DM Live Workspace
 → Acceptance 확장
+→ Official 2024 Character Sheet correction
+→ Dice Slot Reveal Notice correction
 → 새 current-HEAD Static Gate
 → Exploration·Context Input Studio Human Retest
 → UI·Accessibility Evidence
@@ -153,8 +158,7 @@ Shared Shell·Preference Foundation
 → Slice 16 Release Campaign
 ```
 
-따라서 **현재는 사용자에게 Studio 실행을 요청하지 않는다.**
-`Studio Human Retest`는 위 구현·Acceptance 정합화가 끝난 후 새 Head의 Static Gate가 PASS했을 때만 `PENDING/READY`로 전환한다.
+따라서 **현재는 사용자에게 Studio 실행을 요청하지 않는다.** `Studio Human Retest`는 남은 구현·Acceptance 정합화가 끝난 후 새 Head의 Static Gate가 PASS했을 때만 `PENDING/READY`로 전환한다.
 
 ---
 
@@ -198,7 +202,7 @@ Persistence 7개는 `GRAND-ACCEPTANCE-CAMPAIGN.md`의 Persistence 전용 Milesto
 
 ## 6. 다음 사용자 Human Retest 체크리스트 — 준비 중
 
-아래 체크리스트는 `CURRENT-WORK-ORDER.md`의 Acceptance 재작성 범위다. **현재 상태는 `BLOCKED / NOT READY`이며 아직 실행하지 않는다.** 구현과 Acceptance 확장이 끝나면 G1 Runtime에 포함해 한 번의 Batch로 확인한다.
+아래 체크리스트는 `CURRENT-WORK-ORDER.md`의 Acceptance 재작성 범위다. **현재 상태는 `BLOCKED / NOT READY`이며 아직 실행하지 않는다.** 남은 ADR-0091 Source correction과 새 current-HEAD Static Gate가 끝나면 G1 Runtime에 포함해 한 번의 Batch로 확인한다.
 
 ### Input·Direct Play — 11개
 
@@ -214,15 +218,16 @@ Persistence 7개는 `GRAND-ACCEPTANCE-CAMPAIGN.md`의 Persistence 전용 Milesto
 - [ ] 10. 행동 후 Selection이 유지되고 Camera가 강제로 이동하지 않으며 Soft Focus 계약을 따른다.
 - [ ] 11. Pending·Denied·Stale·Projection Revision 상태가 일관되게 표시된다.
 
-### Screen·Preference — 7개
+### Screen·Preference — 8개
 
 - [ ] 12. Exploration·Encounter Mode Composition이 명세와 맞다.
 - [ ] 13. Inventory·Loot·Transfer·Identification 흐름이 맞다.
 - [ ] 14. Journal Permission·Document Navigation이 권한과 명세를 따르며 별도 Player Map을 요구하지 않는다.
-- [ ] 15. Settings 초기값·Reset·Binding Conflict가 정상이다.
-- [ ] 16. Accent·Scale·Motion 변경 중 Focus·Selection이 유지된다.
-- [ ] 17. Entry·Role Change·Reconnect·Recovery 흐름이 정상이다.
-- [ ] 18. Player·DM·Observer Projection이 서로 올바르게 분리된다.
+- [ ] 15. Core Rules Reader에서 검색·stable anchor·lazy chunk·viewer filtering이 실제 Runtime에서도 정상이다.
+- [ ] 16. Settings 초기값·Reset·Binding Conflict가 정상이다.
+- [ ] 17. Accent·Scale·Motion 변경 중 Focus·Selection이 유지된다.
+- [ ] 18. Entry·Role Change·Reconnect·Recovery 흐름이 정상이다.
+- [ ] 19. Player·DM·Observer Projection이 서로 올바르게 분리된다.
 
 ### 현재 판정 기록
 
@@ -234,9 +239,9 @@ tester: USER_MANUAL
 result: NOT_EXECUTED
 passedChecks: 0
 failedChecks: 0
-blockedChecks: 18
-blocker: Full UI·UX Source·Acceptance alignment and new current-HEAD Static Gate required
-next: ADR-0091 rules profile/release leak gate correction
+blockedChecks: 19
+blocker: Official 2024 Sheet + Dice Notice + new current-HEAD Static Gate required
+next: ADR-0091 Official 2024 Character Sheet correction
 ```
 
 ### Historical Studio Evidence — 현재 계약 PASS로 사용 금지
@@ -247,7 +252,7 @@ historicalResult: [RVTT Batch Summary] batch=slice01-world-interaction result=PA
 scope: old Camera·Token Pick·Move·Projection input contract only
 ```
 
-이 Historical PASS는 새 Pointer, Screen Shell, Settings, Accessibility, Role/Recovery 계약의 Runtime Evidence가 아니다.
+이 Historical PASS는 새 Pointer, Screen Shell, Settings, Accessibility, Role/Recovery, Core Rules Reader 계약의 Runtime Evidence가 아니다.
 
 ---
 
@@ -274,7 +279,7 @@ scope: old Camera·Token Pick·Move·Projection input contract only
 Test/Batch: <id or name>
 Target Head: <sha>
 Executed At: <YYYY-MM-DD>
-Executor: USER_MANUAL | CODEX | CI | OTHER
+Executor: USER_MANUAL | CHATGPT_DIRECT | CODEX | CI | OTHER
 Result: PASS | FAIL | BLOCKED | DEFERRED | PARTIAL
 Passed: <n>
 Failed: <n>
@@ -297,5 +302,3 @@ Next: <next required action>
 - `implementation/roblox/GRAND-ACCEPTANCE-CAMPAIGN.md` — Grand Runtime 실행 모델
 - `implementation/roblox/grand-acceptance-manifest.json` — Runtime Phase Manifest
 - 필요 시 개별 Acceptance Project와 Runner
-
-이 문서는 위 Authority를 **한눈에 보는 현재 상태 인덱스**로 유지한다.
