@@ -8,6 +8,8 @@ import sys
 
 from validate_asset_registry import run_self_tests as run_asset_registry_self_tests
 from validate_asset_registry import validate as validate_asset_registry
+from validate_rules_profile_release_gate import run_self_tests as run_rules_profile_self_tests
+from validate_rules_profile_release_gate import validate as validate_rules_profile_gate
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -75,7 +77,10 @@ REQUIRED_FINAL_IDS = {
     "final.core-rules-reader-filtering",
     "final.rules-profile-release-leak-gate",
 }
-RESOLVED_FINAL_IDS = {"final.asset-registry-separation"}
+RESOLVED_FINAL_IDS = {
+    "final.asset-registry-separation",
+    "final.rules-profile-release-leak-gate",
+}
 REMAINING_FINAL_GAPS = REQUIRED_FINAL_IDS - RESOLVED_FINAL_IDS
 
 FORBIDDEN_FEATURE_IDS = {
@@ -246,7 +251,7 @@ def validate_matrix_data(matrix: dict, manifest: dict) -> list[str]:
     if final_gaps != blocked_final_items:
         errors.append("matrix: finalContractGaps must equal the actual BLOCKED final-contract subset")
     if final_gaps != REMAINING_FINAL_GAPS:
-        errors.append("matrix: ADR-0091 remaining four final-contract gaps must stay BLOCKED")
+        errors.append("matrix: ADR-0091 remaining three final-contract gaps must stay BLOCKED")
     for gap_id in REMAINING_FINAL_GAPS:
         matching = next((item for item in items if isinstance(item, dict) and item.get("id") == gap_id), None)
         if matching is None or matching.get("currentState") != "BLOCKED":
@@ -263,6 +268,20 @@ def validate_matrix_data(matrix: dict, manifest: dict) -> list[str]:
         }
         if not required_asset_evidence.issubset(set(asset_item.get("automatedRefs", []))):
             errors.append("matrix: asset registry blocker cannot close without production and focused evidence")
+    rules_item = final_items.get("final.rules-profile-release-leak-gate")
+    if rules_item is not None:
+        if rules_item.get("currentState") != "STATIC_VERIFIED":
+            errors.append("matrix: rules profile/release leak gate must be STATIC_VERIFIED after focused implementation")
+        required_rules_evidence = {
+            "implementation/roblox/src/ServerStorage/RVTT/Content/RulePackageResolver.lua",
+            "implementation/roblox/src/ServerStorage/RVTT/Content/ReleaseContentLeakGate.lua",
+            "implementation/roblox/src/ReplicatedStorage/RVTT/ContentRuntime/RuleProfileStatus.lua",
+            "implementation/roblox/tests/Unit/RulePackageResolver.spec.lua",
+            "implementation/roblox/tests/Unit/ReleaseContentLeakGate.spec.lua",
+            "implementation/roblox/tooling/validate_rules_profile_release_gate.py",
+        }
+        if not required_rules_evidence.issubset(set(rules_item.get("automatedRefs", []))):
+            errors.append("matrix: rules profile gate cannot close without production and focused evidence")
 
     return errors
 
@@ -292,6 +311,7 @@ def validate(root: Path = ROOT) -> list[str]:
     if matrix and manifest:
         errors.extend(validate_matrix_data(matrix, manifest))
     errors.extend(validate_asset_registry(ROOT))
+    errors.extend(validate_rules_profile_gate(ROOT))
     errors.extend(validate_forbidden_player_sources())
     return errors
 
@@ -329,12 +349,17 @@ def run_self_tests(matrix: dict, manifest: dict) -> list[str]:
     asset_item["automatedRefs"] = []
     fixtures.append((missing_asset_evidence, "asset registry blocker cannot close without production and focused evidence"))
 
-    false_remaining_release = deepcopy(matrix)
-    release_item = next(item for item in false_remaining_release["acceptanceItems"] if item["id"] == "final.rules-profile-release-leak-gate")
-    release_item["currentState"] = "STATIC_VERIFIED"
-    release_item.pop("blockerReason", None)
-    false_remaining_release["finalContractGaps"].remove("final.rules-profile-release-leak-gate")
-    fixtures.append((false_remaining_release, "remaining four final-contract gaps must stay BLOCKED"))
+    missing_rules_evidence = deepcopy(matrix)
+    rules_item = next(item for item in missing_rules_evidence["acceptanceItems"] if item["id"] == "final.rules-profile-release-leak-gate")
+    rules_item["automatedRefs"] = []
+    fixtures.append((missing_rules_evidence, "rules profile gate cannot close without production and focused evidence"))
+
+    false_remaining_reader = deepcopy(matrix)
+    reader_item = next(item for item in false_remaining_reader["acceptanceItems"] if item["id"] == "final.core-rules-reader-filtering")
+    reader_item["currentState"] = "STATIC_VERIFIED"
+    reader_item.pop("blockerReason", None)
+    false_remaining_reader["finalContractGaps"].remove("final.core-rules-reader-filtering")
+    fixtures.append((false_remaining_reader, "remaining three final-contract gaps must stay BLOCKED"))
 
     for fixture, expected in fixtures:
         fixture_errors = validate_matrix_data(fixture, manifest)
@@ -350,6 +375,7 @@ def main() -> int:
     if matrix and manifest:
         errors.extend(run_self_tests(matrix, manifest))
     errors.extend(run_asset_registry_self_tests())
+    errors.extend(run_rules_profile_self_tests())
     if errors:
         print("Full UI/UX acceptance validation failed:")
         for error in errors:

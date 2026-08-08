@@ -44,11 +44,11 @@ Grand Persistence Published Runner·Config·CI
 
 현재 작업
 → Full UI·UX Acceptance Matrix 등록 완료
-→ ADR-0091 Asset Registry foundation STATIC_VERIFIED
-→ 나머지 필수 구현 Gap 4개로 Phase 10 HOLD
+→ ADR-0091 Asset Registry + Rules Profile/Release Leak Gate STATIC_VERIFIED
+→ 나머지 필수 구현 Gap 3개로 Phase 10 HOLD
 ```
 
-Input·Context Action, Exploration·Encounter HUD, Inventory·Journal·Settings, Entry·Role·Recovery, DM Workspace Source는 현재 계약에 정합화됐다. ADR-0091 Asset Registry의 Authoring Source·Server Registry·Client-safe View와 focused validation은 정적으로 확인됐다. 나머지 필수 구현 Gap 4개와 그 뒤의 새 current-HEAD Static Gate 전에는 Studio Retest를 시작하지 않는다.
+Input·Context Action, Exploration·Encounter HUD, Inventory·Journal·Settings, Entry·Role·Recovery, DM Workspace Source는 현재 계약에 정합화됐다. ADR-0091 Asset Registry와 Rules Profile Resolver·Release Content Leak Gate의 Server/Client-safe 경계 및 focused validation은 정적으로 확인됐다. 나머지 필수 구현 Gap 3개와 그 뒤의 새 current-HEAD Static Gate 전에는 Studio Retest를 시작하지 않는다.
 
 ## 2. 목표 입력 계약
 
@@ -242,7 +242,7 @@ HEAD 582c1c4
 | 7 | DONE | Inventory·Journal·Settings | 화면·Intent·Permission·Preference |
 | 8 | DONE | Entry·Role·Recovery | Projection rebuild·Reconnect·Error Boundary |
 | 9 | DONE | DM Live Workspace 정합화 | Player Preview·Override·Queue |
-| 10 | HOLD | Acceptance 확장 | Asset Registry STATIC_VERIFIED, ADR-0091 필수 구현 Gap 4개 |
+| 10 | HOLD | Acceptance 확장 | Asset Registry·Rules Profile/Release Leak Gate STATIC_VERIFIED, ADR-0091 필수 구현 Gap 3개 |
 | 11 | BLOCKED | Studio Human Retest | Static Gate PASS 후 실행 |
 | 12 | QUEUED | UI·Accessibility Evidence | Scale·Focus·Contrast·Motion·Screenshot |
 | 13 | QUEUED | DM·Player·Observer Test | 권한별 Projection·Role Change |
@@ -254,7 +254,7 @@ HEAD 582c1c4
 ## 11. 다음 Gate
 
 ```text
-ADR-0091 rules profile/release leak gate correction
+ADR-0091 Core Rules Reader correction
 → Acceptance Matrix Gap 재검증
 → Structure·Security·StyLua·Selene·Rojo·Luau
 → Exploration·Context Input Studio Retest

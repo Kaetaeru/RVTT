@@ -61,15 +61,16 @@ Studio MCP 자동화는 반복 작업 절감 효과가 명확하거나 사용자
 |---|---|---|
 | ADR/설계 및 Studio Preflight 문서 검수 | `PASS` | 마지막 Codex Delta 결과 `NO_SUPPORTED_FINDINGS` |
 | 마지막 Implementation Static Gate | `PASS` | 검증 대상 `ef99a0740711b4f00fac0d5c8d0599f238ea48e9` |
-| Full UI·UX Source·Acceptance 정합화 | `PARTIAL` | Asset Registry STATIC_VERIFIED, ADR-0091 필수 구현 Gap 4개 |
+| Full UI·UX Source·Acceptance 정합화 | `PARTIAL` | Asset Registry·Rules Profile/Release Leak Gate STATIC_VERIFIED, ADR-0091 필수 구현 Gap 3개 |
 | ADR-0091 Asset Registry foundation | `STATIC_VERIFIED` | Source·Server·Client-safe 경계, validation·negative disclosure focused regression |
+| ADR-0091 Rules Profile + Release Leak Gate | `STATIC_VERIFIED` | Profile authority·private readiness·explicit fallback·public artifact leak gate focused regression |
 | Shared Shell·Preference Foundation | `PASS` | `RVTT-PR2-UI-FOUNDATION-IMPLEMENTATION-002` 구현·로컬 정적 검증 완료 |
 | Input·Context Action 정합화 | `PASS` | `RVTT-PR2-INPUT-CONTEXT-IMPLEMENTATION-001` 구현·로컬 정적 검증 완료 |
 | Exploration·Encounter HUD | `PASS` | `RVTT-PR2-EXPLORATION-ENCOUNTER-HUD-IMPLEMENTATION-001` 구현·로컬 정적 검증 완료 |
 | Inventory·Journal·Settings | `PASS` | `RVTT-PR2-INVENTORY-JOURNAL-SETTINGS-IMPLEMENTATION-001` Source·Static 완료 |
 | Entry·Role·Recovery | `PASS` | `RVTT-PR2-ENTRY-ROLE-RECOVERY-IMPLEMENTATION-001` Source·Static 완료 |
 | DM Live Workspace | `PASS` | `RVTT-PR2-DM-LIVE-WORKSPACE-IMPLEMENTATION-001` Source·Static 완료 |
-| Full UI·UX Acceptance 확장 | `HOLD` | 49개 항목 등록, 남은 ADR-0091 correction 4개 필요 |
+| Full UI·UX Acceptance 확장 | `HOLD` | 49개 항목 등록, 남은 ADR-0091 correction 3개 필요 |
 | 현재 사용자 Studio Human Retest | `BLOCKED` | UI·UX Source·Acceptance 정합화 + 새 current-HEAD Static Gate가 먼저 |
 | Codex Studio MCP Smoke | `NOT_DEFAULT` | 현재 운영에서는 사용자 수동 Runtime으로 대체 |
 | 일반 Runtime 실행 그룹 | `0 / 3 PASS` | G1도 아직 실행 가능 상태가 아님 |
@@ -112,16 +113,19 @@ newCurrentHeadStaticGate: REQUIRED_BEFORE_STUDIO
 studioManualRuntimeCurrentContract: NOT_EXECUTED
 humanPlaytestCurrentContract: NOT_EXECUTED
 phase10AcceptanceTargetShaAtStart: e20853c3bc1e36fb78a1888809e13a8c8577ebb0
-phase10AcceptanceRegistration: PARTIAL · 49 items · 12 batches · 4 final-contract blockers
+phase10AcceptanceRegistration: PARTIAL · 49 items · 12 batches · 3 final-contract blockers
 phase10AssetRegistryCommand: RVTT-PR2-ADR0091-ASSET-REGISTRY-IMPLEMENTATION-001
 phase10AssetRegistryTargetShaAtStart: 4321d104a597e530bf57748874ce42b13c42c1c4
 phase10AssetRegistryStaticValidation: PASS · empty production registry + source/server/client-safe boundary + 11 focused fixtures
+phase10RulesProfileCommand: RVTT-PR2-ADR0091-RULES-PROFILE-LEAK-GATE-IMPLEMENTATION-001
+phase10RulesProfileTargetShaAtStart: 899292844d58b4c691dffbf2ff9ce84de4104005
+phase10RulesProfileStaticValidation: PASS · 6 exact profiles + private readiness/fallback + public output leak gate + client-safe allowlist
 phase10StudioRuntime: NOT_EXECUTED
 phase10HumanEvidence: NOT_EXECUTED
-phase10Next: RULES_PROFILE_RELEASE_LEAK_GATE_CORRECTION
+phase10Next: CORE_RULES_READER_CORRECTION
 ```
 
-`ef99a07...` Static PASS는 역사적 증거로 유지한다. 이후 Shared Shell·Preference Foundation, Input·Context Action, Exploration·Encounter HUD, Inventory·Journal·Settings, Entry·Role·Recovery Source가 변경됐고 각 구현 명령 범위의 로컬 Validator·Format·Lint·Rojo Build·Production/Test Luau 분석은 통과했다. Phase 10 Matrix 등록에서 확인된 ADR-0091 필수 구현 Gap 5개 중 Asset Registry foundation은 정적으로 해제됐다. Studio Human Retest 전에는 남은 4개 focused implementation correction을 완료하고 **새 구현 Head에서 current-HEAD Static Gate를 다시 통과해야 한다.**
+`ef99a07...` Static PASS는 역사적 증거로 유지한다. 이후 Shared Shell·Preference Foundation, Input·Context Action, Exploration·Encounter HUD, Inventory·Journal·Settings, Entry·Role·Recovery Source가 변경됐고 각 구현 명령 범위의 로컬 Validator·Format·Lint·Rojo Build·Production/Test Luau 분석은 통과했다. Phase 10 Matrix 등록에서 확인된 ADR-0091 필수 구현 Gap 5개 중 Asset Registry foundation과 Rules Profile/Release Leak Gate는 정적으로 해제됐다. Studio Human Retest 전에는 남은 3개 focused implementation correction을 완료하고 **새 구현 Head에서 current-HEAD Static Gate를 다시 통과해야 한다.**
 
 ---
 

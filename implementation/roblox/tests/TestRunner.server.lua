@@ -32,6 +32,16 @@ local specs: { Spec } = {
 		runner = require(script.Parent.Unit["AssetRegistry.spec"]) :: any,
 	},
 	{
+		id = "unit-rule-package-resolver",
+		name = "RulePackageResolver.spec",
+		runner = require(script.Parent.Unit["RulePackageResolver.spec"]) :: any,
+	},
+	{
+		id = "unit-release-content-leak-gate",
+		name = "ReleaseContentLeakGate.spec",
+		runner = require(script.Parent.Unit["ReleaseContentLeakGate.spec"]) :: any,
+	},
+	{
 		id = "unit-accent-theme",
 		name = "AccentTheme.spec",
 		runner = require(script.Parent.Unit["AccentTheme.spec"]) :: any,

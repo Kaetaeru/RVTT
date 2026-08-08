@@ -182,6 +182,9 @@ required = [
     "src/ServerStorage/RVTT/Content/AssetPackageRegistry.lua",
     "src/ServerStorage/RVTT/Content/AssetRegistryValidator.lua",
     "src/ServerStorage/RVTT/Content/ClientAssetViewBuilder.lua",
+    "src/ServerStorage/RVTT/Content/RulePackageResolver.lua",
+    "src/ServerStorage/RVTT/Content/ReleaseContentLeakGate.lua",
+    "src/ReplicatedStorage/RVTT/ContentRuntime/RuleProfileStatus.lua",
     "src/StarterPlayer/StarterPlayerScripts/RVTT/ClientBoot.client.lua",
     "src/StarterPlayer/StarterPlayerScripts/RVTT/Client/ClientRuntime.lua",
     "src/StarterPlayer/StarterPlayerScripts/RVTT/Client/World/TokenAssetResolver.lua",
@@ -199,6 +202,8 @@ required = [
     "tests/Integration/Slice04Encounter.spec.lua",
     "tests/Unit/BatchSummary.spec.lua",
     "tests/Unit/AssetRegistry.spec.lua",
+    "tests/Unit/RulePackageResolver.spec.lua",
+    "tests/Unit/ReleaseContentLeakGate.spec.lua",
     "tests/Unit/WorldInteractionMath.spec.lua",
     "tests/Unit/WorldTokenContract.spec.lua",
     "tests/Slice01Acceptance/Slice01Acceptance.client.lua",
@@ -210,6 +215,7 @@ required = [
     "tooling/run-grand-acceptance.ps1",
     "tooling/validate_full_ui_ux_acceptance.py",
     "tooling/validate_asset_registry.py",
+    "tooling/validate_rules_profile_release_gate.py",
     "manifests/all-slices-script-manifest.md",
 ]
 for relative in required:
@@ -273,6 +279,8 @@ if test_runner_path.exists():
         'id = "slice03-exploration"',
         'id = "slice04-encounter"',
         'id = "unit-asset-registry"',
+        'id = "unit-rule-package-resolver"',
+        'id = "unit-release-content-leak-gate"',
     ):
         if required_phrase not in test_runner:
             errors.append(f"TestRunner.server.lua: missing grand test contract {required_phrase}")
