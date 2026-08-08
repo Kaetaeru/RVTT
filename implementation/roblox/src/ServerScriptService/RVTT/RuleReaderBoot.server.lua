@@ -51,6 +51,10 @@ local function packageProvider(packageId: string): any?
 	return RuleRuntimePackageBinding.packageForId(packageId, configuredProfile())
 end
 
+local function profileAccessResolver(player: Player): boolean
+	return RuleRuntimePackageBinding.viewerCanAccessProfile(configuredProfile(), player.UserId)
+end
+
 local remoteFolder = ReplicatedStorage:WaitForChild(Names.FOLDER, 15)
 if remoteFolder == nil or not remoteFolder:IsA("Folder") then
 	warn("[RVTT RuleReader] canonical remote folder unavailable")
@@ -80,7 +84,8 @@ local query = RuleReaderQuery.new(
 	RuleReaderService,
 	resolveProfile,
 	packageProvider,
-	nil
+	nil,
+	profileAccessResolver
 )
 query:start()
 
