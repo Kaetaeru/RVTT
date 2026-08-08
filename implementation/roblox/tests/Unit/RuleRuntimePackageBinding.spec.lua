@@ -32,6 +32,7 @@ return function(h: any)
 		sourceBindingKey = privateAuthority.sourceBindingKey,
 		revision = privateAuthority.version,
 		sourceRoot = privateAuthority.sourceRoot,
+		verifiedDigest = privateAuthority.expectedSourceDigest,
 		contentCounts = copy(privateAuthority.expectedContentCounts),
 	}
 	local privatePackage = {
@@ -83,6 +84,12 @@ return function(h: any)
 	local staleReadiness = Binding.resolveProfileWithBinding("test", staleReadinessBinding)
 	local staleReadinessCode = if staleReadiness.error then staleReadiness.error.code else nil
 	h:equal(staleReadinessCode, "SOURCE_REVISION_MISMATCH", "stale readiness is rejected")
+
+	local staleDigestBinding = copy(exactBinding)
+	staleDigestBinding.readiness.verifiedDigest = "stale-digest"
+	local staleDigest = Binding.resolveProfileWithBinding("test", staleDigestBinding)
+	local staleDigestCode = if staleDigest.error then staleDigest.error.code else nil
+	h:equal(staleDigestCode, "SOURCE_DIGEST_MISMATCH", "stale source tree is rejected")
 
 	local wrongPackageBinding = copy(exactBinding)
 	wrongPackageBinding.package.packageId = "rvtt.core.rules"
