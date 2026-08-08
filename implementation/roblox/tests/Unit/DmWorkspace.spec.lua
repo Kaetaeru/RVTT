@@ -166,19 +166,26 @@ return function(harness: any)
 		"accepted_awaiting_projection",
 		"control success receipt alone does not confirm authority"
 	)
+	payload.domains.dm_workspace.control.actor = 22
+	local preexistingControl = ViewModel.build(payload, 1, 10, controlPending)
+	harness:equal(
+		preexistingControl.queue[4].status,
+		"accepted_awaiting_projection",
+		"matching control at the base revision does not confirm the command"
+	)
 	payload.domains.dm_workspace.control.actor = 23
 	local conflictingControl = ViewModel.build(payload, 1, 11, controlPending)
 	harness:equal(
 		conflictingControl.queue[4].status,
 		"accepted_awaiting_projection",
-		"different projected controller is not confirmed"
+		"newer projection with a different controller is not confirmed"
 	)
 	payload.domains.dm_workspace.control.actor = 22
 	local confirmedControl = ViewModel.build(payload, 1, 12, controlPending)
 	harness:equal(
 		confirmedControl.queue[4].status,
 		"projection_confirmed",
-		"matching authoritative control projection confirms the command"
+		"newer matching authoritative control projection confirms the command"
 	)
 
 	local failures = {}

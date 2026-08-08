@@ -104,6 +104,9 @@ phase9LocalStaticValidation: PASS · validators + format + lint + 15 Rojo builds
 phase9ReconciliationFix: PASS · RVTT-PR2-PHASE9-QUEUE-RECONCILIATION-001
 phase9ReconciliationTargetShaAtStart: b70eb0aa34dc4a09270e0ed2c51e6cbd83d512db
 phase9ReconciliationLocalStaticValidation: PASS · recovery/control/terminal-feedback focused regression + validators + format + lint + 15 Rojo builds + default/test/multi-client sourcemaps + production/test Luau analysis
+phase9ControlRevisionFix: PASS · RVTT-PR2-PHASE9-CONTROL-REVISION-FIX-001
+phase9ControlRevisionTargetShaAtStart: 068b6f35a5f4db2e527ad64ee30e6d9310b47a13
+phase9ControlRevisionLocalStaticValidation: PASS · same/base-revision guard + cases A-D + previous reconciliation regressions + validators + format + lint + 15 Rojo builds + default/test/multi-client sourcemaps + production/test Luau analysis
 newCurrentHeadStaticGate: REQUIRED_BEFORE_STUDIO
 studioManualRuntimeCurrentContract: NOT_EXECUTED
 humanPlaytestCurrentContract: NOT_EXECUTED

@@ -142,6 +142,8 @@ function DmWorkspaceViewModel.build(
 	for commandId, record in pending or {} do
 		local controlConfirmed = record.commandType == COMMANDS.ASSIGN_CONTROL
 			and record.accepted == true
+			and type(record.baseRevision) == "number"
+			and revision > record.baseRevision
 			and type(record.expectedActorId) == "string"
 			and type(record.expectedControllerUserId) == "number"
 			and type(workspace.control) == "table"

@@ -46,7 +46,7 @@ Grand Persistence Published Runner·Config·CI
 → Full UI·UX Acceptance 확장
 ```
 
-Input·Context Action, Exploration·Encounter HUD, Inventory·Journal·Settings, Entry·Role·Recovery Source는 현재 계약에 정합화됐다. DM Workspace와 Acceptance 정합화가 남아 있으므로 Studio Retest를 시작하지 않는다.
+Input·Context Action, Exploration·Encounter HUD, Inventory·Journal·Settings, Entry·Role·Recovery, DM Workspace Source는 현재 계약에 정합화됐다. Acceptance 정합화와 새 current-HEAD Static Gate가 남아 있으므로 Studio Retest를 시작하지 않는다.
 
 ## 2. 목표 입력 계약
 
