@@ -61,12 +61,12 @@ Studio MCP 자동화는 반복 작업 절감 효과가 명확하거나 사용자
 |---|---|---|
 | ADR/설계 및 Studio Preflight 문서 검수 | `PASS` | 마지막 Codex Delta 결과 `NO_SUPPORTED_FINDINGS` |
 | 마지막 Implementation Static Gate | `PASS` | 검증 대상 `ef99a0740711b4f00fac0d5c8d0599f238ea48e9` |
-| Full UI·UX Source·Acceptance 정합화 | `IN_PROGRESS` | `CURRENT-WORK-ORDER.md` 순서 7부터 진행 |
+| Full UI·UX Source·Acceptance 정합화 | `IN_PROGRESS` | `CURRENT-WORK-ORDER.md` 순서 8부터 진행 |
 | Shared Shell·Preference Foundation | `PASS` | `RVTT-PR2-UI-FOUNDATION-IMPLEMENTATION-002` 구현·로컬 정적 검증 완료 |
 | Input·Context Action 정합화 | `PASS` | `RVTT-PR2-INPUT-CONTEXT-IMPLEMENTATION-001` 구현·로컬 정적 검증 완료 |
 | Exploration·Encounter HUD | `PASS` | `RVTT-PR2-EXPLORATION-ENCOUNTER-HUD-IMPLEMENTATION-001` 구현·로컬 정적 검증 완료 |
-| Inventory·Journal·Settings | `IN_PROGRESS` | 다음 구현 작업 |
-| Entry·Role·Recovery | `PENDING` | 화면 정합화 이후 |
+| Inventory·Journal·Settings | `PASS` | `RVTT-PR2-INVENTORY-JOURNAL-SETTINGS-IMPLEMENTATION-001` Source·Static 완료 |
+| Entry·Role·Recovery | `IN_PROGRESS` | 다음 구현 작업 |
 | DM Live Workspace | `PENDING` | Role·Recovery 이후 |
 | Full UI·UX Acceptance 확장 | `PENDING` | Runtime 전에 필요 |
 | 현재 사용자 Studio Human Retest | `BLOCKED` | UI·UX Source·Acceptance 정합화 + 새 current-HEAD Static Gate가 먼저 |
@@ -92,12 +92,15 @@ phase5LocalStaticValidation: PASS · validator + format + lint + 15 Rojo builds 
 phase6Implementation: PASS · RVTT-PR2-EXPLORATION-ENCOUNTER-HUD-IMPLEMENTATION-001
 phase6TargetShaAtStart: c1896af5e8cfa4cc80b6b37445beb998e77a0b13
 phase6LocalStaticValidation: PASS · validator + format + lint + 15 Rojo builds + default/test sourcemaps + production/test Luau analysis
+phase7Implementation: PASS · RVTT-PR2-INVENTORY-JOURNAL-SETTINGS-IMPLEMENTATION-001
+phase7TargetShaAtStart: ebe282604fb7140a8acb31b2268c31f45702045e
+phase7LocalStaticValidation: PASS · validators + format + lint + 15 Rojo builds + default/test sourcemaps + production/test Luau analysis
 newCurrentHeadStaticGate: REQUIRED_BEFORE_STUDIO
 studioManualRuntimeCurrentContract: NOT_EXECUTED
 humanPlaytestCurrentContract: NOT_EXECUTED
 ```
 
-`ef99a07...` Static PASS는 역사적 증거로 유지한다. 이후 Shared Shell·Preference Foundation과 Input·Context Action Source가 변경됐고 각 구현 명령 범위의 로컬 Validator·Format·Lint·Rojo Build·Production/Test Luau 분석은 통과했다. Studio Human Retest 전에는 나머지 UI·UX Source·Acceptance 정합화를 완료하고 **새 구현 Head에서 current-HEAD Static Gate를 다시 통과해야 한다.**
+`ef99a07...` Static PASS는 역사적 증거로 유지한다. 이후 Shared Shell·Preference Foundation, Input·Context Action, Exploration·Encounter HUD, Inventory·Journal·Settings Source가 변경됐고 각 구현 명령 범위의 로컬 Validator·Format·Lint·Rojo Build·Production/Test Luau 분석은 통과했다. Studio Human Retest 전에는 나머지 UI·UX Source·Acceptance 정합화를 완료하고 **새 구현 Head에서 current-HEAD Static Gate를 다시 통과해야 한다.**
 
 ---
 
@@ -205,7 +208,7 @@ passedChecks: 0
 failedChecks: 0
 blockedChecks: 18
 blocker: Full UI·UX Source·Acceptance alignment and new current-HEAD Static Gate required
-next: Inventory·Journal·Settings implementation
+next: Entry·Role·Recovery implementation
 ```
 
 ### Historical Studio Evidence — 현재 계약 PASS로 사용 금지

@@ -43,10 +43,10 @@ Grand Persistence Published Runner·Config·CI
 → EXECUTION CONTRACT READY
 
 현재 작업
-→ Inventory·Journal·Settings
+→ Entry·Role·Recovery
 ```
 
-Input·Context Action Source는 Q·ESC·Left·Right·Middle·Availability 계약에 정합화됐다. Preview·HUD·나머지 화면과 Acceptance 정합화가 남아 있으므로 Studio Retest를 시작하지 않는다.
+Input·Context Action, Exploration·Encounter HUD, Inventory·Journal·Settings Source는 현재 계약에 정합화됐다. Entry·Role·Recovery, DM Workspace와 Acceptance 정합화가 남아 있으므로 Studio Retest를 시작하지 않는다.
 
 ## 2. 목표 입력 계약
 
@@ -238,8 +238,8 @@ HEAD 582c1c4
 | 4 | DONE | Shared Shell·Preference Foundation | Layer·Mode·System·Theme·Settings Store |
 | 5 | DONE | Input·Context Action 정합화 | Q·ESC·Left·Right·Middle·Availability |
 | 6 | DONE | Exploration·Encounter HUD | Preview·Turn·Reaction·Selection Continuity |
-| 7 | IN_PROGRESS | Inventory·Journal·Settings | 화면·Intent·Permission·Preference |
-| 8 | QUEUED | Entry·Role·Recovery | Projection rebuild·Reconnect·Error Boundary |
+| 7 | DONE | Inventory·Journal·Settings | 화면·Intent·Permission·Preference |
+| 8 | IN_PROGRESS | Entry·Role·Recovery | Projection rebuild·Reconnect·Error Boundary |
 | 9 | QUEUED | DM Live Workspace 정합화 | Player Preview·Override·Queue |
 | 10 | QUEUED | Acceptance 확장 | Full UI·UX Matrix 등록 |
 | 11 | BLOCKED | Studio Human Retest | Static Gate PASS 후 실행 |

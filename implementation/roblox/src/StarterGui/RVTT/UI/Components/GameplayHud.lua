@@ -104,7 +104,13 @@ local function previewText(preview: any?): string
 	return table.concat(parts, " · ")
 end
 
-function Hud.new(parent: Instance, toastParent: Instance, onEndTurn: () -> ()): any
+function Hud.new(
+	parent: Instance,
+	toastParent: Instance,
+	onEndTurn: () -> (),
+	onOpenInventory: () -> (),
+	onOpenJournal: () -> ()
+): any
 	local root = panel("GameplayHud")
 	root.AnchorPoint = Vector2.new(0.5, 1)
 	root.Position = UDim2.new(0.5, 0, 1, -20)
@@ -145,8 +151,33 @@ function Hud.new(parent: Instance, toastParent: Instance, onEndTurn: () -> ()): 
 
 	local feedback = textLabel("Feedback", Tokens.TextSize.Caption, "success")
 	feedback.Position = UDim2.fromOffset(16, 112)
-	feedback.Size = UDim2.fromOffset(560, 24)
+	feedback.Size = UDim2.fromOffset(390, 24)
 	feedback.Parent = root
+
+	local inventory = Instance.new("TextButton")
+	inventory.Name = "OpenInventory"
+	inventory.Position = UDim2.fromOffset(410, 106)
+	inventory.Size = UDim2.fromOffset(96, 34)
+	inventory.BorderSizePixel = 0
+	inventory.AutoButtonColor = false
+	inventory.Font = Enum.Font.GothamBold
+	inventory.Text = "소지품"
+	inventory.TextSize = Tokens.TextSize.Caption
+	inventory.Selectable = true
+	inventory:SetAttribute("RVTTBackgroundToken", "surfaceSoft")
+	inventory:SetAttribute("RVTTTextToken", "textPrimary")
+	inventory.Parent = root
+	local inventoryCorner = Instance.new("UICorner")
+	inventoryCorner.CornerRadius = Tokens.Radius.SM
+	inventoryCorner.Parent = inventory
+	inventory.Activated:Connect(onOpenInventory)
+
+	local journal = inventory:Clone()
+	journal.Name = "OpenJournal"
+	journal.Position = UDim2.fromOffset(514, 106)
+	journal.Text = "Journal"
+	journal.Parent = root
+	journal.Activated:Connect(onOpenJournal)
 
 	local reaction = textLabel("Reaction", Tokens.TextSize.Caption, "warning")
 	reaction.Position = UDim2.fromOffset(276, 92)

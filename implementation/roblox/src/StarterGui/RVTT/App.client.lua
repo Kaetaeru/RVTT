@@ -11,11 +11,13 @@ local player = Players.LocalPlayer
 local SharedUI = ReplicatedStorage.RVTT.Shared.UI
 local Tokens = require(SharedUI.DesignTokens)
 local GameplayHudViewModel = require(SharedUI.GameplayHudViewModel)
+local ManagementViewModel = require(SharedUI.ManagementViewModel)
 local uiFolder = script.Parent.UI
 local AppShell = require(uiFolder.AppShell)
 local ThemeApplicator = require(uiFolder.ThemeApplicator)
 local SettingsPanel = require(uiFolder.Components.SettingsPanel)
 local GameplayHud = require(uiFolder.Components.GameplayHud)
+local ManagementPanel = require(uiFolder.Components.ManagementPanel)
 local components = uiFolder.Components
 
 local playerScripts = player:WaitForChild("PlayerScripts")
@@ -61,21 +63,27 @@ settingsStroke.Transparency = 0.12
 settingsStroke:SetAttribute("RVTTStrokeToken", "focus")
 settingsStroke.Parent = settingsButton
 
-local currentAccentId = "gold"
 local settingsContextActive = false
+local managementContextActive = false
+local managementReturnSurface = "gameplay"
+local managementCommands: { [string]: any } = {}
+local managementAwaitingRevision: number? = nil
 local feedback = GameplayHudViewModel.initialFeedback(client.Replica.revision)
 local rawPreview = client.WorldTokens.Input:getCurrentPreview()
 local currentHudState: any = nil
 local settingsPanel: any
 local gameplayHud: any
+local managementPanel: any
 local setSettingsVisible: (boolean) -> ()
+local setManagementVisible: (boolean, string?) -> ()
 local renderHud: () -> ()
+local renderManagement: () -> ()
 
 local function applyPreferences()
 	local preferences = client.Preferences:snapshot()
-	currentAccentId = ThemeApplicator.apply(shell.Root, preferences)
+	ThemeApplicator.apply(shell.Root, preferences)
 	if settingsPanel ~= nil then
-		settingsPanel:setSelected(currentAccentId)
+		settingsPanel:setPreferences(preferences)
 	end
 end
 
@@ -85,6 +93,8 @@ local function updatePrompt(settingsVisible: boolean)
 	end
 	if settingsVisible then
 		promptText.Text = "Q 설정 닫기"
+	elseif managementPanel ~= nil and managementPanel.Root.Visible then
+		promptText.Text = "Q 캐릭터 콘솔 닫기"
 	elseif currentHudState ~= nil and currentHudState.preview ~= nil then
 		promptText.Text = currentHudState.preview.enabled
 				and "좌클릭 " .. currentHudState.preview.label .. " · 우클릭 행동"
@@ -95,7 +105,23 @@ local function updatePrompt(settingsVisible: boolean)
 	end
 end
 
+local function submitManagement(intent: any?, errorCode: string?)
+	if intent == nil then
+		managementPanel:setFeedback(errorCode or "요청을 만들 수 없습니다", "warning")
+		ThemeApplicator.apply(managementPanel.Root, client.Preferences:snapshot())
+		return
+	end
+	local commandId = client.Command:submit(intent.commandType, intent.payload)
+	managementCommands[commandId] = { baseRevision = client.Replica.revision }
+	managementPanel:setPending(true)
+	managementPanel:setFeedback("서버 응답 대기 중", "pending")
+	ThemeApplicator.apply(managementPanel.Root, client.Preferences:snapshot())
+end
+
 setSettingsVisible = function(visible: boolean)
+	if visible and managementPanel ~= nil and managementPanel.Root.Visible then
+		setManagementVisible(false)
+	end
 	settingsPanel:setVisible(visible)
 	updatePrompt(visible)
 	settingsButton:SetAttribute(
@@ -121,12 +147,94 @@ setSettingsVisible = function(visible: boolean)
 	end
 end
 
-settingsPanel = SettingsPanel.new(function(id: string)
-	client.Preferences:set("accentPaletteId", id)
+settingsPanel = SettingsPanel.new(function(key: string, value: any)
+	client.Preferences:set(key, value)
+end, function(key: string)
+	client.Preferences:reset(key)
+end, function()
+	client.Preferences:resetAll()
 end, function()
 	setSettingsVisible(false)
 end)
 settingsPanel.Root.Parent = shell:getLayer("Overlay")
+
+managementPanel = ManagementPanel.new(function()
+	setManagementVisible(false)
+end, function(itemId: string, revision: number)
+	local intent, errorCode =
+		ManagementViewModel.moveIntent(managementPanel.state, itemId, revision)
+	submitManagement(intent, errorCode)
+end, function(title: string, body: string, revision: number)
+	local intent, errorCode =
+		ManagementViewModel.createDocumentIntent(managementPanel.state, title, body, revision)
+	submitManagement(intent, errorCode)
+end, function(documentId: string, title: string, body: string, revision: number)
+	local intent, errorCode = ManagementViewModel.editDocumentIntent(
+		managementPanel.state,
+		documentId,
+		title,
+		body,
+		revision
+	)
+	submitManagement(intent, errorCode)
+end)
+managementPanel.Root.Parent = shell:getLayer("Management")
+
+renderManagement = function()
+	local prior = managementPanel.state
+	local selection = if type(prior) == "table"
+		then { itemId = prior.selectedItemId, documentId = prior.selectedDocumentId }
+		else nil
+	local state = ManagementViewModel.build(
+		client.Replica.payload,
+		player.UserId,
+		client.WorldTokens.Renderer:getSelectedActorId(),
+		client.Replica.revision,
+		selection
+	)
+	managementPanel:render(state)
+	if
+		managementAwaitingRevision ~= nil
+		and client.Replica.revision >= managementAwaitingRevision
+	then
+		managementAwaitingRevision = nil
+		managementPanel.draft = false
+		managementPanel:setPending(false)
+		managementPanel:setFeedback("권한 상태에 반영되었습니다", "success")
+	end
+	ThemeApplicator.apply(managementPanel.Root, client.Preferences:snapshot())
+end
+
+setManagementVisible = function(visible: boolean, tab: string?)
+	if visible then
+		setSettingsVisible(false)
+		managementReturnSurface = shell.surface
+		if not shell:setSurface("management") then
+			return
+		end
+		renderManagement()
+		managementPanel:setVisible(true, tab)
+	else
+		managementPanel:setVisible(false)
+		shell:setSurface(managementReturnSurface)
+	end
+	updatePrompt(settingsPanel:isVisible())
+	if visible and not managementContextActive then
+		managementContextActive = true
+		client.Input:push("management_surface", 80, {
+			Cancel = function()
+				setManagementVisible(false)
+				return true
+			end,
+			Confirm = function()
+				return false
+			end,
+		})
+	elseif not visible and managementContextActive then
+		managementContextActive = false
+		client.Input:remove("management_surface")
+	end
+end
 
 gameplayHud = GameplayHud.new(shell:getLayer("Gameplay"), shell:getLayer("Toast"), function()
 	if
@@ -140,6 +248,10 @@ gameplayHud = GameplayHud.new(shell:getLayer("Gameplay"), shell:getLayer("Toast"
 	local commandId = client.Command:submit("encounter.end_turn", {})
 	feedback = GameplayHudViewModel.pendingFeedback("end_turn", commandId, baseRevision)
 	renderHud()
+end, function()
+	setManagementVisible(true, "inventory")
+end, function()
+	setManagementVisible(true, "journal")
 end)
 
 renderHud = function()
@@ -169,6 +281,9 @@ end
 client.Preferences.Changed:Connect(function()
 	applyPreferences()
 	renderHud()
+	if managementPanel.Root.Visible then
+		renderManagement()
+	end
 end)
 applyPreferences()
 
@@ -209,10 +324,24 @@ local function render(payload: any, envelope: any)
 	)
 	feedback = GameplayHudViewModel.reconcileFeedback(feedback, revision)
 	renderHud()
+	if managementPanel.Root.Visible then
+		if shell.surface == "management" then
+			renderManagement()
+		else
+			managementPanel:setVisible(false)
+			if managementContextActive then
+				managementContextActive = false
+				client.Input:remove("management_surface")
+			end
+		end
+	end
 end
 
 client.WorldTokens.SelectionChanged:Connect(function()
 	renderHud()
+	if managementPanel.Root.Visible then
+		renderManagement()
+	end
 end)
 client.WorldTokens.PreviewChanged:Connect(function(value)
 	rawPreview = value
@@ -223,6 +352,31 @@ client.WorldTokens.ContextActionRequested:Connect(function(action, commandId, ba
 	renderHud()
 end)
 client.Command.Received:Connect(function(message)
+	if
+		type(message) == "table"
+		and message.phase == "terminal"
+		and managementCommands[message.commandId]
+	then
+		local record = managementCommands[message.commandId]
+		managementCommands[message.commandId] = nil
+		local result = message.result
+		if type(result) == "table" and result.ok == true then
+			local resultRevision = if type(result.value) == "table"
+					and type(result.value.revision) == "number"
+				then result.value.revision
+				else record.baseRevision + 1
+			managementAwaitingRevision = resultRevision
+			managementPanel:setFeedback("서버 승인 · Projection 반영 대기", "pending")
+		else
+			local errorCode = if type(result) == "table" and type(result.error) == "table"
+				then result.error.code
+				else "UNKNOWN_ERROR"
+			managementPanel:setFeedback("요청 실패 · " .. tostring(errorCode), "danger")
+			managementPanel:setPending(false)
+		end
+		ThemeApplicator.apply(managementPanel.Root, client.Preferences:snapshot())
+		return
+	end
 	if
 		type(message) ~= "table"
 		or message.phase ~= "terminal"

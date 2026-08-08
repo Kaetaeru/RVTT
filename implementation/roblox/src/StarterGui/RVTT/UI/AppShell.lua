@@ -125,7 +125,11 @@ function AppShell.applyProjection(self: any, payload: any, userId: number)
 	local context = ShellContract.resolve(payload, userId)
 	self.role = context.role
 	self.mode = context.mode
-	if not self:setSurface(context.surface) then
+	local requested = context.surface
+	if self.surface == "management" and ShellContract.isSurfaceAllowed(self.role, "management") then
+		requested = "management"
+	end
+	if not self:setSurface(requested) then
 		self.surface = "session"
 		self:setSurface("session")
 	end

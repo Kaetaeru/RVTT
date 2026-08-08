@@ -47,6 +47,11 @@ local specs: { Spec } = {
 		runner = require(script.Parent.Unit["GameplayHud.spec"]) :: any,
 	},
 	{
+		id = "unit-management",
+		name = "Management.spec",
+		runner = require(script.Parent.Unit["Management.spec"]) :: any,
+	},
+	{
 		id = "unit-envelope",
 		name = "Envelope.spec",
 		runner = require(script.Parent.Unit["Envelope.spec"]) :: any,
