@@ -97,13 +97,21 @@ return function(h: any)
 	missingAccessBinding.readiness.authorizedUserIds = nil
 	local missingAccess = Binding.resolveProfileWithBinding("test", missingAccessBinding)
 	local missingAccessCode = if missingAccess.error then missingAccess.error.code else nil
-	h:equal(missingAccessCode, "PRIVATE_RULE_ACCESS_MISSING", "private profile requires explicit viewer access")
+	h:equal(
+		missingAccessCode,
+		"PRIVATE_RULE_ACCESS_MISSING",
+		"private profile requires explicit viewer access"
+	)
 
 	local invalidAccessBinding = copy(exactBinding)
 	invalidAccessBinding.readiness.authorizedUserIds = { 0 }
 	local invalidAccess = Binding.resolveProfileWithBinding("test", invalidAccessBinding)
 	local invalidAccessCode = if invalidAccess.error then invalidAccess.error.code else nil
-	h:equal(invalidAccessCode, "PRIVATE_RULE_ACCESS_INVALID", "invalid private viewer id is rejected")
+	h:equal(
+		invalidAccessCode,
+		"PRIVATE_RULE_ACCESS_INVALID",
+		"invalid private viewer id is rejected"
+	)
 
 	local staleReadinessBinding = copy(exactBinding)
 	staleReadinessBinding.readiness.revision = "stale-revision"
