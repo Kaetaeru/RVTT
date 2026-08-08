@@ -11,6 +11,7 @@ REQUIRED_FILES = {
     "src/ReplicatedStorage/RVTT/Shared/UI/CoreRulesReaderViewModel.lua",
     "src/ServerScriptService/RVTT/Server/Rules/RuleReaderService.lua",
     "src/ServerScriptService/RVTT/Server/Networking/RuleReaderQuery.lua",
+    "src/ServerScriptService/RVTT/Server/Domains/SessionDomain.lua",
     "src/ServerScriptService/RVTT/RuleReaderBoot.server.lua",
     "src/ServerStorage/RVTT/Content/Packs/rvtt.core.rules/RuleReaderPackage.lua",
     "src/StarterGui/RVTT/UI/Components/CoreRulesReaderPanel.lua",
@@ -28,6 +29,7 @@ def validate(root: Path = ROOT) -> list[str]:
 
     service = (root / "src/ServerScriptService/RVTT/Server/Rules/RuleReaderService.lua").read_text(encoding="utf-8")
     query = (root / "src/ServerScriptService/RVTT/Server/Networking/RuleReaderQuery.lua").read_text(encoding="utf-8")
+    session = (root / "src/ServerScriptService/RVTT/Server/Domains/SessionDomain.lua").read_text(encoding="utf-8")
     boot = (root / "src/ServerScriptService/RVTT/RuleReaderBoot.server.lua").read_text(encoding="utf-8")
     client = (root / "src/ReplicatedStorage/RVTT/Shared/Rules/RuleReaderClient.lua").read_text(encoding="utf-8")
     panel = (root / "src/StarterGui/RVTT/UI/Components/CoreRulesReaderPanel.lua").read_text(encoding="utf-8")
@@ -66,11 +68,16 @@ def validate(root: Path = ROOT) -> list[str]:
         "RunService:IsStudio()",
         '"development"',
         '"public"',
+        'GetAttribute("RVTT_Role")',
     ):
         if marker not in boot:
             errors.append(f"RuleReaderBoot.server.lua: missing boot/profile marker {marker}")
     if "allowSrdFallback = true" in boot:
         errors.append("RuleReaderBoot.server.lua: implicit SRD fallback is forbidden")
+
+    for marker in ("publishRole", 'SetAttribute("RVTT_Role"', "session.assign_character", "session.connection"):
+        if marker not in session:
+            errors.append(f"SessionDomain.lua: missing authoritative reader role marker {marker}")
 
     for marker in ("manifestCache", "chunkCache", 'action = "manifest"', 'action = "chunk"'):
         if marker not in client:
