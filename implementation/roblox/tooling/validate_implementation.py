@@ -3,8 +3,12 @@ import json
 import re
 import sys
 
+from validate_full_ui_ux_acceptance import validate as validate_full_ui_ux_acceptance
+
 ROOT = Path(__file__).resolve().parents[1]
 errors: list[str] = []
+
+errors.extend(validate_full_ui_ux_acceptance(ROOT))
 
 for project in (
     "default.project.json",
@@ -160,7 +164,9 @@ for forbidden in ("payload.attackBonus", "payload.armorClass", "payload.damage",
 required = [
     "EXECUTION-TEST-RULES.md",
     "GRAND-ACCEPTANCE-CAMPAIGN.md",
+    "FULL-UI-UX-ACCEPTANCE.md",
     "acceptance-batch.json",
+    "full-ui-ux-acceptance-matrix.json",
     "grand-acceptance-manifest.json",
     "grand-single-client.project.json",
     "src/ReplicatedStorage/RVTT/Shared/Core/ValueGuard.lua",
@@ -197,6 +203,7 @@ required = [
     "tests/MultiClient/ClientRunner.client.lua",
     "tooling/run-studio-acceptance-batch.ps1",
     "tooling/run-grand-acceptance.ps1",
+    "tooling/validate_full_ui_ux_acceptance.py",
     "manifests/all-slices-script-manifest.md",
 ]
 for relative in required:

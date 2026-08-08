@@ -43,10 +43,11 @@ Grand Persistence Published Runner·Config·CI
 → EXECUTION CONTRACT READY
 
 현재 작업
-→ Full UI·UX Acceptance 확장
+→ Full UI·UX Acceptance Matrix 등록 완료
+→ ADR-0091 필수 구현 Gap 5개로 Phase 10 HOLD
 ```
 
-Input·Context Action, Exploration·Encounter HUD, Inventory·Journal·Settings, Entry·Role·Recovery, DM Workspace Source는 현재 계약에 정합화됐다. Acceptance 정합화와 새 current-HEAD Static Gate가 남아 있으므로 Studio Retest를 시작하지 않는다.
+Input·Context Action, Exploration·Encounter HUD, Inventory·Journal·Settings, Entry·Role·Recovery, DM Workspace Source는 현재 계약에 정합화됐다. Acceptance Matrix 등록 결과 ADR-0091 필수 구현 Gap 5개가 확인됐으므로 focused correction과 그 뒤의 새 current-HEAD Static Gate 전에는 Studio Retest를 시작하지 않는다.
 
 ## 2. 목표 입력 계약
 
@@ -98,7 +99,7 @@ Move Surface
 
 - ModeRoleBadge
 - PartyRail·ActiveActorPanel·ActionHotbar
-- Minimap·Map·Journal·System Entry
+- Journal·System Entry
 - Tooltip·Toast·AuthorityPrompt·Recovery Layer
 
 ### Gameplay
@@ -160,7 +161,6 @@ textScale = 1.00
 hotbarRows = 2
 partyRailMode = auto
 combatLog = recent
-minimap = medium · camera_up
 tooltip = 0.25s
 detailedTooltip = 0.75s
 disabledReason = 0.15s
@@ -222,7 +222,7 @@ HEAD 582c1c4
 
 - Exploration·Encounter Mode Composition
 - Inventory·Loot·Transfer·Identification
-- Journal·Map Permission·Navigation
+- Journal Permission·Document Navigation
 - Settings 초기값·Reset·Binding Conflict
 - Accent·Scale·Motion 변경 중 Focus·Selection 유지
 - Entry·Role Change·Reconnect·Recovery
@@ -241,7 +241,7 @@ HEAD 582c1c4
 | 7 | DONE | Inventory·Journal·Settings | 화면·Intent·Permission·Preference |
 | 8 | DONE | Entry·Role·Recovery | Projection rebuild·Reconnect·Error Boundary |
 | 9 | DONE | DM Live Workspace 정합화 | Player Preview·Override·Queue |
-| 10 | IN_PROGRESS | Acceptance 확장 | Full UI·UX Matrix 등록 |
+| 10 | HOLD | Acceptance 확장 | Matrix·Validator 등록 완료, ADR-0091 필수 구현 Gap 5개 |
 | 11 | BLOCKED | Studio Human Retest | Static Gate PASS 후 실행 |
 | 12 | QUEUED | UI·Accessibility Evidence | Scale·Focus·Contrast·Motion·Screenshot |
 | 13 | QUEUED | DM·Player·Observer Test | 권한별 Projection·Role Change |
@@ -253,7 +253,8 @@ HEAD 582c1c4
 ## 11. 다음 Gate
 
 ```text
-Full UI·UX Source·Acceptance 정합화
+ADR-0091 focused implementation correction
+→ Acceptance Matrix Gap 재검증
 → Structure·Security·StyLua·Selene·Rojo·Luau
 → Exploration·Context Input Studio Retest
 → Inventory·Journal·Settings Human Evidence
