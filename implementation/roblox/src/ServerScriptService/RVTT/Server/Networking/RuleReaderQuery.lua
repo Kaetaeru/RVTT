@@ -45,12 +45,13 @@ function RuleReaderQuery:_activePackage(): (any?, any)
 	end
 	local package = self.packageProvider(status.basePackageId)
 	if package == nil then
-		return nil, Result.err(
-			"RULE_PACKAGE_UNAVAILABLE",
-			"error.rules.package_unavailable",
-			true,
-			{ basePackageId = status.basePackageId }
-		)
+		return nil,
+			Result.err(
+				"RULE_PACKAGE_UNAVAILABLE",
+				"error.rules.package_unavailable",
+				true,
+				{ basePackageId = status.basePackageId }
+			)
 	end
 	return package, Result.ok(status)
 end
@@ -80,14 +81,22 @@ function RuleReaderQuery:_handle(player: Player, request: any): any
 	if request.action == "open" then
 		local value, code = self.service.open(package, viewer, request.uri)
 		if value == nil then
-			return Result.err(code or "RULE_LINK_UNAVAILABLE", "error.rules.link_unavailable", false)
+			return Result.err(
+				code or "RULE_LINK_UNAVAILABLE",
+				"error.rules.link_unavailable",
+				false
+			)
 		end
 		return Result.ok(value)
 	end
 	if request.action == "chunk" then
 		local value, code = self.service.chunk(package, viewer, request.chunkId)
 		if value == nil then
-			return Result.err(code or "RULE_CHUNK_UNAVAILABLE", "error.rules.chunk_unavailable", false)
+			return Result.err(
+				code or "RULE_CHUNK_UNAVAILABLE",
+				"error.rules.chunk_unavailable",
+				false
+			)
 		end
 		return Result.ok(value)
 	end
