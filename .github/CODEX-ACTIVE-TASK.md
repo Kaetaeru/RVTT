@@ -1,19 +1,24 @@
 # RVTT Codex Active Task
 
 - status: `READY_FOR_CODEX_EXECUTION`
-- commandId: `RVTT-PR2-ENTRY-ROLE-RECOVERY-IMPLEMENTATION-001`
+- commandId: `RVTT-PR2-PHASE8-CI-RECOVERY-001`
 - repository: `Kaetaeru/RVTT`
 - pullRequest: `2`
 - branch: `agent/survival-logistics-token-authoring`
-- taskType: `IMPLEMENTATION`
-- phase: `FULL_UI_UX_ALIGNMENT_PHASE_8`
-- commandPath: `.github/CODEX-IMPLEMENTATION-ENTRY-ROLE-RECOVERY-001.md`
+- taskType: `CI_FIX`
+- phase: `FULL_UI_UX_ALIGNMENT_PHASE_8_CI_RECOVERY`
+- commandPath: `.github/CODEX-FIX-PHASE8-CI-001.md`
 - targetMode: `CURRENT_PR_HEAD_AT_START`
+- failureSubjectSha: `2336fb76060a5933f9129949358b6e41b6e44b8e`
+- failingWorkflow: `Validate RVTT implementation`
+- failingRunId: `31256113909`
 - expectedOutputChannel: `PR #2 Top-level Conversation Comment`
-- resultMarker: `<!-- RVTT_CODEX_IMPLEMENTATION_RESULT -->`
+- resultMarker: `<!-- RVTT_CODEX_CI_FIX_RESULT -->`
 - resultStatus: `PENDING`
-- previousCommand: `RVTT-PR2-INVENTORY-JOURNAL-SETTINGS-IMPLEMENTATION-001`
-- previousCommandStatus: `PASS`
+- previousCommand: `RVTT-PR2-ENTRY-ROLE-RECOVERY-IMPLEMENTATION-001`
+- previousCommandReportedStatus: `PASS`
+- phase8ApprovalState: `HOLD_PENDING_REMOTE_CI_RECOVERY`
+- phase9ImplementationState: `DO_NOT_START`
 - studioRuntimeState: `BLOCKED_UNTIL_UI_ALIGNMENT_AND_NEW_STATIC_GATE`
 - userManualRuntimeState: `NOT_STARTED_CURRENT_CONTRACT`
 - updatedBy: `ChatGPT Lead Coordinator`
@@ -21,63 +26,58 @@
 
 ## 현재 활성 작업
 
-다음 한 Phase만 수행한다.
+새 기능을 구현하지 않는다.
 
 ```text
-Entry · Role · Recovery
-→ Projection rebuild · Reconnect · Error Boundary
+Phase 8 remote CI failure 조사
+→ 실제 Actions log 확보
+→ root cause 특정
+→ 필요한 최소 수정
+→ local validation
+→ publish
+→ 새 HEAD remote CI success 확인
 ```
 
-Phase 4~7은 완료됐다. 이번 Phase는 기존 Session/Character/Projection/Networking/Client Runtime 권위 경계를 재사용해 Entry, Role 전환, Reconnect, Recovery UI와 상태를 정합화한다.
-
-## 핵심 계약
-
-- non-DM은 authoritative assignment 전 Observer-first다.
-- local selection/pending command만으로 Player 권위를 얻지 않는다.
-- Character Owner / Runtime Controller / Session Role을 분리한다.
-- 역할/캐릭터 전이는 서버 권위 + Projection 확인 뒤에만 UI/행동 권위를 바꾼다.
-- reconnect/full sync는 authoritative Projection에서 다시 구축한다.
-- stale preview/pending claim/revision-bound intent는 resync 후 재검증한다.
-- local preference는 기존 preference boundary 안에서만 유지한다.
-- 새 role에서 더 이상 보이지 않는 selection/private state/capability는 제거한다.
-- recoverable network/projection error와 fatal boundary를 구분한다.
-- Player/Observer에 DM-only 정보나 control을 placeholder로도 노출하지 않는다.
-- client-side role/gameplay authority를 만들지 않는다.
-
-## 실행 절차
-
-1. `commandPath`를 읽는다.
-2. PR #2 최신 원격 HEAD를 `targetShaAtStart`로 기록한다.
-3. `AGENTS.md`, `AGENT-TEST-STATUS.md`, `implementation/roblox/CURRENT-WORK-ORDER.md`와 지정 Authority를 읽는다.
-4. Phase 7 `DONE`, Phase 8 `IN_PROGRESS`를 확인한다.
-5. 기존 `SessionDomain`, `CharacterDomain`, Projection, Networking/full-sync, `ProjectionReplica`, `CommandClient`, `ClientRuntime`, App/Shell과 error/recovery utility를 조사한다.
-6. 같은 책임의 기존 경로를 재사용하며 Phase 8 범위만 구현한다.
-7. observer-first, authoritative role/assignment, reconnect/full-sync rebuild, stale invalidation, recovery/error boundary, negative disclosure 관련 테스트를 보강한다.
-8. Repository가 정의한 정적/자동 검증을 실제 실행한다.
-9. 모두 PASS한 경우에만 Phase 8을 `DONE`, Phase 9를 `IN_PROGRESS`로 갱신하고 `AGENT-TEST-STATUS.md`도 갱신한다.
-10. 현재 PR branch에 non-force 반영한다.
-11. 지정 Marker의 PR #2 top-level 결과 댓글을 남긴다.
-12. Roblox Studio, Studio MCP, Human Playtest는 실행하지 않는다.
-13. PR Ready·Approve·Merge를 하지 않는다.
-
-## 범위 제외
-
-- Phase 9 DM Live Workspace 구현
-- Phase 10 Acceptance 완료
-- Studio/Human PASS
-- Persistence Runtime
-- ADR-0092 Runtime 확대
-- touch/controller 전용 UI
-- Player minimap·별도 map·objective tracker
-- client-side role/gameplay authority
-
-## 성공 시 상태
+현재 알려진 충돌:
 
 ```text
-Phase 8 Entry·Role·Recovery → DONE
-Phase 9 DM Live Workspace → IN_PROGRESS
-Studio Human Retest → 계속 BLOCKED
+Codex Phase 8 local/static report → PASS
+GitHub HEAD 2336fb76060a5933f9129949358b6e41b6e44b8e
+Validate RVTT implementation → FAILURE
 ```
+
+원격 CI 증거가 우선한다. Phase 8은 현재 최종 승인 HOLD이며 Phase 9 구현을 시작하지 않는다.
+
+## 실행 규칙
+
+1. `commandPath`를 먼저 읽는다.
+2. PR #2 최신 HEAD와 현재 branch를 확인한다.
+3. `gh auth status` 후 실패 run `31256113909`의 실제 job/log를 `gh`로 확인한다.
+4. 수정 전에 failing step, failure snippet, root cause, Phase 8 관련성, 최소 fix plan을 확정한다.
+5. Phase 8과 무관한 transient/infrastructure 문제라면 Source를 억지로 변경하지 않는다.
+6. 수정이 필요하면 실패 원인에 직접 필요한 최소 변경만 한다.
+7. test 삭제/skip, assertion 약화, validator/lint/type bypass, `|| true`, continue-on-error 같은 CI 우회를 금지한다.
+8. Phase 8 observer-first/assignment/recovery/negative-disclosure 권위 계약을 보존한다.
+9. 관련 focused test와 repository-required implementation validation을 다시 실행한다.
+10. 변경이 있으면 현재 PR branch에 non-force 반영한다.
+11. 새 HEAD의 `Validate RVTT implementation` 및 관련 required workflows를 `gh`로 재확인한다.
+12. 원격 check가 실제 success가 아니면 PASS로 보고하지 않는다.
+13. Phase 9, Phase 10, Studio/Human, ADR-0092 Runtime, Persistence Runtime은 수행하지 않는다.
+14. 지정 Marker를 사용해 PR #2 top-level 결과 댓글을 남긴다.
+
+## 성공 조건
+
+```text
+실패 root cause가 증거로 설명됨
++ 필요한 최소 fix만 적용됨
++ local relevant validation PASS
++ 새 current HEAD Validate RVTT implementation SUCCESS
++ 다른 관련 required workflow도 실패 없음
+→ Phase 8 최종 PASS 인정 가능
+→ Phase 9 IN_PROGRESS로 복귀 가능
+```
+
+성공하지 못하면 Phase 8은 HOLD/BLOCKED로 유지한다.
 
 ## 사용자가 Codex에 보낼 최소 지시
 
@@ -87,4 +87,12 @@ RVTT 저장소의 .github/CODEX-ACTIVE-TASK.md에서 ChatGPT가 작성한 최신
 
 ## ChatGPT 후속 확인
 
-사용자가 `확인` 또는 `확인해`라고 지시하면 현재 PR HEAD, Phase 8 결과 Marker, `commandId/resultHeadSha`, 실제 changed files/tests, Work Order와 AGENT-TEST-STATUS 전이를 대조한다. PASS면 Phase 8 Source/Static 완료만 인정한다.
+사용자가 `확인` 또는 `확인해`라고 지시하면:
+
+1. PR #2 현재 HEAD를 다시 확인한다.
+2. 최신 `<!-- RVTT_CODEX_CI_FIX_RESULT -->` 댓글을 찾는다.
+3. root cause와 실제 Actions 로그 증거를 확인한다.
+4. target/result SHA와 실제 commits/files를 대조한다.
+5. 새 HEAD의 `Validate RVTT implementation`과 관련 workflow 상태를 직접 확인한다.
+6. 모두 성공한 경우에만 Phase 8 최종 PASS를 인정한다.
+7. 그 뒤에만 Phase 9를 진행한다.
