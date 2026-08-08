@@ -216,6 +216,7 @@ required = [
     "tooling/validate_full_ui_ux_acceptance.py",
     "tooling/validate_asset_registry.py",
     "tooling/validate_rules_profile_release_gate.py",
+    "tooling/build_public_release_staging.py",
     "manifests/all-slices-script-manifest.md",
 ]
 for relative in required:

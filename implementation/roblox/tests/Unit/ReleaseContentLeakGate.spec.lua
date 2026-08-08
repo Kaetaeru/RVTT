@@ -32,22 +32,31 @@ local function hasCode(result: any, expected: string): boolean
 end
 
 return function(h)
-	local Gate = require(game:GetService("ServerStorage").RVTT.Content.ReleaseContentLeakGate)
+	local Content = game:GetService("ServerStorage").RVTT.Content
+	local Gate = require(Content.ReleaseContentLeakGate)
+	local privatePackage: any = nil
+	for _, package in require(Content.BuiltinPackIndex) do
+		if package.packageId == "rvtt.test.rules.2024.integrated.ko" then
+			privatePackage = package
+		end
+	end
+	h:expect(privatePackage ~= nil, "private package authority exists")
 
 	h:expect(Gate.validate(artifact()).ok, "clean synthetic public artifact passes")
 
-	local privatePackage = artifact()
-	table.insert(privatePackage.packageIds, "rvtt.test.rules.2024.integrated.ko")
+	local privatePackageArtifact = artifact()
+	table.insert(privatePackageArtifact.packageIds, "rvtt.test.rules.2024.integrated.ko")
 	h:expect(
-		hasCode(Gate.validate(privatePackage), "PRIVATE_PACKAGE_PRESENT"),
+		hasCode(Gate.validate(privatePackageArtifact), "PRIVATE_PACKAGE_PRESENT"),
 		"private package is rejected"
 	)
 
 	for _, marker in
 		{
-			"Kaetaeru/D-D-2024-private",
-			"RVTT_PRIVATE_DND2024_KO_SOURCE",
-			"10-RULEBOOKS/integrated-2024",
+			privatePackage.sourceRepository,
+			privatePackage.sourceBindingKey,
+			privatePackage.sourceRoot,
+			privatePackage.version,
 			"private-rule-chunk",
 			"private-search-index",
 			"private-snippet-cache",

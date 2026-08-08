@@ -1,27 +1,42 @@
 --!strict
 
-local function readiness(): any
+local function copy(value: any): any
+	if type(value) ~= "table" then
+		return value
+	end
+	local result = {}
+	for key, nested in value do
+		result[key] = copy(nested)
+	end
+	return result
+end
+
+local function packageById(packageIndex: { any }, packageId: string): any
+	for _, package in packageIndex do
+		if package.packageId == packageId then
+			return package
+		end
+	end
+	error("missing package fixture: " .. packageId)
+end
+
+local function readiness(package: any): any
 	return {
 		bindingPresent = true,
-		sourceBindingKey = "RVTT_PRIVATE_DND2024_KO_SOURCE",
-		revision = "d3d574725e0ecdfd05cb69fa32cf66196e3a8ee4",
-		sourceRoot = "10-RULEBOOKS/integrated-2024",
-		contentCounts = {
-			classes = 12,
-			subclasses = 48,
-			backgrounds = 16,
-			species = 10,
-			feats = 75,
-			spells = 391,
-		},
+		sourceBindingKey = package.sourceBindingKey,
+		revision = package.version,
+		sourceRoot = package.sourceRoot,
+		contentCounts = copy(package.expectedContentCounts),
 	}
 end
 
 return function(h)
 	local Resolver = require(game:GetService("ServerStorage").RVTT.Content.RulePackageResolver)
+	local BuiltinPackIndex = require(game:GetService("ServerStorage").RVTT.Content.BuiltinPackIndex)
+	local privatePackage = packageById(BuiltinPackIndex, "rvtt.test.rules.2024.integrated.ko")
 
 	for _, profile in { "development", "test", "studio-acceptance" } do
-		local result = Resolver.resolve(profile, { privateReadiness = readiness() })
+		local result = Resolver.resolve(profile, { privateReadiness = readiness(privatePackage) })
 		h:expect(result.ok, profile .. " resolves when private readiness is exact")
 		h:equal(result.value.basePackageId, "rvtt.test.rules.2024.integrated.ko")
 	end
@@ -58,6 +73,13 @@ return function(h)
 	h:equal(fallback.value.fallbackReasonCode, "INTEGRATED_TEST_PACK_UNAVAILABLE")
 	h:equal(invalidFallbackCode, "PRIVATE_SOURCE_MISSING")
 	h:equal(unknownFallbackCode, "UNKNOWN_PROFILE")
+	local ambiguousIndex = copy(BuiltinPackIndex)
+	table.insert(ambiguousIndex, copy(privatePackage))
+	local ambiguous = Resolver.resolveWithIndex(ambiguousIndex, "test", {
+		privateReadiness = readiness(privatePackage),
+	})
+	local ambiguousCode = if ambiguous.error then ambiguous.error.code else nil
+	h:equal(ambiguousCode, "RULE_PROFILE_AMBIGUOUS")
 
 	local failureFixtures = {
 		{ field = "sourceBindingKey", value = "wrong", code = "SOURCE_BINDING_MISMATCH" },
@@ -65,28 +87,56 @@ return function(h)
 		{ field = "sourceRoot", value = "wrong", code = "SOURCE_ROOT_MISMATCH" },
 	}
 	for _, fixture in failureFixtures do
-		local evidence = readiness()
+		local evidence = readiness(privatePackage)
 		evidence[fixture.field] = fixture.value
 		local result = Resolver.resolve("test", { privateReadiness = evidence })
 		local code = if result.error then result.error.code else nil
 		h:equal(code, fixture.code)
 	end
-	for countName in readiness().contentCounts do
-		local evidence = readiness()
+	for countName in readiness(privatePackage).contentCounts do
+		local evidence = readiness(privatePackage)
 		evidence.contentCounts[countName] += 1
 		local result = Resolver.resolve("test", { privateReadiness = evidence })
 		local code = if result.error then result.error.code else nil
 		h:equal(code, "CONTENT_COUNT_MISMATCH")
 	end
-	local digestEvidence = readiness()
-	digestEvidence.declaredDigest = "declared"
-	digestEvidence.verifiedDigest = "different"
-	local digestResult = Resolver.resolve("test", { privateReadiness = digestEvidence })
+	local digestIndex = copy(BuiltinPackIndex)
+	local digestPackage = packageById(digestIndex, "rvtt.test.rules.2024.integrated.ko")
+	digestPackage.expectedSourceDigest = "fixture-expected-digest"
+	local digestEvidence = readiness(digestPackage)
+	digestEvidence.verifiedDigest = "fixture-different-digest"
+	local digestResult = Resolver.resolveWithIndex(digestIndex, "test", {
+		privateReadiness = digestEvidence,
+	})
 	local digestCode = if digestResult.error then digestResult.error.code else nil
 	h:equal(digestCode, "SOURCE_DIGEST_MISMATCH")
 
-	local projected =
-		Resolver.clientSafeStatus(Resolver.resolve("test", { privateReadiness = readiness() }))
+	local revisionIndex = copy(BuiltinPackIndex)
+	local revisionPackage = packageById(revisionIndex, "rvtt.test.rules.2024.integrated.ko")
+	revisionPackage.version = "fixture-revision-from-index"
+	local revisionResult = Resolver.resolveWithIndex(revisionIndex, "test", {
+		privateReadiness = readiness(revisionPackage),
+	})
+	h:expect(revisionResult.ok, "private revision is derived from the injected package record")
+
+	local countIndex = copy(BuiltinPackIndex)
+	local countPackage = packageById(countIndex, "rvtt.test.rules.2024.integrated.ko")
+	countPackage.expectedContentCounts.classes = 77
+	local countResult = Resolver.resolveWithIndex(countIndex, "test", {
+		privateReadiness = readiness(countPackage),
+	})
+	h:expect(countResult.ok, "private counts are derived from the injected package record")
+	local staleCount = readiness(countPackage)
+	staleCount.contentCounts.classes = 76
+	local staleCountResult = Resolver.resolveWithIndex(countIndex, "test", {
+		privateReadiness = staleCount,
+	})
+	local staleCountCode = if staleCountResult.error then staleCountResult.error.code else nil
+	h:equal(staleCountCode, "CONTENT_COUNT_MISMATCH")
+
+	local projected = Resolver.clientSafeStatus(
+		Resolver.resolve("test", { privateReadiness = readiness(privatePackage) })
+	)
 	local allowed = {
 		activeProfile = true,
 		basePackageId = true,

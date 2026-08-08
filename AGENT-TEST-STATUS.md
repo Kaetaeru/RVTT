@@ -63,7 +63,7 @@ Studio MCP 자동화는 반복 작업 절감 효과가 명확하거나 사용자
 | 마지막 Implementation Static Gate | `PASS` | 검증 대상 `ef99a0740711b4f00fac0d5c8d0599f238ea48e9` |
 | Full UI·UX Source·Acceptance 정합화 | `PARTIAL` | Asset Registry·Rules Profile/Release Leak Gate STATIC_VERIFIED, ADR-0091 필수 구현 Gap 3개 |
 | ADR-0091 Asset Registry foundation | `STATIC_VERIFIED` | Source·Server·Client-safe 경계, validation·negative disclosure focused regression |
-| ADR-0091 Rules Profile + Release Leak Gate | `STATIC_VERIFIED` | Profile authority·private readiness·explicit fallback·public artifact leak gate focused regression |
+| ADR-0091 Rules Profile + Release Leak Gate | `STATIC_VERIFIED` | Builtin package single authority·private readiness·explicit fallback·actual filesystem staging·CI fail-closed regression |
 | Shared Shell·Preference Foundation | `PASS` | `RVTT-PR2-UI-FOUNDATION-IMPLEMENTATION-002` 구현·로컬 정적 검증 완료 |
 | Input·Context Action 정합화 | `PASS` | `RVTT-PR2-INPUT-CONTEXT-IMPLEMENTATION-001` 구현·로컬 정적 검증 완료 |
 | Exploration·Encounter HUD | `PASS` | `RVTT-PR2-EXPLORATION-ENCOUNTER-HUD-IMPLEMENTATION-001` 구현·로컬 정적 검증 완료 |
@@ -119,13 +119,16 @@ phase10AssetRegistryTargetShaAtStart: 4321d104a597e530bf57748874ce42b13c42c1c4
 phase10AssetRegistryStaticValidation: PASS · empty production registry + source/server/client-safe boundary + 11 focused fixtures
 phase10RulesProfileCommand: RVTT-PR2-ADR0091-RULES-PROFILE-LEAK-GATE-IMPLEMENTATION-001
 phase10RulesProfileTargetShaAtStart: 899292844d58b4c691dffbf2ff9ce84de4104005
-phase10RulesProfileStaticValidation: PASS · 6 exact profiles + private readiness/fallback + public output leak gate + client-safe allowlist
+phase10RulesProfileStaticValidation: SUPERSEDED_PARTIAL · in-memory gate existed, but package metadata duplication and filesystem/CI enforcement remained
+phase10RulesReleaseEnforcementFixCommand: RVTT-PR2-ADR0091-RULES-PROFILE-RELEASE-ENFORCEMENT-FIX-001
+phase10RulesReleaseEnforcementTargetShaAtStart: d23b47b1ad6b8f8804e59b146b59eb1a68933c6c
+phase10RulesReleaseEnforcementStaticValidation: PASS · BuiltinPackIndex-derived readiness + injectable drift fixtures + deterministic filesystem staging inventory + CI nonzero gate
 phase10StudioRuntime: NOT_EXECUTED
 phase10HumanEvidence: NOT_EXECUTED
 phase10Next: CORE_RULES_READER_CORRECTION
 ```
 
-`ef99a07...` Static PASS는 역사적 증거로 유지한다. 이후 Shared Shell·Preference Foundation, Input·Context Action, Exploration·Encounter HUD, Inventory·Journal·Settings, Entry·Role·Recovery Source가 변경됐고 각 구현 명령 범위의 로컬 Validator·Format·Lint·Rojo Build·Production/Test Luau 분석은 통과했다. Phase 10 Matrix 등록에서 확인된 ADR-0091 필수 구현 Gap 5개 중 Asset Registry foundation과 Rules Profile/Release Leak Gate는 정적으로 해제됐다. Studio Human Retest 전에는 남은 3개 focused implementation correction을 완료하고 **새 구현 Head에서 current-HEAD Static Gate를 다시 통과해야 한다.**
+`ef99a07...` Static PASS는 역사적 증거로 유지한다. 이후 Shared Shell·Preference Foundation, Input·Context Action, Exploration·Encounter HUD, Inventory·Journal·Settings, Entry·Role·Recovery Source가 변경됐고 각 구현 명령 범위의 로컬 Validator·Format·Lint·Rojo Build·Production/Test Luau 분석은 통과했다. Phase 10 Matrix 등록에서 확인된 ADR-0091 필수 구현 Gap 5개 중 Asset Registry foundation과 Rules Profile/Release Leak Gate는 정적으로 해제됐다. Rules Profile의 최초 in-memory gate 판정은 package metadata 중복과 filesystem/CI enforcement 부재 때문에 대체됐으며, 현재 판정은 actual staging gate까지 포함한다. Studio Human Retest 전에는 남은 3개 focused implementation correction을 완료하고 **새 구현 Head에서 current-HEAD Static Gate를 다시 통과해야 한다.**
 
 ---
 

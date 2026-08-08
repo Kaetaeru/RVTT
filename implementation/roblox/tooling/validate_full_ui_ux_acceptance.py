@@ -278,7 +278,9 @@ def validate_matrix_data(matrix: dict, manifest: dict) -> list[str]:
             "implementation/roblox/src/ReplicatedStorage/RVTT/ContentRuntime/RuleProfileStatus.lua",
             "implementation/roblox/tests/Unit/RulePackageResolver.spec.lua",
             "implementation/roblox/tests/Unit/ReleaseContentLeakGate.spec.lua",
+            "implementation/roblox/tooling/build_public_release_staging.py",
             "implementation/roblox/tooling/validate_rules_profile_release_gate.py",
+            ".github/workflows/validate-rvtt-implementation.yml",
         }
         if not required_rules_evidence.issubset(set(rules_item.get("automatedRefs", []))):
             errors.append("matrix: rules profile gate cannot close without production and focused evidence")

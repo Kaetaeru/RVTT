@@ -42,6 +42,7 @@ return {
 			"studio-acceptance",
 		},
 		sourceMode = "external_private_import",
+		sourceRepository = "Kaetaeru/D-D-2024-",
 		sourceBindingKey = "RVTT_PRIVATE_DND2024_KO_SOURCE",
 		sourceRoot = "10-RULEBOOKS/integrated-2024",
 		expectedContentCounts = {

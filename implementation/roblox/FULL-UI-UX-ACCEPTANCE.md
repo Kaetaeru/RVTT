@@ -3,7 +3,7 @@
 - 상태: `PHASE_10_PARTIAL_HOLD`
 - Matrix: [`full-ui-ux-acceptance-matrix.json`](full-ui-ux-acceptance-matrix.json)
 - Validator: [`tooling/validate_full_ui_ux_acceptance.py`](tooling/validate_full_ui_ux_acceptance.py)
-- Authority snapshot: `899292844d58b4c691dffbf2ff9ce84de4104005`
+- Authority snapshot: `d23b47b1ad6b8f8804e59b146b59eb1a68933c6c`
 - Runtime evidence: `NOT_EXECUTED`
 - Human UI·Accessibility evidence: `NOT_EXECUTED`
 
@@ -74,7 +74,7 @@ content-source/packages/rvtt.core.baseline/package.manifest.json
 
 Production asset set은 승인된 실제 에셋이 없으므로 비어 있다. `AssetRegistryValidator.lua`, `ClientAssetViewBuilder.lua`, `AssetRegistry.spec.lua`, `validate_asset_registry.py`가 Stable ID·kind metadata·dependency·executable payload·source identity와 private/non-exportable negative disclosure를 고정한다.
 
-Rules Profile/Release Leak Gate는 `BuiltinPackIndex.lua`를 유일한 package authority로 사용하며 `RulePackageResolver.lua`, `ReleaseContentLeakGate.lua`, `RuleProfileStatus.lua`와 두 focused Luau spec, `validate_rules_profile_release_gate.py`로 정적 해제했다. Private profile은 exact binding/revision/root/count readiness와 명시적 SRD fallback을 요구하고, public/release/artifact는 SRD-only이며 실제 output inventory leak gate와 client-safe allowlist를 통과해야 한다.
+Rules Profile/Release Leak Gate는 `BuiltinPackIndex.lua`를 유일한 package metadata authority로 사용하며 `RulePackageResolver.lua`, `ReleaseContentLeakGate.lua`, `RuleProfileStatus.lua`와 두 focused Luau spec으로 정적 해제했다. `build_public_release_staging.py`가 현재 public-safe source에서 실제 filesystem staging을 만들고, `validate_rules_profile_release_gate.py`가 모든 staged file을 deterministic inventory로 검사하며 GitHub Actions가 실패를 nonzero로 전파한다. Private profile은 package record에서 파생된 exact readiness와 명시적 SRD fallback을 요구하고, public/release/artifact는 SRD-only 및 client-safe allowlist를 유지한다.
 
 아래 나머지 필수 subsystem과 focused enforcement regression은 발견되지 않았다.
 

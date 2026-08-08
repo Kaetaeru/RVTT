@@ -2,6 +2,8 @@
 
 local ReleaseContentLeakGate = {}
 
+local BuiltinPackIndex = require(script.Parent.BuiltinPackIndex)
+
 local PUBLIC_PACKAGE_ID = "rvtt.core.rules"
 local PRIVATE_PACKAGE_ID = "rvtt.test.rules.2024.integrated.ko"
 local PUBLIC_PROFILES = {
@@ -9,11 +11,7 @@ local PUBLIC_PROFILES = {
 	release = true,
 	artifact = true,
 }
-local FORBIDDEN_TEXT_MARKERS = {
-	PRIVATE_PACKAGE_ID,
-	"kaetaeru/d-d-2024-",
-	"rvtt_private_dnd2024_ko_source",
-	"10-rulebooks/integrated-2024",
+local PRIVATE_OUTPUT_MARKERS = {
 	"private-rule-chunk",
 	"private_rule_chunk",
 	"private-search-index",
@@ -21,6 +19,15 @@ local FORBIDDEN_TEXT_MARKERS = {
 	"private-snippet-cache",
 	"private_snippet_cache",
 }
+
+local function privatePackage(): any?
+	for _, package in BuiltinPackIndex do
+		if package.packageId == PRIVATE_PACKAGE_ID then
+			return package
+		end
+	end
+	return nil
+end
 local FORBIDDEN_METADATA_KEYS = {
 	credential = true,
 	credentials = true,
@@ -40,7 +47,27 @@ end
 
 local function inspectText(errors: { string }, value: string)
 	local lower = string.lower(value)
-	for _, marker in FORBIDDEN_TEXT_MARKERS do
+	local private = privatePackage()
+	if private == nil then
+		addError(errors, "PRIVATE_PACKAGE_AUTHORITY_MISSING")
+		return
+	end
+	local authorityMarkers = {
+		private.packageId,
+		private.sourceRepository,
+		private.sourceBindingKey,
+		private.sourceRoot,
+		private.version,
+	}
+	for _, marker in authorityMarkers do
+		if
+			type(marker) == "string"
+			and string.find(lower, string.lower(marker), 1, true) ~= nil
+		then
+			addError(errors, "PRIVATE_CONTENT_MARKER")
+		end
+	end
+	for _, marker in PRIVATE_OUTPUT_MARKERS do
 		if string.find(lower, marker, 1, true) ~= nil then
 			addError(errors, "PRIVATE_CONTENT_MARKER")
 		end
