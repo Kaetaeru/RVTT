@@ -1,117 +1,147 @@
 # RVTT Codex Active Task
 
 - status: `READY_FOR_CODEX_EXECUTION`
-- commandId: `RVTT-PR2-ADR0091-ASSET-REGISTRY-IMPLEMENTATION-001`
+- commandId: `RVTT-PR2-ADR0091-RULES-PROFILE-LEAK-GATE-IMPLEMENTATION-001`
 - repository: `Kaetaeru/RVTT`
 - pullRequest: `2`
 - branch: `agent/survival-logistics-token-authoring`
 - taskType: `IMPLEMENTATION`
-- phase: `FULL_UI_UX_ALIGNMENT_PHASE_10_ADR0091_ASSET_REGISTRY`
-- commandPath: `.github/CODEX-IMPLEMENTATION-ADR0091-ASSET-REGISTRY-001.md`
+- phase: `FULL_UI_UX_ALIGNMENT_PHASE_10_ADR0091_RULES_PROFILE_LEAK_GATE`
+- commandPath: `.github/CODEX-IMPLEMENTATION-ADR0091-RULES-PROFILE-LEAK-GATE-001.md`
 - targetMode: `CURRENT_PR_HEAD_AT_START`
 - expectedOutputChannel: `PR #2 Top-level Conversation Comment`
-- resultMarker: `<!-- RVTT_CODEX_ADR0091_ASSET_REGISTRY_RESULT -->`
+- resultMarker: `<!-- RVTT_CODEX_ADR0091_RULES_PROFILE_LEAK_GATE_RESULT -->`
 - resultStatus: `PENDING`
-- previousCommand: `RVTT-PR2-FULL-UI-UX-ACCEPTANCE-IMPLEMENTATION-001`
-- previousCommandStatus: `PARTIAL_VERIFIED_BY_CHATGPT`
+- previousCommand: `RVTT-PR2-ADR0091-ASSET-REGISTRY-IMPLEMENTATION-001`
+- previousCommandStatus: `PASS_VERIFIED_BY_CHATGPT`
 - phase9Status: `FINAL_PASS`
-- phase10Status: `HOLD_5_ADR0091_FINAL_CONTRACT_GAPS`
-- currentCorrection: `ASSET_REGISTRY_FOUNDATION`
-- nextCorrectionOnSuccess: `RULES_PROFILE_RELEASE_LEAK_GATE`
+- phase10Status: `PARTIAL_HOLD_4_ADR0091_FINAL_CONTRACT_GAPS`
+- completedCorrections: `ASSET_REGISTRY_FOUNDATION`
+- currentCorrection: `RULES_PROFILE_RELEASE_LEAK_GATE`
+- nextCorrectionOnSuccess: `CORE_RULES_READER`
+- newCurrentHeadStaticGate: `NOT_YET`
 - studioRuntimeState: `BLOCKED`
 - userManualRuntimeState: `NOT_STARTED_CURRENT_CONTRACT`
 - updatedBy: `ChatGPT Lead Coordinator`
-- updatedAt: `2026-08-08`
+- updatedAt: `2026-08-09`
 
 ## 현재 활성 작업
 
-ADR-0091 final-contract blocker 5개 중 **Asset Registry foundation 하나만** 실제 Production Source로 구현한다.
+ADR-0091 remaining blocker 4개 중 **Rules Profile + Public Release Leak Gate 하나만** 실제 Production Source/Tooling으로 구현한다.
 
 ```text
-content-source package boundary
-→ Server-authoritative Content/Packs registry
-→ ReplicatedStorage client-safe ContentRuntime view
-→ stable asset validation
-→ negative-disclosure/leak regression
-→ Acceptance Matrix의 asset-registry blocker만 해제
+BuiltinPackIndex
+→ RulePackageResolver
+→ development/test/studio-acceptance = private integrated base
+→ private source readiness / pin / count fail closed
+→ explicit allowSrdFallback only
+→ public/release/artifact = rvtt.core.rules only
+→ ReleaseContentLeakGate
+→ private package/source/chunk/index/snippet metadata leak rejection
+→ Acceptance blocker 하나만 해제
 ```
 
-Phase 10 전체는 이 작업 성공 후에도 HOLD다. 나머지 4개 blocker를 거짓 PASS로 만들지 않는다.
+성공해도 Phase 10 전체는 HOLD다. Core Rules Reader, Official Sheet, Dice Notice는 계속 BLOCKED다.
 
-## 현재 확인된 blocker
+## 고정 Authority
+
+Profile mapping:
 
 ```text
-content-source/
-→ absent
+development / test / studio-acceptance
+→ rvtt.test.rules.2024.integrated.ko
 
-ServerStorage/RVTT/Content
-→ BuiltinPackIndex.lua only
-
-ReplicatedStorage/RVTT/ContentRuntime
-→ absent
-
-Acceptance
-→ final.asset-registry-separation = BLOCKED
+public / release / artifact
+→ rvtt.core.rules
 ```
+
+Private integrated package:
+
+```text
+sourceBindingKey = RVTT_PRIVATE_DND2024_KO_SOURCE
+sourceRevision = d3d574725e0ecdfd05cb69fa32cf66196e3a8ee4
+sourceRoot = 10-RULEBOOKS/integrated-2024
+expected counts = classes 12 / subclasses 48 / backgrounds 16 / species 10 / feats 75 / spells 391
+```
+
+Private rule 본문, generated chunk, search index, snippet, credential은 public Git tree에 커밋하지 않는다.
 
 ## 실행 규칙
 
-1. `commandPath`를 먼저 읽는다.
+1. `commandPath`를 가장 먼저 읽는다.
 2. PR #2 최신 remote HEAD를 `targetShaAtStart`로 기록한다.
-3. `AGENTS.md`, Work Order, AGENT-TEST-STATUS, ADR-0091, final UI/content contract, Acceptance Matrix/validator를 읽는다.
-4. 중복 Content authority를 만들지 말고 기존 `BuiltinPackIndex.lua`와 연결한다.
-5. Authoring Source / Server Registry / Client-safe Runtime View 세 경계를 실제 source로 만든다.
-6. 존재하지 않는 production model/prefab/thumbnail/Roblox asset ID를 발명하지 않는다.
-7. 실제 production asset이 없다면 empty registry를 지원하고 synthetic fixture는 tests에만 둔다.
-8. Stable Asset Record와 kind-specific validation을 구현한다.
-9. duplicate IDs, identity drift, rights/provenance 누락, pivot/bounds/footprint 등 kind-specific metadata 누락, dependency cycle, invalid performance budget을 거부한다.
-10. executable source/import payload declaration을 fail closed한다.
-11. client-safe view는 allowlist projection이어야 하고 private/non-exportable record는 placeholder/count inference 없이 부재해야 한다.
-12. current `BuiltinPackIndex`의 core rules/test rules/core baseline package 의미는 유지한다.
-13. Private Rules importer/Profile Resolver/Release leak gate 전체는 이번에 구현하지 않는다.
-14. Acceptance validator의 final gaps를 영구 5개 BLOCKED로 강제하는 구조를 실제 gap subset 방식으로 개선한다.
-15. 성공 시 `final.asset-registry-separation`만 `STATIC_VERIFIED`, 나머지 4개는 `BLOCKED`다.
-16. Runtime/Human/Persistence/Performance 상태는 승격하지 않는다.
-17. Work Order에 남은 별도 Player Map 의미의 stale `Journal·Map·Ping` 문구를 최소 정정한다.
-18. focused tests + 기존 전체 static/build/lint/type 검증을 실행한다.
-19. Studio/Studio MCP/Human Playtest는 실행하지 않는다.
-20. current PR branch에 non-force 반영한다.
-21. push 후 새 current HEAD 관련 GitHub Actions를 실제 확인한다.
-22. failure/pending이 하나라도 있으면 PASS 금지.
-23. 지정 Marker로 PR #2 top-level 결과 댓글을 남긴다.
+3. `AGENTS.md`, Work Order, AGENT-TEST-STATUS, ADR-0091, final UI/content contract, Acceptance Matrix/validator, BuiltinPackIndex, Asset Registry foundation을 읽는다.
+4. 기존 `BuiltinPackIndex.lua`를 package authority로 재사용한다. 중복 package authority를 만들지 않는다.
+5. profile별 기본 package는 정확히 하나여야 한다.
+6. unknown profile은 fail closed한다.
+7. private readiness missing/binding mismatch/revision mismatch/root mismatch/count mismatch/digest mismatch는 fail closed한다.
+8. `allowSrdFallback=true`가 명시된 development/test/studio-acceptance에서만 SRD fallback을 허용한다.
+9. fallback은 `fallbackActive`와 viewer-safe reason code를 지속 표시한다. 정상 integrated 상태로 가장하지 않는다.
+10. public/release/artifact는 malformed option과 무관하게 `rvtt.core.rules`만 선택한다.
+11. 동일 Build에서 private/public base body 자동 병합 금지.
+12. ReleaseContentLeakGate는 실제 public output/artifact staging 범위에 대해 fail closed해야 한다.
+13. Gate는 private package id/source path/private metadata/chunk/index/snippet/private rule link를 차단한다.
+14. Gate는 `rvtt.core.rules` attribution/license와 public `rvtt-rule://` package anchor를 검증한다.
+15. source code/ADR/test fixture에서 leak-pattern 문자열을 정의하는 것 자체를 output leak으로 오판하지 않는다.
+16. client-safe 상태에 private source credential/path/raw revision/count를 필요 없이 노출하지 않는다.
+17. 실제 private rule body를 repository에 추가하지 않는다.
+18. Core Rules Reader UI/virtualization은 구현하지 않는다.
+19. Official Sheet/Dice Notice도 구현하지 않는다.
+20. Acceptance Matrix에서 rules-profile/leak-gate blocker만 `STATIC_VERIFIED`로 전환한다.
+21. Asset Registry PASS는 유지하고 나머지 3 final gaps는 BLOCKED로 유지한다.
+22. focused tests + repository-required validators/format/lint/Rojo/sourcemap/Luau analysis를 실행한다.
+23. Studio/Studio MCP/Human Playtest는 실행하지 않는다.
+24. current branch에 non-force push한다.
+25. push 후 새 result HEAD 관련 GitHub Actions를 실제 확인한다.
+26. failure/pending/cancelled 하나라도 있으면 PASS 금지.
+27. 지정 result marker로 PR #2 top-level 결과 댓글을 남긴다.
 
 ## 필수 focused regression
 
+### Resolver
+
 ```text
-valid empty baseline registry
-valid synthetic test-only token/prop fixture
-duplicate asset ID rejection
-missing rights/provenance rejection
-missing token geometry/metadata rejection
-dependency cycle rejection
-private/non-exportable item absent from client-safe view
-client-safe allowlist only
-source/server identity drift rejection
-executable payload declaration rejection
+development/test/studio valid readiness -> integrated package
+public/release/artifact -> rvtt.core.rules
+unknown profile -> fail closed
+private binding missing/mismatch -> fail closed
+pinned revision mismatch -> fail closed
+source root mismatch -> fail closed
+각 expected content count mismatch -> fail closed
+explicit allowSrdFallback=true -> SRD fallback + persistent fallback status
+implicit fallback -> 금지
+public/release malformed options로 private 선택 -> 금지
 ```
 
-Acceptance validator도 다음을 거부해야 한다.
+### Release leak gate
 
 ```text
-asset-registry source/server/client-safe boundary missing
-asset-registry blocker evidence 없이 해제
-remaining four ADR-0091 blockers 거짓 해제
-stale Player Minimap/separate Map/Objective Tracker 재도입
-runtime/human false PASS
+clean synthetic public artifact -> PASS
+private package id -> FAIL
+private repo/source path marker -> FAIL
+private chunk/index/snippet marker -> FAIL
+private source metadata -> FAIL
+missing SRD attribution/license -> FAIL
+private rvtt-rule:// package anchor -> FAIL
+rvtt.core.rules public anchor -> PASS
+client-safe profile state private metadata leak -> FAIL
 ```
 
-## 성공 상태
+실제 private copyrighted body를 fixture로 사용하지 않는다.
+
+## Acceptance 성공 상태
+
+이 correction이 성공하면:
 
 ```text
-ADR-0091 Asset Registry = STATIC_VERIFIED
+final.asset-registry-separation = STATIC_VERIFIED
+final.rules-profile-release-leak-gate = STATIC_VERIFIED
+final.core-rules-reader-filtering = BLOCKED
+final.official-2024-sheet-interactions = BLOCKED
+final.dice-slot-reveal-notice = BLOCKED
+finalContractGaps = 3
 Phase 10 = PARTIAL / HOLD
-remaining blockers = 4
-next = RULES_PROFILE_RELEASE_LEAK_GATE correction
+next = CORE_RULES_READER correction
 new current-HEAD Static Gate = NOT YET
 Studio Human Retest = BLOCKED
 Studio Runtime = NOT_EXECUTED
@@ -120,15 +150,13 @@ Human UI/UX = NOT_EXECUTED
 
 ## 명시적 제외
 
+- private integrated rule body import/commit
+- private credentials/secrets
+- Core Rules Reader UI/virtualized article
 - Official 2024 interactive Character Sheet
 - Dice Slot Reveal Notice
-- Core Rules Reader
-- private integrated rules importer body processing
-- public SRD release leak gate 전체 구현
 - ADR-0092 Runtime
 - Player persistent Minimap / separate Player Map / Objective Tracker
-- fabricated asset IDs
-- private rules body in public Git tree
 - new gameplay-authority command
 - test deletion/skip/assertion weakening
 - validator/CI bypass
@@ -146,14 +174,15 @@ RVTT 저장소의 .github/CODEX-ACTIVE-TASK.md에서 ChatGPT가 작성한 최신
 사용자가 `확인` 또는 `확인해`라고 하면:
 
 1. PR #2 current HEAD 재조회
-2. 최신 `RVTT_CODEX_ADR0091_ASSET_REGISTRY_RESULT` 댓글 확인
+2. 최신 `RVTT_CODEX_ADR0091_RULES_PROFILE_LEAK_GATE_RESULT` 댓글 확인
 3. target/result SHA와 실제 compare/files 대조
-4. Source/Server/Client-safe 세 경계 직접 확인
-5. focused validation/leak tests 직접 확인
-6. private/non-exportable negative disclosure 확인
-7. Acceptance Matrix/validator가 asset blocker만 해제했는지 확인
-8. 나머지 4 blocker가 유지되는지 확인
-9. Work Order Player Map drift 정정 확인
-10. current HEAD GitHub Actions 직접 확인
-11. 모두 맞아야 이 correction PASS 인정
-12. Studio/Human PASS 확대 금지
+4. RulePackageResolver profile mapping 직접 확인
+5. private readiness fail-closed와 explicit fallback 검수
+6. public/release/artifact SRD-only invariant 확인
+7. ReleaseContentLeakGate output-scope와 leak negative fixtures 확인
+8. client-safe negative disclosure 확인
+9. Acceptance Matrix가 이 blocker만 해제해 remaining gap 3인지 확인
+10. Work Order/AGENT status consistency 확인
+11. current HEAD GitHub Actions 직접 확인
+12. 모두 맞아야 correction PASS 인정
+13. Studio/Human PASS 확대 금지
