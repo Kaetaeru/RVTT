@@ -13,9 +13,11 @@ REQUIRED_FILES = {
     "src/ServerScriptService/RVTT/Server/Networking/RuleReaderQuery.lua",
     "src/ServerScriptService/RVTT/Server/Domains/SessionDomain.lua",
     "src/ServerScriptService/RVTT/RuleReaderBoot.server.lua",
+    "src/ServerStorage/RVTT/Content/RuleRuntimePackageBinding.lua",
     "src/ServerStorage/RVTT/Content/Packs/rvtt.core.rules/RuleReaderPackage.lua",
     "src/StarterGui/RVTT/UI/Components/CoreRulesReaderPanel.lua",
     "tests/Unit/CoreRulesReader.spec.lua",
+    "tests/Unit/RuleRuntimePackageBinding.spec.lua",
 }
 
 
@@ -31,10 +33,12 @@ def validate(root: Path = ROOT) -> list[str]:
     query = (root / "src/ServerScriptService/RVTT/Server/Networking/RuleReaderQuery.lua").read_text(encoding="utf-8")
     session = (root / "src/ServerScriptService/RVTT/Server/Domains/SessionDomain.lua").read_text(encoding="utf-8")
     boot = (root / "src/ServerScriptService/RVTT/RuleReaderBoot.server.lua").read_text(encoding="utf-8")
+    binding = (root / "src/ServerStorage/RVTT/Content/RuleRuntimePackageBinding.lua").read_text(encoding="utf-8")
     client = (root / "src/ReplicatedStorage/RVTT/Shared/Rules/RuleReaderClient.lua").read_text(encoding="utf-8")
     panel = (root / "src/StarterGui/RVTT/UI/Components/CoreRulesReaderPanel.lua").read_text(encoding="utf-8")
     package = (root / "src/ServerStorage/RVTT/Content/Packs/rvtt.core.rules/RuleReaderPackage.lua").read_text(encoding="utf-8")
     spec = (root / "tests/Unit/CoreRulesReader.spec.lua").read_text(encoding="utf-8")
+    binding_spec = (root / "tests/Unit/RuleRuntimePackageBinding.spec.lua").read_text(encoding="utf-8")
     remote_names = (root / "src/ReplicatedStorage/RVTT/Shared/Protocol/RemoteNames.lua").read_text(encoding="utf-8")
     management = (root / "src/StarterGui/RVTT/UI/Components/ManagementPanel.lua").read_text(encoding="utf-8")
     remote_spec = (root / "tests/Unit/RemoteBootstrap.spec.lua").read_text(encoding="utf-8")
@@ -62,18 +66,37 @@ def validate(root: Path = ROOT) -> list[str]:
         if marker not in query:
             errors.append(f"RuleReaderQuery.lua: missing query action/enforcement marker {marker}")
     for marker in (
-        "RulePackageResolver",
-        "RuleReaderQuery.new",
+        "RuleRuntimePackageBinding",
+        "RuleRuntimePackageBinding.resolveProfile(configuredProfile())",
+        "RuleRuntimePackageBinding.packageForId(packageId, configuredProfile())",
         "RULE_READER_QUERY",
         "RunService:IsStudio()",
         '"development"',
         '"public"',
         'GetAttribute("RVTT_Role")',
+        "RVTTPrivateRuleContent",
     ):
         if marker not in boot:
             errors.append(f"RuleReaderBoot.server.lua: missing boot/profile marker {marker}")
+    if "RulePackageResolver.resolve(configuredProfile(), {})" in boot:
+        errors.append("RuleReaderBoot.server.lua: private profile must not bypass runtime binding readiness")
     if "allowSrdFallback = true" in boot:
         errors.append("RuleReaderBoot.server.lua: implicit SRD fallback is forbidden")
+
+    for marker in (
+        'RUNTIME_BINDING_ROOT_NAME = "RVTTPrivateRuleContent"',
+        "function RuleRuntimePackageBinding.loadRuntimeBinding",
+        "function RuleRuntimePackageBinding.resolveProfileWithBinding",
+        "function RuleRuntimePackageBinding.packageForIdWithBinding",
+        "privateReadiness = binding.readiness",
+        "pcall(require, readinessModule)",
+        "pcall(require, packageModule)",
+        "PRIVATE_RULE_PACKAGE_MISMATCH",
+        "package.packageId ~= authority.packageId",
+        "package.version ~= authority.version",
+    ):
+        if marker not in binding:
+            errors.append(f"RuleRuntimePackageBinding.lua: missing private positive-path marker {marker}")
 
     for marker in ("publishRole", 'SetAttribute("RVTT_Role"', "session.assign_character", "session.connection"):
         if marker not in session:
@@ -118,8 +141,23 @@ def validate(root: Path = ROOT) -> list[str]:
     ):
         if marker not in spec:
             errors.append(f"CoreRulesReader.spec.lua: missing focused regression marker {marker}")
+
+    for marker in (
+        "resolves with an exact runtime binding",
+        "provider returns the injected package",
+        "PRIVATE_SOURCE_MISSING",
+        "SOURCE_REVISION_MISMATCH",
+        "PRIVATE_RULE_PACKAGE_MISMATCH",
+        "public profile cannot request the private package",
+        "Binding.loadRuntimeBinding(fakeStorage)",
+    ):
+        if marker not in binding_spec:
+            errors.append(f"RuleRuntimePackageBinding.spec.lua: missing positive-path regression marker {marker}")
+
     if 'require(script.Parent["CoreRulesReader.spec"])(harness)' not in remote_spec:
         errors.append("RemoteBootstrap.spec.lua: focused Core Rules Reader regression is not registered")
+    if 'require(script.Parent["RuleRuntimePackageBinding.spec"])(harness)' not in remote_spec:
+        errors.append("RemoteBootstrap.spec.lua: private runtime binding regression is not registered")
     if "RULE_READER_QUERY" not in remote_names:
         errors.append("RemoteNames.lua: RuleReaderQuery remote name is not canonical")
 
@@ -133,7 +171,7 @@ def main() -> int:
         for error in errors:
             print("-", error)
         return 1
-    print("Core Rules Reader validation passed: lazy manifest/search/open/chunk + permission-safe Journal reader")
+    print("Core Rules Reader validation passed: private runtime binding + lazy permission-safe Journal reader")
     return 0
 
 
