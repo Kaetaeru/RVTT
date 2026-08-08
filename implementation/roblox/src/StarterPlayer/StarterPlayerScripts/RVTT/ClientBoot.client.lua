@@ -114,6 +114,7 @@ local CommandClient = require(clientModules.CommandClient)
 local InputContextStack = require(clientModules.InputContextStack)
 local SemanticInputRouter = require(clientModules.SemanticInputRouter)
 local ClientRuntime = require(clientModules.ClientRuntime)
+local UiPreferenceStore = require(clientModules.UiPreferenceStore)
 local WorldTokenRuntime = require(clientModules.World.WorldTokenRuntime)
 
 local replica = ProjectionReplica.new()
@@ -121,6 +122,7 @@ local command = CommandClient.new(remotes, replica)
 local inputStack = InputContextStack.new()
 local inputRouter = SemanticInputRouter.new(inputStack)
 local worldTokens = WorldTokenRuntime.new(replica, command)
+local preferences = UiPreferenceStore.new()
 local syncInFlight = false
 
 local function fullResync()
@@ -165,6 +167,7 @@ ClientRuntime.set({
 	Command = command,
 	Input = inputStack,
 	WorldTokens = worldTokens,
+	Preferences = preferences,
 })
 
 local loadingGui = playerGui:FindFirstChild("RVTT_Loading")
@@ -180,3 +183,4 @@ task.delay(2, function()
 end)
 
 print("[RVTT ClientBoot] runtime ready")
+

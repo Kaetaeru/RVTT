@@ -25,6 +25,7 @@ export type Runtime = {
 	Command: any,
 	Input: InputContextStack,
 	WorldTokens: any,
+	Preferences: any,
 }
 
 local current: Runtime? = nil
@@ -54,3 +55,4 @@ function ClientRuntime.await(): Runtime
 end
 
 return ClientRuntime
+

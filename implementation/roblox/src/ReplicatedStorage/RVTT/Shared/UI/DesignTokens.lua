@@ -24,6 +24,7 @@ local Tokens = {
 		Success = Color3.fromRGB(88, 168, 117),
 		Warning = Color3.fromRGB(208, 160, 74),
 		Danger = Color3.fromRGB(199, 93, 93),
+		Disabled = Color3.fromRGB(101, 108, 120),
 		Info = Color3.fromRGB(100, 152, 208),
 		Pending = Color3.fromRGB(154, 130, 200),
 		Focus = Color3.fromRGB(240, 201, 109),
@@ -31,8 +32,22 @@ local Tokens = {
 	Spacing = { XS = 4, SM = 8, MD = 12, LG = 16, XL = 24, XXL = 32 },
 	Radius = { SM = UDim.new(0, 4), MD = UDim.new(0, 8), LG = UDim.new(0, 12) },
 	TextSize = { Caption = 13, Body = 16, Label = 18, Heading = 22, Title = 28 },
-	Layer = { Hud = 10, Panel = 20, Prompt = 40, Modal = 60, Critical = 80, Recovery = 100 },
+	Layer = {
+		WorldFeedback = 5,
+		Hud = 10,
+		Surface = 20,
+		Panel = 20,
+		System = 30,
+		Overlay = 40,
+		Prompt = 50,
+		Toast = 60,
+		Modal = 65,
+		Tooltip = 70,
+		Critical = 80,
+		Recovery = 100,
+	},
 	Motion = { Fast = 0.12, Normal = 0.2, Slow = 0.35 },
 }
 
 return table.freeze(Tokens)
+

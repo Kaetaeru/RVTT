@@ -62,8 +62,8 @@ Studio MCP 자동화는 반복 작업 절감 효과가 명확하거나 사용자
 | ADR/설계 및 Studio Preflight 문서 검수 | `PASS` | 마지막 Codex Delta 결과 `NO_SUPPORTED_FINDINGS` |
 | 마지막 Implementation Static Gate | `PASS` | 검증 대상 `ef99a0740711b4f00fac0d5c8d0599f238ea48e9` |
 | Full UI·UX Source·Acceptance 정합화 | `IN_PROGRESS` | `CURRENT-WORK-ORDER.md` 순서 4부터 진행 |
-| Shared Shell·Preference Foundation | `IN_PROGRESS` | 현재 구현 작업 |
-| Input·Context Action 정합화 | `PENDING` | Shared Shell 이후 |
+| Shared Shell·Preference Foundation | `PASS` | `RVTT-PR2-UI-FOUNDATION-IMPLEMENTATION-002` 구현·로컬 정적 검증 완료 |
+| Input·Context Action 정합화 | `IN_PROGRESS` | 다음 구현 작업 |
 | Exploration·Encounter HUD | `PENDING` | Input 정합화 이후 |
 | Inventory·Journal·Settings | `PENDING` | HUD 이후 |
 | Entry·Role·Recovery | `PENDING` | 화면 정합화 이후 |
@@ -84,11 +84,14 @@ PR: #2
 branch: agent/survival-logistics-token-authoring
 staticGateTargetSha: ef99a0740711b4f00fac0d5c8d0599f238ea48e9
 staticGate: PASS
+phase4Implementation: PASS · RVTT-PR2-UI-FOUNDATION-IMPLEMENTATION-002
+phase4LocalStaticValidation: PASS
+newCurrentHeadStaticGate: REQUIRED_BEFORE_STUDIO
 studioManualRuntimeCurrentContract: NOT_EXECUTED
 humanPlaytestCurrentContract: NOT_EXECUTED
 ```
 
-`ef99a07...` 이후 현재까지 확인된 변경은 테스트 상태 문서와 에이전트 규칙 문서뿐이다. 따라서 그 Static PASS 기록은 유효한 역사적 증거로 유지한다. 다만 앞으로 Full UI·UX 구현 코드가 변경되면 **새 구현 Head에서 Static Gate를 다시 통과한 뒤** Studio Human Retest를 시작해야 한다.
+`ef99a07...` Static PASS는 역사적 증거로 유지한다. 이후 Shared Shell·Preference Foundation Source가 변경됐고 구현 명령 범위의 로컬 Validator·Format·Lint·Rojo Build·Production/Test Luau 분석은 통과했다. Studio Human Retest 전에는 나머지 UI·UX Source·Acceptance 정합화를 완료하고 **새 구현 Head에서 current-HEAD Static Gate를 다시 통과해야 한다.**
 
 ---
 
@@ -196,7 +199,7 @@ passedChecks: 0
 failedChecks: 0
 blockedChecks: 18
 blocker: Full UI·UX Source·Acceptance alignment and new current-HEAD Static Gate required
-next: Shared Shell·Preference Foundation implementation
+next: Input·Context Action alignment implementation
 ```
 
 ### Historical Studio Evidence — 현재 계약 PASS로 사용 금지
@@ -259,3 +262,4 @@ Next: <next required action>
 - 필요 시 개별 Acceptance Project와 Runner
 
 이 문서는 위 Authority를 **한눈에 보는 현재 상태 인덱스**로 유지한다.
+

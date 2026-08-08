@@ -43,7 +43,7 @@ Grand Persistence Published Runner·Config·CI
 → EXECUTION CONTRACT READY
 
 현재 작업
-→ Shared Shell부터 Settings·Recovery까지 Full UI·UX 정합화
+→ Input·Context Action 정합화
 ```
 
 기존 Context Input과 UI Source는 ESC 처리, Right Pointer·Action Availability·Preview·설정 기본값·화면 상태가 새 명세와 다르므로 Studio Retest를 시작하지 않는다.
@@ -235,8 +235,8 @@ HEAD 582c1c4
 | 1 | DONE | Grand Persistence 실행 계약 | Published Place Runner·Config·Report |
 | 2 | DONE | ADR-0088 상위 기획 | Pointer·Q/E·Feedback·Continuity |
 | 3 | DONE | Full UI·UX 구현 직전 명세 | 화면·Settings·Flow·Acceptance |
-| 4 | IN_PROGRESS | Shared Shell·Preference Foundation | Layer·Mode·System·Theme·Settings Store |
-| 5 | QUEUED | Input·Context Action 정합화 | Q·ESC·Left·Right·Middle·Availability |
+| 4 | DONE | Shared Shell·Preference Foundation | Layer·Mode·System·Theme·Settings Store |
+| 5 | IN_PROGRESS | Input·Context Action 정합화 | Q·ESC·Left·Right·Middle·Availability |
 | 6 | QUEUED | Exploration·Encounter HUD | Preview·Turn·Reaction·Selection Continuity |
 | 7 | QUEUED | Inventory·Journal·Settings | 화면·Intent·Permission·Preference |
 | 8 | QUEUED | Entry·Role·Recovery | Projection rebuild·Reconnect·Error Boundary |
@@ -261,3 +261,4 @@ Full UI·UX Source·Acceptance 정합화
 → UI·Accessibility·Performance Evidence
 → Grand Persistence Runtime
 ```
+

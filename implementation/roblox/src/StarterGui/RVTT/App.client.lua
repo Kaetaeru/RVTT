@@ -9,9 +9,9 @@ end
 
 local player = Players.LocalPlayer
 local SharedUI = ReplicatedStorage.RVTT.Shared.UI
-local AccentPreference = require(SharedUI.AccentPreference)
 local Tokens = require(SharedUI.DesignTokens)
 local uiFolder = script.Parent.UI
+local AppShell = require(uiFolder.AppShell)
 local ThemeApplicator = require(uiFolder.ThemeApplicator)
 local SettingsPanel = require(uiFolder.Components.SettingsPanel)
 local components = uiFolder.Components
@@ -25,14 +25,15 @@ local gui = Instance.new("ScreenGui")
 gui.Name = "RVTT_App"
 gui.ResetOnSpawn = false
 gui.IgnoreGuiInset = false
-gui.DisplayOrder = Tokens.Layer.Hud
+gui.DisplayOrder = 0
 gui.Parent = player:WaitForChild("PlayerGui")
+local shell = AppShell.new(gui)
 
 local banner = require(components.StateBanner)()
-banner.Parent = gui
+banner.Parent = shell:getLayer("System")
 
 local prompt = require(components.ActionPrompt)()
-prompt.Parent = gui
+prompt.Parent = shell:getLayer("Prompt")
 local promptText = prompt:FindFirstChildWhichIsA("TextLabel")
 
 local settingsButton = Instance.new("TextButton")
@@ -47,7 +48,7 @@ settingsButton.Selectable = true
 settingsButton.SelectionOrder = 1
 settingsButton:SetAttribute("RVTTBackgroundToken", "accent")
 settingsButton:SetAttribute("RVTTTextToken", "accentOn")
-settingsButton.Parent = gui
+settingsButton.Parent = shell:getLayer("System")
 
 local settingsCorner = Instance.new("UICorner")
 settingsCorner.CornerRadius = Tokens.Radius.SM
@@ -58,29 +59,14 @@ settingsStroke.Transparency = 0.12
 settingsStroke:SetAttribute("RVTTStrokeToken", "focus")
 settingsStroke.Parent = settingsButton
 
-local currentAccentId = AccentPreference.DEFAULT_ID
-local previewGeneration = 0
+local currentAccentId = "gold"
 local settingsContextActive = false
 local settingsPanel: any
 local setSettingsVisible: (boolean) -> ()
 
-local function projectedAccent(payload: any): string
-	if type(payload) ~= "table" or type(payload.domains) ~= "table" then
-		return AccentPreference.DEFAULT_ID
-	end
-	local uiPreferences = payload.domains.ui_preferences
-	if type(uiPreferences) ~= "table" or type(uiPreferences.byUser) ~= "table" then
-		return AccentPreference.DEFAULT_ID
-	end
-	local preferences = uiPreferences.byUser[tostring(player.UserId)]
-	if type(preferences) ~= "table" then
-		return AccentPreference.DEFAULT_ID
-	end
-	return AccentPreference.normalize(preferences[AccentPreference.KEY])
-end
-
-local function applyAccent(value: any)
-	currentAccentId = ThemeApplicator.apply(gui, value)
+local function applyPreferences()
+	local preferences = client.Preferences:snapshot()
+	currentAccentId = ThemeApplicator.apply(shell.Root, preferences)
 	if settingsPanel ~= nil then
 		settingsPanel:setSelected(currentAccentId)
 	end
@@ -100,7 +86,7 @@ setSettingsVisible = function(visible: boolean)
 		"RVTTBackgroundToken",
 		if visible then "accentPressed" else "accent"
 	)
-	ThemeApplicator.apply(settingsButton, currentAccentId)
+	ThemeApplicator.apply(settingsButton, client.Preferences:snapshot())
 
 	if visible and not settingsContextActive then
 		settingsContextActive = true
@@ -120,28 +106,16 @@ setSettingsVisible = function(visible: boolean)
 end
 
 settingsPanel = SettingsPanel.new(function(id: string)
-	previewGeneration += 1
-	local generation = previewGeneration
-	applyAccent(id)
-	client.Command:submit("ui.set_preference", {
-		key = AccentPreference.KEY,
-		value = id,
-	})
-
-	task.delay(3, function()
-		if previewGeneration ~= generation then
-			return
-		end
-		local authoritative = projectedAccent(client.Replica.payload)
-		if authoritative ~= currentAccentId then
-			previewGeneration += 1
-			applyAccent(authoritative)
-		end
-	end)
+	client.Preferences:set("accentPaletteId", id)
 end, function()
 	setSettingsVisible(false)
 end)
-settingsPanel.Root.Parent = gui
+settingsPanel.Root.Parent = shell:getLayer("Overlay")
+
+client.Preferences.Changed:Connect(function()
+	applyPreferences()
+end)
+applyPreferences()
 
 settingsButton.Activated:Connect(function()
 	setSettingsVisible(not settingsPanel:isVisible())
@@ -149,7 +123,7 @@ end)
 settingsButton.MouseEnter:Connect(function()
 	if not settingsPanel:isVisible() then
 		settingsButton:SetAttribute("RVTTBackgroundToken", "accentHover")
-		ThemeApplicator.apply(settingsButton, currentAccentId)
+		ThemeApplicator.apply(settingsButton, client.Preferences:snapshot())
 	end
 end)
 settingsButton.MouseLeave:Connect(function()
@@ -157,12 +131,11 @@ settingsButton.MouseLeave:Connect(function()
 		"RVTTBackgroundToken",
 		if settingsPanel:isVisible() then "accentPressed" else "accent"
 	)
-	ThemeApplicator.apply(settingsButton, currentAccentId)
+	ThemeApplicator.apply(settingsButton, client.Preferences:snapshot())
 end)
 
 local function render(payload: any, envelope: any)
-	previewGeneration += 1
-	applyAccent(projectedAccent(payload))
+	shell:applyProjection(payload, player.UserId)
 
 	local domains = if type(payload) == "table" then payload.domains else nil
 	local session = if type(domains) == "table" then domains.session else nil
@@ -172,7 +145,13 @@ local function render(payload: any, envelope: any)
 	local revision = if type(envelope) == "table" and type(envelope.revision) == "number"
 		then envelope.revision
 		else client.Replica.revision
-	banner.Text = string.format("RVTT · %s · revision %d", phase, revision)
+	banner.Text = string.format(
+		"RVTT · %s · %s · %s · revision %d",
+		shell.role,
+		shell.mode,
+		phase,
+		revision
+	)
 end
 
 client.Replica.Changed:Connect(render)
@@ -186,3 +165,4 @@ client.Input:push("base_hud", 10, {
 		return false
 	end,
 })
+

@@ -32,6 +32,11 @@ local specs: { Spec } = {
 		runner = require(script.Parent.Unit["AccentTheme.spec"]) :: any,
 	},
 	{
+		id = "unit-ui-foundation",
+		name = "UiFoundation.spec",
+		runner = require(script.Parent.Unit["UiFoundation.spec"]) :: any,
+	},
+	{
 		id = "unit-envelope",
 		name = "Envelope.spec",
 		runner = require(script.Parent.Unit["Envelope.spec"]) :: any,
@@ -244,3 +249,4 @@ end
 
 print(string.format("[RVTT Tests] passed=%d failed=%d", aggregate.passed, aggregate.failed))
 assert(aggregate.failed == 0, "RVTT tests failed")
+
