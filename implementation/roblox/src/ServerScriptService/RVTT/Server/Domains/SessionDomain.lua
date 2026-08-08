@@ -1,10 +1,18 @@
 --!strict
 
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Identity = require(ReplicatedStorage.RVTT.Shared.Core.Identity)
 local Helpers = require(script.Parent.DomainHelpers)
 
 local Domain = { id = "session", slice = 1 }
+
+local function publishRole(userId: number, role: string)
+	local player = Players:GetPlayerByUserId(userId)
+	if player ~= nil then
+		player:SetAttribute("RVTT_Role", role)
+	end
+end
 
 function Domain.initialState()
 	return {
@@ -38,6 +46,7 @@ function Domain.register(registry: any)
 				joinedAt = os.time(),
 			}
 			state.connections[key] = "connected"
+			publishRole(context.playerId, state.memberships[key].role)
 			return { membership = state.memberships[key] }
 		end,
 	})
@@ -85,6 +94,10 @@ function Domain.register(registry: any)
 						local assignedMembership = state.memberships[assignedUserKey]
 						if assignedMembership ~= nil and assignedMembership.role ~= "dm" then
 							assignedMembership.role = "observer"
+							local assignedUserId = tonumber(assignedUserKey)
+							if assignedUserId ~= nil then
+								publishRole(assignedUserId, "observer")
+							end
 						end
 						state.selectedCharacter[assignedUserKey] = nil
 						state.ready[assignedUserKey] = nil
@@ -100,6 +113,7 @@ function Domain.register(registry: any)
 				state.selectedCharacter[key] = nil
 				state.ready[key] = nil
 			end
+			publishRole(userId, membership.role)
 
 			local actors = domains.scene and domains.scene.actors
 			if type(actors) == "table" then
@@ -221,7 +235,14 @@ function Domain.register(registry: any)
 				and (payload.status == "connected" or payload.status == "disconnected")
 		end,
 		execute = function(_: any, state: any, payload: any)
-			state.connections[tostring(payload.userId)] = payload.status
+			local key = tostring(payload.userId)
+			state.connections[key] = payload.status
+			if payload.status == "connected" then
+				local membership = state.memberships[key]
+				if membership ~= nil and type(membership.role) == "string" then
+					publishRole(payload.userId, membership.role)
+				end
+			end
 			return { userId = payload.userId, status = payload.status }
 		end,
 	})
