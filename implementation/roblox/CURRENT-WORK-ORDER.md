@@ -2,7 +2,7 @@
 
 - 상태: `FULL_UI_UX_ALIGNMENT_REQUIRED`
 - 문서 종류: Production Implementation Work Order
-- 최종 갱신일: 2026-08-06
+- 최종 갱신일: 2026-08-09
 - 상위 직접 플레이: [`ADR-0088`](../../docs/remake/decisions/ADR-0088-direct-play-pointer-grammar-and-feedback.md)
 - 구현 직전 UI·UX: [`Full UI·UX Specification`](../../docs/remake/ui/shared/implementation-ready-ui-ux-and-settings-spec.md)
 - UI·UX Gap Audit: [`Implementation Readiness Audit`](../../docs/remake/audits/ui-ux-implementation-readiness-gap-audit.md)
@@ -19,7 +19,7 @@
 → IMPLEMENTED BASELINE
 
 Static·Security·Formatter·Lint·Rojo·Luau Type
-→ PREVIOUS HEAD PASSED
+→ CURRENT CORE RULES READER HEAD PASSED
 
 Historical Roblox Studio Baseline
 → VERIFIED
@@ -36,19 +36,16 @@ Full Screen·Settings·Flow Specification
 기존 Contextual Pointer Actions Source
 → ADR-0088 ALIGNED · LOCAL STATIC VERIFIED
 
-기존 Player UI Source
-→ BASELINE EXISTS · FULL SCREEN SPEC NOT ALIGNED
-
 Grand Persistence Published Runner·Config·CI
 → EXECUTION CONTRACT READY
 
 현재 작업
 → Full UI·UX Acceptance Matrix 등록 완료
-→ ADR-0091 Asset Registry + Rules Profile/Release Leak Gate STATIC_VERIFIED
-→ 나머지 필수 구현 Gap 3개로 Phase 10 HOLD
+→ ADR-0091 Asset Registry + Rules Profile/Release Leak Gate + Core Rules Reader STATIC_VERIFIED
+→ Official 2024 Character Sheet + Dice Slot Reveal Notice 2개 Gap으로 Phase 10 HOLD
 ```
 
-Input·Context Action, Exploration·Encounter HUD, Inventory·Journal·Settings, Entry·Role·Recovery, DM Workspace Source는 현재 계약에 정합화됐다. ADR-0091 Asset Registry와 Rules Profile Resolver·Release Content Leak Gate는 Builtin package single authority, 실제 filesystem public staging, CI fail-closed enforcement, Server/Client-safe 경계와 focused validation까지 정적으로 확인됐다. 나머지 필수 구현 Gap 3개와 그 뒤의 새 current-HEAD Static Gate 전에는 Studio Retest를 시작하지 않는다.
+Input·Context Action, Exploration·Encounter HUD, Inventory·Journal·Settings, Entry·Role·Recovery, DM Workspace Source는 현재 계약에 정합화됐다. ADR-0091 Asset Registry, Rules Profile/Release Leak Gate, Core Rules Reader는 server-side viewer filtering, stable rule anchor, lazy chunk loading, authoritative session-role marker, actual filesystem public staging과 focused validation까지 정적으로 확인됐다. 남은 필수 구현 Gap 2개와 그 뒤의 새 current-HEAD Static Gate 전에는 Studio Retest를 시작하지 않는다.
 
 ## 2. 목표 입력 계약
 
@@ -115,6 +112,7 @@ Move Surface
 - Inventory·Equipment·Loot·Transfer·Identification
 - Character Sheet
 - Journal·Ping (문서·Anchor 탐색; 별도 Player Map 없음)
+- Core Rules Reader (검색·stable anchor·lazy chunk·권한 필터)
 - Settings·Bindings·Accessibility
 
 ### Session·DM
@@ -224,6 +222,7 @@ HEAD 582c1c4
 - Exploration·Encounter Mode Composition
 - Inventory·Loot·Transfer·Identification
 - Journal Permission·Document Navigation
+- Core Rules Permission·Search·Anchor·Lazy Chunk Navigation
 - Settings 초기값·Reset·Binding Conflict
 - Accent·Scale·Motion 변경 중 Focus·Selection 유지
 - Entry·Role Change·Reconnect·Recovery
@@ -242,8 +241,8 @@ HEAD 582c1c4
 | 7 | DONE | Inventory·Journal·Settings | 화면·Intent·Permission·Preference |
 | 8 | DONE | Entry·Role·Recovery | Projection rebuild·Reconnect·Error Boundary |
 | 9 | DONE | DM Live Workspace 정합화 | Player Preview·Override·Queue |
-| 10 | HOLD | Acceptance 확장 | Asset Registry·Rules Profile/Release filesystem enforcement STATIC_VERIFIED, ADR-0091 필수 구현 Gap 3개 |
-| 11 | BLOCKED | Studio Human Retest | Static Gate PASS 후 실행 |
+| 10 | HOLD | Acceptance 확장 | Asset Registry·Rules Profile/Release Gate·Core Rules Reader STATIC_VERIFIED, ADR-0091 필수 구현 Gap 2개 |
+| 11 | BLOCKED | Studio Human Retest | 남은 2개 구현 + 새 current-HEAD Static Gate PASS 후 실행 |
 | 12 | QUEUED | UI·Accessibility Evidence | Scale·Focus·Contrast·Motion·Screenshot |
 | 13 | QUEUED | DM·Player·Observer Test | 권한별 Projection·Role Change |
 | 14 | QUEUED | Grand Persistence Runtime | Published 7개 Phase |
@@ -254,9 +253,10 @@ HEAD 582c1c4
 ## 11. 다음 Gate
 
 ```text
-ADR-0091 Core Rules Reader correction
+ADR-0091 Official 2024 Character Sheet correction
+→ ADR-0091 Dice Slot Reveal Notice correction
 → Acceptance Matrix Gap 재검증
-→ Structure·Security·StyLua·Selene·Rojo·Luau
+→ 새 current-HEAD Static Gate
 → Exploration·Context Input Studio Retest
 → Inventory·Journal·Settings Human Evidence
 → Player·DM·Observer Role·Permission·Recovery Test
