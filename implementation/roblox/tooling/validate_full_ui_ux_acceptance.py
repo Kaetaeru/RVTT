@@ -6,6 +6,9 @@ import json
 import re
 import sys
 
+from validate_asset_registry import run_self_tests as run_asset_registry_self_tests
+from validate_asset_registry import validate as validate_asset_registry
+
 
 ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = ROOT.parents[1]
@@ -65,13 +68,15 @@ REQUIRED_IDS = {
     "dm.role-loss-purge-nondisclosure",
 }
 
-REQUIRED_FINAL_GAPS = {
+REQUIRED_FINAL_IDS = {
     "final.asset-registry-separation",
     "final.official-2024-sheet-interactions",
     "final.dice-slot-reveal-notice",
     "final.core-rules-reader-filtering",
     "final.rules-profile-release-leak-gate",
 }
+RESOLVED_FINAL_IDS = {"final.asset-registry-separation"}
+REMAINING_FINAL_GAPS = REQUIRED_FINAL_IDS - RESOLVED_FINAL_IDS
 
 FORBIDDEN_FEATURE_IDS = {
     "player-persistent-minimap",
@@ -225,13 +230,39 @@ def validate_matrix_data(matrix: dict, manifest: dict) -> list[str]:
             if set(item.get("forbiddenFeatureIds", [])) != FORBIDDEN_FEATURE_IDS:
                 errors.append(f"{item_id}: forbidden feature ids are incomplete")
 
+    final_items = {
+        item.get("id"): item
+        for item in items
+        if isinstance(item, dict) and item.get("id") in REQUIRED_FINAL_IDS
+    }
+    if set(final_items) != REQUIRED_FINAL_IDS:
+        errors.append("matrix: ADR-0091 final-contract item set is incomplete")
     final_gaps = set(matrix.get("finalContractGaps", []))
-    if final_gaps != REQUIRED_FINAL_GAPS:
-        errors.append("matrix: ADR-0091 final-contract gap audit is incomplete")
-    for gap_id in REQUIRED_FINAL_GAPS:
+    blocked_final_items = {
+        item_id
+        for item_id, item in final_items.items()
+        if item.get("currentState") == "BLOCKED"
+    }
+    if final_gaps != blocked_final_items:
+        errors.append("matrix: finalContractGaps must equal the actual BLOCKED final-contract subset")
+    if final_gaps != REMAINING_FINAL_GAPS:
+        errors.append("matrix: ADR-0091 remaining four final-contract gaps must stay BLOCKED")
+    for gap_id in REMAINING_FINAL_GAPS:
         matching = next((item for item in items if isinstance(item, dict) and item.get("id") == gap_id), None)
         if matching is None or matching.get("currentState") != "BLOCKED":
             errors.append(f"matrix: final gap {gap_id} must remain BLOCKED")
+    asset_item = final_items.get("final.asset-registry-separation")
+    if asset_item is not None:
+        if asset_item.get("currentState") != "STATIC_VERIFIED":
+            errors.append("matrix: asset registry must be STATIC_VERIFIED after focused implementation")
+        required_asset_evidence = {
+            "implementation/roblox/tooling/validate_asset_registry.py",
+            "implementation/roblox/tests/Unit/AssetRegistry.spec.lua",
+            "implementation/roblox/src/ServerStorage/RVTT/Content/AssetPackageRegistry.lua",
+            "implementation/roblox/src/ReplicatedStorage/RVTT/ContentRuntime/AssetCatalog.lua",
+        }
+        if not required_asset_evidence.issubset(set(asset_item.get("automatedRefs", []))):
+            errors.append("matrix: asset registry blocker cannot close without production and focused evidence")
 
     return errors
 
@@ -260,6 +291,7 @@ def validate(root: Path = ROOT) -> list[str]:
     manifest = _load_json(MANIFEST_PATH, errors)
     if matrix and manifest:
         errors.extend(validate_matrix_data(matrix, manifest))
+    errors.extend(validate_asset_registry(ROOT))
     errors.extend(validate_forbidden_player_sources())
     return errors
 
@@ -292,6 +324,18 @@ def run_self_tests(matrix: dict, manifest: dict) -> list[str]:
     target["requirement"] = "Player Minimap is required"
     fixtures.append((stale_surface, "forbidden Player surface was registered as required"))
 
+    missing_asset_evidence = deepcopy(matrix)
+    asset_item = next(item for item in missing_asset_evidence["acceptanceItems"] if item["id"] == "final.asset-registry-separation")
+    asset_item["automatedRefs"] = []
+    fixtures.append((missing_asset_evidence, "asset registry blocker cannot close without production and focused evidence"))
+
+    false_remaining_release = deepcopy(matrix)
+    release_item = next(item for item in false_remaining_release["acceptanceItems"] if item["id"] == "final.rules-profile-release-leak-gate")
+    release_item["currentState"] = "STATIC_VERIFIED"
+    release_item.pop("blockerReason", None)
+    false_remaining_release["finalContractGaps"].remove("final.rules-profile-release-leak-gate")
+    fixtures.append((false_remaining_release, "remaining four final-contract gaps must stay BLOCKED"))
+
     for fixture, expected in fixtures:
         fixture_errors = validate_matrix_data(fixture, manifest)
         if not any(expected in error for error in fixture_errors):
@@ -305,6 +349,7 @@ def main() -> int:
     manifest = _load_json(MANIFEST_PATH, errors)
     if matrix and manifest:
         errors.extend(run_self_tests(matrix, manifest))
+    errors.extend(run_asset_registry_self_tests())
     if errors:
         print("Full UI/UX acceptance validation failed:")
         for error in errors:

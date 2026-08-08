@@ -44,10 +44,11 @@ Grand Persistence Published Runner·Config·CI
 
 현재 작업
 → Full UI·UX Acceptance Matrix 등록 완료
-→ ADR-0091 필수 구현 Gap 5개로 Phase 10 HOLD
+→ ADR-0091 Asset Registry foundation STATIC_VERIFIED
+→ 나머지 필수 구현 Gap 4개로 Phase 10 HOLD
 ```
 
-Input·Context Action, Exploration·Encounter HUD, Inventory·Journal·Settings, Entry·Role·Recovery, DM Workspace Source는 현재 계약에 정합화됐다. Acceptance Matrix 등록 결과 ADR-0091 필수 구현 Gap 5개가 확인됐으므로 focused correction과 그 뒤의 새 current-HEAD Static Gate 전에는 Studio Retest를 시작하지 않는다.
+Input·Context Action, Exploration·Encounter HUD, Inventory·Journal·Settings, Entry·Role·Recovery, DM Workspace Source는 현재 계약에 정합화됐다. ADR-0091 Asset Registry의 Authoring Source·Server Registry·Client-safe View와 focused validation은 정적으로 확인됐다. 나머지 필수 구현 Gap 4개와 그 뒤의 새 current-HEAD Static Gate 전에는 Studio Retest를 시작하지 않는다.
 
 ## 2. 목표 입력 계약
 
@@ -113,7 +114,7 @@ Move Surface
 
 - Inventory·Equipment·Loot·Transfer·Identification
 - Character Sheet
-- Journal·Map·Ping
+- Journal·Ping (문서·Anchor 탐색; 별도 Player Map 없음)
 - Settings·Bindings·Accessibility
 
 ### Session·DM
@@ -241,7 +242,7 @@ HEAD 582c1c4
 | 7 | DONE | Inventory·Journal·Settings | 화면·Intent·Permission·Preference |
 | 8 | DONE | Entry·Role·Recovery | Projection rebuild·Reconnect·Error Boundary |
 | 9 | DONE | DM Live Workspace 정합화 | Player Preview·Override·Queue |
-| 10 | HOLD | Acceptance 확장 | Matrix·Validator 등록 완료, ADR-0091 필수 구현 Gap 5개 |
+| 10 | HOLD | Acceptance 확장 | Asset Registry STATIC_VERIFIED, ADR-0091 필수 구현 Gap 4개 |
 | 11 | BLOCKED | Studio Human Retest | Static Gate PASS 후 실행 |
 | 12 | QUEUED | UI·Accessibility Evidence | Scale·Focus·Contrast·Motion·Screenshot |
 | 13 | QUEUED | DM·Player·Observer Test | 권한별 Projection·Role Change |
@@ -253,7 +254,7 @@ HEAD 582c1c4
 ## 11. 다음 Gate
 
 ```text
-ADR-0091 focused implementation correction
+ADR-0091 rules profile/release leak gate correction
 → Acceptance Matrix Gap 재검증
 → Structure·Security·StyLua·Selene·Rojo·Luau
 → Exploration·Context Input Studio Retest

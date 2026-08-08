@@ -3,21 +3,21 @@
 - 상태: `PHASE_10_PARTIAL_HOLD`
 - Matrix: [`full-ui-ux-acceptance-matrix.json`](full-ui-ux-acceptance-matrix.json)
 - Validator: [`tooling/validate_full_ui_ux_acceptance.py`](tooling/validate_full_ui_ux_acceptance.py)
-- Authority snapshot: `e20853c3bc1e36fb78a1888809e13a8c8577ebb0`
+- Authority snapshot: `4321d104a597e530bf57748874ce42b13c42c1c4`
 - Runtime evidence: `NOT_EXECUTED`
 - Human UI·Accessibility evidence: `NOT_EXECUTED`
 
 ## 판정
 
-Phase 10은 49개 stable Acceptance 항목, 12개 실행 Batch 연결, 증거 상태 불변식과 drift validator를 등록했다. 현재 Source와 기존 자동 회귀 근거가 있는 41개 항목은 `STATIC_VERIFIED`다. 이는 Source·정적 계약만 확인했다는 뜻이며 Studio 또는 Human PASS가 아니다.
+Phase 10은 49개 stable Acceptance 항목, 12개 실행 Batch 연결, 증거 상태 불변식과 drift validator를 등록했다. 현재 Source와 기존 자동 회귀 근거가 있는 42개 항목은 `STATIC_VERIFIED`다. 이는 Source·정적 계약만 확인했다는 뜻이며 Studio 또는 Human PASS가 아니다.
 
-ADR-0091 Final Contract의 필수 구현 5개가 현재 Production Source에 없으므로 Phase 10은 `DONE`이 아니라 `PARTIAL / HOLD`다. 다음 Gate는 new current-HEAD Static Gate가 아니라 focused implementation correction이다.
+ADR-0091 Final Contract 중 Developer Asset Registry는 Production Source와 focused regression으로 `STATIC_VERIFIED`다. 나머지 필수 구현 4개가 없으므로 Phase 10은 `DONE`이 아니라 `PARTIAL / HOLD`다. 다음 Gate는 rules profile/release leak gate focused correction이다.
 
 ## 증거 분류
 
 | Evidence class | 연결 항목 수 | 현재 판정 |
 |---|---:|---|
-| `STATIC` | 46 | 41개 Source/Test mapping verified, 5개 gap registration verified |
+| `STATIC` | 46 | 42개 Source/Test mapping verified, 4개 gap registration verified |
 | `STUDIO_SINGLE_CLIENT` | 21 | `NOT_EXECUTED` · G1 |
 | `STUDIO_MULTI_CLIENT` | 17 | `NOT_EXECUTED` · G2 |
 | `REAL_TRANSPORT` | 3 | `NOT_EXECUTED` · G3 |
@@ -25,9 +25,9 @@ ADR-0091 Final Contract의 필수 구현 5개가 현재 Production Source에 없
 | `HUMAN_ACCESSIBILITY` | 4 | `NOT_EXECUTED` · Human evidence |
 | `PERSISTENCE_DEFERRED` | 1 | `DEFERRED` · P1–P7 |
 | `PERFORMANCE_DEFERRED` | 1 | `DEFERRED` |
-| `CONTENT_DEFERRED` | 5 | `BLOCKED` final-contract gaps |
+| `CONTENT_DEFERRED` | 4 | `BLOCKED` final-contract gaps |
 
-Matrix item 상태 합계는 `STATIC_VERIFIED=41`, `NOT_EXECUTED=1`, `DEFERRED=2`, `BLOCKED=5`다.
+Matrix item 상태 합계는 `STATIC_VERIFIED=42`, `NOT_EXECUTED=1`, `DEFERRED=2`, `BLOCKED=4`다.
 
 ## Runtime Batch 연결
 
@@ -64,15 +64,24 @@ RulePackageResolver / RuleReader
 private/public rules profile leak gate
 ```
 
-현재 Source에서 확인된 것은 `BuiltinPackIndex.lua`의 `rvtt.test.rules.2024.integrated.ko` Package ID뿐이다. 아래 필수 subsystem과 focused enforcement regression은 발견되지 않았다.
+Developer Asset Registry는 다음 실제 경계와 검증으로 정적 해제했다.
 
-1. Developer Asset Registry의 Source·Server·Client-safe 분리와 leak gate
-2. Official 2024 Interactive Character Sheet와 Inventory revision parity
-3. Dice Slot Reveal Notice state machine
-4. Core Rules Reader의 chunk·anchor·permission filtering
-5. Private integrated test profile과 public SRD release profile의 fail-closed leak gate
+```text
+content-source/packages/rvtt.core.baseline/package.manifest.json
+→ ServerStorage/RVTT/Content/Packs/rvtt.core.baseline
+→ ReplicatedStorage/RVTT/ContentRuntime/AssetCatalog.lua
+```
 
-이 항목은 문서 존재나 matrix 등록으로 PASS 처리하지 않는다. Matrix의 `finalContractGaps`와 각 `BLOCKED` 항목이 후속 focused implementation correction의 입력이다.
+Production asset set은 승인된 실제 에셋이 없으므로 비어 있다. `AssetRegistryValidator.lua`, `ClientAssetViewBuilder.lua`, `AssetRegistry.spec.lua`, `validate_asset_registry.py`가 Stable ID·kind metadata·dependency·executable payload·source identity와 private/non-exportable negative disclosure를 고정한다.
+
+아래 나머지 필수 subsystem과 focused enforcement regression은 발견되지 않았다.
+
+1. Official 2024 Interactive Character Sheet와 Inventory revision parity
+2. Dice Slot Reveal Notice state machine
+3. Core Rules Reader의 chunk·anchor·permission filtering
+4. Private integrated test profile과 public SRD release profile의 fail-closed leak gate
+
+이 항목은 문서 존재나 matrix 등록으로 PASS 처리하지 않는다. Matrix의 실제 `BLOCKED` subset인 `finalContractGaps`가 후속 focused implementation correction의 입력이다.
 
 ## Validator 불변식
 
@@ -86,7 +95,8 @@ Validator는 최소 다음을 거부한다.
 - reason 없는 Blocked·Deferred 항목
 - Manifest에 없는 Runtime phase
 - 필수 Role·Recovery·Negative Disclosure·DM reconciliation 항목 누락
-- ADR-0091 gap 누락 또는 거짓 해제
+- Asset Registry Production/focused evidence 없는 해제
+- 남은 ADR-0091 gap 누락 또는 거짓 해제
 - Player persistent Minimap·별도 Map·Objective Tracker 재등록과 Source 재도입
 
 Validator 자체는 위 실패 유형의 negative fixture를 매 실행마다 확인한다.

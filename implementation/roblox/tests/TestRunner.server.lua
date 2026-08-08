@@ -27,6 +27,11 @@ local specs: { Spec } = {
 		runner = require(script.Parent.Unit["Core.spec"]) :: any,
 	},
 	{
+		id = "unit-asset-registry",
+		name = "AssetRegistry.spec",
+		runner = require(script.Parent.Unit["AssetRegistry.spec"]) :: any,
+	},
+	{
 		id = "unit-accent-theme",
 		name = "AccentTheme.spec",
 		runner = require(script.Parent.Unit["AccentTheme.spec"]) :: any,

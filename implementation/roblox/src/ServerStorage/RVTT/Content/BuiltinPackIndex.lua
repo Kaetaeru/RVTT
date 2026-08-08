@@ -1,4 +1,6 @@
 --!strict
+local BaselineAssets = script.Parent.Packs["rvtt.core.baseline"]
+
 return {
 	{
 		packageId = "rvtt.core.rules",
@@ -88,5 +90,11 @@ return {
 		redistributable = true,
 		publicBuildAllowed = true,
 		clientExportAllowed = true,
+		assetRegistry = {
+			sourceIdentity = require(BaselineAssets.SourceIdentity),
+			manifest = require(BaselineAssets.Manifest),
+			assets = require(BaselineAssets.AssetRegistry),
+			profile = require(BaselineAssets.ValidationProfile),
+		},
 	},
 }

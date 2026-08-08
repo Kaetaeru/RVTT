@@ -170,6 +170,7 @@ required = [
     "grand-acceptance-manifest.json",
     "grand-single-client.project.json",
     "src/ReplicatedStorage/RVTT/Shared/Core/ValueGuard.lua",
+    "src/ReplicatedStorage/RVTT/ContentRuntime/AssetCatalog.lua",
     "src/ReplicatedStorage/RVTT/Shared/Diagnostics/BatchSummary.lua",
     "src/ReplicatedStorage/RVTT/Shared/World/WorldTokenContract.lua",
     "src/ReplicatedStorage/RVTT/Shared/World/WorldInteractionMath.lua",
@@ -178,6 +179,9 @@ required = [
     "src/ServerScriptService/RVTT/Server/Persistence/PersistenceCoordinator.lua",
     "src/ServerScriptService/RVTT/Server/Rules/ActorProfileResolver.lua",
     "src/ServerScriptService/RVTT/Server/Rules/RuleResolver.lua",
+    "src/ServerStorage/RVTT/Content/AssetPackageRegistry.lua",
+    "src/ServerStorage/RVTT/Content/AssetRegistryValidator.lua",
+    "src/ServerStorage/RVTT/Content/ClientAssetViewBuilder.lua",
     "src/StarterPlayer/StarterPlayerScripts/RVTT/ClientBoot.client.lua",
     "src/StarterPlayer/StarterPlayerScripts/RVTT/Client/ClientRuntime.lua",
     "src/StarterPlayer/StarterPlayerScripts/RVTT/Client/World/TokenAssetResolver.lua",
@@ -194,6 +198,7 @@ required = [
     "tests/Integration/Slice03Exploration.spec.lua",
     "tests/Integration/Slice04Encounter.spec.lua",
     "tests/Unit/BatchSummary.spec.lua",
+    "tests/Unit/AssetRegistry.spec.lua",
     "tests/Unit/WorldInteractionMath.spec.lua",
     "tests/Unit/WorldTokenContract.spec.lua",
     "tests/Slice01Acceptance/Slice01Acceptance.client.lua",
@@ -204,6 +209,7 @@ required = [
     "tooling/run-studio-acceptance-batch.ps1",
     "tooling/run-grand-acceptance.ps1",
     "tooling/validate_full_ui_ux_acceptance.py",
+    "tooling/validate_asset_registry.py",
     "manifests/all-slices-script-manifest.md",
 ]
 for relative in required:
@@ -266,6 +272,7 @@ if test_runner_path.exists():
         'id = "slice02-core-rules"',
         'id = "slice03-exploration"',
         'id = "slice04-encounter"',
+        'id = "unit-asset-registry"',
     ):
         if required_phrase not in test_runner:
             errors.append(f"TestRunner.server.lua: missing grand test contract {required_phrase}")
