@@ -27,6 +27,7 @@ export type Runtime = {
 	WorldTokens: any,
 	Preferences: any,
 	Recovery: any,
+	ViewerPreview: any,
 	RequestFullSync: () -> (),
 }
 

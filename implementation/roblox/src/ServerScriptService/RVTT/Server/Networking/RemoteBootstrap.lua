@@ -10,6 +10,11 @@ local EXPECTED = {
 	{ key = "receipt", name = RemoteNames.RECEIPT, className = "RemoteEvent" },
 	{ key = "projection", name = RemoteNames.PROJECTION, className = "RemoteEvent" },
 	{ key = "sync", name = RemoteNames.SYNC, className = "RemoteFunction" },
+	{
+		key = "viewerProjectionPreview",
+		name = RemoteNames.VIEWER_PROJECTION_PREVIEW,
+		className = "RemoteFunction",
+	},
 	{ key = "clientReady", name = RemoteNames.CLIENT_READY, className = "RemoteEvent" },
 }
 
@@ -90,6 +95,11 @@ function RemoteBootstrap.create()
 		receipt = requireRemote(folder, RemoteNames.RECEIPT, "RemoteEvent") :: RemoteEvent,
 		projection = requireRemote(folder, RemoteNames.PROJECTION, "RemoteEvent") :: RemoteEvent,
 		sync = requireRemote(folder, RemoteNames.SYNC, "RemoteFunction") :: RemoteFunction,
+		viewerProjectionPreview = requireRemote(
+			folder,
+			RemoteNames.VIEWER_PROJECTION_PREVIEW,
+			"RemoteFunction"
+		) :: RemoteFunction,
 		clientReady = requireRemote(folder, RemoteNames.CLIENT_READY, "RemoteEvent") :: RemoteEvent,
 	}
 end

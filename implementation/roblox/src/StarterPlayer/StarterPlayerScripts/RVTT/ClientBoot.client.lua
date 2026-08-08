@@ -42,12 +42,15 @@ local function resolveRemoteSet(folder: Folder): any?
 	local receipt = uniqueTypedChild(folder, Names.RECEIPT, "RemoteEvent")
 	local projection = uniqueTypedChild(folder, Names.PROJECTION, "RemoteEvent")
 	local sync = uniqueTypedChild(folder, Names.SYNC, "RemoteFunction")
+	local viewerProjectionPreview =
+		uniqueTypedChild(folder, Names.VIEWER_PROJECTION_PREVIEW, "RemoteFunction")
 	local clientReady = uniqueTypedChild(folder, Names.CLIENT_READY, "RemoteEvent")
 	if
 		command == nil
 		or receipt == nil
 		or projection == nil
 		or sync == nil
+		or viewerProjectionPreview == nil
 		or clientReady == nil
 	then
 		return nil
@@ -57,6 +60,7 @@ local function resolveRemoteSet(folder: Folder): any?
 		receipt = receipt :: RemoteEvent,
 		projection = projection :: RemoteEvent,
 		sync = sync :: RemoteFunction,
+		viewerProjectionPreview = viewerProjectionPreview :: RemoteFunction,
 		clientReady = clientReady :: RemoteEvent,
 	}
 end
@@ -116,6 +120,7 @@ local SemanticInputRouter = require(clientModules.SemanticInputRouter)
 local ClientRuntime = require(clientModules.ClientRuntime)
 local UiPreferenceStore = require(clientModules.UiPreferenceStore)
 local UIRecoveryCoordinator = require(clientModules.UIRecoveryCoordinator)
+local ViewerProjectionPreviewClient = require(clientModules.ViewerProjectionPreviewClient)
 local WorldTokenRuntime = require(clientModules.World.WorldTokenRuntime)
 
 local replica = ProjectionReplica.new()
@@ -124,6 +129,7 @@ local inputStack = InputContextStack.new()
 local inputRouter = SemanticInputRouter.new(inputStack)
 local worldTokens = WorldTokenRuntime.new(replica, command, inputStack)
 local preferences = UiPreferenceStore.new()
+local viewerPreview = ViewerProjectionPreviewClient.new(remotes.viewerProjectionPreview, replica)
 local syncInFlight = false
 
 local function fullResync()
@@ -150,6 +156,7 @@ local recovery = UIRecoveryCoordinator.new(replica, function()
 end)
 replica.RebuildStarted:Connect(function()
 	worldTokens:invalidateTransientState()
+	viewerPreview:invalidate()
 end)
 
 command:start(function(message)
@@ -180,6 +187,7 @@ ClientRuntime.set({
 	WorldTokens = worldTokens,
 	Preferences = preferences,
 	Recovery = recovery,
+	ViewerPreview = viewerPreview,
 	RequestFullSync = fullResync,
 })
 

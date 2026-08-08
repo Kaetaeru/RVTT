@@ -57,6 +57,11 @@ local specs: { Spec } = {
 		runner = require(script.Parent.Unit["Management.spec"]) :: any,
 	},
 	{
+		id = "unit-dm-workspace",
+		name = "DmWorkspace.spec",
+		runner = require(script.Parent.Unit["DmWorkspace.spec"]) :: any,
+	},
+	{
 		id = "unit-envelope",
 		name = "Envelope.spec",
 		runner = require(script.Parent.Unit["Envelope.spec"]) :: any,
@@ -155,6 +160,11 @@ local specs: { Spec } = {
 		id = "integration-multi-viewer",
 		name = "MultiViewerFlow.spec",
 		runner = require(script.Parent.Integration["MultiViewerFlow.spec"]) :: any,
+	},
+	{
+		id = "integration-viewer-projection-preview",
+		name = "ViewerProjectionPreview.spec",
+		runner = require(script.Parent.Integration["ViewerProjectionPreview.spec"]) :: any,
 	},
 	{
 		id = "slice01-session-flow",

@@ -13,6 +13,8 @@ local Tokens = require(SharedUI.DesignTokens)
 local GameplayHudViewModel = require(SharedUI.GameplayHudViewModel)
 local EntryRecoveryViewModel = require(SharedUI.EntryRecoveryViewModel)
 local ManagementViewModel = require(SharedUI.ManagementViewModel)
+local DmToolRegistry = require(SharedUI.DmToolRegistry)
+local DmWindowHost = require(SharedUI.DmWindowHost)
 local uiFolder = script.Parent.UI
 local AppShell = require(uiFolder.AppShell)
 local ThemeApplicator = require(uiFolder.ThemeApplicator)
@@ -20,6 +22,7 @@ local SettingsPanel = require(uiFolder.Components.SettingsPanel)
 local GameplayHud = require(uiFolder.Components.GameplayHud)
 local ManagementPanel = require(uiFolder.Components.ManagementPanel)
 local EntryRecoveryPanel = require(uiFolder.Components.EntryRecoveryPanel)
+local DmWorkspacePanel = require(uiFolder.Components.DmWorkspacePanel)
 local components = uiFolder.Components
 
 local playerScripts = player:WaitForChild("PlayerScripts")
@@ -34,6 +37,19 @@ gui.IgnoreGuiInset = false
 gui.DisplayOrder = 0
 gui.Parent = player:WaitForChild("PlayerGui")
 local shell = AppShell.new(gui)
+local dmRegistry = DmToolRegistry.new()
+DmWorkspacePanel.registerDefaults(dmRegistry)
+local dmWindowHost = DmWindowHost.new(dmRegistry)
+local dmWorkspacePanel = DmWorkspacePanel.new(
+	shell:getLayer("Dm"),
+	dmRegistry,
+	dmWindowHost,
+	client.ViewerPreview,
+	client.Preferences,
+	function(commandType: string, payload: any): string
+		return client.Command:submit(commandType, payload)
+	end
+)
 
 local banner = require(components.StateBanner)()
 banner.Parent = shell:getLayer("System")
@@ -93,6 +109,7 @@ local function applyPreferences()
 	if settingsPanel ~= nil then
 		settingsPanel:setPreferences(preferences)
 	end
+	ThemeApplicator.apply(dmWorkspacePanel.Root, preferences)
 end
 
 local function updatePrompt(settingsVisible: boolean)
@@ -393,6 +410,8 @@ local function render(payload: any, envelope: any)
 			end
 		end
 	end
+	dmWorkspacePanel:render(payload, player.UserId, revision)
+	ThemeApplicator.apply(dmWorkspacePanel.Root, client.Preferences:snapshot())
 end
 
 client.WorldTokens.SelectionChanged:Connect(function()
@@ -410,6 +429,7 @@ client.WorldTokens.ContextActionRequested:Connect(function(action, commandId, ba
 	renderHud()
 end)
 client.Command.Received:Connect(function(message)
+	dmWorkspacePanel:onReceipt(message)
 	if
 		type(message) == "table"
 		and message.phase == "terminal"
@@ -484,6 +504,7 @@ client.Recovery.Changed:Connect(function(state)
 		managementCommands = {}
 		managementAwaitingRevision = nil
 		managementPanel:setPending(false)
+		client.ViewerPreview:invalidate()
 	elseif state.state == "recovered" then
 		entryError = nil
 	end
@@ -495,6 +516,18 @@ render(client.Replica.payload, { revision = client.Replica.revision })
 
 client.Input:push("base_hud", 10, {
 	Cancel = function()
+		return false
+	end,
+	Confirm = function()
+		return false
+	end,
+})
+
+client.Input:push("dm_workspace", 70, {
+	Cancel = function()
+		if dmWorkspacePanel.Root.Visible then
+			return dmWorkspacePanel:cancelTopContext()
+		end
 		return false
 	end,
 	Confirm = function()

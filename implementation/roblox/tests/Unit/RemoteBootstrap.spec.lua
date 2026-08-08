@@ -36,6 +36,10 @@ return function(harness)
 	harness:expect(remotes.receipt:IsA("RemoteEvent"), "receipt remote is created")
 	harness:expect(remotes.projection:IsA("RemoteEvent"), "projection remote is created")
 	harness:expect(remotes.sync:IsA("RemoteFunction"), "sync remote is created")
+	harness:expect(
+		remotes.viewerProjectionPreview:IsA("RemoteFunction"),
+		"viewer projection preview remote is created"
+	)
 	harness:expect(remotes.clientReady:IsA("RemoteEvent"), "client-ready remote is created")
 	harness:expect(stale.Parent == nil, "stale partial folder is removed")
 	harness:expect(duplicate.Parent == nil, "duplicate malformed folder is removed")

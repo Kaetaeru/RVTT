@@ -15,6 +15,7 @@ local defaults: Preferences = {
 	disabledReasonDelay = 0.15,
 	motion = "full",
 	bindings = {},
+	dmWorkspaceLayout = {},
 }
 
 local function clampedNumber(value: any, minimum: number, maximum: number): (boolean, any)
@@ -60,6 +61,40 @@ local function bindings(value: any): (boolean, any)
 	return true, normalized
 end
 
+local function dmWorkspaceLayout(value: any): (boolean, any)
+	if type(value) ~= "table" then
+		return false, nil
+	end
+	if next(value) == nil then
+		return true, {}
+	end
+	if type(value.windowsByInstanceId) ~= "table" or type(value.zOrder) ~= "table" then
+		return false, nil
+	end
+	if #value.zOrder > 32 then
+		return false, nil
+	end
+	for _, instanceId in value.zOrder do
+		local window = value.windowsByInstanceId[instanceId]
+		if
+			type(instanceId) ~= "string"
+			or #instanceId > 128
+			or type(window) ~= "table"
+			or type(window.moduleId) ~= "string"
+			or #window.moduleId > 96
+			or type(window.position) ~= "table"
+			or type(window.size) ~= "table"
+			or type(window.position.x) ~= "number"
+			or type(window.position.y) ~= "number"
+			or type(window.size.x) ~= "number"
+			or type(window.size.y) ~= "number"
+		then
+			return false, nil
+		end
+	end
+	return true, DeepCopy(value)
+end
+
 local normalizers: { [string]: (any) -> (boolean, any) } = {
 	accentPaletteId = function(value)
 		if not AccentPreference.isValid(value) then
@@ -89,6 +124,7 @@ local normalizers: { [string]: (any) -> (boolean, any) } = {
 		return enum(value, { full = true, reduced = true, minimal = true })
 	end,
 	bindings = bindings,
+	dmWorkspaceLayout = dmWorkspaceLayout,
 }
 
 local PreferenceSchema = {}

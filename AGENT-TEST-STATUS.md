@@ -61,14 +61,14 @@ Studio MCP 자동화는 반복 작업 절감 효과가 명확하거나 사용자
 |---|---|---|
 | ADR/설계 및 Studio Preflight 문서 검수 | `PASS` | 마지막 Codex Delta 결과 `NO_SUPPORTED_FINDINGS` |
 | 마지막 Implementation Static Gate | `PASS` | 검증 대상 `ef99a0740711b4f00fac0d5c8d0599f238ea48e9` |
-| Full UI·UX Source·Acceptance 정합화 | `IN_PROGRESS` | `CURRENT-WORK-ORDER.md` 순서 9부터 진행 |
+| Full UI·UX Source·Acceptance 정합화 | `IN_PROGRESS` | `CURRENT-WORK-ORDER.md` 순서 10 진행 |
 | Shared Shell·Preference Foundation | `PASS` | `RVTT-PR2-UI-FOUNDATION-IMPLEMENTATION-002` 구현·로컬 정적 검증 완료 |
 | Input·Context Action 정합화 | `PASS` | `RVTT-PR2-INPUT-CONTEXT-IMPLEMENTATION-001` 구현·로컬 정적 검증 완료 |
 | Exploration·Encounter HUD | `PASS` | `RVTT-PR2-EXPLORATION-ENCOUNTER-HUD-IMPLEMENTATION-001` 구현·로컬 정적 검증 완료 |
 | Inventory·Journal·Settings | `PASS` | `RVTT-PR2-INVENTORY-JOURNAL-SETTINGS-IMPLEMENTATION-001` Source·Static 완료 |
 | Entry·Role·Recovery | `PASS` | `RVTT-PR2-ENTRY-ROLE-RECOVERY-IMPLEMENTATION-001` Source·Static 완료 |
-| DM Live Workspace | `IN_PROGRESS` | 다음 구현 작업 |
-| Full UI·UX Acceptance 확장 | `PENDING` | Runtime 전에 필요 |
+| DM Live Workspace | `PASS` | `RVTT-PR2-DM-LIVE-WORKSPACE-IMPLEMENTATION-001` Source·Static 완료 |
+| Full UI·UX Acceptance 확장 | `IN_PROGRESS` | Runtime 전에 필요한 다음 구현 작업 |
 | 현재 사용자 Studio Human Retest | `BLOCKED` | UI·UX Source·Acceptance 정합화 + 새 current-HEAD Static Gate가 먼저 |
 | Codex Studio MCP Smoke | `NOT_DEFAULT` | 현재 운영에서는 사용자 수동 Runtime으로 대체 |
 | 일반 Runtime 실행 그룹 | `0 / 3 PASS` | G1도 아직 실행 가능 상태가 아님 |
@@ -98,6 +98,9 @@ phase7LocalStaticValidation: PASS · validators + format + lint + 15 Rojo builds
 phase8Implementation: PASS · RVTT-PR2-ENTRY-ROLE-RECOVERY-IMPLEMENTATION-001
 phase8TargetShaAtStart: 7f1d63e29cd6f3b6dc7097f5a2c45be8c6388c49
 phase8LocalStaticValidation: PASS · validator + format + lint + 15 Rojo builds + default/test sourcemaps + production/test Luau analysis
+phase9Implementation: PASS · RVTT-PR2-DM-LIVE-WORKSPACE-IMPLEMENTATION-001
+phase9TargetShaAtStart: 2673f7d65ff42ae19c08eb14ae5ac44963fad95b
+phase9LocalStaticValidation: PASS · validators + format + lint + 15 Rojo builds + default/test sourcemaps + production/test Luau analysis
 newCurrentHeadStaticGate: REQUIRED_BEFORE_STUDIO
 studioManualRuntimeCurrentContract: NOT_EXECUTED
 humanPlaytestCurrentContract: NOT_EXECUTED
@@ -211,7 +214,7 @@ passedChecks: 0
 failedChecks: 0
 blockedChecks: 18
 blocker: Full UI·UX Source·Acceptance alignment and new current-HEAD Static Gate required
-next: DM Live Workspace implementation
+next: Full UI·UX Acceptance expansion
 ```
 
 ### Historical Studio Evidence — 현재 계약 PASS로 사용 금지
