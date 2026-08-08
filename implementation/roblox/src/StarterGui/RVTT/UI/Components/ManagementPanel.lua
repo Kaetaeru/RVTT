@@ -2,6 +2,9 @@
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Tokens = require(ReplicatedStorage.RVTT.Shared.UI.DesignTokens)
+local RemoteNames = require(ReplicatedStorage.RVTT.Shared.Protocol.RemoteNames)
+local RuleReaderClient = require(ReplicatedStorage.RVTT.Shared.Rules.RuleReaderClient)
+local CoreRulesReaderPanel = require(script.Parent.CoreRulesReaderPanel)
 
 local ManagementPanel = {}
 ManagementPanel.__index = ManagementPanel
@@ -103,6 +106,7 @@ function ManagementPanel.new(
 	self.tab = "inventory"
 	self.draft = false
 	self.pending = false
+	self.lastRole = nil
 
 	local root = Instance.new("Frame")
 	root.Name = "ManagementPanel"
@@ -142,8 +146,16 @@ function ManagementPanel.new(
 	)
 	local journalTab =
 		button(sheet, "JournalTab", "Journal", UDim2.fromOffset(120, 38), UDim2.fromOffset(152, 68))
+	local coreRulesTab = button(
+		sheet,
+		"CoreRulesTab",
+		"Core Rules",
+		UDim2.fromOffset(120, 38),
+		UDim2.fromOffset(280, 68)
+	)
 	self.InventoryTab = inventoryTab
 	self.JournalTab = journalTab
+	self.CoreRulesTab = coreRulesTab
 
 	local list = Instance.new("ScrollingFrame")
 	list.Name = "EntryList"
@@ -236,11 +248,23 @@ function ManagementPanel.new(
 		end
 	end)
 
+	local remoteFolder = ReplicatedStorage:WaitForChild(RemoteNames.FOLDER)
+	local ruleReaderRemote = remoteFolder:WaitForChild(RemoteNames.RULE_READER_QUERY)
+	assert(ruleReaderRemote:IsA("RemoteFunction"), "RuleReaderQuery must be a RemoteFunction")
+	self.RuleReaderClient = RuleReaderClient.new(ruleReaderRemote :: RemoteFunction)
+	self.RulesReader = CoreRulesReaderPanel.new(self.RuleReaderClient)
+	self.RulesReader.Root.Position = UDim2.fromOffset(24, 122)
+	self.RulesReader.Root.Size = UDim2.new(1, -48, 1, -150)
+	self.RulesReader.Root.Parent = sheet
+
 	inventoryTab.Activated:Connect(function()
 		self:setTab("inventory")
 	end)
 	journalTab.Activated:Connect(function()
 		self:setTab("journal")
+	end)
+	coreRulesTab.Activated:Connect(function()
+		self:setTab("rules")
 	end)
 	return self
 end
@@ -266,6 +290,9 @@ function ManagementPanel._selectedDocument(self: any): any?
 end
 
 function ManagementPanel._renderDetail(self: any)
+	if self.tab == "rules" then
+		return
+	end
 	local inventory = self.tab == "inventory"
 	self.DetailTitle.Visible = inventory
 	self.DetailBody.Visible = inventory
@@ -325,7 +352,7 @@ end
 
 function ManagementPanel._renderList(self: any)
 	self:_clearList()
-	if self.state == nil then
+	if self.tab == "rules" or self.state == nil then
 		return
 	end
 	local entries = if self.tab == "inventory" then self.state.items else self.state.documents
@@ -360,11 +387,15 @@ function ManagementPanel._renderList(self: any)
 end
 
 function ManagementPanel.setTab(self: any, tab: string)
-	if tab ~= "inventory" and tab ~= "journal" then
+	if tab ~= "inventory" and tab ~= "journal" and tab ~= "rules" then
 		return
 	end
 	self.tab = tab
 	self.draft = false
+	local rules = tab == "rules"
+	self.List.Visible = not rules
+	self.Detail.Visible = not rules
+	self.RulesReader:setVisible(rules)
 	self.InventoryTab:SetAttribute(
 		"RVTTBackgroundToken",
 		if tab == "inventory" then "accent" else "surfaceRaised"
@@ -373,11 +404,20 @@ function ManagementPanel.setTab(self: any, tab: string)
 		"RVTTBackgroundToken",
 		if tab == "journal" then "accent" else "surfaceRaised"
 	)
+	self.CoreRulesTab:SetAttribute(
+		"RVTTBackgroundToken",
+		if rules then "accent" else "surfaceRaised"
+	)
 	self:_renderList()
 	self:_renderDetail()
 end
 
 function ManagementPanel.render(self: any, state: any)
+	if self.lastRole ~= nil and self.lastRole ~= state.role then
+		self.RuleReaderClient:invalidate()
+		self.RulesReader:invalidate()
+	end
+	self.lastRole = state.role
 	self.state = state
 	self:_renderList()
 	self:_renderDetail()
@@ -397,6 +437,8 @@ function ManagementPanel.setVisible(self: any, visible: boolean, tab: string?)
 	self.Root.Visible = visible
 	if visible and tab ~= nil then
 		self:setTab(tab)
+	elseif not visible then
+		self.RulesReader:setVisible(false)
 	end
 end
 
