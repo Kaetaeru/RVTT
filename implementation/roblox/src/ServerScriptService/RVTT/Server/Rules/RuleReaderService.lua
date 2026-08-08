@@ -71,11 +71,21 @@ local function visibleDocument(module: any, document: any, viewer: any): boolean
 	return roleAllowed(module, viewer) and roleAllowed(document, viewer)
 end
 
-local function safeUri(packageId: string, moduleId: string, documentId: string, anchorId: string?): string?
+local function safeUri(
+	packageId: string,
+	moduleId: string,
+	documentId: string,
+	anchorId: string?
+): string?
 	return RuleLink.build(packageId, moduleId, documentId, anchorId)
 end
 
-local function publicSection(packageId: string, moduleId: string, documentId: string, section: any): any
+local function publicSection(
+	packageId: string,
+	moduleId: string,
+	documentId: string,
+	section: any
+): any
 	return {
 		anchorId = section.anchorId,
 		title = section.title,
@@ -285,7 +295,8 @@ function RuleReaderService.open(package: any, viewer: any, uri: any): (any?, str
 		document = publicDocument(package.packageId, module.id, document),
 		section = publicSection(package.packageId, module.id, document.id, section),
 		chunk = safeChunk(package, viewer, chunk, document),
-	}, nil
+	},
+		nil
 end
 
 function RuleReaderService.chunk(package: any, viewer: any, chunkId: any): (any?, string?)
@@ -293,7 +304,12 @@ function RuleReaderService.chunk(package: any, viewer: any, chunkId: any): (any?
 		return nil, "RULE_CHUNK_UNAVAILABLE"
 	end
 	local chunk, module, document = chunkIndex(package, chunkId)
-	if chunk == nil or module == nil or document == nil or not visibleDocument(module, document, viewer) then
+	if
+		chunk == nil
+		or module == nil
+		or document == nil
+		or not visibleDocument(module, document, viewer)
+	then
 		return nil, "RULE_CHUNK_UNAVAILABLE"
 	end
 	return safeChunk(package, viewer, chunk, document), nil
