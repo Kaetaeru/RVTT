@@ -85,6 +85,8 @@
 6. 현재 브랜치의 기존 변경을 확인한다.
 7. 필요한 테스트와 성능 확인 방법을 정한다.
 
+구현·Runtime·Acceptance·검증·Release 관련 작업이면 위 절차와 함께 루트 `AGENT-TEST-STATUS.md`를 반드시 읽고 현재 테스트 상태와 다음 Gate를 확인한다. 테스트 상태가 바뀌는 작업을 수행했다면 같은 작업에서 그 문서도 갱신한다.
+
 파일명이나 모듈 위치를 추측하여 중복 구조를 만들지 않는다.
 
 다른 사람이 만든 변경을 임의로 되돌리거나 덮어쓰지 않는다.
@@ -506,6 +508,21 @@ item.weapon.longbow
 
 프로덕션 경로에서 테스트용 가짜 데이터와 우회 로직을 남기지 않는다.
 
+### 테스트 상태를 항상 추적한다
+
+루트 `AGENT-TEST-STATUS.md`는 모든 에이전트가 보는 현재 테스트 상태 대시보드다.
+
+- 구현·Runtime·Acceptance·Release 작업을 시작하기 전에 읽는다.
+- 테스트를 실제 수행했거나 PASS/FAIL/BLOCKED/DEFERRED 상태, 다음 Gate, 테스트 가능 범위가 바뀌면 같은 작업에서 갱신한다.
+- 사용자가 직접 수행해야 하는 Runtime 테스트는 작은 수정마다 쪼개지 않고 Batch Acceptance로 묶는다.
+- 현재 사용자 Runtime 실행 그룹, 완료 수, 다음 수동 체크리스트가 한눈에 보여야 한다.
+- 세부 테스트 계약의 원본은 `implementation/roblox/EXECUTION-TEST-RULES.md`, `implementation/roblox/GRAND-ACCEPTANCE-CAMPAIGN.md`, `implementation/roblox/grand-acceptance-manifest.json`이다. 상태 대시보드가 이 원본을 임의로 재정의하면 안 된다.
+- Static·Build·Lint·Type PASS를 Studio Runtime PASS로 확대하지 않는다.
+- Single-client PASS를 Multi-client·Persistence·Accessibility·Performance·Release PASS로 확대하지 않는다.
+- 실행하지 않은 테스트는 체크하거나 PASS로 기록하지 않는다.
+
+현재 운영 기본값은 Codex를 코드·문서 검수, 구조·권한·회귀 검수, Static Gate처럼 토큰·시간 대비 이득이 큰 작업에 사용하고, Roblox Studio 실제 화면·입력·Play·UI·UX 확인은 사용자 Batch Acceptance로 수행하는 것이다. Codex ↔ Studio MCP 자동화는 사용자가 다시 명시적으로 요청하거나 반복 자동화 이득이 명확할 때만 사용한다.
+
 ---
 
 ## 16. 완료 조건
@@ -536,6 +553,8 @@ item.weapon.longbow
 3. 검증하거나 실행한 테스트
 4. 성능 확인 결과 또는 미측정 항목
 5. 남아 있는 제한, 위험과 다음 작업
+
+테스트 상태가 바뀐 작업이라면 완료 보고 전에 `AGENT-TEST-STATUS.md`가 같은 상태를 반영하는지 확인한다.
 
 실패한 작업을 성공한 것처럼 표현하지 않는다.
 
