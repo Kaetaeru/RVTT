@@ -4,7 +4,6 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-REPO_ROOT = ROOT.parents[1]
 
 REQUIRED_FILES = {
     "src/ReplicatedStorage/RVTT/Shared/Rules/RuleLink.lua",
@@ -50,10 +49,14 @@ def validate(root: Path = ROOT) -> list[str]:
     ):
         if marker not in service:
             errors.append(f"RuleReaderService.lua: missing contract marker {marker}")
-    if "chunks =" in service[service.find("function RuleReaderService.manifest"): service.find("function RuleReaderService.search")]:
+    manifest_body = service[
+        service.find("function RuleReaderService.manifest"):
+        service.find("function RuleReaderService.search")
+    ]
+    if "chunks =" in manifest_body or "chunkIds =" in manifest_body:
         errors.append("RuleReaderService.lua: manifest must not replicate the chunk body graph")
 
-    for marker in ("manifest", "search", "open", "chunk", "RATE_LIMITED"):
+    for marker in ('request.action == "manifest"', 'request.action == "search"', 'request.action == "open"', 'request.action == "chunk"', "RATE_LIMITED"):
         if marker not in query:
             errors.append(f"RuleReaderQuery.lua: missing query action/enforcement marker {marker}")
     for marker in ("RulePackageResolver", "RuleReaderQuery.new", "RULE_READER_QUERY", 'return "public"'):
@@ -67,11 +70,11 @@ def validate(root: Path = ROOT) -> list[str]:
             errors.append(f"RuleReaderClient.lua: missing lazy client marker {marker}")
 
     for marker in (
-        'Name = "RuleTree"',
-        'Name = "VirtualizedArticle"',
-        'Name = "RuleOutline"',
-        'Name = "RuleSearch"',
-        'Name = "CopyRuleLink"',
+        '"RuleTree"',
+        '"VirtualizedArticle"',
+        '"RuleOutline"',
+        '"RuleSearch"',
+        '"CopyRuleLink"',
         "PreviousChunk",
         "NextChunk",
     ):
@@ -86,7 +89,7 @@ def validate(root: Path = ROOT) -> list[str]:
 
     if "rvtt.test.rules.2024.integrated.ko" in package or "Kaetaeru/D-D-2024-" in package:
         errors.append("RuleReaderPackage.lua: public package contains private package/source marker")
-    for marker in ("packageId = \"rvtt.core.rules\"", "licenseId = \"CC-BY-4.0\"", "chunks ="):
+    for marker in ('packageId = "rvtt.core.rules"', 'licenseId = "CC-BY-4.0"', "chunks ="):
         if marker not in package:
             errors.append(f"RuleReaderPackage.lua: missing public package marker {marker}")
 
