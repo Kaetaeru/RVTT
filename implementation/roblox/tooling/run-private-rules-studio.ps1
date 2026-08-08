@@ -11,8 +11,9 @@ $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
 
 $RobloxRoot = Split-Path -Parent $PSScriptRoot
-$Importer = Join-Path $PSScriptRoot "build_private_rules_runtime.py"
+$Preparer = Join-Path $PSScriptRoot "prepare_private_rules_runtime.py"
 $SourceBindingEnv = "RVTT_PRIVATE_DND2024_KO_SOURCE"
+$AuthorizedUsersEnv = "RVTT_PRIVATE_RULES_AUTHORIZED_USER_IDS"
 
 function Resolve-ApplicationPath {
     param([string[]]$Names)
@@ -61,8 +62,8 @@ function Invoke-NativeChecked {
 }
 
 function Invoke-SelfTest {
-    if (-not (Test-Path -LiteralPath $Importer)) {
-        throw "private rules importer가 없습니다."
+    if (-not (Test-Path -LiteralPath $Preparer)) {
+        throw "private rules preparer가 없습니다."
     }
     $projectPath = Join-Path $RobloxRoot $Project
     if (-not (Test-Path -LiteralPath $projectPath)) {
@@ -70,6 +71,9 @@ function Invoke-SelfTest {
     }
     if ($SourceBindingEnv -ne "RVTT_PRIVATE_DND2024_KO_SOURCE") {
         throw "private source binding key가 변경되었습니다."
+    }
+    if ($AuthorizedUsersEnv -ne "RVTT_PRIVATE_RULES_AUTHORIZED_USER_IDS") {
+        throw "private reader allowlist binding key가 변경되었습니다."
     }
     Write-Host "RVTT private rules Studio runner SelfTest passed" -ForegroundColor Green
 }
@@ -88,6 +92,11 @@ if (-not (Test-Path -LiteralPath (Join-Path $sourceRepo ".git"))) {
     throw "$SourceBindingEnv 가 Git repository를 가리키지 않습니다: $sourceRepo"
 }
 
+$authorizedUsers = [Environment]::GetEnvironmentVariable($AuthorizedUsersEnv)
+if ([string]::IsNullOrWhiteSpace($authorizedUsers)) {
+    throw "$AuthorizedUsersEnv 환경 변수가 없습니다. Private integrated rules viewer access는 fail closed입니다."
+}
+
 $projectPath = Join-Path $RobloxRoot $Project
 if (-not (Test-Path -LiteralPath $projectPath)) {
     throw "Rojo project가 없습니다: $Project"
@@ -99,9 +108,9 @@ $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
 $workspace = Join-Path ([IO.Path]::GetTempPath()) "RVTT-PrivateRules\$timestamp-$PID"
 New-Item -ItemType Directory -Force $workspace | Out-Null
 
-Write-Host "[RVTT Private Rules] validating pinned source and generating temporary RuleContentPackage" -ForegroundColor Cyan
+Write-Host "[RVTT Private Rules] validating pinned source and generating owner-only RuleContentPackage" -ForegroundColor Cyan
 Invoke-NativeChecked $pythonPath @(
-    $Importer,
+    $Preparer,
     "--source-repo-root", $sourceRepo,
     "--output-root", $workspace,
     "--base-project", $projectPath
@@ -135,6 +144,7 @@ if (-not (Test-Path -LiteralPath $Output)) {
 Write-Host ""
 Write-Host "RVTT private rules Studio build ready" -ForegroundColor Green
 Write-Host "  Source binding: $SourceBindingEnv"
+Write-Host "  Viewer allowlist binding: $AuthorizedUsersEnv"
 Write-Host "  Project: $Project"
 Write-Host "  Generated project: $generatedProject"
 Write-Host "  Place: $Output"
