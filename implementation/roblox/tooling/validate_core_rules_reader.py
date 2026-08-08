@@ -59,9 +59,16 @@ def validate(root: Path = ROOT) -> list[str]:
     for marker in ('request.action == "manifest"', 'request.action == "search"', 'request.action == "open"', 'request.action == "chunk"', "RATE_LIMITED"):
         if marker not in query:
             errors.append(f"RuleReaderQuery.lua: missing query action/enforcement marker {marker}")
-    for marker in ("RulePackageResolver", "RuleReaderQuery.new", "RULE_READER_QUERY", 'return "public"'):
+    for marker in (
+        "RulePackageResolver",
+        "RuleReaderQuery.new",
+        "RULE_READER_QUERY",
+        "RunService:IsStudio()",
+        '"development"',
+        '"public"',
+    ):
         if marker not in boot:
-            errors.append(f"RuleReaderBoot.server.lua: missing boot marker {marker}")
+            errors.append(f"RuleReaderBoot.server.lua: missing boot/profile marker {marker}")
     if "allowSrdFallback = true" in boot:
         errors.append("RuleReaderBoot.server.lua: implicit SRD fallback is forbidden")
 
