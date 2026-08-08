@@ -8,8 +8,8 @@
 - phase: `FULL_UI_UX_ALIGNMENT_PHASE_10`
 - phase9Status: `FINAL_PASS`
 - phase10Status: `PARTIAL_HOLD_2_ADR0091_FINAL_CONTRACT_GAPS`
-- completedCorrections: `ASSET_REGISTRY_FOUNDATION,RULES_PROFILE_RELEASE_ENFORCEMENT,CORE_RULES_READER`
-- lastCompletedDirectWork: `ADR0091_CORE_RULES_READER`
+- completedCorrections: `ASSET_REGISTRY_FOUNDATION,RULES_PROFILE_RELEASE_ENFORCEMENT,CORE_RULES_READER,PRIVATE_RULES_READER_IMPORT_OVERLAY_REPAIR`
+- lastCompletedDirectWork: `ADR0091_PRIVATE_RULES_READER_IMPORT_OVERLAY_REPAIR`
 - nextDirectWork: `ADR0091_OFFICIAL_2024_CHARACTER_SHEET`
 - remainingFinalContractGaps: `2`
 - newCurrentHeadStaticGate: `NOT_YET`
@@ -45,9 +45,21 @@ RuleLink stable URI
 + unauthorized title/count/snippet/link/body nondisclosure
 + Session authoritative role marker wiring
 + Core Rules Reader acceptance validator
++ pinned private integrated subtree digest
++ private Markdown importer with revision/digest/count/dirty-source fail-closed validation
++ temporary RuleContentPackage + localized search index generation
++ generated Rojo project injecting ServerStorage.RVTTPrivateRuleContent
++ explicit server-only authorized-user allowlist
++ private profile query nondisclosure before rule service access
++ fail-closed private Studio build entry point
++ public-safe synthetic importer/preparer/overlay Rojo-build CI regression
 ```
 
-`rvtt.core.rules` repository package는 현재 공개-safe Reader Guide만 포함한다. private integrated Korean rule body는 public Git tree에 포함하지 않는다. Studio development profile은 verified private source가 없으면 fail closed하고 implicit SRD fallback을 사용하지 않는다.
+`rvtt.core.rules` repository package는 현재 공개-safe Reader Guide만 포함한다. private integrated Korean rule body와 generated Rule Chunk는 public Git tree에 포함하지 않는다.
+
+Private integrated Studio build는 `RVTT_PRIVATE_DND2024_KO_SOURCE`와 `RVTT_PRIVATE_RULES_AUTHORIZED_USER_IDS`가 모두 있어야 하며, pinned revision·source subtree digest·12/48/16/10/75/391 count가 일치하지 않거나 source root가 dirty이면 fail closed한다. 검증된 import는 RVTT Git tree 밖의 임시 workspace에만 생성되고 generated Rojo overlay를 통해 `RVTTPrivateRuleContent/Readiness`와 `RuleReaderPackage`를 ServerStorage에 주입한다.
+
+Public GitHub Actions는 private repository나 private rule body를 읽지 않는다. 대신 동일 importer/preparer 경로를 synthetic private Git fixture로 실행해 generated ModuleScript binding과 Rojo overlay build, revision/digest/count/dirty/missing-source, missing viewer allowlist의 fail-closed 회귀를 검사한다. 이는 Source/Static·Build evidence이며 실제 private corpus Studio Runtime evidence가 아니다.
 
 ## 남은 Phase 10 ADR-0091 gap
 
@@ -59,7 +71,9 @@ RuleLink stable URI
 ## 증거 경계
 
 ```text
-Core Rules Reader Source/Static = implemented and current-head CI verified before status-document update
+Core Rules Reader Source/Static = implemented and current-head CI verified
+Private importer synthetic generated-overlay Build = current-head CI verified
+Real private corpus Studio Runtime = NOT_EXECUTED
 Studio Runtime = NOT_EXECUTED
 Human UI/UX = NOT_EXECUTED
 Multi-client Runtime = NOT_EXECUTED
