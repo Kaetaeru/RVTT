@@ -11,6 +11,7 @@ from typing import Iterable
 
 ROBLOX_ROOT = Path(__file__).resolve().parents[1]
 IMPORTER = ROBLOX_ROOT / "tooling/build_private_rules_runtime.py"
+STUDIO_RUNNER = ROBLOX_ROOT / "tooling/run-private-rules-studio.ps1"
 PRIVATE_PACKAGE_ID = "rvtt.test.rules.2024.integrated.ko"
 EXPECTED_COUNTS = {
     "classes": 12,
@@ -131,6 +132,24 @@ def expect_failure(source_repo: Path, output: Path, authority: Path, code: str) 
         raise RuntimeError(f"expected importer failure {code}, got rc={completed.returncode}")
 
 
+def validate_studio_runner_contract() -> None:
+    if not STUDIO_RUNNER.is_file():
+        raise RuntimeError("private rules Studio runner is missing")
+    text = STUDIO_RUNNER.read_text(encoding="utf-8")
+    for marker in (
+        "RVTT_PRIVATE_DND2024_KO_SOURCE",
+        "build_private_rules_runtime.py",
+        "private-rules.generated.project.json",
+        "Readiness.json",
+        "RuleReaderPackage.json",
+        'Invoke-NativeChecked $rojoPath @("build", $generatedProject',
+    ):
+        if marker not in text:
+            raise RuntimeError(f"private rules Studio runner is missing marker: {marker}")
+    if 'rojoPath @("build", $projectPath' in text:
+        raise RuntimeError("private rules Studio runner must not bypass the generated overlay project")
+
+
 def validate_generated(output: Path, rojo: str | None) -> None:
     runtime = output / "runtime/RVTTPrivateRuleContent"
     readiness = json.loads((runtime / "Readiness.json").read_text(encoding="utf-8"))
@@ -160,6 +179,12 @@ def validate_generated(output: Path, rojo: str | None) -> None:
         run([rojo, "build", str(output / "private-rules.generated.project.json"), "--output", str(output_place)])
         if not output_place.is_file() or output_place.stat().st_size == 0:
             raise RuntimeError("Rojo did not produce the private-rules overlay place")
+        xml = output_place.read_text(encoding="utf-8", errors="replace")
+        for marker in ("RVTTPrivateRuleContent", "Readiness", "RuleReaderPackage"):
+            if marker not in xml:
+                raise RuntimeError(f"generated Rojo place is missing private binding instance: {marker}")
+        if xml.count('<Item class="ModuleScript"') < 2:
+            raise RuntimeError("generated Rojo place does not contain the private JSON modules as ModuleScripts")
 
 
 def validate_negative_paths(work: Path, source_repo: Path, revision: str, digest: str) -> None:
@@ -192,6 +217,7 @@ def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
 
 def main(argv: Iterable[str] | None = None) -> int:
     args = parse_args(argv)
+    validate_studio_runner_contract()
     with tempfile.TemporaryDirectory(prefix="rvtt-private-rules-pipeline-") as temp:
         work = Path(temp)
         source_repo = work / "private-source"
@@ -203,7 +229,7 @@ def main(argv: Iterable[str] | None = None) -> int:
         run_import(source_repo, output, authority, expect_success=True)
         validate_generated(output, args.rojo or None)
         validate_negative_paths(work, source_repo, revision, digest)
-    print("Private rules runtime pipeline validation passed: synthetic import + overlay build + fail-closed regressions")
+    print("Private rules runtime pipeline validation passed: synthetic import + binding instances + overlay build + fail-closed regressions")
     return 0
 
 
