@@ -58,6 +58,40 @@ local function validatePrivatePackage(package: any): string?
 	return nil
 end
 
+local function validateAuthorizedUserIds(readiness: any): string?
+	if type(readiness) ~= "table" or type(readiness.authorizedUserIds) ~= "table" then
+		return "PRIVATE_RULE_ACCESS_MISSING"
+	end
+	local count = 0
+	local seen = {}
+	for _, userId in readiness.authorizedUserIds do
+		if type(userId) ~= "number" or userId <= 0 or userId % 1 ~= 0 then
+			return "PRIVATE_RULE_ACCESS_INVALID"
+		end
+		if seen[userId] == true then
+			return "PRIVATE_RULE_ACCESS_INVALID"
+		end
+		seen[userId] = true
+		count += 1
+	end
+	if count == 0 then
+		return "PRIVATE_RULE_ACCESS_MISSING"
+	end
+	return nil
+end
+
+local function userIsAuthorized(readiness: any, userId: number): boolean
+	if validateAuthorizedUserIds(readiness) ~= nil then
+		return false
+	end
+	for _, allowedUserId in readiness.authorizedUserIds do
+		if allowedUserId == userId then
+			return true
+		end
+	end
+	return false
+end
+
 function RuleRuntimePackageBinding.loadRuntimeBinding(storage: Instance?): (any?, string?)
 	local sourceStorage = storage or ServerStorage
 	local root = sourceStorage:FindFirstChild(RUNTIME_BINDING_ROOT_NAME)
@@ -101,6 +135,10 @@ function RuleRuntimePackageBinding.resolveProfileWithBinding(profile: string, bi
 	if type(result) ~= "table" or result.ok ~= true then
 		return result
 	end
+	local accessError = validateAuthorizedUserIds(binding.readiness)
+	if accessError ~= nil then
+		return failure(accessError)
+	end
 	local packageError = validatePrivatePackage(binding.package)
 	if packageError ~= nil then
 		return failure(packageError)
@@ -120,6 +158,32 @@ function RuleRuntimePackageBinding.resolveProfile(profile: string): any
 		return failure(loadError or "PRIVATE_SOURCE_MISSING")
 	end
 	return RuleRuntimePackageBinding.resolveProfileWithBinding(profile, binding)
+end
+
+function RuleRuntimePackageBinding.viewerCanAccessProfileWithBinding(
+	profile: string,
+	userId: number,
+	binding: any?
+): boolean
+	if PRIVATE_PROFILES[profile] ~= true then
+		return true
+	end
+	if type(binding) ~= "table" then
+		return false
+	end
+	local resolved = RuleRuntimePackageBinding.resolveProfileWithBinding(profile, binding)
+	if type(resolved) ~= "table" or resolved.ok ~= true then
+		return false
+	end
+	return userIsAuthorized(binding.readiness, userId)
+end
+
+function RuleRuntimePackageBinding.viewerCanAccessProfile(profile: string, userId: number): boolean
+	if PRIVATE_PROFILES[profile] ~= true then
+		return true
+	end
+	local binding = select(1, RuleRuntimePackageBinding.loadRuntimeBinding())
+	return RuleRuntimePackageBinding.viewerCanAccessProfileWithBinding(profile, userId, binding)
 end
 
 function RuleRuntimePackageBinding.packageForIdWithBinding(
