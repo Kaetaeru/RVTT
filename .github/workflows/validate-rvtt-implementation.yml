@@ -54,6 +54,11 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
       - name: Add local tool directory to PATH
         run: |
           mkdir -p "${HOME}/.local/bin"
@@ -134,6 +139,10 @@ jobs:
           stylua --version
           selene --version
           timeout 10s luau-lsp analyze --help >/dev/null
+
+      - name: Validate private rules runtime pipeline
+        working-directory: implementation/roblox
+        run: python tooling/validate_private_rules_runtime_pipeline.py --rojo "$(command -v rojo)"
 
       - name: Check Luau formatting
         working-directory: implementation/roblox
