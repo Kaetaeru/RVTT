@@ -13,11 +13,14 @@ REQUIRED_FILES = {
     "src/ServerScriptService/RVTT/Server/Networking/RuleReaderQuery.lua",
     "src/ServerScriptService/RVTT/Server/Domains/SessionDomain.lua",
     "src/ServerScriptService/RVTT/RuleReaderBoot.server.lua",
+    "src/ServerStorage/RVTT/Content/BuiltinPackIndex.lua",
     "src/ServerStorage/RVTT/Content/RuleRuntimePackageBinding.lua",
     "src/ServerStorage/RVTT/Content/Packs/rvtt.core.rules/RuleReaderPackage.lua",
     "src/StarterGui/RVTT/UI/Components/CoreRulesReaderPanel.lua",
     "tests/Unit/CoreRulesReader.spec.lua",
     "tests/Unit/RuleRuntimePackageBinding.spec.lua",
+    "tooling/build_private_rules_runtime.py",
+    "tooling/validate_private_rules_runtime_pipeline.py",
 }
 
 
@@ -33,12 +36,15 @@ def validate(root: Path = ROOT) -> list[str]:
     query = (root / "src/ServerScriptService/RVTT/Server/Networking/RuleReaderQuery.lua").read_text(encoding="utf-8")
     session = (root / "src/ServerScriptService/RVTT/Server/Domains/SessionDomain.lua").read_text(encoding="utf-8")
     boot = (root / "src/ServerScriptService/RVTT/RuleReaderBoot.server.lua").read_text(encoding="utf-8")
+    builtin = (root / "src/ServerStorage/RVTT/Content/BuiltinPackIndex.lua").read_text(encoding="utf-8")
     binding = (root / "src/ServerStorage/RVTT/Content/RuleRuntimePackageBinding.lua").read_text(encoding="utf-8")
     client = (root / "src/ReplicatedStorage/RVTT/Shared/Rules/RuleReaderClient.lua").read_text(encoding="utf-8")
     panel = (root / "src/StarterGui/RVTT/UI/Components/CoreRulesReaderPanel.lua").read_text(encoding="utf-8")
     package = (root / "src/ServerStorage/RVTT/Content/Packs/rvtt.core.rules/RuleReaderPackage.lua").read_text(encoding="utf-8")
     spec = (root / "tests/Unit/CoreRulesReader.spec.lua").read_text(encoding="utf-8")
     binding_spec = (root / "tests/Unit/RuleRuntimePackageBinding.spec.lua").read_text(encoding="utf-8")
+    importer = (root / "tooling/build_private_rules_runtime.py").read_text(encoding="utf-8")
+    pipeline = (root / "tooling/validate_private_rules_runtime_pipeline.py").read_text(encoding="utf-8")
     remote_names = (root / "src/ReplicatedStorage/RVTT/Shared/Protocol/RemoteNames.lua").read_text(encoding="utf-8")
     management = (root / "src/StarterGui/RVTT/UI/Components/ManagementPanel.lua").read_text(encoding="utf-8")
     remote_spec = (root / "tests/Unit/RemoteBootstrap.spec.lua").read_text(encoding="utf-8")
@@ -98,6 +104,44 @@ def validate(root: Path = ROOT) -> list[str]:
         if marker not in binding:
             errors.append(f"RuleRuntimePackageBinding.lua: missing private positive-path marker {marker}")
 
+    for marker in (
+        'expectedSourceDigest = "47ad33532e95a2a8834d470085524673231dd260"',
+        'sourceBindingKey = "RVTT_PRIVATE_DND2024_KO_SOURCE"',
+        'sourceRoot = "10-RULEBOOKS/integrated-2024"',
+    ):
+        if marker not in builtin:
+            errors.append(f"BuiltinPackIndex.lua: missing pinned private source marker {marker}")
+
+    for marker in (
+        "SOURCE_REVISION_MISMATCH",
+        "SOURCE_DIGEST_MISMATCH",
+        "CONTENT_COUNT_MISMATCH",
+        "SOURCE_WORKTREE_DIRTY",
+        "PRIVATE_OUTPUT_INSIDE_PUBLIC_REPOSITORY",
+        '"Readiness.json"',
+        '"RuleReaderPackage.json"',
+        '"RVTTPrivateRuleContent"',
+        '"private-rules.generated.project.json"',
+        "MAX_CHUNK_BYTES = 16 * 1024",
+        "searchIndex",
+    ):
+        if marker not in importer:
+            errors.append(f"build_private_rules_runtime.py: missing importer marker {marker}")
+
+    for marker in (
+        "EXPECTED_COUNTS",
+        "make_source_repo",
+        "validate_generated",
+        "SOURCE_REVISION_MISMATCH",
+        "SOURCE_DIGEST_MISMATCH",
+        "CONTENT_COUNT_MISMATCH",
+        "SOURCE_WORKTREE_DIRTY",
+        "PRIVATE_SOURCE_MISSING",
+        "synthetic-private-rules.rbxlx",
+    ):
+        if marker not in pipeline:
+            errors.append(f"validate_private_rules_runtime_pipeline.py: missing pipeline marker {marker}")
+
     for marker in ("publishRole", 'SetAttribute("RVTT_Role"', "session.assign_character", "session.connection"):
         if marker not in session:
             errors.append(f"SessionDomain.lua: missing authoritative reader role marker {marker}")
@@ -147,6 +191,7 @@ def validate(root: Path = ROOT) -> list[str]:
         "provider returns the injected package",
         "PRIVATE_SOURCE_MISSING",
         "SOURCE_REVISION_MISMATCH",
+        "SOURCE_DIGEST_MISMATCH",
         "PRIVATE_RULE_PACKAGE_MISMATCH",
         "public profile cannot request the private package",
         "Binding.loadRuntimeBinding(fakeStorage)",
@@ -171,7 +216,7 @@ def main() -> int:
         for error in errors:
             print("-", error)
         return 1
-    print("Core Rules Reader validation passed: private runtime binding + lazy permission-safe Journal reader")
+    print("Core Rules Reader validation passed: private import overlay + runtime binding + lazy permission-safe Journal reader")
     return 0
 
 
