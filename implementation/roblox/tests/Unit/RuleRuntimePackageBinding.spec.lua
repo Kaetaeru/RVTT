@@ -155,6 +155,14 @@ return function(h: any)
 	local staleReadiness = Binding.resolveProfileWithBinding("test", staleReadinessBinding)
 	local staleReadinessCode = if staleReadiness.error then staleReadiness.error.code else nil
 	h:equal(staleReadinessCode, "SOURCE_REVISION_MISMATCH", "stale readiness is rejected")
+	h:expect(
+		Binding.viewerCanAccessProfileWithBinding("test", ownerUserId, staleReadinessBinding),
+		"authorized owner remains eligible to receive the stale-readiness diagnostic"
+	)
+	h:expect(
+		not Binding.viewerCanAccessProfileWithBinding("test", ownerUserId + 1, staleReadinessBinding),
+		"unlisted viewer remains denied even when private readiness is stale"
+	)
 
 	local staleDigestBinding = copy(exactBinding)
 	staleDigestBinding.readiness.verifiedDigest = "stale-digest"

@@ -53,6 +53,7 @@ def _heading_anchors(path: Path) -> dict[str, str]:
         counts[key] = count
         anchor = key if count == 1 else f"{key}-{count}"
         anchors.setdefault(key, anchor)
+        anchors[anchor] = anchor
     return anchors
 
 
@@ -77,7 +78,7 @@ def _catalog(markdown: list[Path], source_root: Path) -> tuple[dict[Path, dict],
 def _markdown_destination(raw: str) -> str:
     value = raw.strip()
     if value.startswith("<") and ">" in value:
-        return value[1 : value.index(">")] .strip()
+        return value[1 : value.index(">")].strip()
     return value.split(maxsplit=1)[0] if value else ""
 
 

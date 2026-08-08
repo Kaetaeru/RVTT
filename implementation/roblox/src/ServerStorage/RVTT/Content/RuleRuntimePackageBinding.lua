@@ -183,13 +183,20 @@ function RuleRuntimePackageBinding.viewerCanAccessProfileWithBinding(
 	if PRIVATE_PROFILES[profile] ~= true then
 		return true
 	end
-	local resolved = RuleRuntimePackageBinding.resolveProfileWithBinding(profile, binding, options)
-	if type(resolved) ~= "table" or resolved.ok ~= true then
-		return false
+	local safeOptions = resolverOptions(options)
+	if safeOptions.allowSrdFallback == true then
+		local resolved = RuleRuntimePackageBinding.resolveProfileWithBinding(profile, binding, safeOptions)
+		if
+			type(resolved) == "table"
+			and resolved.ok == true
+			and resolved.value.basePackageId == CoreRulesPackage.packageId
+		then
+			return true
+		end
 	end
-	if resolved.value.basePackageId == CoreRulesPackage.packageId then
-		return true
-	end
+	-- Private viewer authorization is intentionally independent of source readiness.
+	-- This lets an authorized owner receive a safe Revision/Count/Digest diagnostic
+	-- while an unlisted viewer is rejected before RuleReaderQuery resolves the profile.
 	if type(binding) ~= "table" then
 		return false
 	end
@@ -198,8 +205,7 @@ end
 
 function RuleRuntimePackageBinding.viewerCanAccessProfile(
 	profile: string,
-	userId: number,
-	options: any?
+	userId: number,J	options: any?
 ): boolean
 	if PRIVATE_PROFILES[profile] ~= true then
 		return true
