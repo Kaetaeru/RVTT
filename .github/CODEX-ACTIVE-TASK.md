@@ -1,78 +1,157 @@
 # RVTT Execution State
 
-- status: `NO_ACTIVE_CODEX_TASK`
+- status: `READY_FOR_CODEX_EXECUTION`
+- commandId: `RVTT-PR2-ADR0091-CORE-RULES-PRIVATE-STABLE-LINK-FIX-001`
 - repository: `Kaetaeru/RVTT`
 - pullRequest: `2`
 - branch: `agent/survival-logistics-token-authoring`
-- executionMode: `CHATGPT_DIRECT_GITHUB_IMPLEMENTATION`
-- phase: `FULL_UI_UX_ALIGNMENT_PHASE_10`
+- taskType: `IMPLEMENTATION_FIX`
+- executionMode: `CODEX_IMPLEMENTATION_CHATGPT_VERIFICATION`
+- phase: `FULL_UI_UX_ALIGNMENT_PHASE_10_ADR0091_CORE_RULES_PRIVATE_STABLE_LINK_FIX`
+- commandPath: `.github/CODEX-FIX-ADR0091-CORE-RULES-PRIVATE-STABLE-LINKS-001.md`
+- targetMode: `CURRENT_PR_HEAD_AT_START`
+- resultMarker: `<!-- RVTT_CODEX_ADR0091_CORE_RULES_PRIVATE_LINK_FIX_RESULT -->`
+- resultStatus: `PENDING`
+- setupBaseHeadBeforeCommand: `1201b587e8638c7111422d2679f7e6bcd784c5b3`
+- commandFileCommit: `bde6f3a70ca2c84c45081aff2ea798229cfca03c`
 - phase9Status: `FINAL_PASS`
-- phase10Status: `PARTIAL_HOLD_2_ADR0091_FINAL_CONTRACT_GAPS`
-- completedCorrections: `ASSET_REGISTRY_FOUNDATION,RULES_PROFILE_RELEASE_ENFORCEMENT,CORE_RULES_READER,PRIVATE_RULES_READER_IMPORT_OVERLAY_REPAIR`
-- lastCompletedDirectWork: `ADR0091_PRIVATE_RULES_READER_IMPORT_OVERLAY_REPAIR`
-- nextDirectWork: `ADR0091_OFFICIAL_2024_CHARACTER_SHEET`
-- remainingFinalContractGaps: `2`
+- phase10Status: `PARTIAL_HOLD_CORE_RULES_PRIVATE_STABLE_LINK_FIX`
+- completedCorrections: `ASSET_REGISTRY_FOUNDATION,RULES_PROFILE_RELEASE_ENFORCEMENT,CORE_RULES_READER_ENGINE,PRIVATE_RULES_READER_IMPORT_OVERLAY_BASE`
+- currentCorrection: `CORE_RULES_PRIVATE_STABLE_LINK_NORMALIZATION`
+- coreRulesReaderFunctionalState: `STATIC_IMPLEMENTED`
+- coreRulesReaderAcceptanceState: `HOLD_PENDING_PRIVATE_STABLE_LINK_FIX`
+- matrixRecordedFinalContractGaps: `2_PREMATURE_UNTIL_THIS_FIX_PASSES`
+- effectiveRemainingFinalContractGaps: `3`
+- nextCorrectionOnSuccess: `OFFICIAL_2024_CHARACTER_SHEET`
 - newCurrentHeadStaticGate: `NOT_YET`
 - studioRuntimeState: `BLOCKED`
 - studioHumanRetestState: `NOT_STARTED_CURRENT_CONTRACT`
 - humanUiUxState: `NOT_EXECUTED`
-- updatedBy: `ChatGPT Direct GitHub Implementation`
+- updatedBy: `ChatGPT Lead Coordinator`
 - updatedAt: `2026-08-09`
 
-## 현재 실행 방식
+## 활성 작업
 
-Codex token budget을 사용하지 않는다. 사용자가 별도로 Codex 사용을 다시 요청하기 전까지 ChatGPT가 GitHub connector를 사용해 다음 흐름을 직접 수행한다.
-
-```text
-latest PR HEAD 확인
-→ Authority / Source 분석
-→ Production Source·Test·Validator 직접 수정
-→ current-head GitHub Actions 확인
-→ PASS/HOLD 판정
-```
-
-사용자에게 Roblox Studio 실행을 요청하는 시점은 남은 ADR-0091 Source gap을 모두 닫고 별도의 새 current-HEAD Static Gate가 PASS한 뒤다.
-
-## 완료된 Core Rules Reader correction
+Codex는 아래 command를 가장 먼저 읽고 그대로 실행한다.
 
 ```text
-RuleLink stable URI
-+ RuleReaderService viewer filtering
-+ manifest/search/open/chunk query boundary
-+ lazy chunk client cache
-+ Journal Core Rules 3-column reader
-+ >200k synthetic corpus lazy-load regression
-+ unauthorized title/count/snippet/link/body nondisclosure
-+ Session authoritative role marker wiring
-+ Core Rules Reader acceptance validator
-+ pinned private integrated subtree digest
-+ private Markdown importer with revision/digest/count/dirty-source fail-closed validation
-+ temporary RuleContentPackage + localized search index generation
-+ generated Rojo project injecting ServerStorage.RVTTPrivateRuleContent
-+ explicit server-only authorized-user allowlist
-+ private profile query nondisclosure before rule service access
-+ fail-closed private Studio build entry point
-+ public-safe synthetic importer/preparer/overlay Rojo-build CI regression
+.github/CODEX-FIX-ADR0091-CORE-RULES-PRIVATE-STABLE-LINKS-001.md
 ```
 
-`rvtt.core.rules` repository package는 현재 공개-safe Reader Guide만 포함한다. private integrated Korean rule body와 generated Rule Chunk는 public Git tree에 포함하지 않는다.
+핵심 repair 범위는 다음 세 축이다.
 
-Private integrated Studio build는 `RVTT_PRIVATE_DND2024_KO_SOURCE`와 `RVTT_PRIVATE_RULES_AUTHORIZED_USER_IDS`가 모두 있어야 하며, pinned revision·source subtree digest·12/48/16/10/75/391 count가 일치하지 않거나 source root가 dirty이면 fail closed한다. 검증된 import는 RVTT Git tree 밖의 임시 workspace에만 생성되고 generated Rojo overlay를 통해 `RVTTPrivateRuleContent/Readiness`와 `RuleReaderPackage`를 ServerStorage에 주입한다.
+```text
+1. imported sourceRoot 내부 Markdown navigation
+   -> stable rvtt-rule:// document/section anchor
 
-Public GitHub Actions는 private repository나 private rule body를 읽지 않는다. 대신 동일 importer/preparer 경로를 synthetic private Git fixture로 실행해 generated ModuleScript binding과 Rojo overlay build, revision/digest/count/dirty/missing-source, missing viewer allowlist의 fail-closed 회귀를 검사한다. 이는 Source/Static·Build evidence이며 실제 private corpus Studio Runtime evidence가 아니다.
+2. missing local target 또는 sourceRoot 밖 repository-relative link
+   -> raw private source path를 runtime text/relatedLinks/backlinks에 남기지 않고 safe plain-text downgrade
 
-## 남은 Phase 10 ADR-0091 gap
+3. synthetic private pipeline
+   -> 실제 link graph + fragment + duplicate anchor + missing/out-of-root/external + reciprocal backlink regression
+```
 
-1. `final.official-2024-sheet-interactions`
-2. `final.dice-slot-reveal-notice`
+## ChatGPT 검증상 현재 상태
 
-다음 직접 구현은 Official 2024 Character Sheet다. 두 gap을 모두 닫은 뒤 Acceptance Matrix를 재검증하고 별도의 new current-HEAD Static Gate를 실행한다.
+이 task 시작 전 독립 재검증 판정은 다음과 같다.
+
+```text
+Asset Registry = STATIC PASS
+Rules Profile / Release Leak Gate = STATIC PASS
+Core Rules Reader engine/filter/lazy-load = STATIC 구현됨
+Core Rules Reader private stable-link import = HOLD
+Official 2024 Character Sheet = BLOCKED
+Dice Slot Reveal Notice = BLOCKED
+Studio/Human Runtime = NOT_EXECUTED
+```
+
+현재 `full-ui-ux-acceptance-matrix.json`이 Core Rules Reader를 `STATIC_VERIFIED`로 기록하고 `finalContractGaps = 2`라고 하더라도, **이번 repair가 PASS하기 전까지 그 상태를 성공 증거로 사용하지 않는다.**
+
+실질적으로는 현재 Core Reader stable-link issue까지 포함해 3개 blocker로 취급한다.
+
+## 확인된 구체적 결함
+
+현재 importer는 `_resolve_rule_uri()`가 실패하면 original Markdown link를 그대로 보존한다.
+
+실제 pinned private corpus에는 다음 유형이 존재한다.
+
+```text
+integrated-2024/README.md
+-> directory README navigation
+
+integrated-2024/character-creation/README.md
+-> in-root document links
+-> ../README.md
+-> ../../../00-QUICK-RULES/... 같은 sourceRoot 밖 repository-relative link
+```
+
+따라서 unresolved/out-of-root local link가 raw `.md` source path로 private runtime RuleReaderPackage text에 남을 수 있다.
+
+Codex는 private body를 public RVTT Git tree에 복사하지 않고 importer behavior와 public-safe synthetic fixtures만 수정해야 한다.
+
+## 보존해야 할 현재 PASS 영역
+
+다음을 회귀시키면 안 된다.
+
+- BuiltinPackIndex single package authority
+- private revision / subtree digest / exact content count / dirty-source fail closed
+- generated private overlay outside public Git tree
+- explicit owner-only authorizedUserIds
+- unauthorized viewer pre-resolution nondisclosure
+- explicit `allowSrdFallback=true` runtime path
+- public/release/artifact SRD-only
+- filesystem release leak gate
+- RuleProfileStatus client-safe allowlist
+- Reader manifest body/chunk graph non-replication
+- lazy chunk loading
+- permission-filtered title/count/snippet/link/body nondisclosure
+- Session authoritative role marker
+- Player persistent Minimap / separate Player Map / Objective Tracker prohibition
+
+## 성공 조건
+
+Codex가 command의 필수 regression과 repository-required validators/toolchain/Actions를 모두 통과한 경우에만 다음 상태를 인정한다.
+
+```text
+Core Rules Reader = STATIC_VERIFIED
+remaining Final Contract gaps = 2
+1. Official 2024 Interactive Character Sheet
+2. Dice Slot Reveal Notice
+Phase 10 = PARTIAL / HOLD
+next = OFFICIAL_2024_CHARACTER_SHEET
+```
+
+failure/pending/cancelled Actions가 있거나 stable-link/raw-path nondisclosure가 불완전하면 `PASS` 금지다.
+
+## 결과 전달
+
+PR #2 top-level Conversation에 다음 marker로 결과를 남긴다.
+
+```text
+<!-- RVTT_CODEX_ADR0091_CORE_RULES_PRIVATE_LINK_FIX_RESULT -->
+```
+
+최소 포함:
+
+- commandId
+- targetShaAtStart
+- resultHeadSha
+- resultStatus
+- changed files
+- in-root document/fragment normalization evidence
+- duplicate-anchor evidence
+- missing-local/sourceRoot-escape nondisclosure evidence
+- relatedLinks/backlinks reciprocity evidence
+- synthetic private runtime pipeline result
+- focused validators
+- current-head GitHub Actions
+- Studio/Human `NOT_EXECUTED`
+- remaining Final Contract gaps
 
 ## 증거 경계
 
 ```text
-Core Rules Reader Source/Static = implemented and current-head CI verified
-Private importer synthetic generated-overlay Build = current-head CI verified
+Source/Static/Build evidence만 이번 Codex 작업 범위
 Real private corpus Studio Runtime = NOT_EXECUTED
 Studio Runtime = NOT_EXECUTED
 Human UI/UX = NOT_EXECUTED
@@ -81,4 +160,4 @@ Persistence Runtime = DEFERRED
 Performance/Soak = PENDING
 ```
 
-상태 문서 변경 후의 최종 current HEAD Actions도 다시 모두 성공해야 최종 Static PASS로 인정한다.
+Studio/Human 실행은 아직 요청하지 않는다.
