@@ -78,7 +78,11 @@ function RuleReaderClient:chunk(chunkId: string, callback: (any) -> ())
 		return self.generation
 	end
 	return self:_request({ action = "chunk", chunkId = chunkId }, function(result)
-		if result.ok == true and type(result.value) == "table" and type(result.value.id) == "string" then
+		if
+			result.ok == true
+			and type(result.value) == "table"
+			and type(result.value.id) == "string"
+		then
 			self.chunkCache[result.value.id] = result.value
 		end
 		callback(result)
