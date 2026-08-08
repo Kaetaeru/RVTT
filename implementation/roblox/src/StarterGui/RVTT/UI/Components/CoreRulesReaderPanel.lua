@@ -15,7 +15,13 @@ local function decorate(frame: GuiObject, background: string)
 	corner.Parent = frame
 end
 
-local function label(parent: Instance, name: string, text: string, size: UDim2, position: UDim2): TextLabel
+local function label(
+	parent: Instance,
+	name: string,
+	text: string,
+	size: UDim2,
+	position: UDim2
+): TextLabel
 	local value = Instance.new("TextLabel")
 	value.Name = name
 	value.Size = size
@@ -32,7 +38,13 @@ local function label(parent: Instance, name: string, text: string, size: UDim2, 
 	return value
 end
 
-local function button(parent: Instance, name: string, text: string, size: UDim2, position: UDim2): TextButton
+local function button(
+	parent: Instance,
+	name: string,
+	text: string,
+	size: UDim2,
+	position: UDim2
+): TextButton
 	local value = Instance.new("TextButton")
 	value.Name = name
 	value.Size = size
@@ -50,7 +62,12 @@ local function button(parent: Instance, name: string, text: string, size: UDim2,
 	return value
 end
 
-local function scrolling(parent: Instance, name: string, size: UDim2, position: UDim2): ScrollingFrame
+local function scrolling(
+	parent: Instance,
+	name: string,
+	size: UDim2,
+	position: UDim2
+): ScrollingFrame
 	local value = Instance.new("ScrollingFrame")
 	value.Name = name
 	value.Size = size
@@ -118,11 +135,19 @@ function CoreRulesReaderPanel.new(reader: any): any
 	searchPadding.Parent = search
 	self.Search = search
 
-	self.SearchButton = button(root, "SearchButton", "검색", UDim2.fromOffset(72, 38), UDim2.new(0.42, 8, 0, 0))
-	self.ProfileBadge = label(root, "ProfileBadge", "RULE PROFILE —", UDim2.fromOffset(160, 38), UDim2.new(1, -330, 0, 8))
+	self.SearchButton =
+		button(root, "SearchButton", "검색", UDim2.fromOffset(72, 38), UDim2.new(0.42, 8, 0, 0))
+	self.ProfileBadge = label(
+		root,
+		"ProfileBadge",
+		"RULE PROFILE —",
+		UDim2.fromOffset(160, 38),
+		UDim2.new(1, -330, 0, 8)
+	)
 	self.ProfileBadge.TextXAlignment = Enum.TextXAlignment.Right
 	self.ProfileBadge.TextSize = Tokens.TextSize.Caption
-	self.CopyLink = button(root, "CopyRuleLink", "Rule Link", UDim2.fromOffset(96, 38), UDim2.new(1, -98, 0, 0))
+	self.CopyLink =
+		button(root, "CopyRuleLink", "Rule Link", UDim2.fromOffset(96, 38), UDim2.new(1, -98, 0, 0))
 
 	local tree = scrolling(root, "RuleTree", UDim2.new(0.25, -4, 1, -54), UDim2.fromOffset(0, 54))
 	listLayout(tree)
@@ -135,25 +160,46 @@ function CoreRulesReaderPanel.new(reader: any): any
 	article.Parent = root
 	decorate(article, "surfaceRaised")
 	self.Article = article
-	self.ArticleTitle = label(article, "ArticleTitle", "Core Rules", UDim2.new(1, -24, 0, 46), UDim2.fromOffset(12, 12))
+	self.ArticleTitle = label(
+		article,
+		"ArticleTitle",
+		"Core Rules",
+		UDim2.new(1, -24, 0, 46),
+		UDim2.fromOffset(12, 12)
+	)
 	self.ArticleTitle.Font = Enum.Font.GothamBold
 	self.ArticleTitle.TextSize = Tokens.TextSize.Heading
 
-	local articleScroll = scrolling(article, "ArticleViewport", UDim2.new(1, -24, 1, -118), UDim2.fromOffset(12, 58))
+	local articleScroll =
+		scrolling(article, "ArticleViewport", UDim2.new(1, -24, 1, -118), UDim2.fromOffset(12, 58))
 	articleScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
 	self.ArticleScroll = articleScroll
 	self.ArticleBody = label(articleScroll, "ArticleBody", "", UDim2.new(1, -8, 0, 0), UDim2.new())
 	self.ArticleBody.AutomaticSize = Enum.AutomaticSize.Y
 	self.ArticleBody.TextSize = Tokens.TextSize.Body
 	self.ArticleBody.LineHeight = 1.15
-	self.PreviousChunk = button(article, "PreviousChunk", "이전 Chunk", UDim2.fromOffset(112, 34), UDim2.new(0, 12, 1, -46))
-	self.NextChunk = button(article, "NextChunk", "다음 Chunk", UDim2.fromOffset(112, 34), UDim2.new(0, 132, 1, -46))
+	self.PreviousChunk = button(
+		article,
+		"PreviousChunk",
+		"이전 Chunk",
+		UDim2.fromOffset(112, 34),
+		UDim2.new(0, 12, 1, -46)
+	)
+	self.NextChunk = button(
+		article,
+		"NextChunk",
+		"다음 Chunk",
+		UDim2.fromOffset(112, 34),
+		UDim2.new(0, 132, 1, -46)
+	)
 
-	local side = scrolling(root, "RuleOutline", UDim2.new(0.25, -4, 1, -54), UDim2.new(0.75, 4, 0, 54))
+	local side =
+		scrolling(root, "RuleOutline", UDim2.new(0.25, -4, 1, -54), UDim2.new(0.75, 4, 0, 54))
 	listLayout(side)
 	self.Side = side
 
-	self.Status = label(root, "ReaderStatus", "", UDim2.new(0.5, -24, 0, 30), UDim2.new(0.25, 16, 1, -88))
+	self.Status =
+		label(root, "ReaderStatus", "", UDim2.new(0.5, -24, 0, 30), UDim2.new(0.25, 16, 1, -88))
 	self.Status.TextSize = Tokens.TextSize.Caption
 	self.Status:SetAttribute("RVTTTextToken", "textSecondary")
 
@@ -186,7 +232,8 @@ function CoreRulesReaderPanel.new(reader: any): any
 			self.LinkBox:CaptureFocus()
 			self.LinkBox.CursorPosition = #uri + 1
 			self.LinkBox.SelectionStart = 1
-			self.Status.Text = "Rule Link를 선택했습니다. Ctrl+C로 복사할 수 있습니다."
+			self.Status.Text =
+				"Rule Link를 선택했습니다. Ctrl+C로 복사할 수 있습니다."
 		end
 	end)
 	self.PreviousChunk.Activated:Connect(function()
@@ -210,7 +257,13 @@ function CoreRulesReaderPanel:_renderTree()
 	if self.state.searchQuery ~= "" then
 		for _, result in self.state.searchResults do
 			order += 1
-			local item = button(self.Tree, "SearchResult_" .. tostring(order), result.documentTitle .. "\n" .. result.sectionTitle, UDim2.new(1, -4, 0, 58), UDim2.new())
+			local item = button(
+				self.Tree,
+				"SearchResult_" .. tostring(order),
+				result.documentTitle .. "\n" .. result.sectionTitle,
+				UDim2.new(1, -4, 0, 58),
+				UDim2.new()
+			)
 			item.LayoutOrder = order
 			item.TextXAlignment = Enum.TextXAlignment.Left
 			item:SetAttribute("RVTTGenerated", true)
@@ -219,7 +272,13 @@ function CoreRulesReaderPanel:_renderTree()
 			end)
 		end
 		if order == 0 then
-			local empty = label(self.Tree, "NoSearchResult", "검색 결과 없음", UDim2.new(1, -4, 0, 44), UDim2.new())
+			local empty = label(
+				self.Tree,
+				"NoSearchResult",
+				"검색 결과 없음",
+				UDim2.new(1, -4, 0, 44),
+				UDim2.new()
+			)
 			empty.LayoutOrder = 1
 			empty:SetAttribute("RVTTGenerated", true)
 		end
@@ -231,19 +290,33 @@ function CoreRulesReaderPanel:_renderTree()
 	end
 	for _, module in manifest.modules or {} do
 		order += 1
-		local header = label(self.Tree, "Module_" .. module.id, tostring(module.title), UDim2.new(1, -4, 0, 34), UDim2.new())
+		local header = label(
+			self.Tree,
+			"Module_" .. module.id,
+			tostring(module.title),
+			UDim2.new(1, -4, 0, 34),
+			UDim2.new()
+		)
 		header.LayoutOrder = order
 		header.Font = Enum.Font.GothamBold
 		header.TextSize = Tokens.TextSize.Caption
 		header:SetAttribute("RVTTGenerated", true)
 		for _, document in module.documents or {} do
 			order += 1
-			local item = button(self.Tree, "Document_" .. document.id, tostring(document.title), UDim2.new(1, -4, 0, 42), UDim2.new())
+			local item = button(
+				self.Tree,
+				"Document_" .. document.id,
+				tostring(document.title),
+				UDim2.new(1, -4, 0, 42),
+				UDim2.new()
+			)
 			item.LayoutOrder = order
 			item.TextXAlignment = Enum.TextXAlignment.Left
 			item:SetAttribute("RVTTGenerated", true)
 			item.Activated:Connect(function()
-				local section = if type(document.sections) == "table" then document.sections[1] else nil
+				local section = if type(document.sections) == "table"
+					then document.sections[1]
+					else nil
 				local uri = if type(section) == "table" then section.uri else document.uri
 				if type(uri) == "string" then
 					self:_open(uri)
@@ -258,14 +331,21 @@ function CoreRulesReaderPanel:_renderSide()
 	local order = 0
 	local document = self.state.openDocument
 	if type(document) == "table" then
-		local outline = label(self.Side, "OutlineHeading", "Outline", UDim2.new(1, -4, 0, 34), UDim2.new())
+		local outline =
+			label(self.Side, "OutlineHeading", "Outline", UDim2.new(1, -4, 0, 34), UDim2.new())
 		outline.LayoutOrder = 1
 		outline.Font = Enum.Font.GothamBold
 		outline:SetAttribute("RVTTGenerated", true)
 		order = 1
 		for _, section in document.sections or {} do
 			order += 1
-			local item = button(self.Side, "Outline_" .. section.anchorId, tostring(section.title), UDim2.new(1, -4, 0, 40), UDim2.new())
+			local item = button(
+				self.Side,
+				"Outline_" .. section.anchorId,
+				tostring(section.title),
+				UDim2.new(1, -4, 0, 40),
+				UDim2.new()
+			)
 			item.LayoutOrder = order
 			item.TextXAlignment = Enum.TextXAlignment.Left
 			item:SetAttribute("RVTTGenerated", true)
@@ -276,7 +356,13 @@ function CoreRulesReaderPanel:_renderSide()
 			end)
 		end
 		order += 1
-		local source = label(self.Side, "Source", "Source\n" .. tostring(document.sourceLabel or "—"), UDim2.new(1, -4, 0, 54), UDim2.new())
+		local source = label(
+			self.Side,
+			"Source",
+			"Source\n" .. tostring(document.sourceLabel or "—"),
+			UDim2.new(1, -4, 0, 54),
+			UDim2.new()
+		)
 		source.LayoutOrder = order
 		source.TextSize = Tokens.TextSize.Caption
 		source:SetAttribute("RVTTTextToken", "textSecondary")
@@ -286,7 +372,16 @@ function CoreRulesReaderPanel:_renderSide()
 	if type(manifest) == "table" and type(manifest.license) == "table" then
 		order += 1
 		local license = manifest.license
-		local licenseLabel = label(self.Side, "License", "License\n" .. tostring(license.licenseId or "—") .. "\n" .. tostring(license.attributionText or ""), UDim2.new(1, -4, 0, 92), UDim2.new())
+		local licenseLabel = label(
+			self.Side,
+			"License",
+			"License\n"
+				.. tostring(license.licenseId or "—")
+				.. "\n"
+				.. tostring(license.attributionText or ""),
+			UDim2.new(1, -4, 0, 92),
+			UDim2.new()
+		)
 		licenseLabel.LayoutOrder = order
 		licenseLabel.TextSize = Tokens.TextSize.Caption
 		licenseLabel:SetAttribute("RVTTTextToken", "textSecondary")
@@ -298,15 +393,23 @@ function CoreRulesReaderPanel:_renderArticle()
 	local document = self.state.openDocument
 	local section = self.state.openSection
 	self.ArticleTitle.Text = if type(document) == "table"
-		then tostring(document.title) .. if type(section) == "table" then " · " .. tostring(section.title) else ""
+		then tostring(document.title) .. if type(section) == "table"
+			then " · " .. tostring(section.title)
+			else ""
 		else "Core Rules"
 	self.ArticleBody.Text = ViewModel.articleText(self.state)
 	local previousId = ViewModel.edgeChunkId(self.state, "previous")
 	local nextId = ViewModel.edgeChunkId(self.state, "next")
 	self.PreviousChunk.Active = previousId ~= nil
 	self.NextChunk.Active = nextId ~= nil
-	self.PreviousChunk:SetAttribute("RVTTBackgroundToken", if previousId ~= nil then "surfaceSoft" else "disabled")
-	self.NextChunk:SetAttribute("RVTTBackgroundToken", if nextId ~= nil then "surfaceSoft" else "disabled")
+	self.PreviousChunk:SetAttribute(
+		"RVTTBackgroundToken",
+		if previousId ~= nil then "surfaceSoft" else "disabled"
+	)
+	self.NextChunk:SetAttribute(
+		"RVTTBackgroundToken",
+		if nextId ~= nil then "surfaceSoft" else "disabled"
+	)
 	self.LinkBox.Text = if type(self.state.activeUri) == "string" then self.state.activeUri else ""
 end
 
