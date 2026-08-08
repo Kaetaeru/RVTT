@@ -11,8 +11,10 @@ from typing import Iterable
 
 ROBLOX_ROOT = Path(__file__).resolve().parents[1]
 IMPORTER = ROBLOX_ROOT / "tooling/build_private_rules_runtime.py"
+PREPARER = ROBLOX_ROOT / "tooling/prepare_private_rules_runtime.py"
 STUDIO_RUNNER = ROBLOX_ROOT / "tooling/run-private-rules-studio.ps1"
 PRIVATE_PACKAGE_ID = "rvtt.test.rules.2024.integrated.ko"
+SYNTHETIC_AUTHORIZED_USER_ID = 123456789
 EXPECTED_COUNTS = {
     "classes": 12,
     "subclasses": 48,
@@ -108,20 +110,46 @@ return {{
 '''
 
 
+def import_command(source_repo: Path, output: Path, authority: Path) -> list[str]:
+    return [
+        sys.executable,
+        str(IMPORTER),
+        "--source-repo-root",
+        str(source_repo),
+        "--output-root",
+        str(output),
+        "--authority-file",
+        str(authority),
+        "--base-project",
+        str(ROBLOX_ROOT / "default.project.json"),
+    ]
+
+
 def run_import(source_repo: Path, output: Path, authority: Path, *, expect_success: bool) -> subprocess.CompletedProcess[str]:
+    return run(import_command(source_repo, output, authority), expect_success=expect_success)
+
+
+def prepare_command(source_repo: Path, output: Path, authority: Path, *, include_authorized_user: bool) -> list[str]:
+    command = [
+        sys.executable,
+        str(PREPARER),
+        "--source-repo-root",
+        str(source_repo),
+        "--output-root",
+        str(output),
+        "--authority-file",
+        str(authority),
+        "--base-project",
+        str(ROBLOX_ROOT / "default.project.json"),
+    ]
+    if include_authorized_user:
+        command.extend(["--authorized-user-id", str(SYNTHETIC_AUTHORIZED_USER_ID)])
+    return command
+
+
+def run_prepare(source_repo: Path, output: Path, authority: Path, *, include_authorized_user: bool, expect_success: bool) -> subprocess.CompletedProcess[str]:
     return run(
-        [
-            sys.executable,
-            str(IMPORTER),
-            "--source-repo-root",
-            str(source_repo),
-            "--output-root",
-            str(output),
-            "--authority-file",
-            str(authority),
-            "--base-project",
-            str(ROBLOX_ROOT / "default.project.json"),
-        ],
+        prepare_command(source_repo, output, authority, include_authorized_user=include_authorized_user),
         expect_success=expect_success,
     )
 
@@ -138,7 +166,8 @@ def validate_studio_runner_contract() -> None:
     text = STUDIO_RUNNER.read_text(encoding="utf-8")
     for marker in (
         "RVTT_PRIVATE_DND2024_KO_SOURCE",
-        "build_private_rules_runtime.py",
+        "RVTT_PRIVATE_RULES_AUTHORIZED_USER_IDS",
+        "prepare_private_rules_runtime.py",
         "private-rules.generated.project.json",
         "Readiness.json",
         "RuleReaderPackage.json",
@@ -158,6 +187,10 @@ def validate_generated(output: Path, rojo: str | None) -> None:
     project = json.loads((output / "private-rules.generated.project.json").read_text(encoding="utf-8"))
     if readiness["bindingPresent"] is not True or readiness["contentCounts"] != EXPECTED_COUNTS:
         raise RuntimeError("generated Readiness contract mismatch")
+    if readiness.get("authorizedUserIds") != [SYNTHETIC_AUTHORIZED_USER_ID]:
+        raise RuntimeError("generated Readiness is missing the explicit owner-only allowlist")
+    if manifest.get("authorizationMode") != "explicit-user-allowlist" or manifest.get("authorizedUserCount") != 1:
+        raise RuntimeError("generated import manifest does not record allowlist mode/count")
     if package["packageId"] != PRIVATE_PACKAGE_ID or package["version"] != readiness["revision"]:
         raise RuntimeError("generated package identity mismatch")
     if not package.get("modules") or not package.get("chunks") or not package.get("searchIndex", {}).get("entries"):
@@ -208,9 +241,19 @@ def validate_negative_paths(work: Path, source_repo: Path, revision: str, digest
 
     expect_failure(work / "missing-source", work / "out-missing", authority, "PRIVATE_SOURCE_MISSING")
 
+    missing_access = run_prepare(
+        source_repo,
+        work / "out-missing-access",
+        authority,
+        include_authorized_user=False,
+        expect_success=False,
+    )
+    if missing_access.returncode == 0 or "PRIVATE_RULE_ACCESS_MISSING" not in missing_access.stderr:
+        raise RuntimeError("private preparer must fail closed without an explicit authorized user allowlist")
+
 
 def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Validate private rules importer and generated Rojo overlay with public synthetic content.")
+    parser = argparse.ArgumentParser(description="Validate private rules importer, owner-only preparation, and generated Rojo overlay with public synthetic content.")
     parser.add_argument("--rojo", default="")
     return parser.parse_args(argv)
 
@@ -226,10 +269,16 @@ def main(argv: Iterable[str] | None = None) -> int:
         authority = work / "authority.lua"
         authority.write_text(authority_text(revision, digest), encoding="utf-8")
         output = work / "output"
-        run_import(source_repo, output, authority, expect_success=True)
+        run_prepare(
+            source_repo,
+            output,
+            authority,
+            include_authorized_user=True,
+            expect_success=True,
+        )
         validate_generated(output, args.rojo or None)
         validate_negative_paths(work, source_repo, revision, digest)
-    print("Private rules runtime pipeline validation passed: synthetic import + binding instances + overlay build + fail-closed regressions")
+    print("Private rules runtime pipeline validation passed: synthetic import + owner allowlist + binding instances + overlay build + fail-closed regressions")
     return 0
 
 
