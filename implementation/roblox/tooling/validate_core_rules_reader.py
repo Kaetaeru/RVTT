@@ -20,7 +20,9 @@ REQUIRED_FILES = {
     "tests/Unit/CoreRulesReader.spec.lua",
     "tests/Unit/RuleRuntimePackageBinding.spec.lua",
     "tooling/build_private_rules_runtime.py",
+    "tooling/prepare_private_rules_runtime.py",
     "tooling/validate_private_rules_runtime_pipeline.py",
+    "tooling/run-private-rules-studio.ps1",
 }
 
 
@@ -44,7 +46,9 @@ def validate(root: Path = ROOT) -> list[str]:
     spec = (root / "tests/Unit/CoreRulesReader.spec.lua").read_text(encoding="utf-8")
     binding_spec = (root / "tests/Unit/RuleRuntimePackageBinding.spec.lua").read_text(encoding="utf-8")
     importer = (root / "tooling/build_private_rules_runtime.py").read_text(encoding="utf-8")
+    preparer = (root / "tooling/prepare_private_rules_runtime.py").read_text(encoding="utf-8")
     pipeline = (root / "tooling/validate_private_rules_runtime_pipeline.py").read_text(encoding="utf-8")
+    studio_runner = (root / "tooling/run-private-rules-studio.ps1").read_text(encoding="utf-8")
     remote_names = (root / "src/ReplicatedStorage/RVTT/Shared/Protocol/RemoteNames.lua").read_text(encoding="utf-8")
     management = (root / "src/StarterGui/RVTT/UI/Components/ManagementPanel.lua").read_text(encoding="utf-8")
     remote_spec = (root / "tests/Unit/RemoteBootstrap.spec.lua").read_text(encoding="utf-8")
@@ -68,13 +72,24 @@ def validate(root: Path = ROOT) -> list[str]:
     if "chunks =" in manifest_body or "chunkIds =" in manifest_body:
         errors.append("RuleReaderService.lua: manifest must not replicate the chunk body graph")
 
-    for marker in ('request.action == "manifest"', 'request.action == "search"', 'request.action == "open"', 'request.action == "chunk"', "RATE_LIMITED"):
+    for marker in (
+        'request.action == "manifest"',
+        'request.action == "search"',
+        'request.action == "open"',
+        'request.action == "chunk"',
+        "RATE_LIMITED",
+        "profileAccessResolver",
+        "profileUnavailable",
+    ):
         if marker not in query:
             errors.append(f"RuleReaderQuery.lua: missing query action/enforcement marker {marker}")
+
     for marker in (
         "RuleRuntimePackageBinding",
         "RuleRuntimePackageBinding.resolveProfile(configuredProfile())",
         "RuleRuntimePackageBinding.packageForId(packageId, configuredProfile())",
+        "RuleRuntimePackageBinding.viewerCanAccessProfile(configuredProfile(), player.UserId)",
+        "profileAccessResolver",
         "RULE_READER_QUERY",
         "RunService:IsStudio()",
         '"development"',
@@ -94,10 +109,15 @@ def validate(root: Path = ROOT) -> list[str]:
         "function RuleRuntimePackageBinding.loadRuntimeBinding",
         "function RuleRuntimePackageBinding.resolveProfileWithBinding",
         "function RuleRuntimePackageBinding.packageForIdWithBinding",
+        "function RuleRuntimePackageBinding.viewerCanAccessProfileWithBinding",
+        "function RuleRuntimePackageBinding.viewerCanAccessProfile",
         "privateReadiness = binding.readiness",
         "pcall(require, readinessModule)",
         "pcall(require, packageModule)",
         "PRIVATE_RULE_PACKAGE_MISMATCH",
+        "PRIVATE_RULE_ACCESS_MISSING",
+        "PRIVATE_RULE_ACCESS_INVALID",
+        "authorizedUserIds",
         "package.packageId ~= authority.packageId",
         "package.version ~= authority.version",
     ):
@@ -129,6 +149,16 @@ def validate(root: Path = ROOT) -> list[str]:
             errors.append(f"build_private_rules_runtime.py: missing importer marker {marker}")
 
     for marker in (
+        'AUTHORIZED_USERS_ENV = "RVTT_PRIVATE_RULES_AUTHORIZED_USER_IDS"',
+        'readiness["authorizedUserIds"] = authorized_user_ids',
+        "PRIVATE_RULE_ACCESS_MISSING",
+        "PRIVATE_RULE_ACCESS_INVALID",
+        'manifest["authorizationMode"] = "explicit-user-allowlist"',
+    ):
+        if marker not in preparer:
+            errors.append(f"prepare_private_rules_runtime.py: missing owner-only preparation marker {marker}")
+
+    for marker in (
         "EXPECTED_COUNTS",
         "make_source_repo",
         "validate_generated",
@@ -137,10 +167,25 @@ def validate(root: Path = ROOT) -> list[str]:
         "CONTENT_COUNT_MISMATCH",
         "SOURCE_WORKTREE_DIRTY",
         "PRIVATE_SOURCE_MISSING",
+        "PRIVATE_RULE_ACCESS_MISSING",
+        "authorizedUserIds",
         "synthetic-private-rules.rbxlx",
+        "ModuleScript",
     ):
         if marker not in pipeline:
             errors.append(f"validate_private_rules_runtime_pipeline.py: missing pipeline marker {marker}")
+
+    for marker in (
+        'SourceBindingEnv = "RVTT_PRIVATE_DND2024_KO_SOURCE"',
+        'AuthorizedUsersEnv = "RVTT_PRIVATE_RULES_AUTHORIZED_USER_IDS"',
+        "prepare_private_rules_runtime.py",
+        'Invoke-NativeChecked $rojoPath @("build", $generatedProject',
+        "private-rules.generated.project.json",
+    ):
+        if marker not in studio_runner:
+            errors.append(f"run-private-rules-studio.ps1: missing fail-closed Studio marker {marker}")
+    if 'rojoPath @("build", $projectPath' in studio_runner:
+        errors.append("run-private-rules-studio.ps1: must build the generated private overlay, not the base project")
 
     for marker in ("publishRole", 'SetAttribute("RVTT_Role"', "session.assign_character", "session.connection"):
         if marker not in session:
@@ -189,9 +234,13 @@ def validate(root: Path = ROOT) -> list[str]:
     for marker in (
         "resolves with an exact runtime binding",
         "provider returns the injected package",
+        "authorizes the explicit owner user",
+        "denies an unlisted user without disclosure",
         "PRIVATE_SOURCE_MISSING",
         "SOURCE_REVISION_MISMATCH",
         "SOURCE_DIGEST_MISMATCH",
+        "PRIVATE_RULE_ACCESS_MISSING",
+        "PRIVATE_RULE_ACCESS_INVALID",
         "PRIVATE_RULE_PACKAGE_MISMATCH",
         "public profile cannot request the private package",
         "Binding.loadRuntimeBinding(fakeStorage)",
@@ -216,7 +265,7 @@ def main() -> int:
         for error in errors:
             print("-", error)
         return 1
-    print("Core Rules Reader validation passed: private import overlay + runtime binding + lazy permission-safe Journal reader")
+    print("Core Rules Reader validation passed: private import overlay + owner-only runtime binding + lazy permission-safe Journal reader")
     return 0
 
 
