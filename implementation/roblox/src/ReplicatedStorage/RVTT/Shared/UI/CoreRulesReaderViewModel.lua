@@ -169,7 +169,9 @@ function CoreRulesReaderViewModel.edgeChunkId(state: any, direction: string): st
 	if #order == 0 then
 		return nil
 	end
-	local chunk = if direction == "previous" then state.chunks[order[1]] else state.chunks[order[#order]]
+	local chunk = if direction == "previous"
+		then state.chunks[order[1]]
+		else state.chunks[order[#order]]
 	if type(chunk) ~= "table" then
 		return nil
 	end
