@@ -1,6 +1,6 @@
 --!strict
 
-return function(h)
+return function(h: any)
 	local ReplicatedStorage = game:GetService("ReplicatedStorage")
 	local Server = game:GetService("ServerScriptService").RVTT.Server
 	local RuleLink = require(ReplicatedStorage.RVTT.Shared.Rules.RuleLink)
@@ -78,6 +78,7 @@ return function(h)
 				{
 					id = "hidden-document",
 					title = "Hidden Document Title",
+					sourceLabel = "Hidden Fixture",
 					visibility = "dm",
 					sections = {
 						{
@@ -128,8 +129,11 @@ return function(h)
 	local uri = RuleLink.build("rvtt.core.rules", "public-module", "large-document", "large")
 	h:expect(uri ~= nil, "stable rule URI is created")
 	local parsed = RuleLink.parse(uri)
-	h:equal(parsed.packageId, "rvtt.core.rules", "stable URI preserves package id")
-	h:equal(parsed.anchorId, "large", "stable URI preserves anchor")
+	h:expect(parsed ~= nil, "stable rule URI parses")
+	if parsed ~= nil then
+		h:equal(parsed.packageId, "rvtt.core.rules", "stable URI preserves package id")
+		h:equal(parsed.anchorId, "large", "stable URI preserves anchor")
+	end
 	h:equal(RuleLink.parse("rvtt-rule://bad/path"), nil, "malformed rule URI fails closed")
 
 	local opened, openError = Reader.open(package, player, uri)
