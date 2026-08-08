@@ -185,11 +185,8 @@ function RuleRuntimePackageBinding.viewerCanAccessProfileWithBinding(
 	end
 	local safeOptions = resolverOptions(options)
 	if safeOptions.allowSrdFallback == true then
-		local resolved = RuleRuntimePackageBinding.resolveProfileWithBinding(
-			profile,
-			binding,
-			safeOptions
-		)
+		local resolved =
+			RuleRuntimePackageBinding.resolveProfileWithBinding(profile, binding, safeOptions)
 		if
 			type(resolved) == "table"
 			and resolved.ok == true

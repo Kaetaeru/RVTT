@@ -80,10 +80,8 @@ end
 -- RuleRuntimePackageBinding.viewerCanAccessProfile(configuredProfile(), player.UserId)
 
 local function resolveProfile(): any
-	local result = RuleRuntimePackageBinding.resolveProfile(
-		configuredProfile(),
-		configuredRuleOptions()
-	)
+	local result =
+		RuleRuntimePackageBinding.resolveProfile(configuredProfile(), configuredRuleOptions())
 	publishProfileStatus(result)
 	return result
 end

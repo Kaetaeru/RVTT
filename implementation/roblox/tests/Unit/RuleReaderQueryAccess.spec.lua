@@ -93,7 +93,11 @@ return function(h: any)
 		"RULE_PROFILE_UNAVAILABLE",
 		"unauthorized viewer cannot distinguish private readiness mismatch"
 	)
-	h:equal(profileCalls, 0, "private readiness mismatch remains unevaluated for unauthorized viewer")
+	h:equal(
+		profileCalls,
+		0,
+		"private readiness mismatch remains unevaluated for unauthorized viewer"
+	)
 
 	authorized = true
 	local authorizedMismatch = query:_handle(player, { action = "manifest" })

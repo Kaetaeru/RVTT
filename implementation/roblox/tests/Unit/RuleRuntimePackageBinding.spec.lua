@@ -93,14 +93,14 @@ return function(h: any)
 		"missing binding never authorizes a private viewer"
 	)
 
-	local explicitFallback = Binding.resolveProfileWithBinding(
-		"development",
-		nil,
-		{ allowSrdFallback = true }
-	)
+	local explicitFallback =
+		Binding.resolveProfileWithBinding("development", nil, { allowSrdFallback = true })
 	h:expect(explicitFallback.ok, "explicit runtime fallback resolves without private binding")
 	h:equal(explicitFallback.value.basePackageId, "rvtt.core.rules")
-	h:expect(explicitFallback.value.fallbackActive == true, "runtime fallback status remains visible")
+	h:expect(
+		explicitFallback.value.fallbackActive == true,
+		"runtime fallback status remains visible"
+	)
 	h:equal(explicitFallback.value.fallbackReasonCode, "INTEGRATED_TEST_PACK_UNAVAILABLE")
 	local fallbackPackage = Binding.packageForIdWithBinding(
 		"rvtt.core.rules",
@@ -160,7 +160,11 @@ return function(h: any)
 		"authorized owner remains eligible to receive the stale-readiness diagnostic"
 	)
 	h:expect(
-		not Binding.viewerCanAccessProfileWithBinding("test", ownerUserId + 1, staleReadinessBinding),
+		not Binding.viewerCanAccessProfileWithBinding(
+			"test",
+			ownerUserId + 1,
+			staleReadinessBinding
+		),
 		"unlisted viewer remains denied even when private readiness is stale"
 	)
 
