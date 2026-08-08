@@ -25,6 +25,7 @@ export type CommandClient = {
 	stop: (self: CommandClient) -> (),
 	tick: (self: CommandClient, now: number?) -> (),
 	submit: (self: CommandClient, commandType: string, payload: { [string]: unknown }) -> string,
+	invalidatePending: (self: CommandClient, code: string?) -> (),
 }
 
 local CommandClient = {}
@@ -38,6 +39,23 @@ local function notify(self: CommandClient, message: any)
 	local callback = self.receiptCallback
 	if callback ~= nil then
 		callback(message)
+	end
+end
+
+function CommandClient.invalidatePending(self: CommandClient, code: string?)
+	local pending = self.pending
+	self.pending = {}
+	for commandId, record in pending do
+		notify(self, {
+			commandId = commandId,
+			phase = "terminal",
+			result = Result.err(
+				code or "STALE_EPOCH",
+				"error.authority.stale_epoch",
+				true,
+				{ attempts = record.attempts }
+			),
+		})
 	end
 end
 

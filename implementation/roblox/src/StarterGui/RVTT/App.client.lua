@@ -11,6 +11,7 @@ local player = Players.LocalPlayer
 local SharedUI = ReplicatedStorage.RVTT.Shared.UI
 local Tokens = require(SharedUI.DesignTokens)
 local GameplayHudViewModel = require(SharedUI.GameplayHudViewModel)
+local EntryRecoveryViewModel = require(SharedUI.EntryRecoveryViewModel)
 local ManagementViewModel = require(SharedUI.ManagementViewModel)
 local uiFolder = script.Parent.UI
 local AppShell = require(uiFolder.AppShell)
@@ -18,6 +19,7 @@ local ThemeApplicator = require(uiFolder.ThemeApplicator)
 local SettingsPanel = require(uiFolder.Components.SettingsPanel)
 local GameplayHud = require(uiFolder.Components.GameplayHud)
 local ManagementPanel = require(uiFolder.Components.ManagementPanel)
+local EntryRecoveryPanel = require(uiFolder.Components.EntryRecoveryPanel)
 local components = uiFolder.Components
 
 local playerScripts = player:WaitForChild("PlayerScripts")
@@ -68,16 +70,22 @@ local managementContextActive = false
 local managementReturnSurface = "gameplay"
 local managementCommands: { [string]: any } = {}
 local managementAwaitingRevision: number? = nil
+local entryCommandId: string? = nil
+local entryAwaitingRevision: number? = nil
+local entryError: any = nil
+local lastAuthorityEpoch = client.Replica.epoch
 local feedback = GameplayHudViewModel.initialFeedback(client.Replica.revision)
 local rawPreview = client.WorldTokens.Input:getCurrentPreview()
 local currentHudState: any = nil
 local settingsPanel: any
 local gameplayHud: any
 local managementPanel: any
+local entryRecoveryPanel: any
 local setSettingsVisible: (boolean) -> ()
 local setManagementVisible: (boolean, string?) -> ()
 local renderHud: () -> ()
 local renderManagement: () -> ()
+local renderEntryRecovery: () -> ()
 
 local function applyPreferences()
 	local preferences = client.Preferences:snapshot()
@@ -157,6 +165,37 @@ end, function()
 	setSettingsVisible(false)
 end)
 settingsPanel.Root.Parent = shell:getLayer("Overlay")
+
+entryRecoveryPanel = EntryRecoveryPanel.new(function()
+	local view = EntryRecoveryViewModel.build(
+		client.Replica.payload,
+		player.UserId,
+		entryError or client.Recovery:snapshot(),
+		entryCommandId ~= nil or entryAwaitingRevision ~= nil
+	)
+	local intent = EntryRecoveryViewModel.readyIntent(view, true)
+	if intent == nil then
+		return
+	end
+	entryCommandId = client.Command:submit(intent.commandType, intent.payload)
+	renderEntryRecovery()
+end, function()
+	client.Recovery:retry()
+end)
+entryRecoveryPanel.EntryRoot.Parent = shell:getLayer("Session")
+entryRecoveryPanel.RecoveryRoot.Parent = shell:getLayer("Recovery")
+
+renderEntryRecovery = function()
+	local view = EntryRecoveryViewModel.build(
+		client.Replica.payload,
+		player.UserId,
+		entryError or client.Recovery:snapshot(),
+		entryCommandId ~= nil or entryAwaitingRevision ~= nil
+	)
+	entryRecoveryPanel:render(view)
+	ThemeApplicator.apply(entryRecoveryPanel.EntryRoot, client.Preferences:snapshot())
+	ThemeApplicator.apply(entryRecoveryPanel.RecoveryRoot, client.Preferences:snapshot())
+end
 
 managementPanel = ManagementPanel.new(function()
 	setManagementVisible(false)
@@ -280,6 +319,7 @@ end
 
 client.Preferences.Changed:Connect(function()
 	applyPreferences()
+	renderEntryRecovery()
 	renderHud()
 	if managementPanel.Root.Visible then
 		renderManagement()
@@ -305,7 +345,20 @@ settingsButton.MouseLeave:Connect(function()
 end)
 
 local function render(payload: any, envelope: any)
+	local envelopeEpoch = if type(envelope) == "table" then envelope.authorityEpoch else nil
+	if type(envelopeEpoch) == "string" and envelopeEpoch ~= lastAuthorityEpoch then
+		lastAuthorityEpoch = envelopeEpoch
+		entryCommandId = nil
+		entryAwaitingRevision = nil
+		entryError = nil
+		managementCommands = {}
+		managementAwaitingRevision = nil
+	end
 	shell:applyProjection(payload, player.UserId)
+	local selectedActorId = client.WorldTokens.Renderer:getSelectedActorId()
+	if EntryRecoveryViewModel.validSelection(payload, player.UserId, selectedActorId) == nil then
+		client.WorldTokens.Renderer:setSelected(nil)
+	end
 
 	local domains = if type(payload) == "table" then payload.domains else nil
 	local session = if type(domains) == "table" then domains.session else nil
@@ -323,6 +376,11 @@ local function render(payload: any, envelope: any)
 		revision
 	)
 	feedback = GameplayHudViewModel.reconcileFeedback(feedback, revision)
+	if entryAwaitingRevision ~= nil and revision >= entryAwaitingRevision then
+		entryAwaitingRevision = nil
+		entryError = nil
+	end
+	renderEntryRecovery()
 	renderHud()
 	if managementPanel.Root.Visible then
 		if shell.surface == "management" then
@@ -352,6 +410,28 @@ client.WorldTokens.ContextActionRequested:Connect(function(action, commandId, ba
 	renderHud()
 end)
 client.Command.Received:Connect(function(message)
+	if
+		type(message) == "table"
+		and message.phase == "terminal"
+		and message.commandId == entryCommandId
+	then
+		entryCommandId = nil
+		local result = message.result
+		if type(result) == "table" and result.ok == true then
+			entryAwaitingRevision = if type(result.value) == "table"
+					and type(result.value.revision) == "number"
+				then result.value.revision
+				else client.Replica.revision + 1
+		else
+			entryAwaitingRevision = nil
+			local code = if type(result) == "table" and type(result.error) == "table"
+				then result.error.code
+				else nil
+			entryError = EntryRecoveryViewModel.safeError(code)
+		end
+		renderEntryRecovery()
+		return
+	end
 	if
 		type(message) == "table"
 		and message.phase == "terminal"
@@ -394,6 +474,20 @@ client.Command.Received:Connect(function(message)
 	feedback =
 		GameplayHudViewModel.resolveFeedback(feedback, result.ok == true, code, resultRevision)
 	renderHud()
+end)
+
+client.Recovery.Changed:Connect(function(state)
+	if state.state == "rebuilding" or state.state == "recovery" then
+		entryCommandId = nil
+		entryAwaitingRevision = nil
+		entryError = nil
+		managementCommands = {}
+		managementAwaitingRevision = nil
+		managementPanel:setPending(false)
+	elseif state.state == "recovered" then
+		entryError = nil
+	end
+	renderEntryRecovery()
 end)
 
 client.Replica.Changed:Connect(render)

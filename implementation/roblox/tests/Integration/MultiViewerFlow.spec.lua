@@ -1,202 +1,19 @@
---!strict
+# RVTT Roblox Implementation í˜„ìž¬ ìž‘ì—… ìˆœì„œ
 
-return function(harness)
-	local Server = game:GetService("ServerScriptService").RVTT.Server
-	local Registry = require(Server.Runtime.CommandRegistry).new()
-	local Diagnostics = require(Server.Runtime.Diagnostics).new()
-	local Outbox = require(Server.Runtime.EventOutbox).new()
-	local Journal = require(Server.Persistence.SnapshotJournal).new(32)
-	local Transactions = require(Server.Runtime.TransactionCoordinator).new(Diagnostics)
-	local Runtime = require(Server.Runtime.AuthorityRuntime).new(
-		Registry,
-		Transactions,
-		Outbox,
-		Diagnostics,
-		Journal
-	)
-	for _, domain in require(Server.Bootstrap.ServiceGraph).domainModules() do
-		Runtime:installDomain(domain)
-	end
+- ìƒíƒœ: `FULL_UI_UX_ALIGNMENT_REQUIRED`
+- ë¬¸ì„œ ì¢…ë¥˜: Production Implementation Work Order
+- ìµœì¢… ê°±ì‹ ì¼: 2026-08-06
+- ìƒìœ„ ì§ì ‘ í”Œë ˆì´: [`ADR-0088`](../../docs/remake/decisions/ADR-0088-direct-play-pointer-grammar-and-feedback.md)
+- êµ¬í˜„ ì§ì „ UIÂ·UX: [`Full UIÂ·UX Specification`](../../docs/remake/ui/shared/implementation-ready-ui-ux-and-settings-spec.md)
+- UIÂ·UX Gap Audit: [`Implementation Readiness Audit`](../../docs/remake/audits/ui-ux-implementation-readiness-gap-audit.md)
+- UI Review Checklist: [`UIÂ·UX Review Checklist`](../../docs/remake/ui/policies/UI-UX-REVIEW-CHECKLIST.md)
+- Grand Campaign: [`GRAND-ACCEPTANCE-CAMPAIGN.md`](GRAND-ACCEPTANCE-CAMPAIGN.md)
+- Grand Persistence: [`GRAND-PERSISTENCE-MILESTONE.md`](GRAND-PERSISTENCE-MILESTONE.md)
+- Context Input: [`CONTEXTUAL-POINTER-ACTIONS.md`](CONTEXTUAL-POINTER-ACTIONS.md)
+- ì‹¤í–‰ í…ŒìŠ¤íŠ¸ ê·œì¹™: [`EXECUTION-TEST-RULES.md`](EXECUTION-TEST-RULES.md)
 
-	local Builder = require(Server.Projection.ProjectionBuilder).new()
-	local players = {
-		dm = { DisplayName = "DM" },
-		player = { DisplayName = "Player" },
-		observer = { DisplayName = "Observer" },
-	}
-	local contexts = {
-		dm = {
-			player = players.dm,
-			playerId = 101,
-			role = "dm",
-			origin = "remote",
-		},
-		player = {
-			player = players.player,
-			playerId = 202,
-			role = "player",
-			origin = "remote",
-		},
-		observer = {
-			player = players.observer,
-			playerId = 303,
-			role = "observer",
-			origin = "remote",
-		},
-	}
+## 1. í˜„ìž¬ ìƒíƒœ
 
-	local function lookup(map: any, key: any): any
-		return rawget(map, key)
-	end
-
-	local function execute(
-		context: any,
-		commandId: string,
-		commandType: string,
-		payload: any,
-		expectedRevision: number
-	): any
-		context.commandId = commandId
-		context.correlationId = commandId
-		return Runtime:execute(context, {
-			commandId = commandId,
-			commandType = commandType,
-			correlationId = commandId,
-			authorityEpoch = Runtime:snapshot().authorityEpoch,
-			expectedRevision = expectedRevision,
-			payload = payload,
-		})
-	end
-
-	local dmJoin = execute(contexts.dm, "multi:join:dm", "session.join", {}, 0)
-	harness:expect(dmJoin.ok, "DM joins at the initial revision")
-
-	local stalePlayerJoin =
-		execute(contexts.player, "multi:join:player:stale", "session.join", {}, 0)
-	harness:expect(
-		not stalePlayerJoin.ok and stalePlayerJoin.error.code == "STALE_REVISION",
-		"concurrent player join detects a stale revision"
-	)
-
-	local playerJoin = execute(contexts.player, "multi:join:player", "session.join", {}, 1)
-	local observerJoin = execute(contexts.observer, "multi:join:observer", "session.join", {}, 2)
-	harness:expect(playerJoin.ok, "player retries join after resync")
-	harness:expect(observerJoin.ok, "observer joins the shared session")
-	harness:equal(Runtime:snapshot().revision, 3, "three memberships commit exactly once")
-
-	local memberships = Runtime:snapshot().domains.session.memberships
-	local dmMembership = lookup(memberships, "101")
-	local playerMembership = lookup(memberships, "202")
-	local observerMembership = lookup(memberships, "303")
-	harness:expect(tostring(dmMembership.role) == "dm", "DM membership retains its role")
-	harness:expect(
-		tostring(playerMembership.role) == "player",
-		"player membership retains its role"
-	)
-	harness:expect(
-		tostring(observerMembership.role) == "observer",
-		"observer membership retains its role"
-	)
-
-	local observerDmCommand = execute(
-		contexts.observer,
-		"multi:observer:dm-command",
-		"dm.quick_action",
-		{ actionId = "forbidden" },
-		3
-	)
-	harness:expect(
-		not observerDmCommand.ok and observerDmCommand.error.code == "UNAUTHORIZED",
-		"observer cannot execute a DM command"
-	)
-	harness:equal(Runtime:snapshot().revision, 3, "unauthorized command does not commit")
-
-	local dmCommand = execute(
-		contexts.dm,
-		"multi:dm:quick-action",
-		"dm.quick_action",
-		{ actionId = "authorized" },
-		3
-	)
-	harness:expect(dmCommand.ok, "DM command commits")
-
-	local dmDraft =
-		execute(contexts.dm, "multi:draft:dm", "character.create_draft", { name = "DM Draft" }, 4)
-	local stalePlayerDraft = execute(
-		contexts.player,
-		"multi:draft:player:stale",
-		"character.create_draft",
-		{ name = "Player Draft" },
-		4
-	)
-	harness:expect(dmDraft.ok, "DM draft commits")
-	harness:expect(
-		not stalePlayerDraft.ok and stalePlayerDraft.error.code == "STALE_REVISION",
-		"concurrent draft creation detects a stale revision"
-	)
-
-	local playerDraft = execute(
-		contexts.player,
-		"multi:draft:player",
-		"character.create_draft",
-		{ name = "Player Draft" },
-		5
-	)
-	harness:expect(playerDraft.ok, "player draft commits after resync")
-	local dmDraftId = dmDraft.value.outcome.id
-	local playerDraftId = playerDraft.value.outcome.id
-
-	local state = Runtime:snapshot()
-	local dmProjection = Builder:build(state, 101, "dm")
-	local playerProjection = Builder:build(state, 202, "player")
-	local observerProjection = Builder:build(state, 303, "observer")
-	local dmCharacters = dmProjection.payload.domains.character.drafts
-	local playerCharacters = playerProjection.payload.domains.character.drafts
-	local observerCharacters = observerProjection.payload.domains.character.drafts
-
-	harness:expect(
-		dmCharacters[dmDraftId] ~= nil and dmCharacters[playerDraftId] ~= nil,
-		"DM projection contains both private drafts"
-	)
-	harness:expect(
-		playerCharacters[dmDraftId] == nil and playerCharacters[playerDraftId] ~= nil,
-		"player projection contains only the owned draft"
-	)
-	harness:expect(
-		observerCharacters[dmDraftId] == nil and observerCharacters[playerDraftId] == nil,
-		"observer projection contains no private drafts"
-	)
-	harness:expect(
-		next(dmProjection.payload.domains.dm_workspace) ~= nil,
-		"DM receives the workspace projection"
-	)
-	harness:expect(
-		next(playerProjection.payload.domains.dm_workspace) == nil
-			and next(observerProjection.payload.domains.dm_workspace) == nil,
-		"non-DM viewers do not receive the workspace projection"
-	)
-
-	local disconnected = Runtime:executeSystem("session.connection", {
-		userId = 202,
-		status = "disconnected",
-	})
-	local reconnected = Runtime:executeSystem("session.connection", {
-		userId = 202,
-		status = "connected",
-	})
-	harness:expect(disconnected.ok and reconnected.ok, "connection transitions commit")
-	local connections = Runtime:snapshot().domains.session.connections
-	local connection = lookup(connections, "202")
-	harness:expect(tostring(connection) == "connected", "reconnection restores connected status")
-
-	local dmProjectionAgain = Builder:build(Runtime:snapshot(), 101, "dm")
-	harness:expect(
-		dmProjectionAgain.projectionSequence > dmProjection.projectionSequence,
-		"each viewer projection sequence advances independently"
-	)
-	harness:equal(
-		playerProjection.projectionSequence,
-		1,
-		"another viewer starts with its own projection sequence"
-	)
-end
+```text
+16ê°œ Slice Production Source
+â†’ IMPLEMENTED BASEMøã­-¢G§²ÚîÆ­yÕÑ…¥¹Ì¥ÑÌÉ½±”ˆ¤(%¡…É¹•ÍÌé•áÁ•Ð ($%Ñ½ÍÑÉ¥¹œ¡Á±…å•É5•µ‰•ÉÍ¡¥À¹É½±”¤€ôô€‰½‰Í•ÉÙ•Èˆ°($$‰¹½¸µ4µ•µ‰•ÉÍ¡¥À•¹Ñ•ÉÌ½‰Í•ÉÙ•Èµ™¥ÉÍÐÉ•…É‘±•ÍÌ½˜ÑÉ…¹ÍÁ½ÉÐÉ½±”ˆ($¤(%¡…É¹•ÍÌé•áÁ•Ð ($%Ñ½ÍÑÉ¥¹œ¡½‰Í•ÉÙ•É5•µ‰•ÉÍ¡¥À¹É½±”¤€ôô€‰½‰Í•ÉÙ•Èˆ°($$‰½‰Í•ÉÙ•Èµ•µ‰•ÉÍ¡¥ÀÉ•Ñ…¥¹Ì¥ÑÌÉ½±”ˆ($¤((%±½…°½‰Í•ÉÙ•Éµ½µµ…¹€ô•á•ÕÑ” ($%½¹Ñ•áÑÌ¹½‰Í•ÉÙ•È°($$‰µÕ±Ñ¤é½‰Í•ÉÙ•Èé‘´µ½µµ…¹ˆ°($$‰‘´¹ÅÕ¥­}…Ñ¥½¸ˆ°($%ì…Ñ¥½¹%€ô€‰™½É‰¥‘‘•¸ˆô°($$Ì($¤(%¡…É¹•ÍÌé•áÁ•Ð ($%¹½Ð½‰Í•ÉÙ•Éµ½µµ…¹¹½¬…¹½‰Í•ÉÙ•Éµ½µµ…¹¹•ÉÉ½È¹½‘”€ôô€‰U9UQ!=I%iˆ°($$‰½‰Í•ÉÙ•È…¹¹½Ð•á•ÕÑ”„4½µµ…¹ˆ($¤(%¡…É¹•ÍÌé•ÅÕ…°¡IÕ¹Ñ¥µ”éÍ¹…ÁÍ¡½Ð ¤¹É•Ù¥Í¥½¸°€Ì°€‰Õ¹…ÕÑ¡½É¥é•½µµ…¹‘½•Ì¹½Ð½µµ¥Ðˆ¤((%±½…°‘µ½µµ…¹€ô•á•ÕÑ” ($%½¹Ñ•áÑÌ¹‘´°($$‰µÕ±Ñ¤é‘´éÅÕ¥¬µ…Ñ¥½¸ˆ°($$‰‘´¹ÅÕ¥­}…Ñ¥½¸ˆ°($%ì…Ñ¥½¹%€ô€‰…ÕÑ¡½É¥é•ˆô°($$Ì($¤(%¡…É¹•ÍÌé•áÁ•Ð¡‘µ½µµ…¹¹½¬°€‰4½µµ…¹½µµ¥ÑÌˆ¤((%±½…°‘µÉ…™Ð€ô($%•á•ÕÑ”¡½¹Ñ•áÑÌ¹‘´°€‰µÕ±Ñ¤é‘É…™Ðé‘´ˆ°€‰¡…É…Ñ•È¹É•…Ñ•}‘É…™Ðˆ°ì¹…µ”€ô€‰4É…™Ðˆô°€Ð¤(%±½…°ÍÑ…±•A±…å•ÉÉ…™Ð€ô•á•ÕÑ” ($%½¹Ñ•áÑÌ¹Á±…å•È°($$‰µÕ±Ñ¤é‘É…™ÐéÁ±…å•ÈéÍÑ…±”ˆ°($$‰¡…É…Ñ•È¹É•…Ñ•}‘É…™Ðˆ°($%ì¹…µ”€ô€‰A±…å•ÈÉ…™Ðˆô°($$Ð($¤(%¡…É¹•ÍÌé•áÁ•Ð¡‘µÉ…™Ð¹½¬°€‰4‘É…™Ð½µµ¥ÑÌˆ¤(%¡…É¹•ÍÌé•áÁ•Ð ($%¹½ÐÍÑ…±•A±…å•ÉÉ…™Ð¹½¬…¹ÍÑ…±•A±…å•ÉÉ…™Ð¹•ÉÉ½È¹½‘”€ôô€‰MQ1}IY%M%=8ˆ°($$‰½¹ÕÉÉ•¹Ð‘É…™ÐÉ•…Ñ¥½¸‘•Ñ•ÑÌ„ÍÑ…±”É•Ù¥Í¥½¸ˆ($¤((%±½…°Á±…å•ÉÉ…™Ð€ô•á•ÕÑ” ($%½¹Ñ•áÑÌ¹Á±…å•È°($$‰µÕ±Ñ¤é‘É…™ÐéÁ±…å•Èˆ°($$‰¡…É…Ñ•È¹É•…Ñ•}‘É…™Ðˆ°($%ì¹…µ”€ô€‰A±…å•ÈÉ…™Ðˆô°($$Ô($¤(%¡…É¹•ÍÌé•áÁ•Ð¡Á±…å•ÉÉ…™Ð¹½¬°€‰Á±…å•È‘É…™Ð½µµ¥ÑÌ…™Ñ•ÈÉ•Íå¹Œˆ¤(%±½…°‘µÉ…™Ñ%€ô‘µÉ…™Ð¹Ù…±Õ”¹½ÕÑ½µ”¹¥(%±½…°Á±…å•ÉÉ…™Ñ%€ôÁ±…å•ÉÉ…™Ð¹Ù…±Õ”¹½ÕÑ½µ”¹¥((%±½…°ÍÑ…Ñ”€ôIÕ¹Ñ¥µ”éÍ¹…ÁÍ¡½Ð ¤(%±½…°‘µAÉ½©•Ñ¥½¸€ô	Õ¥±‘•Èé‰Õ¥±¡ÍÑ…Ñ”°€ÄÀÄ°€‰‘´ˆ¤(%±½…°Á±…å•ÉAÉ½©•Ñ¥½¸€ô	Õ¥±‘•Èé‰Õ¥±¡ÍÑ…Ñ”°€ÈÀÈ°€‰Á±…å•Èˆ¤(%±½…°½‰Í•ÉÙ•ÉAÉ½©•Ñ¥½¸€ô	Õ¥±‘•Èé‰Õ¥±¡ÍÑ…Ñ”°€ÌÀÌ°€‰½‰Í•ÉÙ•Èˆ¤(%±½…°‘µ¡…É…Ñ•ÉÌ€ô‘µAÉ½©•Ñ¥½¸¹Á…å±½…¹‘½µ…¥¹Ì¹¡…É…Ñ•È¹‘É…™ÑÌ(%±½…°Á±…å•É¡…É…Ñ•ÉÌ€ôÁ±…å•ÉAÉ½©•Ñ¥½¸¹Á…å±½…¹‘½µ…¥¹Ì¹¡…É…Ñ•È¹‘É…™ÑÌ(%±½…°½‰Í•ÉÙ•É¡…É…Ñ•ÉÌ€ô½‰Í•ÉÙ•ÉAÉ½©•Ñ¥½¸¹Á…å±½…¹‘½µ…¥¹Ì¹¡…É…Ñ•È¹‘É…™ÑÌ((%¡…É¹•ÍÌé•áÁ•Ð ($%‘µ¡…É…Ñ•ÉÍm‘µÉ…™Ñ%‘tøô¹¥°…¹‘µ¡…É…Ñ•ÉÍmÁ±…å•ÉÉ…™Ñ%‘tøô¹¥°°($$‰4ÁÉ½©•Ñ¥½¸½¹Ñ…¥¹Ì‰½Ñ ÁÉ¥Ù…Ñ”‘É…™ÑÌˆ($¤(%¡…É¹•ÍÌé•áÁ•Ð ($%Á±…å•É¡…É…Ñ•ÉÍm‘µÉ…™Ñ%‘t€ôô¹¥°…¹Á±…å•É¡…É…Ñ•ÉÍmÁ±…å•ÉÉ…™Ñ%‘tøô¹¥°°($$‰Á±…å•ÈÁÉ½©•Ñ¥½¸½¹Ñ…¥¹Ì½¹±äÑ¡”½Ý¹•‘É…™Ðˆ($¤(%¡…É¹•ÍÌé•áÁ•Ð ($%½‰Í•ÉÙ•É¡…É…Ñ•ÉÍm‘µÉ…™Ñ%‘t€ôô¹¥°…¹½‰Í•ÉÙ•É¡…É…Ñ•ÉÍmÁ±…å•ÉÉ…™Ñ%‘t€ôô¹¥°°($$‰½‰Í•ÉÙ•ÈÁÉ½©•Ñ¥½¸½¹Ñ…¥¹Ì¹¼ÁÉ¥Ù…Ñ”‘É…™ÑÌˆ($¤(%¡…É¹•ÍÌé•áÁ•Ð ($%¹•áÐ¡‘µAÉ½©•Ñ¥½¸¹Á…å±½…¹‘½µ…¥¹Ì¹‘µ}Ý½É­ÍÁ…”¤øô¹¥°°($$‰4É••¥Ù•ÌÑ¡”Ý½É­ÍÁ…”ÁÉ½©•Ñ¥½¸ˆ($¤(%¡…É¹•ÍÌé•áÁ•Ð ($%¹•áÐ¡Á±…å•ÉAÉ½©•Ñ¥½¸¹Á…å±½…¹‘½µ…¥¹Ì¹‘µ}Ý½É­ÍÁ…”¤€ôô¹¥°($$%…¹¹•áÐ¡½‰Í•ÉÙ•ÉAÉ½©•Ñ¥½¸¹Á…å±½…¹‘½µ…¥¹Ì¹‘µ}Ý½É­ÍÁ…”¤€ôô¹¥°°($$‰¹½¸µ4Ù¥•Ý•ÉÌ‘¼¹½ÐÉ••¥Ù”Ñ¡”Ý½É­ÍÁ…”ÁÉ½©•Ñ¥½¸ˆ($¤((%±½…°‘¥Í½¹¹•Ñ•€ôIÕ¹Ñ¥µ”é•á•ÕÑ•MåÍÑ•´ ‰Í•ÍÍ¥½¸¹½¹¹•Ñ¥½¸ˆ°ì($%ÕÍ•É%€ô€ÈÀÈ°($%ÍÑ…ÑÕÌ€ô€‰‘¥Í½¹¹•Ñ•ˆ°(%ô¤(%±½…°É•½¹¹•Ñ•€ôIÕ¹Ñ¥µ”é•á•ÕÑ•MåÍÑ•´ ‰Í•ÍÍ¥½¸¹½¹¹•Ñ¥½¸ˆ°ì($%ÕÍ•É%€ô€ÈÀÈ°($%ÍÑ…ÑÕÌ€ô€‰½¹¹•Ñ•ˆ°(%ô¤(%¡…É¹•ÍÌé•áÁ•Ð¡‘¥Í½¹¹•Ñ•¹½¬…¹É•½¹¹•Ñ•¹½¬°€‰½¹¹•Ñ¥½¸ÑÉ…¹Í¥Ñ¥½¹Ì½µµ¥Ðˆ¤(%±½…°½¹¹•Ñ¥½¹Ì€ôIÕ¹Ñ¥µ”éÍ¹…ÁÍ¡½Ð ¤¹‘½µ…¥¹Ì¹Í•ÍÍ¥½¸¹½¹¹•Ñ¥½¹Ì(%±½…°½¹¹•Ñ¥½¸€ô±½½­ÕÀ¡½¹¹•Ñ¥½¹Ì°€ˆÈÀÈˆ¤(%¡…É¹•ÍÌé•áÁ•Ð¡Ñ½ÍÑÉ¥¹œ¡½¹¹•Ñ¥½¸¤€ôô€‰½¹¹•Ñ•ˆ°€‰É•½¹¹•Ñ¥½¸É•ÍÑ½É•Ì½¹¹•Ñ•ÍÑ…ÑÕÌˆ¤((%±½…°‘µAÉ½©•Ñ¥½¹…¥¸€ô	Õ¥±‘•Èé‰Õ¥±¡IÕ¹Ñ¥µ”éÍ¹…ÁÍ¡½Ð ¤°€ÄÀÄ°€‰‘´ˆ¤(%¡…É¹•ÍÌé•áÁ•Ð ($%‘µAÉ½©•Ñ¥½¹…¥¸¹ÁÉ½©•Ñ¥½¹M•ÅÕ•¹”€ø‘µAÉ½©•Ñ¥½¸¹ÁÉ½©•Ñ¥½¹M•ÅÕ•¹”°($$‰•… Ù¥•Ý•ÈÁÉ½©•Ñ¥½¸Í•ÅÕ•¹”…‘Ù…¹•Ì¥¹‘•Á•¹‘•¹Ñ±äˆ($¤(%¡…É¹•ÍÌé•ÅÕ…° ($%Á±…å•ÉAÉ½©•Ñ¥½¸¹ÁÉ½©•Ñ¥½¹M•ÅÕ•¹”°($$Ä°($$‰…¹½Ñ¡•ÈÙ¥•Ý•ÈÍÑ…ÉÑÌÝ¥Ñ ¥ÑÌ½Ý¸ÁÉ½©•Ñ¥½¸Í•ÅÕ•¹”ˆ($¤)•¹(

@@ -96,6 +96,13 @@ function Controller:getCurrentPreview(): any?
 	return self.currentPreview
 end
 
+function Controller:invalidateTransientState()
+	table.clear(self.pending)
+	self.menu:close("projection-rebuild")
+	self.renderer:clearDestination(nil)
+	self:_setPreview(nil)
+end
+
 function Controller:ensureSemanticSelection(): string?
 	local selectedActorId = self.renderer:getSelectedActorId()
 	if selectedActorId ~= nil and self.resolver:isControllable(selectedActorId) then

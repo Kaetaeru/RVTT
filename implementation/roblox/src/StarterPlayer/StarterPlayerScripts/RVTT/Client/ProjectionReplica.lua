@@ -17,6 +17,11 @@ export type Replica = {
 	epochOrder: { string },
 	Changed: any,
 	GapDetected: any,
+	RebuildStarted: any,
+	RebuildFinished: any,
+	RebuildFailed: any,
+	beginRebuild: (self: Replica, reason: string) -> (),
+	failRebuild: (self: Replica, reason: string) -> (),
 	apply: (self: Replica, envelope: ProjectionEnvelope, force: boolean?) -> boolean,
 }
 
@@ -47,7 +52,26 @@ function Replica.new(): Replica
 		epochOrder = {},
 		Changed = Signal.new(),
 		GapDetected = Signal.new(),
+		RebuildStarted = Signal.new(),
+		RebuildFinished = Signal.new(),
+		RebuildFailed = Signal.new(),
 	}, Replica) :: any
+end
+
+function Replica.beginRebuild(self: Replica, reason: string)
+	self.RebuildStarted:Fire({
+		reason = reason,
+		authorityEpoch = self.epoch,
+		revision = self.revision,
+	})
+end
+
+function Replica.failRebuild(self: Replica, reason: string)
+	self.RebuildFailed:Fire({
+		reason = reason,
+		authorityEpoch = self.epoch,
+		revision = self.revision,
+	})
 end
 
 function Replica.apply(self: Replica, envelope: ProjectionEnvelope, force: boolean?): boolean
@@ -86,6 +110,9 @@ function Replica.apply(self: Replica, envelope: ProjectionEnvelope, force: boole
 	self.payload = envelope.payload
 	rememberEpoch(self, envelope.authorityEpoch)
 	self.Changed:Fire(self.payload, envelope)
+	if force == true then
+		self.RebuildFinished:Fire(self.payload, envelope)
+	end
 	return true
 end
 

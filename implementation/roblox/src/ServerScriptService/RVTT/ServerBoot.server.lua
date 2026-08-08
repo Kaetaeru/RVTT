@@ -158,10 +158,18 @@ local function roleResolver(player: Player): string
 		return "dm"
 	end
 	local role = player:GetAttribute("RVTT_Role")
-	if role == "dm" or role == "observer" then
-		return role
+	if role == "dm" then
+		return "dm"
 	end
-	return "player"
+	local state = runtime:snapshot()
+	local session = state.domains.session
+	local membership = if type(session) == "table"
+		then session.memberships[tostring(player.UserId)]
+		else nil
+	if type(membership) == "table" and membership.role == "player" then
+		return "player"
+	end
+	return "observer"
 end
 
 local builder = ProjectionBuilder.new()

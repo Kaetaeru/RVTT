@@ -37,6 +37,11 @@ local specs: { Spec } = {
 		runner = require(script.Parent.Unit["UiFoundation.spec"]) :: any,
 	},
 	{
+		id = "unit-entry-recovery",
+		name = "EntryRecovery.spec",
+		runner = require(script.Parent.Unit["EntryRecovery.spec"]) :: any,
+	},
+	{
 		id = "unit-input-context",
 		name = "InputContext.spec",
 		runner = require(script.Parent.Unit["InputContext.spec"]) :: any,
@@ -125,6 +130,11 @@ local specs: { Spec } = {
 		id = "integration-authority-flow",
 		name = "AuthorityFlow.spec",
 		runner = require(script.Parent.Integration["AuthorityFlow.spec"]) :: any,
+	},
+	{
+		id = "integration-entry-role-recovery",
+		name = "EntryRoleRecovery.spec",
+		runner = require(script.Parent.Integration["EntryRoleRecovery.spec"]) :: any,
 	},
 	{
 		id = "integration-security-boundary",

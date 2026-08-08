@@ -13,6 +13,9 @@ local values: { [string]: string } = {
 	VALIDATION_ERROR = "validation_error",
 	CONFLICT = "conflict",
 	RECOVERY = "recovery",
+	REBUILDING = "rebuilding",
+	RECOVERED = "recovered",
+	FATAL = "fatal",
 }
 
 local allowed: { [string]: boolean } = {}

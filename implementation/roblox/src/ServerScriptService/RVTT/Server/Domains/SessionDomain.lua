@@ -13,6 +13,7 @@ function Domain.initialState()
 		memberships = {},
 		ready = {},
 		selectedCharacter = {},
+		assignmentPreviousOwner = {},
 		connections = {},
 		sceneId = nil,
 	}
@@ -33,7 +34,7 @@ function Domain.register(registry: any)
 				displayName = if player ~= nil
 					then player.DisplayName
 					else tostring(context.playerId),
-				role = context.role,
+				role = if context.role == "dm" then "dm" else "observer",
 				joinedAt = os.time(),
 			}
 			state.connections[key] = "connected"
@@ -42,10 +43,107 @@ function Domain.register(registry: any)
 	})
 
 	registry:register({
+		commandType = "session.assign_character",
+		domainId = Domain.id,
+		authorize = function(context: any)
+			return Helpers.requireRole(context, { "dm" })
+		end,
+		validate = function(payload: any)
+			return Helpers.hasNumber(payload, "userId")
+				and (payload.characterId == nil or Helpers.hasString(payload, "characterId"))
+		end,
+		execute = function(_: any, state: any, payload: any, domains: any)
+			state.assignmentPreviousOwner = state.assignmentPreviousOwner or {}
+			local userId = math.floor(payload.userId)
+			local key = tostring(userId)
+			local membership = state.memberships[key]
+			if userId <= 0 or membership == nil or membership.role == "dm" then
+				return Helpers.conflict("assignable observer membership required")
+			end
+
+			local previousCharacterId = state.selectedCharacter[key]
+			local characterId = payload.characterId
+			if type(previousCharacterId) == "string" and previousCharacterId ~= characterId then
+				local previousCharacter = domains.character.characters[previousCharacterId]
+				if previousCharacter ~= nil then
+					previousCharacter.ownerUserId =
+						state.assignmentPreviousOwner[previousCharacterId]
+					previousCharacter.revision += 1
+				end
+				state.assignmentPreviousOwner[previousCharacterId] = nil
+			end
+			if characterId ~= nil then
+				local character = domains.character.characters[characterId]
+				if character == nil or character.status ~= "active" then
+					return Helpers.conflict("active character required")
+				end
+				if state.assignmentPreviousOwner[characterId] == nil then
+					state.assignmentPreviousOwner[characterId] = character.ownerUserId
+				end
+				for assignedUserKey, assignedCharacterId in state.selectedCharacter do
+					if assignedUserKey ~= key and assignedCharacterId == characterId then
+						local assignedMembership = state.memberships[assignedUserKey]
+						if assignedMembership ~= nil and assignedMembership.role ~= "dm" then
+							assignedMembership.role = "observer"
+						end
+						state.selectedCharacter[assignedUserKey] = nil
+						state.ready[assignedUserKey] = nil
+					end
+				end
+				character.ownerUserId = userId
+				character.revision += 1
+				membership.role = "player"
+				state.selectedCharacter[key] = characterId
+				state.ready[key] = false
+			else
+				membership.role = "observer"
+				state.selectedCharacter[key] = nil
+				state.ready[key] = nil
+			end
+
+			local actors = domains.scene and domains.scene.actors
+			if type(actors) == "table" then
+				for _, actor in actors do
+					if type(actor) == "table" and actor.controllerUserId == userId then
+						actor.controllerUserId = nil
+					end
+					if
+						type(previousCharacterId) == "string"
+						and previousCharacterId ~= characterId
+						and type(actor) == "table"
+						and actor.sourceCharacterId == previousCharacterId
+					then
+						local previousCharacter = domains.character.characters[previousCharacterId]
+						actor.ownerUserId = if previousCharacter ~= nil
+							then previousCharacter.ownerUserId
+							else nil
+					end
+				end
+				if characterId ~= nil then
+					for _, actor in actors do
+						if type(actor) == "table" and actor.sourceCharacterId == characterId then
+							actor.ownerUserId = userId
+							actor.controllerUserId = userId
+						end
+					end
+				end
+			end
+
+			return {
+				userId = userId,
+				role = membership.role,
+				characterId = characterId,
+				previousCharacterId = previousCharacterId,
+			}
+		end,
+	})
+
+	registry:register({
 		commandType = "session.select_character",
 		domainId = Domain.id,
 		authorize = function(context: any, domains: any, payload: any)
-			return Helpers.membership(context, domains)
+			return Helpers.requireRole(context, { "dm" })
+				and Helpers.membership(context, domains)
 				and Helpers.ownsCharacter(context, domains, payload.characterId)
 		end,
 		validate = function(payload: any)
@@ -67,13 +165,17 @@ function Domain.register(registry: any)
 		commandType = "session.ready",
 		domainId = Domain.id,
 		authorize = function(context: any, domains: any)
-			return Helpers.membership(context, domains)
+			local membership = domains.session.memberships[tostring(context.playerId)]
+			return membership ~= nil and (membership.role == "player" or membership.role == "dm")
 		end,
 		validate = function(payload: any)
 			return type(payload.ready) == "boolean"
 		end,
 		execute = function(context: any, state: any, payload: any)
 			local key = tostring(context.playerId)
+			if state.connections[key] ~= "connected" then
+				return Helpers.conflict("connected player required")
+			end
 			if state.selectedCharacter[key] == nil then
 				return Helpers.conflict("character selection required")
 			end

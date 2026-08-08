@@ -26,6 +26,8 @@ export type Runtime = {
 	Input: InputContextStack,
 	WorldTokens: any,
 	Preferences: any,
+	Recovery: any,
+	RequestFullSync: () -> (),
 }
 
 local current: Runtime? = nil

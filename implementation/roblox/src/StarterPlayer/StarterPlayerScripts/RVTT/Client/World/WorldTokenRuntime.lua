@@ -33,6 +33,7 @@ export type Runtime = {
 	previewConnection: any,
 	started: boolean,
 	start: (self: Runtime) -> (),
+	invalidateTransientState: (self: Runtime) -> (),
 	destroy: (self: Runtime) -> (),
 }
 
@@ -62,6 +63,11 @@ local function logProjection(summary: any)
 			summary.count
 		)
 	)
+end
+
+function Runtime.invalidateTransientState(self: Runtime)
+	self.Input:invalidateTransientState()
+	self.PreviewRenderer:clear()
 end
 
 function Runtime.new(replica: any, command: any, inputStack: any): Runtime

@@ -115,6 +115,7 @@ local InputContextStack = require(clientModules.InputContextStack)
 local SemanticInputRouter = require(clientModules.SemanticInputRouter)
 local ClientRuntime = require(clientModules.ClientRuntime)
 local UiPreferenceStore = require(clientModules.UiPreferenceStore)
+local UIRecoveryCoordinator = require(clientModules.UIRecoveryCoordinator)
 local WorldTokenRuntime = require(clientModules.World.WorldTokenRuntime)
 
 local replica = ProjectionReplica.new()
@@ -130,16 +131,26 @@ local function fullResync()
 		return
 	end
 	syncInFlight = true
+	replica:beginRebuild("full_sync")
+	command:invalidatePending("STALE_EPOCH")
 	local succeeded, snapshot = pcall(function()
 		return remotes.sync:InvokeServer()
 	end)
 	syncInFlight = false
-	if succeeded and snapshot ~= nil then
-		replica:apply(snapshot :: any, true)
-	elseif not succeeded then
+	if succeeded and snapshot ~= nil and replica:apply(snapshot :: any, true) then
+		return
+	else
 		warn("[RVTT ClientBoot] full resync failed", snapshot)
+		replica:failRebuild(if succeeded then "invalid_snapshot" else "transport_error")
 	end
 end
+
+local recovery = UIRecoveryCoordinator.new(replica, function()
+	task.spawn(fullResync)
+end)
+replica.RebuildStarted:Connect(function()
+	worldTokens:invalidateTransientState()
+end)
 
 command:start(function(message)
 	if message.phase == "terminal" and message.result ~= nil and not message.result.ok then
@@ -168,6 +179,8 @@ ClientRuntime.set({
 	Input = inputStack,
 	WorldTokens = worldTokens,
 	Preferences = preferences,
+	Recovery = recovery,
+	RequestFullSync = fullResync,
 })
 
 local loadingGui = playerGui:FindFirstChild("RVTT_Loading")
