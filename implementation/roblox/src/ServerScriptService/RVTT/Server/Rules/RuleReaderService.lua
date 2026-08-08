@@ -171,7 +171,8 @@ local function normalizedQuery(value: any): string
 	if type(value) ~= "string" then
 		return ""
 	end
-	return string.lower(string.gsub(value, "^%s*(.-)%s*$", "%1"))
+	local trimmed = string.gsub(value, "^%s*(.-)%s*$", "%1")
+	return string.lower(trimmed)
 end
 
 local function snippet(text: string, query: string): string
