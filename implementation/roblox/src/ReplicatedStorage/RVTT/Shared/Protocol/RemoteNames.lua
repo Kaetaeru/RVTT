@@ -6,5 +6,6 @@ return table.freeze({
 	PROJECTION = "Projection",
 	SYNC = "Sync",
 	VIEWER_PROJECTION_PREVIEW = "ViewerProjectionPreview",
+	RULE_READER_QUERY = "RuleReaderQuery",
 	CLIENT_READY = "ClientReady",
 })
