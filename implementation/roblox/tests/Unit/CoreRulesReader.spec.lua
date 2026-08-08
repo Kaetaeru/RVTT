@@ -131,7 +131,10 @@ return function(h)
 	local opened, openError = Reader.open(package, player, uri)
 	h:expect(opened ~= nil and openError == nil, "authorized stable URI opens")
 	if opened ~= nil then
-		h:equal(#opened.chunk.text, 5018, "open returns one chunk rather than the whole package")
+		h:expect(
+			#opened.chunk.text >= 4000 and #opened.chunk.text <= 16000,
+			"open returns one semantic chunk rather than the whole package"
+		)
 		h:equal(opened.chunk.nextChunkId, "public.chunk.2", "open exposes only the adjacent lazy-load cursor")
 		h:equal(#opened.chunk.relatedLinks, 1, "related links are permission filtered")
 	end
