@@ -61,7 +61,8 @@ return function(harness)
 
 	clearCandidates()
 
-	-- Keep the focused Core Rules Reader regression in the established unit runner
-	-- without requiring a second boot-time remote set in RVTT_TestMode.
+	-- Keep focused rules regressions in the established unit runner without
+	-- requiring a second boot-time remote set in RVTT_TestMode.
 	require(script.Parent["CoreRulesReader.spec"])(harness)
+	require(script.Parent["RuleRuntimePackageBinding.spec"])(harness)
 end
