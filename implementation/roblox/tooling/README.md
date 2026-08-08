@@ -24,14 +24,17 @@ Windows PowerShell Parser와 Manifest SelfTest는 GitHub Actions에서 검증한
 Owner-only integrated 2024 rules를 포함한 Studio place를 준비하는 fail-closed 진입점이다.
 
 - Local Secret `RVTT_PRIVATE_DND2024_KO_SOURCE`가 private source Git repository를 가리켜야 한다.
+- Server-only viewer allowlist `RVTT_PRIVATE_RULES_AUTHORIZED_USER_IDS`가 쉼표로 구분한 Roblox UserId를 하나 이상 제공해야 한다.
 - `build_private_rules_runtime.py`가 `BuiltinPackIndex.lua`의 pinned revision, integrated subtree digest와 12/48/16/10/75/391 count를 검증한다.
+- `prepare_private_rules_runtime.py`가 검증된 import output의 `Readiness.json`에 explicit user allowlist를 추가한다. allowlist가 없거나 잘못되면 private runtime 준비를 중단한다.
 - Source root에 tracked/untracked 변경이 있거나 revision/digest/count가 맞지 않으면 build를 중단한다.
 - Markdown을 임시 workspace에서 Module/Document/Section과 최대 16KB RuleChunk, localized search index로 변환한다.
 - `Readiness.json`과 `RuleReaderPackage.json`을 `RVTTPrivateRuleContent`로 생성하고 temporary Rojo project에 overlay한다.
 - 생성 workspace는 RVTT Git working tree 밖이어야 하며 private 본문이나 generated chunk를 public repository에 쓰지 않는다.
+- Reader query는 private profile에서 server-only allowlist에 없는 UserId를 `RULE_PROFILE_UNAVAILABLE`로 처리해 title/count/snippet/body를 반환하지 않는다.
 - 검증된 generated project만 Rojo build하고 필요하면 Studio에서 연다.
 
-Public GitHub Actions는 private repository를 checkout하지 않는다. 대신 `validate_private_rules_runtime_pipeline.py`가 공개-safe synthetic Git fixture로 같은 importer를 실행하고 generated `RVTTPrivateRuleContent` overlay를 실제 Rojo build하며 revision/digest/count/dirty/missing source fail-closed 회귀를 검증한다.
+Public GitHub Actions는 private repository를 checkout하지 않는다. 대신 `validate_private_rules_runtime_pipeline.py`가 공개-safe synthetic Git fixture로 같은 importer/preparer를 실행하고 generated `RVTTPrivateRuleContent` overlay를 실제 Rojo build한다. synthetic 회귀는 revision/digest/count/dirty/missing source, missing viewer allowlist, generated ModuleScript binding과 unauthorized-access contract를 검증한다.
 
 ### `run-studio-acceptance-batch.ps1`
 
@@ -49,7 +52,7 @@ Structure·Security·Manifest·Runner·Project 계약을 검증한다.
 
 - 사용자 수동 검사는 Grand Acceptance Milestone에서만 요청한다.
 - 사용자는 저장소 Update와 정확한 Head 검사가 포함된 완전한 Windows PowerShell 블록을 받는다.
-- Private integrated Core Rules가 필요한 Studio evidence는 반드시 fail-closed private importer/overlay를 먼저 통과한다.
+- Private integrated Core Rules가 필요한 Studio evidence는 반드시 fail-closed private importer/overlay와 explicit server-only viewer allowlist를 먼저 통과한다.
 - Tooling은 Production Authorization·Transaction·Projection을 우회하지 않는다.
 - Runner Self-check가 실제 사용자 입력을 대신하지 않는다.
 - 아직 구현되지 않은 Phase는 PASS가 아니라 `blocked`다.
