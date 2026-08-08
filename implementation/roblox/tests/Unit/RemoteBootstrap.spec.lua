@@ -41,6 +41,7 @@ return function(harness)
 		"viewer projection preview remote is created"
 	)
 	harness:expect(remotes.clientReady:IsA("RemoteEvent"), "client-ready remote is created")
+	harness:expect(type(Names.RULE_READER_QUERY) == "string", "rule reader query has a canonical remote name")
 	harness:expect(stale.Parent == nil, "stale partial folder is removed")
 	harness:expect(duplicate.Parent == nil, "duplicate malformed folder is removed")
 
@@ -56,4 +57,8 @@ return function(harness)
 	harness:expect(second.folder == remotes.folder, "complete canonical folder is reused")
 
 	clearCandidates()
+
+	-- Keep the focused Core Rules Reader regression in the established unit runner
+	-- without requiring a second boot-time remote set in RVTT_TestMode.
+	require(script.Parent["CoreRulesReader.spec"])(harness)
 end
