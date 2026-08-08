@@ -13,8 +13,7 @@ local Server = script.Parent.Server
 local RuleReaderQuery = require(Server.Networking.RuleReaderQuery)
 local RuleReaderService = require(Server.Rules.RuleReaderService)
 local Content = ServerStorage.RVTT.Content
-local RulePackageResolver = require(Content.RulePackageResolver)
-local CoreRulesPackage = require(Content.Packs["rvtt.core.rules"].RuleReaderPackage)
+local RuleRuntimePackageBinding = require(Content.RuleRuntimePackageBinding)
 
 local projectRoot = ServerStorage:WaitForChild("RVTT")
 
@@ -27,9 +26,9 @@ local function configuredProfile(): string
 	if type(attribute) == "string" and attribute ~= "" then
 		return attribute
 	end
-	-- Local Studio development follows the private-integrated default and therefore
-	-- fails closed until verified private readiness is supplied. Published public
-	-- runtime defaults to the SRD-only profile.
+	-- Local Studio development follows the private-integrated default. The runtime
+	-- binding stays fail closed until the private importer injects verified
+	-- Readiness + RuleReaderPackage modules into ServerStorage.RVTTPrivateRuleContent.
 	return if RunService:IsStudio() then "development" else "public"
 end
 
@@ -45,16 +44,11 @@ local function roleResolver(player: Player): string
 end
 
 local function resolveProfile(): any
-	-- Private profiles deliberately fail closed until the private importer supplies
-	-- verified readiness evidence. Public/release/artifact resolve without it.
-	return RulePackageResolver.resolve(configuredProfile(), {})
+	return RuleRuntimePackageBinding.resolveProfile(configuredProfile())
 end
 
 local function packageProvider(packageId: string): any?
-	if packageId == CoreRulesPackage.packageId then
-		return CoreRulesPackage
-	end
-	return nil
+	return RuleRuntimePackageBinding.packageForId(packageId, configuredProfile())
 end
 
 local remoteFolder = ReplicatedStorage:WaitForChild(Names.FOLDER, 15)
