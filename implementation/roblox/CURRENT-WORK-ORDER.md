@@ -43,7 +43,7 @@ Grand Persistence Published Runner·Config·CI
 → EXECUTION CONTRACT READY
 
 현재 작업
-→ Exploration·Encounter HUD
+→ Inventory·Journal·Settings
 ```
 
 Input·Context Action Source는 Q·ESC·Left·Right·Middle·Availability 계약에 정합화됐다. Preview·HUD·나머지 화면과 Acceptance 정합화가 남아 있으므로 Studio Retest를 시작하지 않는다.
@@ -237,8 +237,8 @@ HEAD 582c1c4
 | 3 | DONE | Full UI·UX 구현 직전 명세 | 화면·Settings·Flow·Acceptance |
 | 4 | DONE | Shared Shell·Preference Foundation | Layer·Mode·System·Theme·Settings Store |
 | 5 | DONE | Input·Context Action 정합화 | Q·ESC·Left·Right·Middle·Availability |
-| 6 | IN_PROGRESS | Exploration·Encounter HUD | Preview·Turn·Reaction·Selection Continuity |
-| 7 | QUEUED | Inventory·Journal·Settings | 화면·Intent·Permission·Preference |
+| 6 | DONE | Exploration·Encounter HUD | Preview·Turn·Reaction·Selection Continuity |
+| 7 | IN_PROGRESS | Inventory·Journal·Settings | 화면·Intent·Permission·Preference |
 | 8 | QUEUED | Entry·Role·Recovery | Projection rebuild·Reconnect·Error Boundary |
 | 9 | QUEUED | DM Live Workspace 정합화 | Player Preview·Override·Queue |
 | 10 | QUEUED | Acceptance 확장 | Full UI·UX Matrix 등록 |

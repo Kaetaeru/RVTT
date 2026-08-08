@@ -82,7 +82,32 @@ function Controller.new(
 		ContextActionRequested = Signal.new(),
 		ContextActionResolved = Signal.new(),
 		ActionMenuChanged = Signal.new(),
+		PreviewChanged = Signal.new(),
+		currentPreview = nil,
 	}, Controller)
+end
+
+function Controller:_setPreview(preview: any?)
+	self.currentPreview = preview
+	self.PreviewChanged:Fire(preview)
+end
+
+function Controller:getCurrentPreview(): any?
+	return self.currentPreview
+end
+
+function Controller:ensureSemanticSelection(): string?
+	local selectedActorId = self.renderer:getSelectedActorId()
+	if selectedActorId ~= nil and self.resolver:isControllable(selectedActorId) then
+		return selectedActorId
+	end
+	local fallbackActorId = self.resolver:defaultControllableActorId()
+	if fallbackActorId ~= nil then
+		self.renderer:setSelected(fallbackActorId)
+	elseif selectedActorId ~= nil then
+		self.renderer:setSelected(nil)
+	end
+	return fallbackActorId
 end
 
 function Controller:_pointerPosition(): Vector2
@@ -167,7 +192,7 @@ function Controller:openActionsForTarget(target: Target, screenPosition: Vector2
 end
 
 function Controller:_executeAction(action: Action): string?
-	if action.enabled == false then
+	if action.enabled == false or action.projectionRevision ~= self.replica.revision then
 		return nil
 	end
 	local selectedActorId = self.renderer:getSelectedActorId()
@@ -187,6 +212,7 @@ function Controller:_executeAction(action: Action): string?
 		self.MoveRequested:Fire(selectedActorId, destination, commandId, baseRevision)
 	end
 	self.ContextActionRequested:Fire(action, commandId, baseRevision)
+	self:_setPreview(nil)
 	return commandId
 end
 
@@ -272,6 +298,31 @@ function Controller:_leftClick()
 	end
 end
 
+function Controller:refreshPreview()
+	if self.menu:isOpen() then
+		self:_setPreview(nil)
+		return
+	end
+	local selectedActorId = self.renderer:getSelectedActorId()
+	if selectedActorId == nil or not self.resolver:isControllable(selectedActorId) then
+		self:_setPreview(nil)
+		return
+	end
+	local target = self:_raycastTarget()
+	local actions = self:resolveActionsForTarget(target)
+	local action = self.resolver:previewAction(actions)
+	if action == nil then
+		self:_setPreview(nil)
+		return
+	end
+	self:_setPreview({
+		actorId = selectedActorId,
+		target = target,
+		action = action,
+		projectionRevision = self.replica.revision,
+	})
+end
+
 function Controller:_rightClick()
 	if self.renderer:getSelectedActorId() == nil then
 		local target = self:_raycastTarget()
@@ -280,6 +331,7 @@ function Controller:_rightClick()
 		end
 		return
 	end
+	self:_setPreview(nil)
 	self:openActionsForTarget(self:_raycastTarget(), UserInputService:GetMouseLocation())
 end
 
@@ -289,8 +341,11 @@ function Controller:_cancel(): boolean
 		return true
 	end
 	if self.renderer:getSelectedActorId() ~= nil then
-		self.renderer:setSelected(nil)
-		return true
+		local fallbackActorId = self.resolver:defaultControllableActorId()
+		if self.renderer:getSelectedActorId() ~= fallbackActorId then
+			self.renderer:setSelected(fallbackActorId)
+			return true
+		end
 	end
 	return false
 end
@@ -325,6 +380,7 @@ function Controller:start()
 		return
 	end
 	self.started = true
+	self:ensureSemanticSelection()
 	self.inputStack:push(INPUT_CONTEXT_ID, INPUT_CONTEXT_PRIORITY, {
 		PrimaryPointer = function(payload)
 			return self:handleSemantic("PrimaryPointer", payload)
@@ -342,6 +398,17 @@ function Controller:start()
 			return self:handleSemantic("Confirm", payload)
 		end,
 	})
+	table.insert(
+		self.connections,
+		UserInputService.InputChanged:Connect(function(input, processed)
+			if
+				input.UserInputType == Enum.UserInputType.MouseMovement
+				and GameplayInputGuard.allows(processed, UserInputService:GetFocusedTextBox())
+			then
+				self:refreshPreview()
+			end
+		end)
+	)
 	table.insert(
 		self.connections,
 		self.command.remotes.receipt.OnClientEvent:Connect(function(message)
@@ -379,12 +446,14 @@ function Controller:destroy()
 	end
 	self.connections = {}
 	self.pending = {}
+	self.currentPreview = nil
 	self.PickResolved:Destroy()
 	self.MoveRequested:Destroy()
 	self.MoveResolved:Destroy()
 	self.ContextActionRequested:Destroy()
 	self.ContextActionResolved:Destroy()
 	self.ActionMenuChanged:Destroy()
+	self.PreviewChanged:Destroy()
 end
 
 return Controller

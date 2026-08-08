@@ -19,4 +19,8 @@ return table.freeze({
 	DestinationRejected = Color3.fromRGB(220, 105, 105),
 	DestinationProjectionTolerance = 0.35,
 	DestinationMarkerLifetimeSeconds = 2,
+	PreviewValid = Color3.fromRGB(98, 169, 230),
+	PreviewInvalid = Color3.fromRGB(220, 105, 105),
+	PreviewStale = Color3.fromRGB(208, 160, 74),
+	PreviewLineThickness = 0.12,
 })

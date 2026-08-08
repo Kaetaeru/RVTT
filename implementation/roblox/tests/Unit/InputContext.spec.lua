@@ -79,6 +79,7 @@ return function(harness: any)
 					memberships = {
 						["101"] = { role = "player" },
 					},
+					selectedCharacter = { ["101"] = "hero-character" },
 				},
 				scene = {
 					actors = {
@@ -221,6 +222,7 @@ return function(harness: any)
 			selectedActorId = actorId
 			return true
 		end,
+		showDestination = function() end,
 	}
 	local menu: any = {
 		isOpen = function()
@@ -249,8 +251,11 @@ return function(harness: any)
 	harness:expect(controller:handleSemantic("Cancel", {}), "Q closes the action table")
 	harness:equal(closeReason, "context-cancel", "the close is attributed to semantic cancel")
 	harness:equal(selectedActorId, "hero", "closing the table preserves actor selection")
-	harness:expect(controller:handleSemantic("Cancel", {}), "the next Q clears actor selection")
-	harness:equal(selectedActorId, nil, "one later Q removes only the next context stage")
+	harness:expect(
+		not controller:handleSemantic("Cancel", {}),
+		"Q is a no-op when semantic selection is already at the default actor"
+	)
+	harness:equal(selectedActorId, "hero", "default Player actor selection remains continuous")
 	harness:expect(
 		not controller:handleSemantic("Confirm", {}),
 		"E has no side effect without a confirm-owning context"
@@ -268,4 +273,19 @@ return function(harness: any)
 	}
 	controller:executeAction(blockedAttack[1])
 	harness:equal(submissions, 0, "disabled action invocation cannot submit a command")
+	replica.revision = 28
+	controller:executeAction(enabledAttack[1])
+	harness:equal(submissions, 0, "stale action revision cannot submit a command")
+	replica.revision = 27
+	controller:executeAction(enabledAttack[1])
+	harness:equal(selectedActorId, "hero", "attack preserves the semantic actor selection")
+	controller:executeAction(objectActions[1])
+	harness:equal(selectedActorId, "hero", "interaction preserves the semantic actor selection")
+	replica.payload.domains.encounter.active.movementRemaining = 10
+	local enabledMovement = resolver:resolve("hero", {
+		kind = "surface",
+		position = Vector3.new(1, 0, 0),
+	})
+	controller:executeAction(enabledMovement[1])
+	harness:equal(selectedActorId, "hero", "movement preserves the semantic actor selection")
 end

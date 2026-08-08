@@ -61,11 +61,11 @@ Studio MCP 자동화는 반복 작업 절감 효과가 명확하거나 사용자
 |---|---|---|
 | ADR/설계 및 Studio Preflight 문서 검수 | `PASS` | 마지막 Codex Delta 결과 `NO_SUPPORTED_FINDINGS` |
 | 마지막 Implementation Static Gate | `PASS` | 검증 대상 `ef99a0740711b4f00fac0d5c8d0599f238ea48e9` |
-| Full UI·UX Source·Acceptance 정합화 | `IN_PROGRESS` | `CURRENT-WORK-ORDER.md` 순서 6부터 진행 |
+| Full UI·UX Source·Acceptance 정합화 | `IN_PROGRESS` | `CURRENT-WORK-ORDER.md` 순서 7부터 진행 |
 | Shared Shell·Preference Foundation | `PASS` | `RVTT-PR2-UI-FOUNDATION-IMPLEMENTATION-002` 구현·로컬 정적 검증 완료 |
 | Input·Context Action 정합화 | `PASS` | `RVTT-PR2-INPUT-CONTEXT-IMPLEMENTATION-001` 구현·로컬 정적 검증 완료 |
-| Exploration·Encounter HUD | `IN_PROGRESS` | 다음 구현 작업 |
-| Inventory·Journal·Settings | `PENDING` | HUD 이후 |
+| Exploration·Encounter HUD | `PASS` | `RVTT-PR2-EXPLORATION-ENCOUNTER-HUD-IMPLEMENTATION-001` 구현·로컬 정적 검증 완료 |
+| Inventory·Journal·Settings | `IN_PROGRESS` | 다음 구현 작업 |
 | Entry·Role·Recovery | `PENDING` | 화면 정합화 이후 |
 | DM Live Workspace | `PENDING` | Role·Recovery 이후 |
 | Full UI·UX Acceptance 확장 | `PENDING` | Runtime 전에 필요 |
@@ -89,6 +89,9 @@ phase4LocalStaticValidation: PASS
 phase5Implementation: PASS · RVTT-PR2-INPUT-CONTEXT-IMPLEMENTATION-001
 phase5TargetShaAtStart: 8002f7e64f0325da048ceff8a02958088c56d393
 phase5LocalStaticValidation: PASS · validator + format + lint + 15 Rojo builds + default/test sourcemaps + production/test Luau analysis
+phase6Implementation: PASS · RVTT-PR2-EXPLORATION-ENCOUNTER-HUD-IMPLEMENTATION-001
+phase6TargetShaAtStart: c1896af5e8cfa4cc80b6b37445beb998e77a0b13
+phase6LocalStaticValidation: PASS · validator + format + lint + 15 Rojo builds + default/test sourcemaps + production/test Luau analysis
 newCurrentHeadStaticGate: REQUIRED_BEFORE_STUDIO
 studioManualRuntimeCurrentContract: NOT_EXECUTED
 humanPlaytestCurrentContract: NOT_EXECUTED
@@ -202,7 +205,7 @@ passedChecks: 0
 failedChecks: 0
 blockedChecks: 18
 blocker: Full UI·UX Source·Acceptance alignment and new current-HEAD Static Gate required
-next: Exploration·Encounter HUD implementation
+next: Inventory·Journal·Settings implementation
 ```
 
 ### Historical Studio Evidence — 현재 계약 PASS로 사용 금지

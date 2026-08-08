@@ -7,6 +7,7 @@ local values: { [string]: string } = {
 	PENDING = "pending",
 	PARTIAL = "partial",
 	STALE = "stale",
+	EXPIRED = "expired",
 	PERMISSION_DENIED = "permission_denied",
 	NETWORK_ERROR = "network_error",
 	VALIDATION_ERROR = "validation_error",

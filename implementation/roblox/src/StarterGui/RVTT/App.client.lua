@@ -10,10 +10,12 @@ end
 local player = Players.LocalPlayer
 local SharedUI = ReplicatedStorage.RVTT.Shared.UI
 local Tokens = require(SharedUI.DesignTokens)
+local GameplayHudViewModel = require(SharedUI.GameplayHudViewModel)
 local uiFolder = script.Parent.UI
 local AppShell = require(uiFolder.AppShell)
 local ThemeApplicator = require(uiFolder.ThemeApplicator)
 local SettingsPanel = require(uiFolder.Components.SettingsPanel)
+local GameplayHud = require(uiFolder.Components.GameplayHud)
 local components = uiFolder.Components
 
 local playerScripts = player:WaitForChild("PlayerScripts")
@@ -61,8 +63,13 @@ settingsStroke.Parent = settingsButton
 
 local currentAccentId = "gold"
 local settingsContextActive = false
+local feedback = GameplayHudViewModel.initialFeedback(client.Replica.revision)
+local rawPreview = client.WorldTokens.Input:getCurrentPreview()
+local currentHudState: any = nil
 local settingsPanel: any
+local gameplayHud: any
 local setSettingsVisible: (boolean) -> ()
+local renderHud: () -> ()
 
 local function applyPreferences()
 	local preferences = client.Preferences:snapshot()
@@ -76,7 +83,16 @@ local function updatePrompt(settingsVisible: boolean)
 	if promptText == nil then
 		return
 	end
-	promptText.Text = if settingsVisible then "Q 설정 닫기" else "Q 취소    E 확인"
+	if settingsVisible then
+		promptText.Text = "Q 설정 닫기"
+	elseif currentHudState ~= nil and currentHudState.preview ~= nil then
+		promptText.Text = currentHudState.preview.enabled
+				and "좌클릭 " .. currentHudState.preview.label .. " · 우클릭 행동"
+			or currentHudState.preview.disabledReason
+			or "현재 실행할 수 없습니다"
+	else
+		promptText.Text = "좌클릭 선택·기본 행동    우클릭 행동"
+	end
 end
 
 setSettingsVisible = function(visible: boolean)
@@ -112,8 +128,47 @@ end, function()
 end)
 settingsPanel.Root.Parent = shell:getLayer("Overlay")
 
+gameplayHud = GameplayHud.new(shell:getLayer("Gameplay"), shell:getLayer("Toast"), function()
+	if
+		currentHudState == nil
+		or currentHudState.canEndTurn ~= true
+		or feedback.state == "pending"
+	then
+		return
+	end
+	local baseRevision = client.Replica.revision
+	local commandId = client.Command:submit("encounter.end_turn", {})
+	feedback = GameplayHudViewModel.pendingFeedback("end_turn", commandId, baseRevision)
+	renderHud()
+end)
+
+renderHud = function()
+	local selectedActorId = client.WorldTokens.Renderer:getSelectedActorId()
+	local preview = GameplayHudViewModel.preview(
+		client.Replica.payload,
+		selectedActorId,
+		rawPreview,
+		client.Replica.revision
+	)
+	currentHudState = GameplayHudViewModel.build(
+		client.Replica.payload,
+		player.UserId,
+		selectedActorId,
+		client.Replica.revision,
+		preview,
+		feedback
+	)
+	gameplayHud:render(currentHudState)
+	updatePrompt(settingsPanel:isVisible())
+	local preferences = client.Preferences:snapshot()
+	ThemeApplicator.apply(gameplayHud.Root, preferences)
+	ThemeApplicator.apply(gameplayHud.Initiative, preferences)
+	ThemeApplicator.apply(gameplayHud.Toast, preferences)
+end
+
 client.Preferences.Changed:Connect(function()
 	applyPreferences()
+	renderHud()
 end)
 applyPreferences()
 
@@ -152,7 +207,40 @@ local function render(payload: any, envelope: any)
 		phase,
 		revision
 	)
+	feedback = GameplayHudViewModel.reconcileFeedback(feedback, revision)
+	renderHud()
 end
+
+client.WorldTokens.SelectionChanged:Connect(function()
+	renderHud()
+end)
+client.WorldTokens.PreviewChanged:Connect(function(value)
+	rawPreview = value
+	renderHud()
+end)
+client.WorldTokens.ContextActionRequested:Connect(function(action, commandId, baseRevision)
+	feedback = GameplayHudViewModel.pendingFeedback(action.kind, commandId, baseRevision)
+	renderHud()
+end)
+client.Command.Received:Connect(function(message)
+	if
+		type(message) ~= "table"
+		or message.phase ~= "terminal"
+		or message.commandId ~= feedback.commandId
+		or type(message.result) ~= "table"
+	then
+		return
+	end
+	local result = message.result
+	local code = if type(result.error) == "table" then result.error.code else nil
+	local resultRevision = if type(result.value) == "table"
+			and type(result.value.revision) == "number"
+		then result.value.revision
+		else nil
+	feedback =
+		GameplayHudViewModel.resolveFeedback(feedback, result.ok == true, code, resultRevision)
+	renderHud()
+end)
 
 client.Replica.Changed:Connect(render)
 render(client.Replica.payload, { revision = client.Replica.revision })

@@ -90,9 +90,13 @@ local function activeTurn(allDomains: any, actorId: string): (boolean, any?)
 	if type(active) ~= "table" then
 		return true, nil
 	end
-	local timeline = active.timeline
-	local entry = type(timeline) == "table" and timeline[active.cursor] or nil
-	return type(entry) == "table" and entry.actorId == actorId, active
+	local currentActorId = active.activeActorId
+	if type(currentActorId) ~= "string" then
+		local timeline = active.timeline
+		local entry = type(timeline) == "table" and timeline[active.cursor] or nil
+		currentActorId = if type(entry) == "table" then entry.actorId else nil
+	end
+	return currentActorId == actorId, active
 end
 
 local function attackProfiles(allDomains: any, actorId: string): { string }
@@ -199,6 +203,34 @@ end
 
 function Resolver:isControllable(actorId: string): boolean
 	return controlsActor(domains(self.replica), self.playerId, actorId)
+end
+
+function Resolver:defaultControllableActorId(): string?
+	local allDomains = domains(self.replica)
+	local session = allDomains.session
+	local selectedCharacters = if type(session) == "table" then session.selectedCharacter else nil
+	local selectedCharacterId = if type(selectedCharacters) == "table"
+		then selectedCharacters[tostring(self.playerId)]
+		else nil
+	local scene = allDomains.scene
+	local actors = if type(scene) == "table" then scene.actors else nil
+	local candidates = {}
+	if type(actors) == "table" then
+		for actorId, value in actors do
+			if type(actorId) == "string" and controlsActor(allDomains, self.playerId, actorId) then
+				if
+					type(selectedCharacterId) == "string"
+					and type(value) == "table"
+					and value.sourceCharacterId == selectedCharacterId
+				then
+					return actorId
+				end
+				table.insert(candidates, actorId)
+			end
+		end
+	end
+	table.sort(candidates)
+	return candidates[1]
 end
 
 function Resolver:resolve(selectedActorId: string, target: Target): { Action }
@@ -359,6 +391,15 @@ end
 function Resolver.defaultAction(_: any, actions: { Action }): Action?
 	for _, action in actions do
 		if action.isDefault and action.enabled then
+			return action
+		end
+	end
+	return nil
+end
+
+function Resolver.previewAction(_: any, actions: { Action }): Action?
+	for _, action in actions do
+		if action.isDefault then
 			return action
 		end
 	end
