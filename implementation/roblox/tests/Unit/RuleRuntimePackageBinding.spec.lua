@@ -26,6 +26,7 @@ return function(h: any)
 	local Binding = require(Content.RuleRuntimePackageBinding)
 	local BuiltinPackIndex = require(Content.BuiltinPackIndex)
 	local privateAuthority = packageById(BuiltinPackIndex, "rvtt.test.rules.2024.integrated.ko")
+	local ownerUserId = 424242
 
 	local readiness = {
 		bindingPresent = true,
@@ -34,6 +35,7 @@ return function(h: any)
 		sourceRoot = privateAuthority.sourceRoot,
 		verifiedDigest = privateAuthority.expectedSourceDigest,
 		contentCounts = copy(privateAuthority.expectedContentCounts),
+		authorizedUserIds = { ownerUserId },
 	}
 	local privatePackage = {
 		schemaVersion = 1,
@@ -64,6 +66,14 @@ return function(h: any)
 		local provided =
 			Binding.packageForIdWithBinding(resolved.value.basePackageId, profile, exactBinding)
 		h:expect(provided == privatePackage, profile .. " provider returns the injected package")
+		h:expect(
+			Binding.viewerCanAccessProfileWithBinding(profile, ownerUserId, exactBinding),
+			profile .. " authorizes the explicit owner user"
+		)
+		h:expect(
+			not Binding.viewerCanAccessProfileWithBinding(profile, ownerUserId + 1, exactBinding),
+			profile .. " denies an unlisted user without disclosure"
+		)
 	end
 
 	local missing = Binding.resolveProfileWithBinding("development", nil)
@@ -78,6 +88,22 @@ return function(h: any)
 		nil,
 		"missing binding never yields a private package"
 	)
+	h:expect(
+		not Binding.viewerCanAccessProfileWithBinding("development", ownerUserId, nil),
+		"missing binding never authorizes a private viewer"
+	)
+
+	local missingAccessBinding = copy(exactBinding)
+	missingAccessBinding.readiness.authorizedUserIds = nil
+	local missingAccess = Binding.resolveProfileWithBinding("test", missingAccessBinding)
+	local missingAccessCode = if missingAccess.error then missingAccess.error.code else nil
+	h:equal(missingAccessCode, "PRIVATE_RULE_ACCESS_MISSING", "private profile requires explicit viewer access")
+
+	local invalidAccessBinding = copy(exactBinding)
+	invalidAccessBinding.readiness.authorizedUserIds = { 0 }
+	local invalidAccess = Binding.resolveProfileWithBinding("test", invalidAccessBinding)
+	local invalidAccessCode = if invalidAccess.error then invalidAccess.error.code else nil
+	h:equal(invalidAccessCode, "PRIVATE_RULE_ACCESS_INVALID", "invalid private viewer id is rejected")
 
 	local staleReadinessBinding = copy(exactBinding)
 	staleReadinessBinding.readiness.revision = "stale-revision"
@@ -120,6 +146,10 @@ return function(h: any)
 		Binding.packageForIdWithBinding("rvtt.core.rules", "public", wrongPackageBinding)
 	h:expect(publicPackage ~= nil, "public provider remains available")
 	h:equal(publicPackage.packageId, "rvtt.core.rules")
+	h:expect(
+		Binding.viewerCanAccessProfileWithBinding("public", ownerUserId + 1, wrongPackageBinding),
+		"public profile does not apply the private owner allowlist"
+	)
 	h:equal(
 		Binding.packageForIdWithBinding(
 			"rvtt.test.rules.2024.integrated.ko",
