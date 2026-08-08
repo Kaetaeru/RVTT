@@ -121,7 +121,7 @@ local replica = ProjectionReplica.new()
 local command = CommandClient.new(remotes, replica)
 local inputStack = InputContextStack.new()
 local inputRouter = SemanticInputRouter.new(inputStack)
-local worldTokens = WorldTokenRuntime.new(replica, command)
+local worldTokens = WorldTokenRuntime.new(replica, command, inputStack)
 local preferences = UiPreferenceStore.new()
 local syncInFlight = false
 

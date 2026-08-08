@@ -12,6 +12,11 @@ type Action = {
 	commandType: string,
 	payload: { [string]: any },
 	isDefault: boolean,
+	enabled: boolean,
+	disabledReason: string?,
+	category: string,
+	sortOrder: number,
+	projectionRevision: number,
 }
 
 local Menu = {}
@@ -22,9 +27,10 @@ local BUTTON_HEIGHT = 36
 local GAP = 8
 local PADDING = 12
 local TITLE_HEIGHT = 34
-local COLUMNS = 2
+local COLUMNS = 1
+local REASON_HEIGHT = 24
 
-local function ensureGui(): (ScreenGui, Frame, TextLabel, Frame)
+local function ensureGui(): (ScreenGui, Frame, TextLabel, Frame, TextLabel)
 	local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
 	local existing = playerGui:FindFirstChild("RVTTWorldActionMenu")
 	if existing ~= nil then
@@ -82,21 +88,41 @@ local function ensureGui(): (ScreenGui, Frame, TextLabel, Frame)
 	layout.SortOrder = Enum.SortOrder.LayoutOrder
 	layout.Parent = buttons
 
-	return gui, panel, title, buttons
+	local reason = Instance.new("TextLabel")
+	reason.Name = "DisabledReason"
+	reason.BackgroundTransparency = 1
+	reason.Font = Enum.Font.Gotham
+	reason.Text = ""
+	reason.TextColor3 = Color3.fromRGB(207, 168, 96)
+	reason.TextSize = 12
+	reason.TextWrapped = true
+	reason.TextXAlignment = Enum.TextXAlignment.Left
+	reason.Visible = false
+	reason.Parent = panel
+
+	return gui, panel, title, buttons, reason
 end
 
 function Menu.new(): any
-	local gui, panel, title, buttons = ensureGui()
+	local gui, panel, title, buttons, reason = ensureGui()
 	return setmetatable({
 		gui = gui,
 		panel = panel,
 		title = title,
 		buttons = buttons,
+		reason = reason,
 		actions = {},
+		previousSelectedObject = nil,
 		ActionInvoked = Signal.new(),
 		Opened = Signal.new(),
 		Closed = Signal.new(),
 	}, Menu)
+end
+
+function Menu:_showReason(action: Action, visible: boolean)
+	local reason = if action.enabled then nil else action.disabledReason
+	self.reason.Text = reason or ""
+	self.reason.Visible = visible and reason ~= nil and reason ~= ""
 end
 
 function Menu:_clearButtons()
@@ -111,16 +137,24 @@ function Menu:_createButton(action: Action, index: number): TextButton
 	local button = Instance.new("TextButton")
 	button.Name = "Action_" .. action.id
 	button.LayoutOrder = index
-	button.BackgroundColor3 = if action.isDefault
-		then Color3.fromRGB(70, 91, 126)
+	button.BackgroundColor3 = if not action.enabled
+		then Color3.fromRGB(55, 57, 62)
+		elseif action.isDefault then Color3.fromRGB(70, 91, 126)
 		else Color3.fromRGB(46, 52, 63)
 	button.BorderSizePixel = 0
-	button.AutoButtonColor = true
+	button.AutoButtonColor = action.enabled
+	-- Disabled actions remain focusable so their viewer-safe reason can be inspected.
+	button.Active = true
 	button.Font = Enum.Font.GothamMedium
 	button.Text = action.label
-	button.TextColor3 = Color3.fromRGB(240, 242, 246)
+	button.TextColor3 = if action.enabled
+		then Color3.fromRGB(240, 242, 246)
+		else Color3.fromRGB(151, 155, 164)
 	button.TextSize = 13
 	button.Selectable = true
+	button:SetAttribute("RVTTAvailability", if action.enabled then "enabled" else "disabled")
+	button:SetAttribute("RVTTDisabledReason", action.disabledReason)
+	button:SetAttribute("RVTTProjectionRevision", action.projectionRevision)
 	button.Parent = self.buttons
 
 	local corner = Instance.new("UICorner")
@@ -128,8 +162,24 @@ function Menu:_createButton(action: Action, index: number): TextButton
 	corner.Parent = button
 
 	button.Activated:Connect(function()
+		if not action.enabled then
+			self:_showReason(action, true)
+			return
+		end
 		self.ActionInvoked:Fire(action)
 		self:close("invoked")
+	end)
+	button.MouseEnter:Connect(function()
+		self:_showReason(action, true)
+	end)
+	button.MouseLeave:Connect(function()
+		self:_showReason(action, false)
+	end)
+	button.SelectionGained:Connect(function()
+		self:_showReason(action, true)
+	end)
+	button.SelectionLost:Connect(function()
+		self:_showReason(action, false)
 	end)
 	return button
 end
@@ -148,9 +198,13 @@ function Menu:open(actions: { Action }, screenPosition: Vector2, targetLabel: st
 
 	local rows = math.ceil(#actions / COLUMNS)
 	local width = PADDING * 2 + BUTTON_WIDTH * COLUMNS + GAP * (COLUMNS - 1)
-	local height = TITLE_HEIGHT + PADDING + BUTTON_HEIGHT * rows + GAP * math.max(0, rows - 1)
+	local buttonsHeight = BUTTON_HEIGHT * rows + GAP * math.max(0, rows - 1)
+	local height = TITLE_HEIGHT + PADDING * 2 + buttonsHeight + REASON_HEIGHT
 	self.panel.Size = UDim2.fromOffset(width, height)
-	self.buttons.Size = UDim2.fromOffset(width - PADDING * 2, height - TITLE_HEIGHT - PADDING)
+	self.buttons.Size = UDim2.fromOffset(width - PADDING * 2, buttonsHeight)
+	self.reason.Position = UDim2.fromOffset(PADDING, TITLE_HEIGHT + buttonsHeight + PADDING)
+	self.reason.Size = UDim2.fromOffset(width - PADDING * 2, REASON_HEIGHT)
+	self.reason.Visible = false
 
 	local camera = workspace.CurrentCamera
 	local viewport = if camera ~= nil then camera.ViewportSize else Vector2.new(1280, 720)
@@ -167,6 +221,9 @@ function Menu:open(actions: { Action }, screenPosition: Vector2, targetLabel: st
 		end
 	end
 
+	if not self.gui.Enabled then
+		self.previousSelectedObject = GuiService.SelectedObject
+	end
 	self.gui.Enabled = true
 	if firstButton ~= nil then
 		GuiService.SelectedObject = firstButton
@@ -180,8 +237,14 @@ function Menu:close(reason: string?)
 	end
 	self.gui.Enabled = false
 	self.actions = {}
+	self.reason.Visible = false
 	if GuiService.SelectedObject ~= nil and GuiService.SelectedObject:IsDescendantOf(self.gui) then
 		GuiService.SelectedObject = nil
+	end
+	local previous = self.previousSelectedObject
+	self.previousSelectedObject = nil
+	if previous ~= nil and previous.Parent ~= nil and previous.Visible then
+		GuiService.SelectedObject = previous
 	end
 	self.Closed:Fire(reason or "closed")
 end
@@ -201,6 +264,10 @@ end
 function Menu:invoke(actionId: string): boolean
 	for _, action in self.actions do
 		if action.id == actionId then
+			if not action.enabled then
+				self:_showReason(action, true)
+				return false
+			end
 			self.ActionInvoked:Fire(action)
 			self:close("invoked")
 			return true

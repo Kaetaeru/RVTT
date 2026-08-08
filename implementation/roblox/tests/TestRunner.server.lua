@@ -37,6 +37,11 @@ local specs: { Spec } = {
 		runner = require(script.Parent.Unit["UiFoundation.spec"]) :: any,
 	},
 	{
+		id = "unit-input-context",
+		name = "InputContext.spec",
+		runner = require(script.Parent.Unit["InputContext.spec"]) :: any,
+	},
+	{
 		id = "unit-envelope",
 		name = "Envelope.spec",
 		runner = require(script.Parent.Unit["Envelope.spec"]) :: any,

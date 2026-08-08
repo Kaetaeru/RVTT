@@ -7,6 +7,7 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
 local Signal = require(ReplicatedStorage.RVTT.Shared.Core.Signal)
+local GameplayInputGuard = require(script.Parent.Parent.GameplayInputGuard)
 
 local BASE_YAW = math.rad(180)
 local DEFAULT_PITCH = math.rad(45)
@@ -151,7 +152,7 @@ function Controller:_updateKeyboard(deltaTime: number)
 	if
 		self.movementModeActive
 		or next(self.keyboardPanSuppressors) ~= nil
-		or UserInputService:GetFocusedTextBox() ~= nil
+		or not GameplayInputGuard.allows(false, UserInputService:GetFocusedTextBox())
 	then
 		return
 	end
@@ -238,7 +239,7 @@ function Controller:getTargetPivot(): Vector3
 end
 
 function Controller:_onInputBegan(input: InputObject, processed: boolean)
-	if processed or UserInputService:GetFocusedTextBox() ~= nil then
+	if not GameplayInputGuard.allows(processed, UserInputService:GetFocusedTextBox()) then
 		return
 	end
 	if input.UserInputType == Enum.UserInputType.MouseButton3 then
@@ -287,7 +288,10 @@ function Controller:_onInputChanged(input: InputObject, processed: boolean)
 	if input.UserInputType ~= Enum.UserInputType.MouseWheel then
 		return
 	end
-	if processed or isPointerOverVisibleUi() then
+	if
+		not GameplayInputGuard.allows(processed, UserInputService:GetFocusedTextBox())
+		or isPointerOverVisibleUi()
+	then
 		self.InputResolved:Fire("zoom", "mouse-wheel", false, false, processed)
 		return
 	end
@@ -306,7 +310,11 @@ function Controller:_onInputChanged(input: InputObject, processed: boolean)
 end
 
 function Controller:_render(deltaTime: number)
-	if self.middleMouseDown and self.lastMousePosition ~= nil then
+	if not GameplayInputGuard.allows(false, UserInputService:GetFocusedTextBox()) then
+		self.lastMousePosition = if self.middleMouseDown
+			then UserInputService:GetMouseLocation()
+			else nil
+	elseif self.middleMouseDown and self.lastMousePosition ~= nil then
 		local mousePosition = UserInputService:GetMouseLocation()
 		local delta = mousePosition - self.lastMousePosition
 		self.lastMousePosition = mousePosition

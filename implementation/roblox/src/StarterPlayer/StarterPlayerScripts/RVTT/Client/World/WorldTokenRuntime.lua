@@ -59,12 +59,18 @@ local function logProjection(summary: any)
 	)
 end
 
-function Runtime.new(replica: any, command: any): Runtime
+function Runtime.new(replica: any, command: any, inputStack: any): Runtime
 	local renderer = WorldTokenRenderer.new(nil, nil)
 	local actionResolver = WorldContextActionResolver.new(replica)
 	local actionMenu = WorldActionMenu.new()
-	local input =
-		WorldTokenInputController.new(renderer, replica, command, actionResolver, actionMenu)
+	local input = WorldTokenInputController.new(
+		renderer,
+		replica,
+		command,
+		actionResolver,
+		actionMenu,
+		inputStack
+	)
 	local camera = WorldCameraController.new(renderer, ACCEPTANCE_MODE)
 	local compatibilityConnection = nil
 	if ACCEPTANCE_MODE then

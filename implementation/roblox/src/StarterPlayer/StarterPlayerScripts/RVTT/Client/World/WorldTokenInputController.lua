@@ -5,11 +5,14 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
 local Signal = require(ReplicatedStorage.RVTT.Shared.Core.Signal)
+local GameplayInputGuard = require(script.Parent.Parent.GameplayInputGuard)
 
 local Controller = {}
 Controller.__index = Controller
 
 local RAY_DISTANCE = 2048
+local INPUT_CONTEXT_ID = "world_direct_play"
+local INPUT_CONTEXT_PRIORITY = 20
 
 type Action = {
 	id: string,
@@ -18,6 +21,11 @@ type Action = {
 	commandType: string,
 	payload: { [string]: any },
 	isDefault: boolean,
+	enabled: boolean,
+	disabledReason: string?,
+	category: string,
+	sortOrder: number,
+	projectionRevision: number,
 }
 
 type Target = {
@@ -50,13 +58,21 @@ local function terminalResult(message: any): (string?, any?)
 	return message.commandId, message.result
 end
 
-function Controller.new(renderer: any, replica: any, command: any, resolver: any, menu: any): any
+function Controller.new(
+	renderer: any,
+	replica: any,
+	command: any,
+	resolver: any,
+	menu: any,
+	inputStack: any
+): any
 	return setmetatable({
 		renderer = renderer,
 		replica = replica,
 		command = command,
 		resolver = resolver,
 		menu = menu,
+		inputStack = inputStack,
 		connections = {},
 		pending = {},
 		started = false,
@@ -151,6 +167,9 @@ function Controller:openActionsForTarget(target: Target, screenPosition: Vector2
 end
 
 function Controller:_executeAction(action: Action): string?
+	if action.enabled == false then
+		return nil
+	end
 	local selectedActorId = self.renderer:getSelectedActorId()
 	if selectedActorId == nil then
 		return nil
@@ -226,33 +245,37 @@ end
 
 function Controller:_leftClick()
 	if self.menu:isOpen() then
-		self.menu:close("world-left-click")
-		self.ActionMenuChanged:Fire(false, {}, { kind = "none" })
+		-- The open action table owns PrimaryPointer until Q closes it.
+		return
 	end
 	local target = self:_raycastTarget()
 	local selectedActorId = self.renderer:getSelectedActorId()
 	if selectedActorId == nil then
-		if target.actorId ~= nil then
+		if target.actorId ~= nil and self.resolver:isControllable(target.actorId) then
 			self:_pick(target.actorId, "ray", target.instance)
 		end
+		return
+	end
+	if
+		target.actorId ~= nil
+		and target.actorId ~= selectedActorId
+		and self.resolver:isControllable(target.actorId)
+	then
+		self:_pick(target.actorId, "ray", target.instance)
 		return
 	end
 
 	local actions = self:resolveActionsForTarget(target)
 	local defaultAction = self.resolver:defaultAction(actions)
-	if defaultAction ~= nil then
+	if defaultAction ~= nil and defaultAction.enabled then
 		self:_executeAction(defaultAction)
-		return
-	end
-	if target.actorId ~= nil and target.actorId == selectedActorId then
-		self:_pick(target.actorId, "ray", target.instance)
 	end
 end
 
 function Controller:_rightClick()
 	if self.renderer:getSelectedActorId() == nil then
 		local target = self:_raycastTarget()
-		if target.actorId ~= nil then
+		if target.actorId ~= nil and self.resolver:isControllable(target.actorId) then
 			self:_pick(target.actorId, "ray", target.instance)
 		end
 		return
@@ -260,27 +283,41 @@ function Controller:_rightClick()
 	self:openActionsForTarget(self:_raycastTarget(), UserInputService:GetMouseLocation())
 end
 
-function Controller:_escape()
+function Controller:_cancel(): boolean
 	if self.menu:isOpen() then
-		self.menu:close("escape")
-		self.ActionMenuChanged:Fire(false, {}, { kind = "none" })
-		return
+		self.menu:close("context-cancel")
+		return true
 	end
-	self.renderer:clearDestination(nil)
-	self.renderer:setSelected(nil)
+	if self.renderer:getSelectedActorId() ~= nil then
+		self.renderer:setSelected(nil)
+		return true
+	end
+	return false
 end
 
-function Controller:_onInputBegan(input: InputObject, processed: boolean)
-	if processed then
-		return
+function Controller:handleSemantic(action: string, _: any): boolean
+	if not GameplayInputGuard.allows(false, UserInputService:GetFocusedTextBox()) then
+		return false
 	end
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+	if action == "PrimaryPointer" then
+		if self.menu:isOpen() then
+			return true
+		end
 		self:_leftClick()
-	elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
+		return true
+	elseif action == "ContextActionPointer" then
 		self:_rightClick()
-	elseif input.KeyCode == Enum.KeyCode.Escape then
-		self:_escape()
+		return true
+	elseif action == "Cancel" then
+		return self:_cancel()
+	elseif action == "Confirm" then
+		-- Phase 6 targeting/preview contexts register their own higher-priority Confirm.
+		return false
+	elseif action == "CameraOrbitPointer" then
+		-- WorldCameraController owns the drag while this context leaves it unconsumed.
+		return false
 	end
+	return false
 end
 
 function Controller:start()
@@ -288,12 +325,23 @@ function Controller:start()
 		return
 	end
 	self.started = true
-	table.insert(
-		self.connections,
-		UserInputService.InputBegan:Connect(function(input, processed)
-			self:_onInputBegan(input, processed)
-		end)
-	)
+	self.inputStack:push(INPUT_CONTEXT_ID, INPUT_CONTEXT_PRIORITY, {
+		PrimaryPointer = function(payload)
+			return self:handleSemantic("PrimaryPointer", payload)
+		end,
+		ContextActionPointer = function(payload)
+			return self:handleSemantic("ContextActionPointer", payload)
+		end,
+		CameraOrbitPointer = function(payload)
+			return self:handleSemantic("CameraOrbitPointer", payload)
+		end,
+		Cancel = function(payload)
+			return self:handleSemantic("Cancel", payload)
+		end,
+		Confirm = function(payload)
+			return self:handleSemantic("Confirm", payload)
+		end,
+	})
 	table.insert(
 		self.connections,
 		self.command.remotes.receipt.OnClientEvent:Connect(function(message)
@@ -325,6 +373,7 @@ function Controller:destroy()
 		return
 	end
 	self.started = false
+	self.inputStack:remove(INPUT_CONTEXT_ID)
 	for _, connection in self.connections do
 		connection:Disconnect()
 	end

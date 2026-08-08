@@ -34,7 +34,7 @@ Full Screen·Settings·Flow Specification
 → IMPLEMENTATION READY
 
 기존 Contextual Pointer Actions Source
-→ STATIC VERIFIED · ADR-0088 NOT ALIGNED
+→ ADR-0088 ALIGNED · LOCAL STATIC VERIFIED
 
 기존 Player UI Source
 → BASELINE EXISTS · FULL SCREEN SPEC NOT ALIGNED
@@ -43,10 +43,10 @@ Grand Persistence Published Runner·Config·CI
 → EXECUTION CONTRACT READY
 
 현재 작업
-→ Input·Context Action 정합화
+→ Exploration·Encounter HUD
 ```
 
-기존 Context Input과 UI Source는 ESC 처리, Right Pointer·Action Availability·Preview·설정 기본값·화면 상태가 새 명세와 다르므로 Studio Retest를 시작하지 않는다.
+Input·Context Action Source는 Q·ESC·Left·Right·Middle·Availability 계약에 정합화됐다. Preview·HUD·나머지 화면과 Acceptance 정합화가 남아 있으므로 Studio Retest를 시작하지 않는다.
 
 ## 2. 목표 입력 계약
 
@@ -236,8 +236,8 @@ HEAD 582c1c4
 | 2 | DONE | ADR-0088 상위 기획 | Pointer·Q/E·Feedback·Continuity |
 | 3 | DONE | Full UI·UX 구현 직전 명세 | 화면·Settings·Flow·Acceptance |
 | 4 | DONE | Shared Shell·Preference Foundation | Layer·Mode·System·Theme·Settings Store |
-| 5 | IN_PROGRESS | Input·Context Action 정합화 | Q·ESC·Left·Right·Middle·Availability |
-| 6 | QUEUED | Exploration·Encounter HUD | Preview·Turn·Reaction·Selection Continuity |
+| 5 | DONE | Input·Context Action 정합화 | Q·ESC·Left·Right·Middle·Availability |
+| 6 | IN_PROGRESS | Exploration·Encounter HUD | Preview·Turn·Reaction·Selection Continuity |
 | 7 | QUEUED | Inventory·Journal·Settings | 화면·Intent·Permission·Preference |
 | 8 | QUEUED | Entry·Role·Recovery | Projection rebuild·Reconnect·Error Boundary |
 | 9 | QUEUED | DM Live Workspace 정합화 | Player Preview·Override·Queue |
