@@ -1,18 +1,18 @@
 # RVTT Codex Active Task
 
 - status: `READY_FOR_CODEX_EXECUTION`
-- commandId: `RVTT-PR2-EXPLORATION-ENCOUNTER-HUD-IMPLEMENTATION-001`
+- commandId: `RVTT-PR2-INVENTORY-JOURNAL-SETTINGS-IMPLEMENTATION-001`
 - repository: `Kaetaeru/RVTT`
 - pullRequest: `2`
 - branch: `agent/survival-logistics-token-authoring`
 - taskType: `IMPLEMENTATION`
-- phase: `FULL_UI_UX_ALIGNMENT_PHASE_6`
-- commandPath: `.github/CODEX-IMPLEMENTATION-EXPLORATION-ENCOUNTER-HUD-001.md`
+- phase: `FULL_UI_UX_ALIGNMENT_PHASE_7`
+- commandPath: `.github/CODEX-IMPLEMENTATION-INVENTORY-JOURNAL-SETTINGS-001.md`
 - targetMode: `CURRENT_PR_HEAD_AT_START`
 - expectedOutputChannel: `PR #2 Top-level Conversation Comment`
 - resultMarker: `<!-- RVTT_CODEX_IMPLEMENTATION_RESULT -->`
 - resultStatus: `PENDING`
-- previousCommand: `RVTT-PR2-INPUT-CONTEXT-IMPLEMENTATION-001`
+- previousCommand: `RVTT-PR2-EXPLORATION-ENCOUNTER-HUD-IMPLEMENTATION-001`
 - previousCommandStatus: `PASS`
 - studioRuntimeState: `BLOCKED_UNTIL_UI_ALIGNMENT_AND_NEW_STATIC_GATE`
 - userManualRuntimeState: `NOT_STARTED_CURRENT_CONTRACT`
@@ -24,12 +24,12 @@
 다음 한 Phase만 수행한다.
 
 ```text
-Exploration·Encounter HUD
-→ Preview · Turn · Reaction · Selection Continuity
+Inventory · Journal · Settings
+→ Screen · Intent · Permission · Preference
 ```
 
-Phase 4 Shared Shell·Preference Foundation과 Phase 5 Input·Context Action은 완료됐다.
-이번 Phase는 기존 Shared Shell, Projection, World Direct Play, Exploration/Encounter Authority를 재사용해 실제 플레이 HUD와 Preview Presentation을 정합화한다.
+Phase 4 Shared Shell·Preference Foundation, Phase 5 Input·Context Action, Phase 6 Exploration·Encounter HUD는 완료됐다.
+이번 Phase는 기존 Shared Shell/Projection/Command/Preference 경계를 재사용해 관리 화면을 정합화한다.
 
 ## 현재 Authority
 
@@ -37,112 +37,125 @@ Phase 4 Shared Shell·Preference Foundation과 Phase 5 Input·Context Action은 
 AGENTS.md
 → AGENT-TEST-STATUS.md
 → implementation/roblox/CURRENT-WORK-ORDER.md
-→ ADR-0088
-→ ADR-0089 / ADR-0090 / ADR-0091
+→ ADR-0088 / ADR-0089 / ADR-0090 / ADR-0091
 → final-ui-content-implementation-contract.md
-→ implementation-ready-ui-ux-and-settings-spec.md
-→ implementation/roblox/CONTEXTUAL-POINTER-ACTIONS.md
-→ Exploration / Encounter 관련 Architecture·System Guide·Slice Spec
+→ implementation-ready-ui-ux-and-settings-spec.md (상위 계약에 의해 superseded된 부분 제외)
+→ Inventory / Journal / Character / Settings 관련 Architecture·Slice·System Guide
 → EXECUTION-TEST-RULES.md
 ```
 
-충돌 시 상위 Accepted ADR과 최신 Final UI Contract를 따른다.
+중요: 최신 상위 계약에 따라 Player persistent UI에 Minimap·별도 Map·Objective Tracker를 추가하지 않는다.
 
 ## 이번 Phase의 고정 계약
 
-### Exploration
+### Inventory
 
-- World와 HUD가 같은 semantic actor selection을 사용한다.
-- 기본 행동을 클릭 전에 식별할 수 있다.
-- 이동 path, distance, remaining movement, risk를 권위 Projection 범위에서 Preview한다.
-- pending, approved, denied, stale, reconciliation을 구분한다.
-- Client가 Movement Authority 결과를 새로 발명하지 않는다.
+- Projection-backed inventory/equipment/item presentation을 사용한다.
+- 현재 Repository에 존재하는 loot/transfer/identification flow만 UI Intent로 연결한다.
+- UI가 Domain Store를 직접 변경하지 않는다.
+- 실제 변경은 기존 Command boundary와 Server authorize를 통과한다.
+- viewer에게 공개되지 않은 item/property/count/container/capability는 노출하거나 추측하지 않는다.
 
-### Encounter
+### Journal
 
-- Initiative, current turn, active actor와 주요 Action Economy 상태를 표시한다.
-- End Turn과 Reaction 진입점은 서버 Projection을 따른다.
-- Turn 전환은 HUD/World 강조와 soft notification을 사용한다.
-- Turn 전환만으로 Camera를 강제 이동하지 않는다.
+- 기존 Journal Projection과 Permission을 따른다.
+- private/DM-only/hidden entry를 placeholder로도 누출하지 않는다.
+- 별도 Player Map이나 Objective Tracker를 새로 만들지 않는다.
+- navigation/selection은 권위 Command가 없는 한 local presentation state다.
 
-### Target / Area / Reaction
+### Settings
 
-- 공개된 Range, valid target, area, affected target, cost를 Preview한다.
-- hidden target, capability, opportunity는 노출하지 않는다.
-- Reaction은 서버가 공개한 Opportunity가 있을 때만 표시한다.
-- 실제 Movement, Attack, Reaction, Resource 변경은 기존 서버 Authority를 유지한다.
-
-### Continuity
+기존 다음 경로를 재사용한다.
 
 ```text
-move / attack / interaction
-→ actor selection 유지
-
-turn transition
-→ active-turn presentation 갱신
-→ 사용자 selection을 불필요하게 제거하지 않음
+PreferenceSchema
+→ UiPreferenceStore
+→ ThemeContract / ThemeApplicator
+→ SettingsPanel
 ```
 
-World, Action Table, HUD, Preview는 Revision mismatch를 감지하고 stale preview를 확정하지 않는다.
+- schema가 실제 지원하는 설정만 노출한다.
+- reset은 기존 schema/store 계약을 따른다.
+- binding 편집이 현 계약에 포함돼 있으면 conflict를 감지·표시하며 조용히 덮어쓰지 않는다.
+- accent/ui scale/text scale/motion 등 기존 preference 변경 중 gameplay selection/focus를 불필요하게 제거하지 않는다.
+- 현재 architecture보다 강한 persistence 보장을 꾸며내지 않는다.
+
+### Availability / Permission
+
+```text
+viewer에게 비공개
+→ 미표시
+
+viewer에게 공개되지만 현재 불가능
+→ disabled + viewer-safe reason
+
+현재 가능
+→ enabled intent
+```
+
+stale projection/revision으로 권위 변경을 우회하지 않는다.
 
 ## 작업 경계
 
 이번 Phase에서는 다음을 하지 않는다.
 
 - Roblox Studio 또는 Human Playtest
-- Phase 7 Inventory·Journal·Settings
 - Phase 8 Entry·Role·Recovery
 - Phase 9 DM Live Workspace
-- Phase 10 Full Acceptance 완료 처리
-- ADR-0092 Runtime 구현
+- Phase 10 Full Acceptance 완료
+- ADR-0092 Runtime
 - Persistence Runtime 확대
 - Touch·Controller 전용 UI
 - Player Minimap·별도 Map·Objective Tracker
-- 서버 Gameplay Authority를 Client로 이동
-- Hidden 정보의 placeholder 노출
-- PR Ready 전환·승인·Merge
+- Client Gameplay Authority 신설
+- Hidden 정보 placeholder
+- PR Ready·Approve·Merge
 
-Studio Human Retest는 Phase 4~10 정합화와 새 current-HEAD Static Gate가 끝난 뒤에만 진행한다.
+Studio Human Retest는 Phase 4~10 정합화와 새 current-HEAD Static Gate 뒤에만 진행한다.
 
 ## 실행 절차
 
-1. `commandPath`의 Phase 6 명령을 읽는다.
-2. PR #2 최신 HEAD와 현재 Branch를 확인한다.
-3. `AGENTS.md`, `AGENT-TEST-STATUS.md`, `implementation/roblox/CURRENT-WORK-ORDER.md`를 읽는다.
-4. Phase 5 `DONE`, Phase 6 `IN_PROGRESS`를 확인한다.
-5. 기존 Shared UI/Input/Projection/World/Exploration/Encounter Source를 조사한다.
-6. 같은 책임의 기존 모듈을 재사용한다.
-7. Phase 6 범위만 구현한다.
-8. Repository가 정의한 정적·자동 검증과 관련 HUD/Preview/Selection Test를 실행한다.
-9. 성공한 경우에만 Phase 6을 `DONE`, Phase 7을 `IN_PROGRESS`로 갱신한다.
-10. `AGENT-TEST-STATUS.md`를 실제 결과에 맞춰 갱신한다.
-11. 변경을 현재 PR Branch에 반영한다.
-12. 결과를 지정된 PR #2 Top-level Conversation Comment에 남긴다.
-13. Studio Runtime/Human PASS를 주장하지 않는다.
+1. `commandPath`의 Phase 7 명령을 읽는다.
+2. PR #2 최신 원격 HEAD와 현재 Branch를 확인한다.
+3. `AGENTS.md`, `AGENT-TEST-STATUS.md`, `implementation/roblox/CURRENT-WORK-ORDER.md`를 먼저 읽는다.
+4. Phase 6 `DONE`, Phase 7 `IN_PROGRESS`를 확인한다.
+5. 기존 Inventory/Journal/Settings UI·Projection·Domain·Permission·Command·Preference Source를 조사한다.
+6. Shared Shell, `PanelShell`, `ProjectionReplica`, `CommandClient`, `PreferenceSchema`, `UiPreferenceStore`, Theme 경계를 재사용한다.
+7. `RVTT-PR2-INVENTORY-JOURNAL-SETTINGS-IMPLEMENTATION-001` 범위만 구현한다.
+8. Screen composition, permission/negative disclosure, intent routing, preference validation/reset/conflict, revision handling 관련 test를 보강한다.
+9. Repository가 정의한 가능한 정적/자동 검증을 실행한다.
+10. 성공한 경우에만 Phase 7을 `DONE`, Phase 8을 `IN_PROGRESS`로 갱신하고 `AGENT-TEST-STATUS.md`도 실제 결과에 맞춘다.
+11. 현재 PR branch에 non-force 반영한다.
+12. 결과 게시 직전 원격 PR HEAD를 재확인한다.
+13. 지정 Marker를 포함한 PR #2 top-level 결과 댓글을 남긴다.
+14. Studio Runtime/Human PASS를 주장하지 않는다.
 
 ## 결과 검수 기준
 
-결과 댓글은 `<!-- RVTT_CODEX_IMPLEMENTATION_RESULT -->` Marker를 사용하고 다음을 포함한다.
+결과 댓글은 최소 다음을 포함한다.
 
 ```text
-commandId: RVTT-PR2-EXPLORATION-ENCOUNTER-HUD-IMPLEMENTATION-001
+<!-- RVTT_CODEX_IMPLEMENTATION_RESULT -->
+commandId: RVTT-PR2-INVENTORY-JOURNAL-SETTINGS-IMPLEMENTATION-001
 targetShaAtStart: <sha>
 resultHeadSha: <sha or unchanged>
 resultStatus: PASS | FAIL | BLOCKED | PARTIAL | ABORTED_STALE_HEAD
-phase: FULL_UI_UX_ALIGNMENT_PHASE_6
+phase: FULL_UI_UX_ALIGNMENT_PHASE_7
 implementedScope: <concise list>
-changedFiles: <paths>
+changedFiles: <count and/or paths>
 testsRun: <commands/results>
 staticValidationStatus: <status>
 studioRuntimeStatus: NOT_EXECUTED
-currentWorkOrderStatus: <phase 6/7 status>
+humanPlaytestStatus: NOT_EXECUTED
+currentWorkOrderStatus: <phase 7/8 status>
 agentTestStatusUpdated: true | false
 failedChecks: <none or list>
 blockerReason: <none or reason>
+negativeDisclosure: <summary>
 notes: <limitations>
 ```
 
-PASS는 Phase 6 Source/Static 범위만 의미한다.
+PASS는 Phase 7 Source/Static 범위만 의미한다.
 
 ## 사용자가 Codex에 보낼 최소 지시
 
@@ -152,4 +165,13 @@ RVTT 저장소의 .github/CODEX-ACTIVE-TASK.md에서 ChatGPT가 작성한 최신
 
 ## ChatGPT 후속 확인
 
-사용자가 `확인해`라고 지시하면 PR #2의 현재 HEAD, 최신 Phase 6 결과 Marker, 실제 changed files, tests, Work Order 상태를 대조한다. PASS면 Phase 6 완료 여부만 인정하고 Phase 7로 이어간다. Studio Runtime/Human PASS로 확대 해석하지 않는다.
+사용자가 `확인` 또는 `확인해`라고 지시하면:
+
+1. PR #2 현재 HEAD를 조회한다.
+2. 최신 `<!-- RVTT_CODEX_IMPLEMENTATION_RESULT -->` 댓글을 찾는다.
+3. `commandId`가 `RVTT-PR2-INVENTORY-JOURNAL-SETTINGS-IMPLEMENTATION-001`인지 확인한다.
+4. `resultHeadSha`와 현재 PR HEAD가 일치하는지 확인한다.
+5. 실제 changed files/tests와 결과 보고를 대조한다.
+6. Screen·Intent·Permission·Preference 및 negative disclosure 경계를 확인한다.
+7. PASS면 Phase 7 완료만 인정하고 Phase 8로 이어간다.
+8. Studio Runtime/Human PASS로 확대 해석하지 않는다.
