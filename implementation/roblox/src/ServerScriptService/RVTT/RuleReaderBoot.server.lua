@@ -49,7 +49,7 @@ local function publishProfileStatus(result: any)
 		"RuleProfileFallbackActive",
 		type(value) == "table" and value.fallbackActive == true
 	)
-	projectRoot:SetAttrribute(
+	projectRoot:SetAttribute(
 		"RuleProfileFallbackReasonCode",
 		if type(value) == "table" and type(value.fallbackReasonCode) == "string"
 			then value.fallbackReasonCode
@@ -96,7 +96,7 @@ local function packageProvider(packageId: string): any?
 	)
 end
 
-loccal function profileAccessResolver(player: Player): boolean
+local function profileAccessResolver(player: Player): boolean
 	return RuleRuntimePackageBinding.viewerCanAccessProfile(
 		configuredProfile(),
 		player.UserId,
