@@ -32,6 +32,12 @@ local function failure(code: string): any
 	}
 end
 
+local function resolverOptions(options: any?): any
+	return {
+		allowSrdFallback = type(options) == "table" and options.allowSrdFallback == true,
+	}
+end
+
 local function privateAuthority(): any?
 	for _, package in BuiltinPackIndex do
 		if package.packageId == PRIVATE_PACKAGE_ID then
@@ -122,18 +128,29 @@ function RuleRuntimePackageBinding.loadRuntimeBinding(storage: Instance?): (any?
 	}, nil
 end
 
-function RuleRuntimePackageBinding.resolveProfileWithBinding(profile: string, binding: any?): any
+function RuleRuntimePackageBinding.resolveProfileWithBinding(
+	profile: string,
+	binding: any?,
+	options: any?
+): any
 	if PRIVATE_PROFILES[profile] ~= true then
 		return RulePackageResolver.resolve(profile, {})
 	end
-	if type(binding) ~= "table" then
-		return RulePackageResolver.resolve(profile, {})
+	local safeOptions = resolverOptions(options)
+	if type(binding) == "table" then
+		safeOptions.privateReadiness = binding.readiness
 	end
-	local result = RulePackageResolver.resolve(profile, {
-		privateReadiness = binding.readiness,
-	})
+	local result = RulePackageResolver.resolve(profile, safeOptions)
 	if type(result) ~= "table" or result.ok ~= true then
 		return result
+	end
+	-- An explicit development/test fallback selects the public package and must not
+	-- depend on private package or allowlist material that is unavailable by design.
+	if result.value.basePackageId == CoreRulesPackage.packageId then
+		return result
+	end
+	if type(binding) ~= "table" then
+		return failure("PRIVATE_SOURCE_MISSING")
 	end
 	local accessError = validateAuthorizedUserIds(binding.readiness)
 	if accessError ~= nil then
@@ -146,52 +163,63 @@ function RuleRuntimePackageBinding.resolveProfileWithBinding(profile: string, bi
 	return result
 end
 
-function RuleRuntimePackageBinding.resolveProfile(profile: string): any
+function RuleRuntimePackageBinding.resolveProfile(profile: string, options: any?): any
 	if PRIVATE_PROFILES[profile] ~= true then
 		return RulePackageResolver.resolve(profile, {})
 	end
 	local binding, loadError = RuleRuntimePackageBinding.loadRuntimeBinding()
-	if binding == nil then
-		if loadError == "PRIVATE_SOURCE_MISSING" then
-			return RulePackageResolver.resolve(profile, {})
-		end
+	if binding == nil and loadError ~= "PRIVATE_SOURCE_MISSING" then
 		return failure(loadError or "PRIVATE_SOURCE_MISSING")
 	end
-	return RuleRuntimePackageBinding.resolveProfileWithBinding(profile, binding)
+	return RuleRuntimePackageBinding.resolveProfileWithBinding(profile, binding, options)
 end
 
 function RuleRuntimePackageBinding.viewerCanAccessProfileWithBinding(
 	profile: string,
 	userId: number,
-	binding: any?
+	binding: any?,
+	options: any?
 ): boolean
 	if PRIVATE_PROFILES[profile] ~= true then
+		return true
+	end
+	local resolved = RuleRuntimePackageBinding.resolveProfileWithBinding(profile, binding, options)
+	if type(resolved) ~= "table" or resolved.ok ~= true then
+		return false
+	end
+	if resolved.value.basePackageId == CoreRulesPackage.packageId then
 		return true
 	end
 	if type(binding) ~= "table" then
 		return false
 	end
-	local resolved = RuleRuntimePackageBinding.resolveProfileWithBinding(profile, binding)
-	if type(resolved) ~= "table" or resolved.ok ~= true then
-		return false
-	end
 	return userIsAuthorized(binding.readiness, userId)
 end
 
-function RuleRuntimePackageBinding.viewerCanAccessProfile(profile: string, userId: number): boolean
+function RuleRuntimePackageBinding.viewerCanAccessProfile(
+	profile: string,
+	userId: number,
+	options: any?
+): boolean
 	if PRIVATE_PROFILES[profile] ~= true then
 		return true
 	end
 	local binding = select(1, RuleRuntimePackageBinding.loadRuntimeBinding())
-	return RuleRuntimePackageBinding.viewerCanAccessProfileWithBinding(profile, userId, binding)
+	return RuleRuntimePackageBinding.viewerCanAccessProfileWithBinding(
+		profile,
+		userId,
+		binding,
+		options
+	)
 end
 
 function RuleRuntimePackageBinding.packageForIdWithBinding(
 	packageId: string,
 	profile: string,
-	binding: any?
+	binding: any?,
+	options: any?
 ): any?
-	local result = RuleRuntimePackageBinding.resolveProfileWithBinding(profile, binding)
+	local result = RuleRuntimePackageBinding.resolveProfileWithBinding(profile, binding, options)
 	if type(result) ~= "table" or result.ok ~= true then
 		return nil
 	end
@@ -207,12 +235,16 @@ function RuleRuntimePackageBinding.packageForIdWithBinding(
 	return nil
 end
 
-function RuleRuntimePackageBinding.packageForId(packageId: string, profile: string): any?
+function RuleRuntimePackageBinding.packageForId(
+	packageId: string,
+	profile: string,
+	options: any?
+): any?
 	if PRIVATE_PROFILES[profile] ~= true then
-		return RuleRuntimePackageBinding.packageForIdWithBinding(packageId, profile, nil)
+		return RuleRuntimePackageBinding.packageForIdWithBinding(packageId, profile, nil, options)
 	end
 	local binding = select(1, RuleRuntimePackageBinding.loadRuntimeBinding())
-	return RuleRuntimePackageBinding.packageForIdWithBinding(packageId, profile, binding)
+	return RuleRuntimePackageBinding.packageForIdWithBinding(packageId, profile, binding, options)
 end
 
 return RuleRuntimePackageBinding

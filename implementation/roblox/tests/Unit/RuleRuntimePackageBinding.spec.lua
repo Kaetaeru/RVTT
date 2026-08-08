@@ -93,6 +93,43 @@ return function(h: any)
 		"missing binding never authorizes a private viewer"
 	)
 
+	local explicitFallback = Binding.resolveProfileWithBinding(
+		"development",
+		nil,
+		{ allowSrdFallback = true }
+	)
+	h:expect(explicitFallback.ok, "explicit runtime fallback resolves without private binding")
+	h:equal(explicitFallback.value.basePackageId, "rvtt.core.rules")
+	h:expect(explicitFallback.value.fallbackActive == true, "runtime fallback status remains visible")
+	h:equal(explicitFallback.value.fallbackReasonCode, "INTEGRATED_TEST_PACK_UNAVAILABLE")
+	local fallbackPackage = Binding.packageForIdWithBinding(
+		"rvtt.core.rules",
+		"development",
+		nil,
+		{ allowSrdFallback = true }
+	)
+	h:expect(fallbackPackage ~= nil, "explicit runtime fallback provides the SRD package")
+	h:equal(fallbackPackage.packageId, "rvtt.core.rules")
+	h:expect(
+		Binding.viewerCanAccessProfileWithBinding(
+			"development",
+			ownerUserId + 1,
+			nil,
+			{ allowSrdFallback = true }
+		),
+		"SRD fallback does not retain the private owner allowlist"
+	)
+	h:equal(
+		Binding.packageForIdWithBinding(
+			"rvtt.test.rules.2024.integrated.ko",
+			"development",
+			nil,
+			{ allowSrdFallback = true }
+		),
+		nil,
+		"explicit fallback cannot provide the private package"
+	)
+
 	local missingAccessBinding = copy(exactBinding)
 	missingAccessBinding.readiness.authorizedUserIds = nil
 	local missingAccess = Binding.resolveProfileWithBinding("test", missingAccessBinding)

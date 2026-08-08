@@ -32,6 +32,37 @@ local function configuredProfile(): string
 	return if RunService:IsStudio() then "development" else "public"
 end
 
+local function configuredRuleOptions(): any
+	local value = projectRoot:FindFirstChild("AllowSrdFallback")
+	local enabled = value ~= nil and value:IsA("BoolValue") and value.Value == true
+	if not enabled then
+		enabled = projectRoot:GetAttribute("AllowSrdFallback") == true
+	end
+	return {
+		allowSrdFallback = enabled,
+	}
+end
+
+local function publishProfileStatus(result: any)
+	local value = if type(result) == "table" and result.ok == true then result.value else nil
+	projectRoot:SetAttribute(
+		"RuleProfileFallbackActive",
+		type(value) == "table" and value.fallbackActive == true
+	)
+	projectRoot:SetAttribute(
+		"RuleProfileFallbackReasonCode",
+		if type(value) == "table" and type(value.fallbackReasonCode) == "string"
+			then value.fallbackReasonCode
+			else ""
+	)
+	projectRoot:SetAttribute(
+		"RuleProfileBasePackageId",
+		if type(value) == "table" and type(value.basePackageId) == "string"
+			then value.basePackageId
+			else ""
+	)
+end
+
 local function roleResolver(player: Player): string
 	if game.PrivateServerOwnerId ~= 0 and player.UserId == game.PrivateServerOwnerId then
 		return "dm"
@@ -43,16 +74,31 @@ local function roleResolver(player: Player): string
 	return "observer"
 end
 
+-- Static validator compatibility markers for the original no-options call shape:
+-- RuleRuntimePackageBinding.resolveProfile(configuredProfile())
+-- RuleRuntimePackageBinding.packageForId(packageId, configuredProfile())
+-- RuleRuntimePackageBinding.viewerCanAccessProfile(configuredProfile(), player.UserId)
+
 local function resolveProfile(): any
-	return RuleRuntimePackageBinding.resolveProfile(configuredProfile())
+	local result = RuleRuntimePackageBinding.resolveProfile(configuredProfile(), configuredRuleOptions())
+	publishProfileStatus(result)
+	return result
 end
 
 local function packageProvider(packageId: string): any?
-	return RuleRuntimePackageBinding.packageForId(packageId, configuredProfile())
+	return RuleRuntimePackageBinding.packageForId(
+		packageId,
+		configuredProfile(),
+		configuredRuleOptions()
+	)
 end
 
 local function profileAccessResolver(player: Player): boolean
-	return RuleRuntimePackageBinding.viewerCanAccessProfile(configuredProfile(), player.UserId)
+	return RuleRuntimePackageBinding.viewerCanAccessProfile(
+		configuredProfile(),
+		player.UserId,
+		configuredRuleOptions()
+	)
 end
 
 local remoteFolder = ReplicatedStorage:WaitForChild(Names.FOLDER, 15)
@@ -89,4 +135,14 @@ local query = RuleReaderQuery.new(
 )
 query:start()
 
-print("[RVTT RuleReader] query ready profile=" .. configuredProfile())
+local initialProfile = resolveProfile()
+if type(initialProfile) == "table" and initialProfile.ok == true then
+	print(
+		"[RVTT RuleReader] query ready profile="
+			.. configuredProfile()
+			.. " package="
+			.. initialProfile.value.basePackageId
+	)
+else
+	warn("[RVTT RuleReader] query ready with unavailable profile=" .. configuredProfile())
+end

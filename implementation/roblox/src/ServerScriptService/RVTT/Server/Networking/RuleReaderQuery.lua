@@ -63,12 +63,15 @@ function RuleReaderQuery:_handle(player: Player, request: any): any
 	if type(request) ~= "table" or type(request.action) ~= "string" then
 		return validationFailure()
 	end
+	-- Private profile readiness can contain source/digest/count diagnostics. Gate the
+	-- viewer before resolving that profile so an unauthorized caller only receives
+	-- the nondisclosing RULE_PROFILE_UNAVAILABLE result.
+	if self.profileAccessResolver(player) ~= true then
+		return profileUnavailable()
+	end
 	local package, profileResult = self:_activePackage()
 	if package == nil then
 		return profileResult
-	end
-	if self.profileAccessResolver(player) ~= true then
-		return profileUnavailable()
 	end
 	local viewer = {
 		userId = player.UserId,

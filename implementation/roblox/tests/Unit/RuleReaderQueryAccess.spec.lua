@@ -5,6 +5,7 @@ return function(h: any)
 	local Query = require(Server.Networking.RuleReaderQuery)
 	local remote = Instance.new("RemoteFunction")
 	local serviceCalls = 0
+	local profileCalls = 0
 	local service = {
 		manifest = function(_package: any, _viewer: any, _profile: any): any
 			serviceCalls += 1
@@ -26,7 +27,7 @@ return function(h: any)
 	local package = {
 		packageId = "rvtt.test.rules.2024.integrated.ko",
 	}
-	local profile = {
+	local profile: any = {
 		ok = true,
 		value = {
 			activeProfile = "development",
@@ -41,6 +42,7 @@ return function(h: any)
 		end,
 		service,
 		function(): any
+			profileCalls += 1
 			return profile
 		end,
 		function(_packageId: string): any
@@ -76,8 +78,39 @@ return function(h: any)
 		h:equal(denied.value, nil, "denial contains no private value")
 	end
 	h:equal(serviceCalls, 0, "unauthorized private viewer never reaches rule body service")
+	h:equal(profileCalls, 0, "unauthorized private viewer never resolves private profile readiness")
+
+	profile = {
+		ok = false,
+		error = {
+			code = "SOURCE_REVISION_MISMATCH",
+			message = "private diagnostic fixture",
+		},
+	}
+	local deniedMismatch = query:_handle(player, { action = "manifest" })
+	h:equal(
+		deniedMismatch.error.code,
+		"RULE_PROFILE_UNAVAILABLE",
+		"unauthorized viewer cannot distinguish private readiness mismatch"
+	)
+	h:equal(profileCalls, 0, "private readiness mismatch remains unevaluated for unauthorized viewer")
 
 	authorized = true
+	local authorizedMismatch = query:_handle(player, { action = "manifest" })
+	h:equal(
+		authorizedMismatch.error.code,
+		"SOURCE_REVISION_MISMATCH",
+		"authorized viewer can receive private readiness diagnostics"
+	)
+	h:equal(profileCalls, 1, "authorized viewer resolves the private profile")
+
+	profile = {
+		ok = true,
+		value = {
+			activeProfile = "development",
+			basePackageId = "rvtt.test.rules.2024.integrated.ko",
+		},
+	}
 	local allowed = query:_handle(player, { action = "manifest" })
 	h:expect(allowed.ok == true, "explicitly authorized private viewer reaches reader service")
 	h:equal(serviceCalls, 1, "authorized private viewer executes one reader service call")
