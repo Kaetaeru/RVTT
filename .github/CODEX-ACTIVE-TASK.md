@@ -1,21 +1,22 @@
 # RVTT Codex Active Task
 
 - status: `READY_FOR_CODEX_EXECUTION`
-- commandId: `RVTT-PR2-DM-LIVE-WORKSPACE-IMPLEMENTATION-001`
+- commandId: `RVTT-PR2-PHASE9-QUEUE-RECONCILIATION-001`
 - repository: `Kaetaeru/RVTT`
 - pullRequest: `2`
 - branch: `agent/survival-logistics-token-authoring`
-- taskType: `IMPLEMENTATION`
-- phase: `FULL_UI_UX_ALIGNMENT_PHASE_9`
-- commandPath: `.github/CODEX-IMPLEMENTATION-DM-LIVE-WORKSPACE-001.md`
+- taskType: `IMPLEMENTATION_FIX`
+- phase: `FULL_UI_UX_ALIGNMENT_PHASE_9_RECONCILIATION_FIX`
+- commandPath: `.github/CODEX-FIX-PHASE9-QUEUE-RECONCILIATION-001.md`
 - targetMode: `CURRENT_PR_HEAD_AT_START`
 - expectedOutputChannel: `PR #2 Top-level Conversation Comment`
-- resultMarker: `<!-- RVTT_CODEX_IMPLEMENTATION_RESULT -->`
+- resultMarker: `<!-- RVTT_CODEX_PHASE9_FIX_RESULT -->`
 - resultStatus: `PENDING`
-- previousCommand: `RVTT-PR2-ENTRY-ROLE-RECOVERY-IMPLEMENTATION-001`
-- previousCommandStatus: `PASS_AFTER_CI_RECOVERY`
-- phase8CiRecoveryCommand: `RVTT-PR2-PHASE8-CI-RECOVERY-001`
-- phase8CiRecoveryStatus: `PASS`
+- previousImplementationCommand: `RVTT-PR2-DM-LIVE-WORKSPACE-IMPLEMENTATION-001`
+- previousImplementationReportedStatus: `PASS`
+- chatgptVerificationStatus: `PARTIAL_HOLD`
+- phase9ApprovalState: `HOLD_PENDING_RECONCILIATION_FIX`
+- phase10State: `DO_NOT_ADVANCE`
 - studioRuntimeState: `BLOCKED_UNTIL_PHASE10_AND_NEW_CURRENT_HEAD_STATIC_GATE`
 - userManualRuntimeState: `NOT_STARTED_CURRENT_CONTRACT`
 - updatedBy: `ChatGPT Lead Coordinator`
@@ -23,174 +24,85 @@
 
 ## 현재 활성 작업
 
-다음 한 Phase만 수행한다.
+새 DM 기능을 추가하지 않는다.
 
 ```text
-DM Live Workspace
-→ modular window host
-→ player-view-safe preview
-→ authoritative override/control intents
-→ projected queue/status
+Phase 9 Queue / Receipt reconciliation fix
+→ recovery duplicate 제거
+→ control assignment projection confirmation
+→ terminal denied/stale/failure viewer-safe feedback 유지
+→ focused regression tests
+→ local/static validation
+→ publish
+→ new current HEAD remote CI success 확인
 ```
 
-Phase 4~8 Source 정합화와 Phase 8 remote CI recovery는 완료됐다. 현재 Work Order의 Phase 9 `DM Live Workspace 정합화`만 구현한다.
+## ChatGPT 검수에서 확인된 blocker
 
-## 핵심 Authority
+Phase 9 구현과 원격 CI 자체는 성공했지만, Source 검수에서 다음 결함이 확인됐다.
 
-```text
-AGENTS.md
-→ current PR / current remote HEAD
-→ CURRENT-WORK-ORDER.md
-→ AGENT-TEST-STATUS.md
-→ ADR-0089
-→ ADR-0090
-→ ADR-0091 / final UI contract
-→ ADR-0045 / ADR-0047
-→ modular-dm-tool-window-contract.md
-→ current Production Source / Tests
-```
+1. `dm.request_recovery` projected record는 stable key `recovery:<commandId>`를 가지지만 record.commandId가 없어 현재 generic dedup이 local pending과 연결하지 못한다.
+2. `dm.assign_control` success pending은 authoritative `dm_workspace.control[actorId]`와 expected controller를 대조하지 않아 `projection_confirmed`로 수렴하지 못한다.
+3. terminal failure receipt는 DM Workspace local pending에서 즉시 삭제되어 denied/stale/timeout/validation feedback이 보이지 않는다.
+4. 기존 focused test는 runtime patch dedup은 검증하지만 위 recovery/control/failure 경계를 충분히 고정하지 않는다.
 
-상위 계약에 따라 Player persistent UI에는 Minimap, 별도 Map, Objective Tracker를 추가하지 않는다.
+따라서 repository status 문서가 Phase 9 DONE/PASS를 표시하더라도 **최종 승인 상태는 HOLD**다. 이 Active Task와 연결된 fix command가 현재 explicit follow-up authority다.
 
-## 현재 Source 경계
+## 실행 규칙
 
-실행 시 최신 HEAD에서 반드시 재확인한다.
+1. `commandPath`를 먼저 읽는다.
+2. PR #2 최신 remote HEAD를 `targetShaAtStart`로 기록한다.
+3. current Phase 9 Source/Test를 다시 조사해 위 root cause가 실제로 맞는지 확인한다.
+4. 결함을 재현/정적으로 입증한 뒤 필요한 최소 수정만 한다.
+5. 새 gameplay-authority `dm.*` command를 추가하지 않는다.
+6. `DmWorkspaceDomain` state shape는 기존 stable identity로 해결할 수 있으면 변경하지 않는다.
+7. recovery는 기존 `recovery:<commandId>` stable identity를 우선 활용한다.
+8. control assignment는 submitted expected actor/controller와 authorized projection을 대조해 success receipt만으로 confirmed 처리하지 않는다.
+9. terminal denied/stale/timeout/validation 등은 bounded local viewer-safe feedback으로 유지한다. authoritative history로 가장하지 않는다.
+10. Player/Observer negative disclosure, Player View Preview server-policy parity, no live projection-sequence mutation을 보존한다.
+11. role loss/full sync는 sensitive windows와 local pending/terminal feedback을 purge해야 한다.
+12. recovery/control/failure focused tests와 기존 runtime patch/quick action regression test를 보강한다.
+13. repository validator/formatter/lint/Rojo/sourcemap/Luau analysis를 실행한다.
+14. Studio/Studio MCP/Human Playtest는 실행하지 않는다.
+15. 변경은 current PR branch에 non-force 반영한다.
+16. push 후 새 current HEAD의 관련 GitHub Actions를 실제 확인한다.
+17. 원격 CI 하나라도 failure면 PASS로 보고하지 않는다.
+18. 성공할 때만 Phase 9 final PASS, Phase 10 IN_PROGRESS로 상태 문서를 정정한다.
+19. 실패/부분 완료면 Phase 9 HOLD, Phase 10 DO NOT ADVANCE를 유지한다.
+20. 지정 Marker로 PR #2 top-level 결과 댓글을 남긴다.
 
-현재 `DmWorkspaceDomain`은 다음 DM-only server command를 가진다.
+## 명시적 제외
 
-```text
-dm.assign_control
-dm.quick_action
-dm.runtime_patch
-dm.request_recovery
-```
-
-현재 Projection Policy는 `dm_workspace`를 DM에게만 보여 주고 Player/Observer에는 `{}`를 제공한다.
-
-이 경계를 유지한다. UI 편의를 위해 임의 gameplay-authority command나 client-side mutation을 만들지 않는다.
-
-## 이번 Phase의 고정 계약
-
-### DM Window Host
-
-- Top Authoring Strip은 launcher다.
-- Left Inspector는 기본 dock일 뿐 고정 불변 패널이 아니다.
-- 여러 Tool Window를 독립 instance로 열 수 있다.
-- Move/Resize/Close/Focus/Dock 계열 layout은 local preference다.
-- Tool끼리 내부 상태를 직접 변경하지 않는다.
-- authoritative shared state는 Projection/Command 경계만 사용한다.
-- Quick Action은 작은 context popover로 유지한다.
-
-### Player View Preview
-
-- DM이 선택한 participant/viewer가 실제 받을 viewer-scoped Projection을 Preview한다.
-- DM full Projection을 client에서 가짜로 필터링하지 않는다.
-- 기존 server projection policy를 재사용한다.
-- Preview 때문에 실제 Player의 live projection sequence나 gameplay state를 변경하지 않는다.
-- target role/assignment/revision 변화 시 stale/refresh/close 처리한다.
-- target viewer가 볼 수 없는 private data/count/capability/DM workspace는 Preview에도 없어야 한다.
-
-### Override / Control
-
-기본 binding:
-
-```text
-control assignment → dm.assign_control
-quick action       → dm.quick_action
-runtime patch      → dm.runtime_patch
-recovery request   → dm.request_recovery
-```
-
-- CommandClient + revision/epoch 경계를 통한다.
-- stale 우회 금지.
-- runtime_patch를 범용 client backdoor로 확장하지 않는다.
-- pending/accepted/denied/stale/reconciled feedback은 기존 Phase 6~8 문법을 따른다.
-
-### Queue / Status
-
-- 실제 projected `quickActions`, `recoveryRequests`, `runtimePatches`, command receipt/pending source만 사용한다.
-- table iteration order를 UI order로 쓰지 않는다.
-- stable id + 실제 timestamp/revision으로 deterministic order를 만든다.
-- optimistic local item을 authoritative row처럼 가장하지 않는다.
-- refresh/reconnect 뒤 duplicate row를 만들지 않는다.
-- hidden item/count를 추론하거나 placeholder로 누출하지 않는다.
-
-### Permission / Recovery
-
-- DM 권한 상실 시 sensitive DM projection을 즉시 purge한다.
-- 관련 window는 close 또는 permission-safe surface가 된다.
-- 한 window의 stale/dispose가 다른 window local state를 손상시키지 않는다.
-- Phase 8 full-sync/epoch-change recovery를 재사용한다.
-
-## 작업 경계
-
-이번 Phase에서 하지 않는다.
-
-- Phase 10 Acceptance 완료
-- Studio / Studio MCP / Human Playtest
-- 전체 Full Scene Editor 신규 구현
-- 모든 역사적 DM panel 전면 구현
+- Phase 10 Acceptance 구현
+- 새 DM Tool/feature 추가
+- Full Scene Editor
 - ADR-0092 Runtime
 - Persistence Runtime
 - Performance/Soak
-- Touch/Controller UI
-- Player Minimap / 별도 Map / Objective Tracker
-- Audio
-- Client gameplay authority
+- Studio / Human Runtime
+- Player Minimap / separate Map / Objective Tracker
+- client gameplay authority
 - hidden/private placeholder
-- test skip/assertion 약화/CI bypass
+- test 삭제/skip/assertion 약화
+- validator/lint/CI bypass
+- force push
 - PR Ready/Approve/Merge
 
-## 실행 절차
-
-1. `commandPath`를 읽는다.
-2. PR #2 최신 remote HEAD를 `targetShaAtStart`로 기록한다.
-3. Authority, Work Order, AGENT-TEST-STATUS를 확인한다.
-4. Phase 8 `DONE`, Phase 9 `IN_PROGRESS`를 확인한다.
-5. 현재 DM UI/AppShell/App.client/ViewModel/Projection/Command/Input/Preference/Domain/Test source를 조사한다.
-6. 기존 책임과 중복되는 subsystem을 만들지 않는다.
-7. DM-only modular workspace/window lifecycle을 구현 또는 정합화한다.
-8. side-effect-free viewer-scoped Player View Preview를 구현하고 projection parity test를 추가한다.
-9. 기존 DM command에 control/override intents를 연결한다.
-10. projected queue/status와 reconciliation을 구현한다.
-11. role loss/resync/stale cleanup과 negative disclosure test를 보강한다.
-12. validator/formatter/lint/Rojo/Luau analysis와 관련 tests를 실행하고 UTF-8/diff 문제도 확인한다.
-13. 성공한 경우에만 Phase 9를 `DONE`, Phase 10을 `IN_PROGRESS`로 갱신하고 AGENT-TEST-STATUS도 실제 결과에 맞춘다.
-14. current PR branch에 non-force 반영한다.
-15. push 후 새 current HEAD의 `Validate RVTT implementation` 및 관련 required workflow 결론을 실제 확인한다. 원격 CI failure가 있으면 PASS 금지.
-16. 지정 Marker로 PR #2 top-level 결과 댓글을 남긴다.
-17. Studio/Human PASS를 주장하지 않는다.
-
-## 결과 검수 기준
-
-결과 댓글은 최소 다음을 포함한다.
+## 성공 조건
 
 ```text
-<!-- RVTT_CODEX_IMPLEMENTATION_RESULT -->
-commandId: RVTT-PR2-DM-LIVE-WORKSPACE-IMPLEMENTATION-001
-targetShaAtStart: <sha>
-resultHeadSha: <sha or unchanged>
-resultStatus: PASS | FAIL | BLOCKED | PARTIAL | ABORTED_STALE_HEAD
-phase: FULL_UI_UX_ALIGNMENT_PHASE_9
-implementedScope: <concise list>
-changedFiles: <count and/or paths>
-playerViewPreviewBoundary: <server viewer-policy reuse / no live sequence mutation>
-overrideCommandBindings: <actual existing commands>
-queueProjectionBoundary: <actual sources/order/reconciliation>
-negativeDisclosure: <DM vs Player/Observer>
-testsRun: <commands/results>
-staticValidationStatus: <status>
-remoteCiStatus: <current-head workflow conclusions>
-studioRuntimeStatus: NOT_EXECUTED
-humanPlaytestStatus: NOT_EXECUTED
-currentWorkOrderStatus: <phase 9/10 status>
-agentTestStatusUpdated: true | false
-failedChecks: <none or list>
-blockerReason: <none or reason>
-notes: <limitations>
+recovery command local/projected row 정확히 1개로 수렴
++ assign_control은 authoritative projection 일치 뒤 confirmed
++ denied/stale/terminal failure가 bounded viewer-safe local feedback으로 표시
++ runtime patch/quick action regression 없음
++ role-loss purge 유지
++ negative disclosure 유지
++ focused tests PASS
++ local/static validation PASS
++ new current HEAD related GitHub Actions SUCCESS
+→ Phase 9 FINAL PASS
+→ Phase 10 IN_PROGRESS
 ```
-
-PASS는 Phase 9 Source/Static/CI 범위만 의미한다.
 
 ## 사용자가 Codex에 보낼 최소 지시
 
@@ -203,9 +115,9 @@ RVTT 저장소의 .github/CODEX-ACTIVE-TASK.md에서 ChatGPT가 작성한 최신
 사용자가 `확인` 또는 `확인해`라고 하면:
 
 1. PR #2 current HEAD를 다시 조회한다.
-2. 최신 Phase 9 `<!-- RVTT_CODEX_IMPLEMENTATION_RESULT -->` 댓글을 찾는다.
-3. `commandId`, `targetShaAtStart`, `resultHeadSha`를 대조한다.
-4. 실제 commit/files와 Player Preview/Override/Queue/negative-disclosure 구현을 확인한다.
-5. 새 HEAD의 related GitHub Actions를 직접 확인한다.
-6. 모두 성공한 경우에만 Phase 9 최종 PASS를 인정한다.
-7. PASS 후에만 Phase 10 Acceptance 확장으로 진행한다.
+2. 최신 `<!-- RVTT_CODEX_PHASE9_FIX_RESULT -->` 댓글을 찾는다.
+3. target/result SHA와 실제 commit/files를 대조한다.
+4. recovery/control/failure reconciliation과 focused tests를 직접 확인한다.
+5. 새 HEAD 관련 GitHub Actions를 직접 확인한다.
+6. 모두 성공한 경우에만 Phase 9 final PASS를 인정한다.
+7. 그 뒤에만 Phase 10 Acceptance로 진행한다.
