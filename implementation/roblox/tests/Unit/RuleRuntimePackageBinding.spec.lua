@@ -60,23 +60,20 @@ return function(h: any)
 			"rvtt.test.rules.2024.integrated.ko",
 			profile .. " selects the private integrated package"
 		)
-		local provided = Binding.packageForIdWithBinding(
-			resolved.value.basePackageId,
-			profile,
-			exactBinding
-		)
+		local provided =
+			Binding.packageForIdWithBinding(resolved.value.basePackageId, profile, exactBinding)
 		h:expect(provided == privatePackage, profile .. " provider returns the injected package")
 	end
 
 	local missing = Binding.resolveProfileWithBinding("development", nil)
 	local missingCode = if missing.error then missing.error.code else nil
-	h:equal(missingCode, "PRIVATE_SOURCE_MISSING", "private profile remains fail closed without binding")
 	h:equal(
-		Binding.packageForIdWithBinding(
-			"rvtt.test.rules.2024.integrated.ko",
-			"development",
-			nil
-		),
+		missingCode,
+		"PRIVATE_SOURCE_MISSING",
+		"private profile remains fail closed without binding"
+	)
+	h:equal(
+		Binding.packageForIdWithBinding("rvtt.test.rules.2024.integrated.ko", "development", nil),
 		nil,
 		"missing binding never yields a private package"
 	)
@@ -103,16 +100,25 @@ return function(h: any)
 	malformedPackageBinding.package.chunks = nil
 	local malformedPackage = Binding.resolveProfileWithBinding("test", malformedPackageBinding)
 	local malformedPackageCode = if malformedPackage.error then malformedPackage.error.code else nil
-	h:equal(malformedPackageCode, "PRIVATE_RULE_PACKAGE_MISMATCH", "package body shape is validated")
+	h:equal(
+		malformedPackageCode,
+		"PRIVATE_RULE_PACKAGE_MISMATCH",
+		"package body shape is validated"
+	)
 
 	local publicResolved = Binding.resolveProfileWithBinding("public", wrongPackageBinding)
 	h:expect(publicResolved.ok, "public profile does not depend on private binding state")
 	h:equal(publicResolved.value.basePackageId, "rvtt.core.rules")
-	local publicPackage = Binding.packageForIdWithBinding("rvtt.core.rules", "public", wrongPackageBinding)
+	local publicPackage =
+		Binding.packageForIdWithBinding("rvtt.core.rules", "public", wrongPackageBinding)
 	h:expect(publicPackage ~= nil, "public provider remains available")
 	h:equal(publicPackage.packageId, "rvtt.core.rules")
 	h:equal(
-		Binding.packageForIdWithBinding("rvtt.test.rules.2024.integrated.ko", "public", exactBinding),
+		Binding.packageForIdWithBinding(
+			"rvtt.test.rules.2024.integrated.ko",
+			"public",
+			exactBinding
+		),
 		nil,
 		"public profile cannot request the private package"
 	)
