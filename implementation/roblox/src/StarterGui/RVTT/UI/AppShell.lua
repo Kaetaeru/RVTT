@@ -137,4 +137,3 @@ function AppShell.destroy(self: any)
 end
 
 return table.freeze(AppShell)
-

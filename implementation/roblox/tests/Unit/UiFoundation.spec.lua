@@ -129,4 +129,3 @@ return function(harness: any)
 	harness:expect(not ViewState.isValid("spinner_only"), "spinner-only is not a view state")
 	store:destroy()
 end
-

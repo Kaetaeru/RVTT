@@ -165,4 +165,3 @@ client.Input:push("base_hud", 10, {
 		return false
 	end,
 })
-

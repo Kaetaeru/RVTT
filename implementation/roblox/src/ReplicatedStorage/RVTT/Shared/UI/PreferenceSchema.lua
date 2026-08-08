@@ -124,4 +124,3 @@ function PreferenceSchema.defaults(): Preferences
 end
 
 return table.freeze(PreferenceSchema)
-

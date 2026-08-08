@@ -74,4 +74,3 @@ function ShellContract.resolve(payload: any, userId: number): Context
 end
 
 return table.freeze(ShellContract)
-

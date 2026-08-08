@@ -55,4 +55,3 @@ function ClientRuntime.await(): Runtime
 end
 
 return ClientRuntime
-

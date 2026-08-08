@@ -261,4 +261,3 @@ Full UI·UX Source·Acceptance 정합화
 → UI·Accessibility·Performance Evidence
 → Grand Persistence Runtime
 ```
-

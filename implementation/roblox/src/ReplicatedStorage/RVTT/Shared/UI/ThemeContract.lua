@@ -54,4 +54,3 @@ function ThemeContract.resolve(preferences: any): Theme
 end
 
 return table.freeze(ThemeContract)
-

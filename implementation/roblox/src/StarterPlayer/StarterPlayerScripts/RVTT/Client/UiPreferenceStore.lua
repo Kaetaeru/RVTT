@@ -75,4 +75,3 @@ function Store.destroy(self: any)
 end
 
 return Store
-

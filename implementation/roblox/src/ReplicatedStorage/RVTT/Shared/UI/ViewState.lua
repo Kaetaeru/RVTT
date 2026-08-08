@@ -26,4 +26,3 @@ function ViewState.isValid(value: any): boolean
 end
 
 return table.freeze(ViewState)
-

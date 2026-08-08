@@ -112,4 +112,3 @@ function ThemeApplicator.apply(root: Instance, preferences: any): string
 end
 
 return table.freeze(ThemeApplicator)
-

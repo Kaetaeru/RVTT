@@ -262,4 +262,3 @@ Next: <next required action>
 - 필요 시 개별 Acceptance Project와 Runner
 
 이 문서는 위 Authority를 **한눈에 보는 현재 상태 인덱스**로 유지한다.
-
