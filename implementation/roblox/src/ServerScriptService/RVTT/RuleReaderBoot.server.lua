@@ -1,7 +1,7 @@
 --!strict
 
-local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local ServerStorage = game:GetService("ServerStorage")
 
 if ReplicatedStorage:FindFirstChild("RVTT_TestMode") ~= nil then
@@ -27,7 +27,10 @@ local function configuredProfile(): string
 	if type(attribute) == "string" and attribute ~= "" then
 		return attribute
 	end
-	return "public"
+	-- Local Studio development follows the private-integrated default and therefore
+	-- fails closed until verified private readiness is supplied. Published public
+	-- runtime defaults to the SRD-only profile.
+	return if RunService:IsStudio() then "development" else "public"
 end
 
 local function roleResolver(player: Player): string
@@ -86,10 +89,5 @@ local query = RuleReaderQuery.new(
 	nil
 )
 query:start()
-
-Players.PlayerRemoving:Connect(function(_player)
-	-- Query state is request-local; this connection intentionally documents that
-	-- no per-player rule body cache survives a session departure on the server.
-end)
 
 print("[RVTT RuleReader] query ready profile=" .. configuredProfile())
