@@ -248,6 +248,12 @@ function DmWorkspacePanel:_submit(commandType: string, payload: any, target: any
 		createdAt = os.time(),
 		baseRevision = self.state.revision or -1,
 		accepted = false,
+		expectedActorId = if commandType == ViewModel.Commands.ASSIGN_CONTROL
+			then payload.actorId
+			else nil,
+		expectedControllerUserId = if commandType == ViewModel.Commands.ASSIGN_CONTROL
+			then payload.controllerUserId
+			else nil,
 	}
 	self:_renderWindows()
 end
@@ -263,7 +269,14 @@ function DmWorkspacePanel:onReceipt(message: any)
 	if type(message.result) == "table" and message.result.ok == true then
 		record.accepted = true
 	else
-		self.pending[message.commandId] = nil
+		local result = if type(message.result) == "table" then message.result else nil
+		local errorValue = if type(result) == "table" and type(result.error) == "table"
+			then result.error
+			else nil
+		record.terminalFailure = true
+		record.failureCode =
+			ViewModel.safeFailureCode(if type(errorValue) == "table" then errorValue.code else nil)
+		ViewModel.pruneTerminalFeedback(self.pending)
 	end
 	self:_renderWindows()
 end
@@ -537,7 +550,13 @@ function DmWorkspacePanel:_renderQueue(body: Frame)
 		end
 		label(
 			body,
-			string.format("%s · %s · r%s", row.status, row.kind, tostring(row.revision)),
+			string.format(
+				"%s · %s · r%s%s",
+				row.status,
+				row.kind,
+				tostring(row.revision),
+				if type(row.reason) == "string" then " · " .. row.reason else ""
+			),
 			UDim2.new(1, -16, 0, 24),
 			UDim2.fromOffset(8, y)
 		)
@@ -636,14 +655,7 @@ function DmWorkspacePanel:render(payload: any, userId: number, revision: number)
 	self.state = ViewModel.build(payload, userId, revision, self.pending)
 	self.Root.Visible = self.state.visible == true
 	if not self.Root.Visible then
-		self.previewClient:invalidate()
-		self.previewState = nil
-		self.pending = {}
-		self.quickActionVisible = false
-		self.defaultOpened = false
-		self.suppressLayoutSave = true
-		self.host:purgeSensitive()
-		self.suppressLayoutSave = false
+		self:purgeLocalState()
 		return
 	end
 	if not self.defaultOpened then
@@ -669,6 +681,17 @@ function DmWorkspacePanel:render(payload: any, userId: number, revision: number)
 	end
 	self:_renderQuickAction()
 	self:_renderWindows()
+end
+
+function DmWorkspacePanel:purgeLocalState()
+	self.previewClient:invalidate()
+	self.previewState = nil
+	self.pending = {}
+	self.quickActionVisible = false
+	self.defaultOpened = false
+	self.suppressLayoutSave = true
+	self.host:purgeSensitive()
+	self.suppressLayoutSave = false
 end
 
 function DmWorkspacePanel:cancelTopContext(): boolean

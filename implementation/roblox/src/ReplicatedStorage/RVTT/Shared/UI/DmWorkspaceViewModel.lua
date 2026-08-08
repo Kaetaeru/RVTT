@@ -10,6 +10,51 @@ local COMMANDS = table.freeze({
 })
 DmWorkspaceViewModel.Commands = COMMANDS
 
+local MAX_TERMINAL_FEEDBACK = 8
+DmWorkspaceViewModel.MaxTerminalFeedback = MAX_TERMINAL_FEEDBACK
+
+local SAFE_FAILURE_CODES: { [string]: boolean } = table.freeze({
+	UNAUTHORIZED = true,
+	PERMISSION_DENIED = true,
+	STALE_EPOCH = true,
+	STALE_REVISION = true,
+	VALIDATION_FAILED = true,
+	CLIENT_TIMEOUT = true,
+	TIMEOUT = true,
+	CONFLICT = true,
+	EXPIRED = true,
+	OPPORTUNITY_EXPIRED = true,
+	NETWORK_ERROR = true,
+})
+
+function DmWorkspaceViewModel.safeFailureCode(code: any): string
+	return if type(code) == "string" and SAFE_FAILURE_CODES[code] == true
+		then code
+		else "COMMAND_FAILED"
+end
+
+function DmWorkspaceViewModel.pruneTerminalFeedback(pending: any): any
+	local failures = {}
+	for commandId, record in pending do
+		if type(record) == "table" and record.terminalFailure == true then
+			table.insert(failures, {
+				commandId = commandId,
+				createdAt = if type(record.createdAt) == "number" then record.createdAt else 0,
+			})
+		end
+	end
+	table.sort(failures, function(left, right)
+		if left.createdAt ~= right.createdAt then
+			return left.createdAt > right.createdAt
+		end
+		return left.commandId > right.commandId
+	end)
+	for index = MAX_TERMINAL_FEEDBACK + 1, #failures do
+		pending[failures[index].commandId] = nil
+	end
+	return pending
+end
+
 local function domainsOf(payload: any): any
 	return if type(payload) == "table" and type(payload.domains) == "table"
 		then payload.domains
@@ -26,14 +71,21 @@ local function roleOf(domains: any, userId: number): string
 		else "observer"
 end
 
-local function appendQueue(rows: { any }, id: string, kind: string, record: any, revision: number)
+local function appendQueue(
+	rows: { any },
+	id: string,
+	kind: string,
+	record: any,
+	revision: number,
+	commandId: string?
+)
 	table.insert(rows, {
 		id = id,
 		kind = kind,
 		createdAt = if type(record.createdAt) == "number" then record.createdAt else 0,
 		revision = if type(record.revision) == "number" then record.revision else revision,
 		status = "projection_confirmed",
-		commandId = record.commandId,
+		commandId = commandId or record.commandId,
 		target = record.target or record.targetId or record.actionId,
 	})
 end
@@ -56,17 +108,28 @@ function DmWorkspaceViewModel.build(
 	local rows = {}
 	for _, record in workspace.quickActions or {} do
 		if type(record) == "table" and type(record.commandId) == "string" then
-			appendQueue(rows, "quick:" .. record.commandId, "quick_action", record, revision)
+			appendQueue(rows, "quick:" .. record.commandId, "quick_action", record, revision, nil)
 		end
 	end
 	for targetId, record in workspace.runtimePatches or {} do
 		if type(record) == "table" then
-			appendQueue(rows, "patch:" .. tostring(targetId), "runtime_patch", record, revision)
+			appendQueue(
+				rows,
+				"patch:" .. tostring(targetId),
+				"runtime_patch",
+				record,
+				revision,
+				nil
+			)
 		end
 	end
 	for requestId, record in workspace.recoveryRequests or {} do
 		if type(record) == "table" then
-			appendQueue(rows, tostring(requestId), "recovery", record, revision)
+			local stableId = tostring(requestId)
+			local commandId = if string.sub(stableId, 1, 9) == "recovery:"
+				then string.sub(stableId, 10)
+				else nil
+			appendQueue(rows, stableId, "recovery", record, revision, commandId)
 		end
 	end
 
@@ -77,17 +140,38 @@ function DmWorkspaceViewModel.build(
 		end
 	end
 	for commandId, record in pending or {} do
-		if confirmedCommands[commandId] ~= true then
+		local controlConfirmed = record.commandType == COMMANDS.ASSIGN_CONTROL
+			and record.accepted == true
+			and type(record.expectedActorId) == "string"
+			and type(record.expectedControllerUserId) == "number"
+			and type(workspace.control) == "table"
+			and workspace.control[record.expectedActorId] == record.expectedControllerUserId
+		if confirmedCommands[commandId] ~= true and controlConfirmed then
+			table.insert(rows, {
+				id = "control:" .. commandId,
+				kind = "assign_control",
+				createdAt = record.createdAt or 0,
+				revision = revision,
+				status = "projection_confirmed",
+				commandId = commandId,
+				target = record.expectedActorId,
+			})
+			confirmedCommands[commandId] = true
+		elseif confirmedCommands[commandId] ~= true then
 			table.insert(rows, {
 				id = "pending:" .. commandId,
 				kind = record.kind or record.commandType,
 				createdAt = record.createdAt or 0,
 				revision = record.baseRevision or revision,
-				status = if record.accepted
-					then "accepted_awaiting_projection"
+				status = if record.terminalFailure == true
+					then "terminal_failure"
+					elseif record.accepted then "accepted_awaiting_projection"
 					else "pending_receipt",
 				commandId = commandId,
 				target = record.target,
+				reason = if record.terminalFailure == true
+					then DmWorkspaceViewModel.safeFailureCode(record.failureCode)
+					else nil,
 			})
 		end
 	end

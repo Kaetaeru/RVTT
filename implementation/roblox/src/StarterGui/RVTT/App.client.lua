@@ -505,6 +505,7 @@ client.Recovery.Changed:Connect(function(state)
 		managementAwaitingRevision = nil
 		managementPanel:setPending(false)
 		client.ViewerPreview:invalidate()
+		dmWorkspacePanel:purgeLocalState()
 	elseif state.state == "recovered" then
 		entryError = nil
 	end

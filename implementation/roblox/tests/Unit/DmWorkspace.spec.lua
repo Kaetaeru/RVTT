@@ -96,7 +96,11 @@ return function(harness: any)
 					actor = { commandId = "command:a", createdAt = 10, revision = 2 },
 				},
 				recoveryRequests = {
-					["recovery:c"] = { id = "recovery:c", createdAt = 30, status = "requested" },
+					["recovery:command:c"] = {
+						id = "recovery:command:c",
+						createdAt = 30,
+						status = "requested",
+					},
 				},
 			},
 		},
@@ -129,6 +133,82 @@ return function(harness: any)
 		view.queue[4].status,
 		"accepted_awaiting_projection",
 		"accepted receipt stays distinct from projected confirmation"
+	)
+
+	local recoveryView = ViewModel.build(payload, 1, 10, {
+		["command:c"] = {
+			commandType = "dm.request_recovery",
+			createdAt = 30,
+			baseRevision = 9,
+			accepted = true,
+		},
+	})
+	harness:equal(#recoveryView.queue, 3, "recovery stable id removes the local duplicate")
+	harness:equal(
+		recoveryView.queue[3].commandId,
+		"command:c",
+		"recovery stable id derives the original command identity"
+	)
+
+	local controlPending = {
+		["command:control"] = {
+			commandType = "dm.assign_control",
+			createdAt = 40,
+			baseRevision = 10,
+			accepted = true,
+			expectedActorId = "actor",
+			expectedControllerUserId = 22,
+		},
+	}
+	local awaitingControl = ViewModel.build(payload, 1, 10, controlPending)
+	harness:equal(
+		awaitingControl.queue[4].status,
+		"accepted_awaiting_projection",
+		"control success receipt alone does not confirm authority"
+	)
+	payload.domains.dm_workspace.control.actor = 23
+	local conflictingControl = ViewModel.build(payload, 1, 11, controlPending)
+	harness:equal(
+		conflictingControl.queue[4].status,
+		"accepted_awaiting_projection",
+		"different projected controller is not confirmed"
+	)
+	payload.domains.dm_workspace.control.actor = 22
+	local confirmedControl = ViewModel.build(payload, 1, 12, controlPending)
+	harness:equal(
+		confirmedControl.queue[4].status,
+		"projection_confirmed",
+		"matching authoritative control projection confirms the command"
+	)
+
+	local failures = {}
+	for index = 1, ViewModel.MaxTerminalFeedback + 2 do
+		failures["failure:" .. tostring(index)] = {
+			commandType = "dm.runtime_patch",
+			createdAt = index,
+			terminalFailure = true,
+			failureCode = if index == ViewModel.MaxTerminalFeedback + 2
+				then "PRIVATE_SERVER_DETAIL"
+				else "STALE_REVISION",
+		}
+	end
+	ViewModel.pruneTerminalFeedback(failures)
+	local failureView = ViewModel.build(payload, 1, 12, failures)
+	harness:equal(
+		#failureView.queue,
+		ViewModel.MaxTerminalFeedback + 3,
+		"terminal feedback is retained with a bounded local history"
+	)
+	local redactedFailure: any = nil
+	for _, row in failureView.queue do
+		if row.commandId == "failure:" .. tostring(ViewModel.MaxTerminalFeedback + 2) then
+			redactedFailure = row
+		end
+	end
+	harness:equal(
+		redactedFailure.reason,
+		"COMMAND_FAILED",
+		"unknown terminal details are replaced with a viewer-safe code"
 	)
 	payload.domains.session.memberships["1"].role = "player"
 	local hidden = ViewModel.build(payload, 1, 9, {})
