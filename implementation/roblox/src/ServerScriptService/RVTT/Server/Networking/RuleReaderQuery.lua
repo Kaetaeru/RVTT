@@ -14,7 +14,8 @@ function RuleReaderQuery.new(
 	service: any,
 	resolveProfile: () -> any,
 	packageProvider: (string) -> any?,
-	clock: (() -> number)?
+	clock: (() -> number)?,
+	profileAccessResolver: ((Player) -> boolean)?
 ): any
 	return setmetatable({
 		remote = remote,
@@ -23,6 +24,9 @@ function RuleReaderQuery.new(
 		resolveProfile = resolveProfile,
 		packageProvider = packageProvider,
 		clock = clock or os.clock,
+		profileAccessResolver = profileAccessResolver or function(_player: Player): boolean
+			return true
+		end,
 		lastRequestByUserId = {},
 	}, RuleReaderQuery)
 end
@@ -31,19 +35,21 @@ local function validationFailure(): any
 	return Result.err("VALIDATION_FAILED", "error.command.validation_failed", false, nil)
 end
 
+local function profileUnavailable(): any
+	return Result.err("RULE_PROFILE_UNAVAILABLE", "error.rules.profile_unavailable", false, nil)
+end
+
 function RuleReaderQuery:_activePackage(): (any?, any)
 	local profileResult = self.resolveProfile()
 	if type(profileResult) ~= "table" or profileResult.ok ~= true then
 		if type(profileResult) == "table" and profileResult.ok == false then
 			return nil, profileResult
 		end
-		return nil,
-			Result.err("RULE_PROFILE_UNAVAILABLE", "error.rules.profile_unavailable", true, nil)
+		return nil, profileUnavailable()
 	end
 	local status = profileResult.value
 	if type(status) ~= "table" or type(status.basePackageId) ~= "string" then
-		return nil,
-			Result.err("RULE_PROFILE_UNAVAILABLE", "error.rules.profile_unavailable", true, nil)
+		return nil, profileUnavailable()
 	end
 	local package = self.packageProvider(status.basePackageId)
 	if package == nil then
@@ -60,6 +66,9 @@ function RuleReaderQuery:_handle(player: Player, request: any): any
 	local package, profileResult = self:_activePackage()
 	if package == nil then
 		return profileResult
+	end
+	if self.profileAccessResolver(player) ~= true then
+		return profileUnavailable()
 	end
 	local viewer = {
 		userId = player.UserId,
