@@ -1,144 +1,114 @@
 # RVTT Execution State
 
-- status: `RESULT_READY_FOR_CHATGPT_VERIFICATION`
-- commandId: `RVTT-PR2-ADR0091-OFFICIAL-2024-CHARACTER-SHEET-001`
+- status: `READY_FOR_CODEX_EXECUTION`
+- commandId: `RVTT-PR2-ADR0091-OFFICIAL-2024-CHARACTER-SHEET-FIX-002`
 - repository: `Kaetaeru/RVTT`
 - pullRequest: `2`
 - branch: `agent/survival-logistics-token-authoring`
-- taskType: `IMPLEMENTATION`
+- taskType: `FOCUSED_IMPLEMENTATION_REPAIR`
 - executionMode: `CODEX_IMPLEMENTATION_CHATGPT_VERIFICATION`
-- phase: `FULL_UI_UX_ALIGNMENT_PHASE_10_ADR0091_OFFICIAL_2024_CHARACTER_SHEET`
-- commandPath: `.github/CODEX-IMPLEMENTATION-ADR0091-OFFICIAL-2024-CHARACTER-SHEET-001.md`
+- phase: `FULL_UI_UX_ALIGNMENT_PHASE_10_ADR0091_OFFICIAL_2024_CHARACTER_SHEET_AUTHORITY_REPAIR`
+- commandPath: `.github/CODEX-FIX-ADR0091-OFFICIAL-2024-CHARACTER-SHEET-002.md`
 - targetMode: `CURRENT_PR_HEAD_AT_START`
-- resultMarker: `<!-- RVTT_CODEX_ADR0091_OFFICIAL_2024_CHARACTER_SHEET_RESULT -->`
-- resultStatus: `IMPLEMENTED_PENDING_CHATGPT_VERIFICATION`
-- resultHeadSha: `CURRENT_REMOTE_HEAD_AT_RESULT_PUBLICATION`
-- setupBaseHeadBeforeCommand: `ed6879eeb43ef3a0c097d975b1104a190a8f4210`
-- commandFileCommit: `224698d7ebdc2e3ea95091f7c8547c804022871f`
+- resultMarker: `<!-- RVTT_CODEX_ADR0091_OFFICIAL_2024_CHARACTER_SHEET_FIX_002_RESULT -->`
+- resultStatus: `PENDING`
+- setupBaseHeadBeforeCommand: `0d151c8253cc36fa31f7582e845bbe184e780bbd`
+- commandFileCommit: `c95d6e298dda896f3254228d402c1bf31052332d`
 - phase9Status: `FINAL_PASS`
-- phase10Status: `PARTIAL_HOLD_DICE_SLOT_REVEAL_NOTICE`
-- completedCorrections: `ASSET_REGISTRY_FOUNDATION,RULES_PROFILE_RELEASE_ENFORCEMENT,CORE_RULES_READER_ENGINE,PRIVATE_RULES_READER_IMPORT_OVERLAY,PRIVATE_STABLE_LINK_NORMALIZATION,OFFICIAL_2024_INTERACTIVE_CHARACTER_SHEET`
-- currentCorrection: `OFFICIAL_2024_INTERACTIVE_CHARACTER_SHEET`
+- phase10Status: `PARTIAL_HOLD_OFFICIAL_SHEET_AUTHORITY_REPAIR`
+- completedCorrections: `ASSET_REGISTRY_FOUNDATION,RULES_PROFILE_RELEASE_ENFORCEMENT,CORE_RULES_READER_ENGINE,PRIVATE_RULES_READER_IMPORT_OVERLAY,PRIVATE_STABLE_LINK_NORMALIZATION`
+- currentCorrection: `OFFICIAL_2024_CHARACTER_SHEET_AUTHORITY_AND_PRODUCTION_PATH_REPAIR`
 - coreRulesReaderAcceptanceState: `FINAL_STATIC_PASS`
-- officialCharacterSheetAcceptanceState: `STATIC_VERIFIED_PENDING_CHATGPT_VERIFICATION`
+- rulesProfileReleaseAcceptanceState: `STATIC_PASS`
+- officialCharacterSheetAcceptanceState: `HOLD_PENDING_AUTHORITY_REPAIR`
 - diceSlotRevealNoticeState: `BLOCKED`
-- matrixRecordedFinalContractGaps: `1`
-- effectiveRemainingFinalContractGaps: `1`
+- matrixRecordedFinalContractGaps: `1_STALE_OVERSTATEMENT`
+- effectiveRemainingFinalContractGaps: `2`
 - nextCorrectionOnVerifiedSuccess: `DICE_SLOT_REVEAL_NOTICE`
 - newCurrentHeadStaticGate: `NOT_YET`
 - studioRuntimeState: `NOT_EXECUTED`
 - studioHumanRetestState: `NOT_EXECUTED`
 - humanUiUxState: `NOT_EXECUTED`
 - updatedBy: `ChatGPT Lead Coordinator`
-- updatedAt: `2026-08-09`
+- updatedAt: `2026-08-10`
 
 ## 활성 작업
 
 Codex는 아래 command를 가장 먼저 읽고 그대로 실행한다.
 
 ```text
-.github/CODEX-IMPLEMENTATION-ADR0091-OFFICIAL-2024-CHARACTER-SHEET-001.md
+.github/CODEX-FIX-ADR0091-OFFICIAL-2024-CHARACTER-SHEET-002.md
 ```
 
-## 이번 작업 목표
+## ChatGPT 독립 검증 판정
 
-ADR-0091 / ADR-0040의 Official 2024 Character Sheet를 generic mockup이 아니라 실제 Production projection/control surface로 구현한다.
+직전 구현은 current-head Actions가 green이었지만 아래 차단 결함 때문에 Official Sheet를 `STATIC_VERIFIED`로 인정하지 않았다.
 
-핵심 축:
+1. `rules.sheet_roll`이 client-supplied `ability/proficient/mode`를 규칙 권위로 사용할 수 있음.
+2. focused spec이 Production command path로 만들 수 없는 Character/Item fields를 직접 주입함.
+3. Sheet attack list가 authoritative `ActorProfileResolver` attack catalog와 분리됨.
+4. Page 1 Top Header/Main Left 정보 구조가 Final UI contract보다 부족함.
+5. Equipment가 첫 row 하나만 실질 interaction surface임.
+6. details/send가 완결된 interaction flow가 아니고 structured spell slots rendering도 보강 필요.
+
+따라서 현재 matrix의 Official Sheet `STATIC_VERIFIED`와 final gap 1개 기록은 성공 증거로 사용하지 않는다. Codex는 작업 중 실제 상태를 HOLD에 맞추고, 모든 repair와 gate 성공 후에만 다시 `STATIC_VERIFIED_PENDING_CHATGPT_VERIFICATION`으로 올릴 수 있다.
+
+## 이번 repair의 필수 축
 
 ```text
-authoritative domain/projection
-→ CharacterSheetProjection + revision parity
-→ official-style Page 1 / Page 2 layout
-→ roll / equip / use / prepare / attune / hotbar intents
-→ CommandClient / server command
-→ receipt / awaiting projection / reconciliation
+server-authoritative roll resolution
+→ forged payload negative regressions
+→ Production-constructible Character/Inventory state
+→ projection/attack source parity
+→ exact Official 2024 two-page information structure
+→ all Equipment rows + working Popover/details/send
+→ receipt/revision/epoch safety
+→ strengthened validator + current-head Actions
 ```
 
-Character Sheet는 별도 상태 저장소가 아니다. Inventory/Equipment/Character/Spell/Resource와 같은 authoritative state를 projection하여 표시하고, 변경은 server command만 제출한다.
+### 서버 Roll 권위
 
-## 필수 UI 계약
+Client가 modifier/proficiency/advantage/damage formula를 선택할 수 없어야 한다. `rollKind + stable sourceId + authoritative domain/profile`에서 서버가 ability/proficiency/formula/eligibility를 해석한다.
 
-```text
-Reference page ratio = 8.5:11 portrait
+### Production constructibility
 
-Page 1
-Top Header = 13%
-Main = 87%
-Main Left / Right = 35% / 65%
-Right subsections = 24% / 43% / 33%
+Synthetic fixture에만 `attacks/spellcasting/equipSlot/usable/attunable/hotbarCapable`를 직접 넣고 PASS하는 것은 금지한다. 실제 Production character/inventory/content boundary로 생성된 state에서 Sheet positive path가 성립해야 한다.
 
-Page 2
-Left / Right = 68% / 32%
-Left Top = 24% / 76%
-Right subsections = 14% / 30% / 10% / 34% / 12%
-```
+특정 D&D class/item/spell 수치나 CR을 임의로 만들지 않는다. authoritative source가 없는 optional field는 unavailable/empty로 표시한다.
 
-Wide/Reference는 two-page spread, Compact는 Page Tab 1/2이며 compact column reflow는 금지한다.
+### UI 계약
 
-## 필수 authority / interaction 계약
-
-- Sheet revision은 authoritative projection revision이며 VTT Inventory와 동일해야 한다.
-- Ability/Save/Skill/Initiative/Attack/Damage/Spell Attack/Hit Dice/Death Save/Feature Roll은 client dice 계산 없이 server roll request를 만든다.
-- HP/Temp HP, equip/unequip, use/split/send, attune/unattune, prepare/memorize, hotbar pin/unpin, inspiration spend는 server command만 사용한다.
-- 현재 backend에 accepted action이 없으면 UI fake success가 아니라 최소 server-owned generic state/command를 구현하고 synthetic regression으로 검증한다.
-- receipt success와 authoritative projection 반영을 구분한다.
-- stale revision, permission revoke, authority epoch rebuild를 fail-safe 처리한다.
-- Player owner / authorized DM / Observer-or-unrelated-player nondisclosure를 projection builder 단계에서 검증한다.
-- 특정 class/item/spell 또는 공식 수치를 UI 코드에 꾸며내지 않는다.
+Accepted Final UI contract의 Page 1 Header/Main Left/Main Right와 Page 2 비율·내용을 그대로 유지한다. Equipment 34%에는 모든 row가 표시되고 각 row가 `SheetItemActionPopover`를 열어야 한다.
 
 ## 범위 밖
 
-이번 task에서는 다음을 시작하지 않는다.
-
 - Dice Slot Reveal Notice
 - Studio/Human execution
-- Multi-client runtime campaign
-- Persistence runtime
-- Performance/soak
+- Persistence
+- performance/soak
 - ADR-0092 Production
 
-## 성공 조건
+## 성공 상태
 
-모든 focused/static/build/current-head Actions가 통과한 경우에만 Codex는 구현 완료를 주장할 수 있다.
-
-성공 시 repository 상태 목표:
+모든 repair + focused/static/build/current-head Actions 성공 후에만:
 
 ```text
-Official 2024 Character Sheet = STATIC_VERIFIED
+Official 2024 Character Sheet = STATIC_VERIFIED_PENDING_CHATGPT_VERIFICATION
 Core Rules Reader = FINAL STATIC PASS
-remaining Final Contract gaps = 1
+Effective Final Contract gaps = 1
 → final.dice-slot-reveal-notice
 Phase 10 = PARTIAL / HOLD
 Studio/Human = NOT_EXECUTED
 ```
 
-`full-ui-ux-acceptance-matrix.json`의 Official Sheet 항목을 실제 Source/spec/validator 증거와 함께 갱신하고, `finalContractGaps`를 Dice Notice 하나로 줄이는 것은 모든 gate 통과 후에만 한다.
-
-## 완료 후 결과 상태
-
-Codex는 작업 완료 후 이 파일을 stale `READY_FOR_CODEX_EXECUTION` 상태로 남기지 않는다.
-
-성공 주장 시:
-
-```text
-status: RESULT_READY_FOR_CHATGPT_VERIFICATION
-resultStatus: IMPLEMENTED_PENDING_CHATGPT_VERIFICATION
-resultHeadSha: <current remote HEAD>
-effectiveRemainingFinalContractGaps: 1
-nextCorrectionOnVerifiedSuccess: DICE_SLOT_REVEAL_NOTICE
-studioRuntimeState: NOT_EXECUTED
-humanUiUxState: NOT_EXECUTED
-```
-
-ChatGPT 독립 검증 전에는 `FINAL_PASS`를 쓰지 않는다.
+Codex는 `FINAL_PASS`를 쓰지 않는다. ChatGPT가 결과 diff, domain authority, regressions, validator, current-head Actions를 독립 검증한 뒤 최종 판정한다.
 
 ## 결과 전달
 
-PR #2 top-level Conversation에 다음 marker로 결과를 남긴다.
+PR #2 top-level Conversation에 다음 marker를 사용한다.
 
 ```text
-<!-- RVTT_CODEX_ADR0091_OFFICIAL_2024_CHARACTER_SHEET_RESULT -->
+<!-- RVTT_CODEX_ADR0091_OFFICIAL_2024_CHARACTER_SHEET_FIX_002_RESULT -->
 ```
 
-필수 결과 내용은 command 파일의 `결과 댓글` 절을 따른다.
+세부 성공 조건과 필수 결과 필드는 command 파일을 따른다.
