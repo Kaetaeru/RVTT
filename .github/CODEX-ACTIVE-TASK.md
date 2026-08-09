@@ -1,26 +1,26 @@
 # RVTT Execution State
 
 - status: `READY_FOR_CODEX_EXECUTION`
-- commandId: `RVTT-PR2-ADR0091-OFFICIAL-2024-CHARACTER-SHEET-FIX-002`
+- commandId: `RVTT-PR2-ADR0091-OFFICIAL-2024-CHARACTER-SHEET-FIX-003`
 - repository: `Kaetaeru/RVTT`
 - pullRequest: `2`
 - branch: `agent/survival-logistics-token-authoring`
 - taskType: `FOCUSED_IMPLEMENTATION_REPAIR`
 - executionMode: `CODEX_IMPLEMENTATION_CHATGPT_VERIFICATION`
-- phase: `FULL_UI_UX_ALIGNMENT_PHASE_10_ADR0091_OFFICIAL_2024_CHARACTER_SHEET_AUTHORITY_REPAIR`
-- commandPath: `.github/CODEX-FIX-ADR0091-OFFICIAL-2024-CHARACTER-SHEET-002.md`
+- phase: `FULL_UI_UX_ALIGNMENT_PHASE_10_ADR0091_OFFICIAL_2024_CHARACTER_SHEET_ELIGIBILITY_AUTHORITY_REPAIR`
+- commandPath: `.github/CODEX-FIX-ADR0091-OFFICIAL-2024-CHARACTER-SHEET-003.md`
 - targetMode: `CURRENT_PR_HEAD_AT_START`
-- resultMarker: `<!-- RVTT_CODEX_ADR0091_OFFICIAL_2024_CHARACTER_SHEET_FIX_002_RESULT -->`
+- resultMarker: `<!-- RVTT_CODEX_ADR0091_OFFICIAL_2024_CHARACTER_SHEET_FIX_003_RESULT -->`
 - resultStatus: `PENDING`
-- setupBaseHeadBeforeCommand: `0d151c8253cc36fa31f7582e845bbe184e780bbd`
-- commandFileCommit: `c95d6e298dda896f3254228d402c1bf31052332d`
+- setupBaseHeadBeforeCommand: `fecf0f39ce964d60229818f685afdf23cb5059e8`
+- commandFileCommit: `b993341496af39ff8dbf4ff8135a0de2c6e1ebc1`
 - phase9Status: `FINAL_PASS`
-- phase10Status: `PARTIAL_HOLD_OFFICIAL_SHEET_AUTHORITY_REPAIR`
-- completedCorrections: `ASSET_REGISTRY_FOUNDATION,RULES_PROFILE_RELEASE_ENFORCEMENT,CORE_RULES_READER_ENGINE,PRIVATE_RULES_READER_IMPORT_OVERLAY,PRIVATE_STABLE_LINK_NORMALIZATION`
-- currentCorrection: `OFFICIAL_2024_CHARACTER_SHEET_AUTHORITY_AND_PRODUCTION_PATH_REPAIR`
+- phase10Status: `PARTIAL_HOLD_OFFICIAL_SHEET_ELIGIBILITY_AUTHORITY_REPAIR`
+- completedCorrections: `ASSET_REGISTRY_FOUNDATION,RULES_PROFILE_RELEASE_ENFORCEMENT,CORE_RULES_READER_ENGINE,PRIVATE_RULES_READER_IMPORT_OVERLAY,PRIVATE_STABLE_LINK_NORMALIZATION,OFFICIAL_SHEET_FIX_002_MAJOR_REPAIR`
+- currentCorrection: `OFFICIAL_2024_CHARACTER_SHEET_HIT_DIE_AND_ITEM_CAPABILITY_AUTHORITY`
 - coreRulesReaderAcceptanceState: `FINAL_STATIC_PASS`
 - rulesProfileReleaseAcceptanceState: `STATIC_PASS`
-- officialCharacterSheetAcceptanceState: `HOLD_PENDING_AUTHORITY_REPAIR`
+- officialCharacterSheetAcceptanceState: `HOLD_PENDING_ELIGIBILITY_AUTHORITY_REPAIR`
 - diceSlotRevealNoticeState: `BLOCKED`
 - matrixRecordedFinalContractGaps: `1_STALE_OVERSTATEMENT`
 - effectiveRemainingFinalContractGaps: `2`
@@ -37,48 +37,70 @@
 Codex는 아래 command를 가장 먼저 읽고 그대로 실행한다.
 
 ```text
-.github/CODEX-FIX-ADR0091-OFFICIAL-2024-CHARACTER-SHEET-002.md
+.github/CODEX-FIX-ADR0091-OFFICIAL-2024-CHARACTER-SHEET-003.md
 ```
 
-## ChatGPT 독립 검증 판정
+## ChatGPT 독립 재검증 판정
 
-직전 구현은 current-head Actions가 green이었지만 아래 차단 결함 때문에 Official Sheet를 `STATIC_VERIFIED`로 인정하지 않았다.
+FIX-002는 다음 큰 결함을 실제로 개선했다.
 
-1. `rules.sheet_roll`이 client-supplied `ability/proficient/mode`를 규칙 권위로 사용할 수 있음.
-2. focused spec이 Production command path로 만들 수 없는 Character/Item fields를 직접 주입함.
-3. Sheet attack list가 authoritative `ActorProfileResolver` attack catalog와 분리됨.
-4. Page 1 Top Header/Main Left 정보 구조가 Final UI contract보다 부족함.
-5. Equipment가 첫 row 하나만 실질 interaction surface임.
-6. details/send가 완결된 interaction flow가 아니고 structured spell slots rendering도 보강 필요.
+- `rules.sheet_roll` client rule-math forgery 차단
+- server-owned Character/Item content hydration
+- canonical profile attack source wiring
+- Official two-page field/layout 보강
+- 모든 Equipment row + working popover/details/send
+- structured spell slots
+- out-of-order receipt guard
 
-따라서 현재 matrix의 Official Sheet `STATIC_VERIFIED`와 final gap 1개 기록은 성공 증거로 사용하지 않는다. Codex는 작업 중 실제 상태를 HOLD에 맞추고, 모든 repair와 gate 성공 후에만 다시 `STATIC_VERIFIED_PENDING_CHATGPT_VERIFICATION`으로 올릴 수 있다.
+그러나 current HEAD `fecf0f39ce964d60229818f685afdf23cb5059e8`에서 아래 차단 결함이 남아 있어 Official Sheet는 아직 `HOLD`다.
 
-## 이번 repair의 필수 축
+1. Hit Die는 `remaining == 0`이어도 server roll 가능하며 성공 시 remaining을 소비하지 않는다.
+2. `inventory.equip`은 trusted `item.equipSlot`을 server boundary에서 강제하지 않고 client slot/비장착 item 우회가 가능하다.
+3. `character.sheet_set_hotbar`는 `item.hotbarCapable == true` 및 target character ↔ item location 관계를 server boundary에서 강제하지 않는다.
+4. trusted attack source가 없는 상태에서 fabricated generic fallback이 Official Sheet completeness의 성공 근거가 되지 않도록 non-invention guard가 필요하다.
+5. focused regression/validator는 위 세 eligibility authority 우회를 아직 직접 잠그지 않는다.
+
+현재 Matrix의 Official Sheet `STATIC_VERIFIED`와 final gap 1개 기록은 이번 ChatGPT 판정 기준으로 stale overstatement이며 성공 증거로 사용하지 않는다.
+
+## 이번 FIX-003 필수 축
 
 ```text
-server-authoritative roll resolution
-→ forged payload negative regressions
-→ Production-constructible Character/Inventory state
-→ projection/attack source parity
-→ exact Official 2024 two-page information structure
-→ all Equipment rows + working Popover/details/send
-→ receipt/revision/epoch safety
-→ strengthened validator + current-head Actions
+Hit Die remaining authority + atomic consumption
+→ Projection availability parity
+→ trusted equipSlot enforcement
+→ hotbarCapable + character-item relation enforcement
+→ no fabricated attack acceptance
+→ real Production-path negative regressions
+→ validator negative self-tests
+→ current-head Actions
 ```
 
-### 서버 Roll 권위
+### Hit Die
 
-Client가 modifier/proficiency/advantage/damage formula를 선택할 수 없어야 한다. `rollKind + stable sourceId + authoritative domain/profile`에서 서버가 ability/proficiency/formula/eligibility를 해석한다.
+- authoritative `remaining > 0`일 때만 사용 가능
+- 성공한 roll과 remaining -1이 같은 transaction
+- zero/malformed/missing remaining은 fail closed
+- Projection도 availability와 일치
+- client가 sides/count/modifier/remaining을 지정하지 못함
 
-### Production constructibility
+### Equip
 
-Synthetic fixture에만 `attacks/spellcasting/equipSlot/usable/attunable/hotbarCapable`를 직접 넣고 PASS하는 것은 금지한다. 실제 Production character/inventory/content boundary로 생성된 state에서 Sheet positive path가 성립해야 한다.
+- trusted `item.equipSlot`만 canonical slot
+- non-equippable item direct command 거부
+- forged alternate slot 거부 또는 authority effect 없음
+- 다른 character item을 equip command로 몰래 이전하는 우회 금지
 
-특정 D&D class/item/spell 수치나 CR을 임의로 만들지 않는다. authoritative source가 없는 optional field는 unavailable/empty로 표시한다.
+### Hotbar
 
-### UI 계약
+- trusted `item.hotbarCapable == true` 필수
+- item current location이 target character에 속해야 함
+- 다른 character/ground/non-capable item pin/unpin fail closed
 
-Accepted Final UI contract의 Page 1 Header/Main Left/Main Right와 Page 2 비율·내용을 그대로 유지한다. Equipment 34%에는 모든 row가 표시되고 각 row가 `SheetItemActionPopover`를 열어야 한다.
+### Attack non-invention
+
+- positive attack acceptance는 active server-owned original definition의 explicit attack으로 증명
+- trusted attack definition이 없는 character에 새 공식/가짜 attack formula를 발명하지 않음
+- 특정 D&D 수치/CR/공격 수치를 새로 hardcode하지 않음
 
 ## 범위 밖
 
@@ -87,6 +109,7 @@ Accepted Final UI contract의 Page 1 Header/Main Left/Main Right와 Page 2 비�
 - Persistence
 - performance/soak
 - ADR-0092 Production
+- unrelated refactor
 
 ## 성공 상태
 
@@ -101,14 +124,14 @@ Phase 10 = PARTIAL / HOLD
 Studio/Human = NOT_EXECUTED
 ```
 
-Codex는 `FINAL_PASS`를 쓰지 않는다. ChatGPT가 결과 diff, domain authority, regressions, validator, current-head Actions를 독립 검증한 뒤 최종 판정한다.
+Codex는 `FINAL_PASS`를 쓰지 않는다. ChatGPT가 result diff, authority semantics, negative regressions, validator, current-head Actions를 독립 검증한 뒤 최종 판정한다.
 
 ## 결과 전달
 
 PR #2 top-level Conversation에 다음 marker를 사용한다.
 
 ```text
-<!-- RVTT_CODEX_ADR0091_OFFICIAL_2024_CHARACTER_SHEET_FIX_002_RESULT -->
+<!-- RVTT_CODEX_ADR0091_OFFICIAL_2024_CHARACTER_SHEET_FIX_003_RESULT -->
 ```
 
-세부 성공 조건과 필수 결과 필드는 command 파일을 따른다.
+세부 필수 결과 필드는 command 파일을 따른다.
