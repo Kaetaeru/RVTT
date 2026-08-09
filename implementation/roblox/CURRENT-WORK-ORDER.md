@@ -42,11 +42,11 @@ Grand Persistence Published Runner·Config·CI
 현재 작업
 → Full UI·UX Acceptance Matrix 등록 완료
 → ADR-0091 Asset Registry + Rules Profile/Release Leak Gate + Core Rules Reader STATIC_VERIFIED
-→ Core Rules private importer + generated Rojo overlay + owner-only access positive path STATIC/BUILD VERIFIED
+→ Core Rules private importer + stable document/README/fragment links + raw-path safe downgrade + reciprocal backlinks + generated Rojo overlay + owner-only access positive path STATIC/BUILD VERIFIED
 → Official 2024 Character Sheet + Dice Slot Reveal Notice 2개 Gap으로 Phase 10 HOLD
 ```
 
-Input·Context Action, Exploration·Encounter HUD, Inventory·Journal·Settings, Entry·Role·Recovery, DM Workspace Source는 현재 계약에 정합화됐다. ADR-0091 Asset Registry, Rules Profile/Release Leak Gate, Core Rules Reader는 server-side viewer filtering, stable rule anchor, lazy chunk loading, authoritative session-role marker, actual filesystem public staging과 focused validation까지 정적으로 확인됐다. Core Rules private positive path는 pinned private source revision·subtree digest·12/48/16/10/75/391 count·dirty-source 검증, 임시 RuleContentPackage/search index 생성, explicit server-only UserId allowlist, generated `RVTTPrivateRuleContent` Rojo overlay, unauthorized query nondisclosure까지 연결했다. Public CI는 private body를 읽지 않고 synthetic source로 동일 importer/preparer/overlay build를 검증하므로 실제 private corpus Studio Runtime PASS로 확대하지 않는다. 남은 필수 구현 Gap 2개와 그 뒤의 새 current-HEAD Static Gate 전에는 Studio Retest를 시작하지 않는다.
+Input·Context Action, Exploration·Encounter HUD, Inventory·Journal·Settings, Entry·Role·Recovery, DM Workspace Source는 현재 계약에 정합화됐다. ADR-0091 Asset Registry, Rules Profile/Release Leak Gate, Core Rules Reader는 server-side viewer filtering, stable rule anchor, lazy chunk loading, authoritative session-role marker, actual filesystem public staging과 focused validation까지 정적으로 확인됐다. Core Rules private positive path는 pinned private source revision·subtree digest·12/48/16/10/75/391 count·dirty-source 검증, 임시 RuleContentPackage/search index 생성, in-root document·README·fragment·duplicate anchor stable URI, missing/out-of-root raw-path safe downgrade, reciprocal backlink, explicit server-only UserId allowlist, generated `RVTTPrivateRuleContent` Rojo overlay, unauthorized query nondisclosure까지 연결했다. Public CI는 private body를 읽지 않고 synthetic source로 동일 importer/preparer/overlay build를 검증하므로 실제 private corpus Studio Runtime PASS로 확대하지 않는다. 남은 필수 구현 Gap 2개와 그 뒤의 새 current-HEAD Static Gate 전에는 Studio Retest를 시작하지 않는다.
 
 ## 2. 목표 입력 계약
 

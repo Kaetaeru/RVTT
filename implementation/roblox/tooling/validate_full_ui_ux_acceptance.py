@@ -282,10 +282,16 @@ def validate_matrix_data(matrix: dict, manifest: dict) -> list[str]:
             "implementation/roblox/src/ReplicatedStorage/RVTT/Shared/Rules/RuleReaderClient.lua",
             "implementation/roblox/src/StarterGui/RVTT/UI/Components/CoreRulesReaderPanel.lua",
             "implementation/roblox/tests/Unit/CoreRulesReader.spec.lua",
+            "implementation/roblox/tests/Unit/RuleRuntimePackageBinding.spec.lua",
+            "implementation/roblox/tests/Unit/RuleReaderQueryAccess.spec.lua",
+            "implementation/roblox/tooling/build_private_rules_runtime.py",
+            "implementation/roblox/tooling/validate_private_rules_runtime_pipeline.py",
             "implementation/roblox/tooling/validate_core_rules_reader.py",
         }
         if not required_reader_evidence.issubset(set(reader_item.get("automatedRefs", []))):
-            errors.append("matrix: Core Rules Reader cannot close without lazy-load and nondisclosure evidence")
+            errors.append(
+                "matrix: Core Rules Reader cannot close without lazy-load, private stable-link, and nondisclosure evidence"
+            )
 
     rules_item = final_items.get("final.rules-profile-release-leak-gate")
     if rules_item is not None:
@@ -374,7 +380,12 @@ def run_self_tests(matrix: dict, manifest: dict) -> list[str]:
     missing_reader_evidence = deepcopy(matrix)
     reader_item = next(item for item in missing_reader_evidence["acceptanceItems"] if item["id"] == "final.core-rules-reader-filtering")
     reader_item["automatedRefs"] = []
-    fixtures.append((missing_reader_evidence, "Core Rules Reader cannot close without lazy-load and nondisclosure evidence"))
+    fixtures.append(
+        (
+            missing_reader_evidence,
+            "Core Rules Reader cannot close without lazy-load, private stable-link, and nondisclosure evidence",
+        )
+    )
 
     missing_rules_evidence = deepcopy(matrix)
     rules_item = next(item for item in missing_rules_evidence["acceptanceItems"] if item["id"] == "final.rules-profile-release-leak-gate")

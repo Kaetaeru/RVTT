@@ -115,7 +115,10 @@ BuiltinPackIndex pinned revision + integrated source-tree digest + expected coun
 - `run-private-rules-studio.ps1`은 `RVTT_PRIVATE_DND2024_KO_SOURCE`와 `RVTT_PRIVATE_RULES_AUTHORIZED_USER_IDS`가 모두 없으면 fail closed하며 base project를 직접 build하지 않고 generated private overlay project만 Rojo build한다.
 - public GitHub Actions는 private repository나 private rule body를 checkout하지 않는다.
 - `validate_private_rules_runtime_pipeline.py`는 공개-safe synthetic Git source를 만들어 동일 importer/preparer를 실행하고 generated `.rbxlx`에 `RVTTPrivateRuleContent`, `Readiness`, `RuleReaderPackage` ModuleScript binding이 실제 포함되는지 확인한다.
-- synthetic pipeline은 wrong revision, wrong source-tree digest, wrong content count, dirty source, missing source, missing viewer allowlist를 각각 fail-closed regression으로 검증한다.
+- synthetic pipeline은 in-root document·README·same/cross-document fragment와 duplicate heading anchor를 stable `rvtt-rule://` URI로 정규화하고, 모든 `relatedLinks`가 실제 generated target의 first chunk에 정확히 하나의 reciprocal backlink를 만드는지 검증한다.
+- missing local target, sourceRoot escape와 invalid `rvtt-rule://` 입력은 human label만 plain text로 보존하며 raw `.md` path나 related/backlink를 runtime package에 남기지 않는다. 명시적 external URL은 일반 Markdown으로만 보존한다.
+- 같은 synthetic source를 두 번 import한 `RuleReaderPackage.json` byte output이 일치하고 모든 related/backlink URI가 generated catalog에서 resolve되며 각 chunk가 UTF-8 16KB 이하인지 확인한다.
+- synthetic pipeline은 wrong revision, wrong source-tree digest, wrong content count, dirty source, missing source, missing viewer allowlist를 각각 fail-closed regression으로 계속 검증한다.
 - private profile에서 allowlist에 없는 UserId는 RuleReader service에 도달하기 전에 `RULE_PROFILE_UNAVAILABLE`만 받고 manifest/search/open/chunk body를 얻지 못하도록 focused regression과 static validator에 연결한다.
 
 현재 repository의 `rvtt.core.rules` Reader package에는 구조 검증용 공개-safe Reader Guide만 들어 있다. 전체 SRD corpus 또는 private 한국어 integrated corpus의 실제 content population/runtime evidence를 이 Static PASS로 확대하지 않는다. 특히 public CI의 synthetic importer/overlay PASS는 **실제 private corpus Studio Runtime PASS가 아니다**.

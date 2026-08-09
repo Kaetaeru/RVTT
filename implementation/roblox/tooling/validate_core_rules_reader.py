@@ -18,6 +18,7 @@ REQUIRED_FILES = {
     "src/ServerStorage/RVTT/Content/Packs/rvtt.core.rules/RuleReaderPackage.lua",
     "src/StarterGui/RVTT/UI/Components/CoreRulesReaderPanel.lua",
     "tests/Unit/CoreRulesReader.spec.lua",
+    "tests/Unit/RuleReaderQueryAccess.spec.lua",
     "tests/Unit/RuleRuntimePackageBinding.spec.lua",
     "tooling/build_private_rules_runtime.py",
     "tooling/prepare_private_rules_runtime.py",
@@ -144,6 +145,9 @@ def validate(root: Path = ROOT) -> list[str]:
         '"private-rules.generated.project.json"',
         "MAX_CHUNK_BYTES = 16 * 1024",
         "searchIndex",
+        "normalize_markdown_links",
+        "RULE_LINK_TARGET_UNRESOLVED",
+        "return label",
     ):
         if marker not in importer:
             errors.append(f"build_private_rules_runtime.py: missing importer marker {marker}")
@@ -171,6 +175,13 @@ def validate(root: Path = ROOT) -> list[str]:
         "authorizedUserIds",
         "synthetic-private-rules.rbxlx",
         "ModuleScript",
+        "write_link_graph",
+        "validate_link_graph",
+        "duplicate-heading-2",
+        "missing-local.md",
+        "../../../outside.md",
+        "relatedLinks",
+        "backlinks",
     ):
         if marker not in pipeline:
             errors.append(f"validate_private_rules_runtime_pipeline.py: missing pipeline marker {marker}")
@@ -252,6 +263,8 @@ def validate(root: Path = ROOT) -> list[str]:
         errors.append("RemoteBootstrap.spec.lua: focused Core Rules Reader regression is not registered")
     if 'require(script.Parent["RuleRuntimePackageBinding.spec"])(harness)' not in remote_spec:
         errors.append("RemoteBootstrap.spec.lua: private runtime binding regression is not registered")
+    if 'require(script.Parent["RuleReaderQueryAccess.spec"])(harness)' not in remote_spec:
+        errors.append("RemoteBootstrap.spec.lua: private query access regression is not registered")
     if "RULE_READER_QUERY" not in remote_names:
         errors.append("RemoteNames.lua: RuleReaderQuery remote name is not canonical")
 

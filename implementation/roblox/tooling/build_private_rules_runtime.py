@@ -99,9 +99,11 @@ def _resolve_rule_uri(
     source_root: Path,
     catalog: dict[Path, dict],
     package_id: str,
+    valid_targets: set[str],
 ) -> str | None:
-    if destination.startswith("rvtt-rule://"):
-        return destination
+    if destination.lower().startswith("rvtt-rule://"):
+        normalized_rule_uri = "rvtt-rule://" + destination[len("rvtt-rule://") :]
+        return normalized_rule_uri if normalized_rule_uri in valid_targets else None
     if re.match(r"^[A-Za-z][A-Za-z0-9+.-]*:", destination) or destination.startswith("//"):
         return None
     path_part, separator, fragment = destination.partition("#")
@@ -135,6 +137,7 @@ def normalize_markdown_links(
     source_root: Path,
     catalog: dict[Path, dict],
     package_id: str,
+    valid_targets: set[str],
 ) -> tuple[str, list[str]]:
     related: list[str] = []
     seen: set[str] = set()
@@ -142,9 +145,26 @@ def normalize_markdown_links(
     def replace(match: re.Match[str]) -> str:
         label = match.group(1)
         destination = _markdown_destination(match.group(2))
-        uri = _resolve_rule_uri(destination, source_path, source_root, catalog, package_id)
+        uri = _resolve_rule_uri(
+            destination,
+            source_path,
+            source_root,
+            catalog,
+            package_id,
+            valid_targets,
+        )
         if uri is None:
-            return match.group(0)
+            has_external_scheme = re.match(
+                r"^[A-Za-z][A-Za-z0-9+.-]*:", destination
+            ) and not destination.lower().startswith("rvtt-rule://")
+            if has_external_scheme:
+                return match.group(0)
+            if destination.startswith("//"):
+                return match.group(0)
+            # Missing, out-of-root, and invalid stable-rule targets are private
+            # source topology, not trusted runtime navigation. Preserve only the
+            # human-facing label as plain text.
+            return label
         if uri not in seen:
             seen.add(uri)
             related.append(uri)
@@ -174,13 +194,19 @@ def normalize_package_links(package: dict, markdown: list[Path], source_root: Pa
             if first_document_chunk is not None:
                 document_uri = f"rvtt-rule://{package_id}/{module['id']}/{document['id']}"
                 target_chunks[document_uri] = first_document_chunk
+    valid_targets = set(target_chunks)
 
     for chunk in chunks.values():
         source_path = by_document_id.get(chunk["documentId"])
         if source_path is None:
             raise ImportFailure("RULE_LINK_SOURCE_UNRESOLVED", chunk["documentId"])
         normalized, related = normalize_markdown_links(
-            chunk["text"], source_path, source_root, catalog, package_id
+            chunk["text"],
+            source_path,
+            source_root,
+            catalog,
+            package_id,
+            valid_targets,
         )
         if _utf8_len(normalized) > MAX_CHUNK_BYTES:
             raise ImportFailure("CHUNK_SIZE_INVALID", chunk["id"])
@@ -191,13 +217,19 @@ def normalize_package_links(package: dict, markdown: list[Path], source_root: Pa
         source_uri = (
             f"rvtt-rule://{package_id}/{chunk['moduleId']}/{chunk['documentId']}#{chunk['anchorId']}"
         )
+        if source_uri not in target_chunks:
+            raise ImportFailure("RULE_LINK_SOURCE_UNRESOLVED", source_uri)
         for target_uri in chunk.get("relatedLinks", []):
             target_id = target_chunks.get(target_uri)
             if target_id is None:
-                continue
+                raise ImportFailure("RULE_LINK_TARGET_UNRESOLVED", target_uri)
             backlinks = chunks[target_id].setdefault("backlinks", [])
             if source_uri not in backlinks:
                 backlinks.append(source_uri)
+
+    for chunk in chunks.values():
+        chunk["relatedLinks"] = list(dict.fromkeys(chunk.get("relatedLinks", [])))
+        chunk["backlinks"] = sorted(set(chunk.get("backlinks", [])))
 
 
 def build_package(source_root: Path, authority: Authority) -> dict:

@@ -48,7 +48,7 @@ ChatGPT Direct GitHub Implementation
 → 기능 동작·플레이 감각
 ```
 
-Codex는 현재 token budget 때문에 활성 실행 경로에서 제외한다. 사용자가 다시 명시적으로 요청하기 전까지 `.github/CODEX-ACTIVE-TASK.md`는 `NO_ACTIVE_CODEX_TASK` 상태를 유지한다.
+사용자가 `.github/CODEX-ACTIVE-TASK.md`의 최신 명령 실행을 명시적으로 요청해 `RVTT-PR2-ADR0091-CORE-RULES-PRIVATE-STABLE-LINK-FIX-001` Source·Static 경로를 Codex가 수행한다. 결과는 PR #2 top-level Conversation에 기록하며 Studio·Human Runtime은 이번 명령에서 실행하지 않는다.
 
 기본적으로 **Codex ↔ Roblox Studio MCP 자동 Smoke를 필수 사용자 흐름으로 사용하지 않는다.** Studio MCP 자동화는 반복 작업 절감 효과가 명확하거나 사용자가 다시 명시적으로 요청할 때만 사용한다. Runtime 테스트를 생략한다는 뜻은 아니며 Studio Runtime 검증은 Batch 기반 사용자 직접 확인으로 진행한다.
 
@@ -63,7 +63,7 @@ Codex는 현재 token budget 때문에 활성 실행 경로에서 제외한다. 
 | Full UI·UX Source·Acceptance 정합화 | `PARTIAL` | Asset Registry·Rules Profile/Release Gate·Core Rules Reader STATIC_VERIFIED, ADR-0091 필수 구현 Gap 2개 |
 | ADR-0091 Asset Registry foundation | `STATIC_VERIFIED` | Source·Server·Client-safe 경계, validation·negative disclosure focused regression |
 | ADR-0091 Rules Profile + Release Leak Gate | `STATIC_VERIFIED` | Builtin package single authority·private readiness·explicit fallback·actual filesystem staging·CI fail-closed regression |
-| ADR-0091 Core Rules Reader | `STATIC_VERIFIED` | stable anchor·lazy manifest/search/open/chunk·viewer nondisclosure·authoritative role marker·focused >200k corpus regression |
+| ADR-0091 Core Rules Reader | `STATIC_VERIFIED` | private in-root/README/fragment/duplicate stable link·missing/out-of-root raw-path nondisclosure·reciprocal backlink·deterministic import + lazy/viewer filtering regression |
 | Shared Shell·Preference Foundation | `PASS` | `RVTT-PR2-UI-FOUNDATION-IMPLEMENTATION-002` 구현·로컬 정적 검증 완료 |
 | Input·Context Action 정합화 | `PASS` | `RVTT-PR2-INPUT-CONTEXT-IMPLEMENTATION-001` 구현·로컬 정적 검증 완료 |
 | Exploration·Encounter HUD | `PASS` | `RVTT-PR2-EXPLORATION-ENCOUNTER-HUD-IMPLEMENTATION-001` 구현·로컬 정적 검증 완료 |
@@ -125,6 +125,9 @@ phase10RulesReleaseEnforcementTargetShaAtStart: d23b47b1ad6b8f8804e59b146b59eb1a
 phase10RulesReleaseEnforcementStaticValidation: PASS · BuiltinPackIndex-derived readiness + injectable drift fixtures + deterministic filesystem staging inventory + CI nonzero gate
 phase10CoreRulesReaderExecutionMode: CHATGPT_DIRECT_GITHUB_IMPLEMENTATION
 phase10CoreRulesReaderStaticValidation: PASS · focused validator + StyLua + Selene + all required Rojo builds/sourcemaps + production/tests Luau analysis
+phase10CoreRulesPrivateStableLinkFixCommand: RVTT-PR2-ADR0091-CORE-RULES-PRIVATE-STABLE-LINK-FIX-001
+phase10CoreRulesPrivateStableLinkFixTargetShaAtStart: 783bce4e20aa2c1a843cdabf2b7937b45af7a9eb
+phase10CoreRulesPrivateStableLinkLocalValidation: PASS · public-safe synthetic document/README/fragment/duplicate graph + missing/out-of-root/invalid-link nondisclosure + reciprocal backlinks + deterministic double import + focused/full validators + 15 Rojo builds + 3 sourcemaps + production/tests Luau analysis + PowerShell SelfTests
 phase10CoreRulesReaderRuntime: NOT_EXECUTED
 phase10StudioRuntime: NOT_EXECUTED
 phase10HumanEvidence: NOT_EXECUTED

@@ -34,7 +34,7 @@ Owner-only integrated 2024 rules를 포함한 Studio place를 준비하는 fail-
 - Reader query는 private profile에서 server-only allowlist에 없는 UserId를 `RULE_PROFILE_UNAVAILABLE`로 처리해 title/count/snippet/body를 반환하지 않는다.
 - 검증된 generated project만 Rojo build하고 필요하면 Studio에서 연다.
 
-Public GitHub Actions는 private repository를 checkout하지 않는다. 대신 `validate_private_rules_runtime_pipeline.py`가 공개-safe synthetic Git fixture로 같은 importer/preparer를 실행하고 generated `RVTTPrivateRuleContent` overlay를 실제 Rojo build한다. synthetic 회귀는 revision/digest/count/dirty/missing source, missing viewer allowlist, generated ModuleScript binding과 unauthorized-access contract를 검증한다.
+Public GitHub Actions는 private repository를 checkout하지 않는다. 대신 `validate_private_rules_runtime_pipeline.py`가 공개-safe synthetic Git fixture로 같은 importer/preparer를 실행하고 generated `RVTTPrivateRuleContent` overlay를 실제 Rojo build한다. synthetic 회귀는 in-root document·README·fragment·duplicate heading의 stable URI, missing/out-of-root local link의 raw-path nondisclosure, reciprocal related/backlink, deterministic output, 16KB chunk limit, revision/digest/count/dirty/missing source, missing viewer allowlist, generated ModuleScript binding과 unauthorized-access contract를 검증한다.
 
 ### `run-studio-acceptance-batch.ps1`
 

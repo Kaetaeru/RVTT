@@ -48,6 +48,37 @@ def write_markdown(path: Path, title: str) -> None:
     )
 
 
+def write_link_graph(source: Path, repository_root: Path) -> None:
+    write_markdown(source / "README.md", "Integrated Rules Overview")
+    write_markdown(source / "playing-the-game/README.md", "Playing the Game Overview")
+    (source / "playing-the-game/link-b.md").write_text(
+        "# Link Graph B\n\n"
+        "## Existing Heading\n\nExisting anchor target.\n\n"
+        "## Duplicate Heading\n\nFirst duplicate target.\n\n"
+        "## Duplicate Heading\n\nSecond duplicate target.\n",
+        encoding="utf-8",
+    )
+    (source / "playing-the-game/link-a.md").write_text(
+        "# Link Graph A\n\n"
+        "[B document](link-b.md) and [B document again](link-b.md).\n\n"
+        "[B existing](link-b.md#existing-heading).\n\n"
+        f"[Existing stable input](rvtt-rule://{PRIVATE_PACKAGE_ID}/private.playing-the-game/playing-the-game-link-b#existing-heading).\n\n"
+        "[B duplicate](link-b.md#duplicate-heading-2).\n\n"
+        "[Same document](#link-graph-a).\n\n"
+        "[Directory README](README.md).\n\n"
+        "[Root README](../README.md).\n\n"
+        "[Missing local](missing-local.md).\n\n"
+        "[Outside source root](../../../outside.md).\n\n"
+        "[External reference](https://example.invalid/reference).\n\n"
+        "[Invalid stable rule](rvtt-rule://unknown.package/module/document#anchor).\n",
+        encoding="utf-8",
+    )
+    (repository_root / "outside.md").write_text(
+        "# Outside\n\nThis file is intentionally outside the imported source root.\n",
+        encoding="utf-8",
+    )
+
+
 def make_source_repo(root: Path) -> tuple[str, str]:
     run(["git", "init", "-q"], cwd=root)
     run(["git", "config", "user.email", "rvtt-pipeline@example.invalid"], cwd=root)
@@ -70,6 +101,7 @@ def make_source_repo(root: Path) -> tuple[str, str]:
             write_markdown(source / directory / f"item-{index:03d}.md", f"{label} {index:03d}")
     for directory in ("playing-the-game", "character-creation", "equipment", "rules-glossary"):
         write_markdown(source / directory / "core.md", directory.replace("-", " ").title())
+    write_link_graph(source, root)
     run(["git", "add", "."], cwd=root)
     run(["git", "commit", "-qm", "synthetic private source"], cwd=root)
     revision = run(["git", "rev-parse", "HEAD"], cwd=root).stdout.strip()
@@ -200,6 +232,7 @@ def validate_generated(output: Path, rojo: str | None) -> None:
     for chunk in package["chunks"].values():
         if len(chunk["text"].encode("utf-8")) > MAX_CHUNK_BYTES:
             raise RuntimeError("generated rule chunk exceeds 16KB")
+    validate_link_graph(package)
     server_storage = project.get("tree", {}).get("ServerStorage", {})
     if "RVTTPrivateRuleContent" not in server_storage:
         raise RuntimeError("generated project does not inject RVTTPrivateRuleContent")
@@ -218,6 +251,82 @@ def validate_generated(output: Path, rojo: str | None) -> None:
                 raise RuntimeError(f"generated Rojo place is missing private binding instance: {marker}")
         if xml.count('<Item class="ModuleScript"') < 2:
             raise RuntimeError("generated Rojo place does not contain the private JSON modules as ModuleScripts")
+
+
+def _rule_targets(package: dict) -> dict[str, str]:
+    targets: dict[str, str] = {}
+    package_id = package["packageId"]
+    for module in package["modules"]:
+        for document in module["documents"]:
+            first_document_chunk = None
+            for section in document["sections"]:
+                chunk_ids = section.get("chunkIds") or []
+                if not chunk_ids:
+                    continue
+                if first_document_chunk is None:
+                    first_document_chunk = chunk_ids[0]
+                targets[
+                    f"rvtt-rule://{package_id}/{module['id']}/{document['id']}#{section['anchorId']}"
+                ] = chunk_ids[0]
+            if first_document_chunk is not None:
+                targets[
+                    f"rvtt-rule://{package_id}/{module['id']}/{document['id']}"
+                ] = first_document_chunk
+    return targets
+
+
+def validate_link_graph(package: dict) -> None:
+    targets = _rule_targets(package)
+    chunks = package["chunks"]
+    package_id = package["packageId"]
+    a_document = "playing-the-game-link-a"
+    a_chunks = [chunk for chunk in chunks.values() if chunk["documentId"] == a_document]
+    if not a_chunks:
+        raise RuntimeError("synthetic link graph source document is missing")
+    a_text = "\n".join(chunk["text"] for chunk in a_chunks)
+    a_related = [uri for chunk in a_chunks for uri in chunk.get("relatedLinks", [])]
+    b_uri = f"rvtt-rule://{package_id}/private.playing-the-game/playing-the-game-link-b"
+    expected = {
+        b_uri,
+        f"{b_uri}#existing-heading",
+        f"{b_uri}#duplicate-heading-2",
+        f"rvtt-rule://{package_id}/private.playing-the-game/{a_document}#link-graph-a",
+        f"rvtt-rule://{package_id}/private.playing-the-game/playing-the-game-readme",
+        f"rvtt-rule://{package_id}/private.overview/readme",
+    }
+    if set(a_related) != expected:
+        raise RuntimeError("synthetic stable related-link graph mismatch")
+    if len(a_related) != len(set(a_related)):
+        raise RuntimeError("synthetic related links are not deterministically deduplicated")
+    for raw_private_path in (
+        "missing-local.md",
+        "../../../outside.md",
+        "rvtt-rule://unknown.package/module/document#anchor",
+    ):
+        if raw_private_path in a_text:
+            raise RuntimeError("unresolved private navigation leaked into runtime text")
+    if "https://example.invalid/reference" not in a_text:
+        raise RuntimeError("explicit external URL should remain ordinary Markdown text")
+
+    source_uri = (
+        f"rvtt-rule://{package_id}/private.playing-the-game/{a_document}#link-graph-a"
+    )
+    for target_uri in expected:
+        target_chunk_id = targets.get(target_uri)
+        if target_chunk_id is None:
+            raise RuntimeError("generated related rule URI does not resolve")
+        backlinks = chunks[target_chunk_id].get("backlinks", [])
+        if backlinks.count(source_uri) != 1:
+            raise RuntimeError("generated reciprocal backlink is missing or duplicated")
+
+    for chunk in chunks.values():
+        related = chunk.get("relatedLinks", [])
+        backlinks = chunk.get("backlinks", [])
+        if len(related) != len(set(related)) or len(backlinks) != len(set(backlinks)):
+            raise RuntimeError("generated rule links contain duplicates")
+        for uri in related + backlinks:
+            if uri not in targets:
+                raise RuntimeError("generated related/backlink URI does not resolve")
 
 
 def validate_negative_paths(work: Path, source_repo: Path, revision: str, digest: str) -> None:
@@ -277,8 +386,20 @@ def main(argv: Iterable[str] | None = None) -> int:
             expect_success=True,
         )
         validate_generated(output, args.rojo or None)
+        deterministic_output = work / "output-deterministic"
+        run_prepare(
+            source_repo,
+            deterministic_output,
+            authority,
+            include_authorized_user=True,
+            expect_success=True,
+        )
+        first_package = output / "runtime/RVTTPrivateRuleContent/RuleReaderPackage.json"
+        second_package = deterministic_output / "runtime/RVTTPrivateRuleContent/RuleReaderPackage.json"
+        if first_package.read_bytes() != second_package.read_bytes():
+            raise RuntimeError("private stable-link package output is not deterministic")
         validate_negative_paths(work, source_repo, revision, digest)
-    print("Private rules runtime pipeline validation passed: synthetic import + owner allowlist + binding instances + overlay build + fail-closed regressions")
+    print("Private rules runtime pipeline validation passed: synthetic stable-link graph + reciprocal backlinks + deterministic import + owner allowlist + binding instances + overlay build + fail-closed regressions")
     return 0
 
 
