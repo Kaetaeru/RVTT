@@ -24,6 +24,7 @@ FILES = {
     "rules_domain": ROOT / "src/ServerScriptService/RVTT/Server/Domains/RulesDomain.lua",
     "content_domain": ROOT / "src/ServerScriptService/RVTT/Server/Domains/ContentDomain.lua",
     "definition_resolver": ROOT / "src/ServerScriptService/RVTT/Server/Rules/ContentDefinitionResolver.lua",
+    "actor_profile_resolver": ROOT / "src/ServerScriptService/RVTT/Server/Rules/ActorProfileResolver.lua",
     "spec": ROOT / "tests/Unit/OfficialCharacterSheet.spec.lua",
     "runner": ROOT / "tests/TestRunner.server.lua",
 }
@@ -135,6 +136,57 @@ def validate_forbidden_patterns(projection: str, rules_domain: str, surface: str
     return errors
 
 
+def validate_capability_authority(
+    projection: str,
+    rules_domain: str,
+    inventory_domain: str,
+    character_domain: str,
+    actor_profile_resolver: str,
+) -> list[str]:
+    errors: list[str] = []
+    required = {
+        "RulesDomain hit die guard": (
+            rules_domain,
+            {
+                '"remaining"',
+                "isFiniteInteger(hitDice.remaining)",
+                "hitDice.remaining <= 0",
+                "hitDice.remaining -= 1",
+            },
+        ),
+        "CharacterSheetProjection hit die parity": (
+            projection,
+            {"availableHitDice", "hitDice.remaining > 0"},
+        ),
+        "InventoryDomain trusted equip capability": (
+            inventory_domain,
+            {
+                "item.equipSlot",
+                "payload.slot ~= item.equipSlot",
+                "location.characterId ~= payload.characterId",
+            },
+        ),
+        "CharacterDomain hotbar capability": (
+            character_domain,
+            {
+                "item.hotbarCapable ~= true",
+                "location.characterId ~= payload.characterId",
+            },
+        ),
+        "CharacterSheetProjection attack provenance": (
+            projection + actor_profile_resolver,
+            {'profile.attackSource == "character_definition"', '"fallback"'},
+        ),
+    }
+    for name, (text, markers) in required.items():
+        for marker in markers:
+            if marker not in text:
+                errors.append(f"{name}: missing {marker}")
+    if "slot = payload.slot" in inventory_domain:
+        errors.append("InventoryDomain: equip must not trust slot = payload.slot")
+    return errors
+
+
 def validate(root: Path = ROOT) -> list[str]:
     if root != ROOT:
         raise ValueError("validate_official_character_sheet only supports its repository checkout")
@@ -153,6 +205,15 @@ def validate(root: Path = ROOT) -> list[str]:
     errors.extend(
         validate_forbidden_patterns(
             texts["projection"], texts["rules_domain"], texts["surface"]
+        )
+    )
+    errors.extend(
+        validate_capability_authority(
+            texts["projection"],
+            texts["rules_domain"],
+            texts["inventory_domain"],
+            texts["character_domain"],
+            texts["actor_profile_resolver"],
         )
     )
 
@@ -299,6 +360,13 @@ def validate(root: Path = ROOT) -> list[str]:
             "forged damage formula is rejected",
             "another user's actor roll is rejected",
             "production inventory path snapshots trusted capabilities",
+            "valid hit die roll consumes one trusted die",
+            "zero remaining removes hit die action",
+            "forged equip slot fails closed",
+            "non-hotbar-capable item cannot be pinned",
+            "another character's capable item cannot be pinned",
+            "unpin cannot bypass the item-character relationship guard",
+            "trusted attack-less production character receives no invented attack row",
             "out-of-order terminal receipt cannot replace latest feedback",
         },
         "OfficialCharacterSheet.spec",
@@ -344,6 +412,15 @@ def run_self_tests() -> list[str]:
     )
     if len(authority_errors) != 4:
         failures.append("self-test: authority/UI shortcut regressions were not all rejected")
+    capability_errors = validate_capability_authority(
+        "",
+        "",
+        "slot = payload.slot",
+        "",
+        "",
+    )
+    if len(capability_errors) < 10:
+        failures.append("self-test: capability authority guard omissions were not rejected")
     return failures
 
 

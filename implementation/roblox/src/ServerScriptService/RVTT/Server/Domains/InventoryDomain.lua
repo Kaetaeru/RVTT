@@ -111,16 +111,30 @@ function Domain.register(registry: any)
 		validate = function(payload: any)
 			return Helpers.hasString(payload, "itemId")
 				and Helpers.hasString(payload, "characterId")
-				and Helpers.hasString(payload, "slot", 64)
+				and (payload.slot == nil or Helpers.hasString(payload, "slot", 64))
 		end,
 		execute = function(_: any, state: any, payload: any)
-			if state.items[payload.itemId] == nil then
+			local item = state.items[payload.itemId]
+			local location = state.locations[payload.itemId]
+			if item == nil or type(location) ~= "table" then
 				return Helpers.notFound("item", payload.itemId)
+			end
+			if type(item.equipSlot) ~= "string" or item.equipSlot == "" or #item.equipSlot > 64 then
+				return Helpers.conflict("item is not equippable")
+			end
+			if
+				location.characterId ~= payload.characterId
+				or (location.kind ~= "inventory" and location.kind ~= "equipped")
+			then
+				return Helpers.conflict("item does not belong to the requested character")
+			end
+			if payload.slot ~= nil and payload.slot ~= item.equipSlot then
+				return Helpers.conflict("requested slot does not match the trusted item slot")
 			end
 			return move(state, payload.itemId, {
 				kind = "equipped",
 				characterId = payload.characterId,
-				slot = payload.slot,
+				slot = item.equipSlot,
 			})
 		end,
 	})

@@ -88,6 +88,20 @@ local function addAction(actions: any, id: string, commandType: string, payload:
 	})
 end
 
+local function availableHitDice(hitDice: any): boolean
+	return type(hitDice) == "table"
+		and type(hitDice.sides) == "number"
+		and hitDice.sides == hitDice.sides
+		and hitDice.sides >= 2
+		and hitDice.sides <= 100
+		and hitDice.sides % 1 == 0
+		and type(hitDice.remaining) == "number"
+		and hitDice.remaining == hitDice.remaining
+		and hitDice.remaining > 0
+		and hitDice.remaining < math.huge
+		and hitDice.remaining % 1 == 0
+end
+
 local function listFromMap(source: any): { any }
 	local result = {}
 	for _, id in sortedKeys(source) do
@@ -149,12 +163,15 @@ local function inventoryProjection(
 						characterId = characterId,
 					})
 					table.insert(itemActions, { id = id, label = "장착 해제" })
-				elseif type(item.equipSlot) == "string" then
+				elseif
+					type(item.equipSlot) == "string"
+					and item.equipSlot ~= ""
+					and #item.equipSlot <= 64
+				then
 					local id = "item." .. itemId .. ".equip"
 					addAction(actions, id, "inventory.equip", {
 						itemId = itemId,
 						characterId = characterId,
-						slot = item.equipSlot,
 					})
 					table.insert(itemActions, { id = id, label = "장착" })
 				end
@@ -337,7 +354,10 @@ function CharacterSheetProjection.build(
 		end
 	end
 	local weapons = {}
-	local authoritativeAttacks = if profile ~= nil then profile.attacks else {}
+	local authoritativeAttacks = if profile ~= nil
+			and profile.attackSource == "character_definition"
+		then profile.attacks
+		else {}
 	for _, profileId in sortedKeys(authoritativeAttacks) do
 		local attack = authoritativeAttacks[profileId]
 		if type(attack) == "table" then
@@ -392,7 +412,7 @@ function CharacterSheetProjection.build(
 			end
 		end
 		local hitDice = character.hitDice
-		if type(hitDice) == "table" and type(hitDice.sides) == "number" then
+		if availableHitDice(hitDice) then
 			addAction(actions, "roll.hit_die", "rules.sheet_roll", {
 				actorId = actorId,
 				rollKind = "hit_die",
@@ -485,8 +505,7 @@ function CharacterSheetProjection.build(
 			hitDice = character.hitDice,
 			hitDieActionId = if canControl
 					and actorId ~= nil
-					and type(character.hitDice) == "table"
-					and type(character.hitDice.sides) == "number"
+					and availableHitDice(character.hitDice)
 				then "roll.hit_die"
 				else nil,
 			deathSaveActionId = if canControl

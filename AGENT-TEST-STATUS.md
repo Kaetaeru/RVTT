@@ -138,6 +138,10 @@ phase10OfficialCharacterSheetAuthorityRepairCommand: RVTT-PR2-ADR0091-OFFICIAL-2
 phase10OfficialCharacterSheetAuthorityRepairTargetShaAtStart: 6ee5cc953fdfe3015f18edb9a5ee5dd2318cbbe5
 phase10OfficialCharacterSheetAuthorityRepairLocalStaticValidation: PASS · server-owned Content character/item definition hydration + forged roll semantics/domain negatives + canonical ActorProfile attacks + exact header/left/right information structure + all equipment rows/popover/details/authorized send targets + structured slots + out-of-order receipt regression + strengthened validator + 15 Rojo builds + 3 sourcemaps + production/tests Luau analysis
 phase10OfficialCharacterSheetAuthorityRepairStudioHuman: NOT_EXECUTED
+phase10OfficialCharacterSheetEligibilityRepairCommand: RVTT-PR2-ADR0091-OFFICIAL-2024-CHARACTER-SHEET-FIX-003
+phase10OfficialCharacterSheetEligibilityRepairTargetShaAtStart: 7bda8950d703028606d8a46404461fad13dc375d
+phase10OfficialCharacterSheetEligibilityRepairLocalStaticValidation: PASS · atomic finite Hit Die consumption/exhaustion + trusted equipSlot and character-location enforcement + hotbar capability/character relation enforcement + attack fallback non-invention + focused negative regressions + strengthened validator/self-tests + public release leak gate + StyLua + 15 Rojo builds + 3 sourcemaps + production/tests Luau analysis; Selene delegated to current-head Actions
+phase10OfficialCharacterSheetEligibilityRepairStudioHuman: NOT_EXECUTED
 phase10StudioRuntime: NOT_EXECUTED
 phase10HumanEvidence: NOT_EXECUTED
 phase10Next: DICE_SLOT_REVEAL_NOTICE_CORRECTION

@@ -7,6 +7,34 @@ return function(harness)
 	if heroId == nil then
 		return
 	end
+	local registered = scenario:execute("content.register_pack", {
+		manifest = {
+			packId = "pack:slice-06-original",
+			version = "1.0.0",
+			rightsStatus = "original",
+			dependencies = {},
+			definitions = {
+				items = {
+					["item:test-sword"] = { equipSlot = "main-hand" },
+				},
+			},
+		},
+	})
+	if
+		scenario:expectOutcome(harness, registered, "Slice 06 registers trusted item capability")
+		== nil
+	then
+		return
+	end
+	if
+		scenario:expectOutcome(
+			harness,
+			scenario:execute("content.activate_pack", { packId = "pack:slice-06-original" }),
+			"Slice 06 activates trusted item capability"
+		) == nil
+	then
+		return
+	end
 
 	local item = scenario:execute("inventory.create_item", {
 		definitionId = "item:test-sword",
@@ -87,7 +115,6 @@ return function(harness)
 	local equip = scenario:executeAs("player", 606, "inventory.equip", {
 		itemId = itemId,
 		characterId = heroId,
-		slot = "main-hand",
 	})
 	local equipOutcome = scenario:expectOutcome(harness, equip, "Slice 06 equips the owned item")
 	if equipOutcome == nil then

@@ -39,7 +39,17 @@ local CLIENT_RULE_FIELDS = {
 	"sides",
 	"attackModifier",
 	"damageModifier",
+	"modifier",
+	"remaining",
 }
+
+local function isFiniteInteger(value: any): boolean
+	return type(value) == "number"
+		and value == value
+		and value > -math.huge
+		and value < math.huge
+		and value % 1 == 0
+end
 
 function Domain.initialState()
 	return {
@@ -152,18 +162,28 @@ function Domain.register(registry: any)
 			local character = characterForActor(payload.actorId, domains)
 			if payload.rollKind == "hit_die" then
 				local hitDice = if type(character) == "table" then character.hitDice else nil
-				if type(hitDice) ~= "table" or type(hitDice.sides) ~= "number" then
+				if
+					type(hitDice) ~= "table"
+					or not isFiniteInteger(hitDice.sides)
+					or hitDice.sides < 2
+					or hitDice.sides > 100
+				then
 					return Helpers.notFound("hit_dice", payload.actorId)
 				end
+				if not isFiniteInteger(hitDice.remaining) or hitDice.remaining <= 0 then
+					return Helpers.conflict("hit die is unavailable")
+				end
 				local modifier = RuleResolver.abilityModifier(profile, "constitution")
-				local total, rolls =
-					Dice.rollFormula(1, math.clamp(math.floor(hitDice.sides), 2, 100), modifier)
+				local total, rolls = Dice.rollFormula(1, hitDice.sides, modifier)
+				hitDice.remaining -= 1
+				character.revision += 1
 				return record(state, context, payload.rollKind, {
 					actorId = payload.actorId,
 					rollKind = payload.rollKind,
 					rolls = rolls,
 					modifier = modifier,
 					total = math.max(0, total),
+					remaining = hitDice.remaining,
 				})
 			end
 			if payload.rollKind == "weapon_damage" or payload.rollKind == "damage_cantrip" then

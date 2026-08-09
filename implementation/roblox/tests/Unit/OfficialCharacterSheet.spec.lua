@@ -14,6 +14,14 @@ return function(harness: any)
 		return scenario:expectOutcome(harness, result, label)
 	end
 
+	local function mapCount(source: any): number
+		local count = 0
+		for _ in source do
+			count += 1
+		end
+		return count
+	end
+
 	local registered = scenario:execute("content.register_pack", {
 		manifest = {
 			packId = "pack:sheet-original",
@@ -39,7 +47,7 @@ return function(harness: any)
 						},
 						training = { armor = { label = "Generic armor training" } },
 						inspiration = true,
-						hitDice = { sides = 10, remaining = 3 },
+						hitDice = { sides = 10, remaining = 1 },
 						classFeatures = {
 							["feature:generic"] = {
 								label = "Generic feature",
@@ -67,6 +75,12 @@ return function(harness: any)
 						coins = { gp = 10 },
 						size = "medium",
 						passivePerception = 12,
+					},
+					["class:generic-attackless"] = {
+						saves = {},
+						skills = {},
+						classFeatures = {},
+						preparedSpells = {},
 					},
 				},
 				items = {
@@ -103,7 +117,7 @@ return function(harness: any)
 		return
 	end
 
-	local function createCharacter(name: string): string?
+	local function createCharacter(name: string, classId: string?): string?
 		local draft = outcome(
 			scenario:execute("character.create_draft", { name = name }),
 			"production path creates " .. name
@@ -114,7 +128,7 @@ return function(harness: any)
 		local updated = scenario:execute("character.update_draft", {
 			characterId = draft.id,
 			patch = {
-				classId = "class:generic-sheet",
+				classId = classId or "class:generic-sheet",
 				ancestryId = "species:generic",
 				backgroundId = "background:generic",
 				abilities = {
@@ -143,7 +157,8 @@ return function(harness: any)
 
 	local heroId = createCharacter("Generic Hero")
 	local otherId = createCharacter("Generic Recipient")
-	if heroId == nil or otherId == nil then
+	local attacklessId = createCharacter("Generic Attackless", "class:generic-attackless")
+	if heroId == nil or otherId == nil or attacklessId == nil then
 		return
 	end
 	if
@@ -177,6 +192,14 @@ return function(harness: any)
 	end
 	if
 		outcome(
+			scenario:execute("scene.enter", { sceneId = "scene:sheet", actorId = attacklessId }),
+			"production scene path creates the trusted attack-less actor"
+		) == nil
+	then
+		return
+	end
+	if
+		outcome(
 			scenario:execute("rules.set_actor_state", {
 				actorId = heroId,
 				currentHitPoints = 20,
@@ -204,10 +227,19 @@ return function(harness: any)
 		}),
 		"production inventory path creates a second equipment row"
 	)
-	if itemResult == nil or secondItemResult == nil then
+	local otherItemResult = outcome(
+		scenario:execute("inventory.create_item", {
+			definitionId = "item:generic-tool",
+			location = { kind = "inventory", characterId = otherId },
+		}),
+		"production inventory path creates another character's capable item"
+	)
+	if itemResult == nil or secondItemResult == nil or otherItemResult == nil then
 		return
 	end
 	local itemId = itemResult.item.id
+	local secondItemId = secondItemResult.item.id
+	local otherItemId = otherItemResult.item.id
 	local domains = scenario:snapshot().domains
 	harness:equal(
 		domains.character.characters[heroId].sheetDefinitionId,
@@ -234,6 +266,13 @@ return function(harness: any)
 		owner.weaponsAndDamageCantrips[1].id,
 		"attack:generic",
 		"projection uses the ActorProfileResolver canonical attack catalog"
+	)
+	local attackless =
+		Projection.build(domains, { userId = 101, role = "player" }, revision, attacklessId)
+	harness:equal(
+		#attackless.weaponsAndDamageCantrips,
+		0,
+		"trusted attack-less production character receives no invented attack row"
 	)
 
 	local unrelated = Projection.build(domains, { userId = 202, role = "player" }, revision, heroId)
@@ -339,6 +378,95 @@ return function(harness: any)
 			)
 		end
 	end
+	local forgedHitDieFields = {
+		{ field = "sides", value = 100 },
+		{ field = "count", value = 2 },
+		{ field = "modifier", value = 99 },
+		{ field = "remaining", value = 99 },
+	}
+	for _, forgedCase in forgedHitDieFields do
+		local before = scenario:snapshot()
+		local payload = { actorId = heroId, rollKind = "hit_die" }
+		payload[forgedCase.field] = forgedCase.value
+		local forged = scenario:execute("rules.sheet_roll", payload)
+		harness:expect(not forged.ok, "forged hit die " .. forgedCase.field .. " is rejected")
+		if not forged.ok then
+			harness:equal(
+				forged.error.code,
+				"VALIDATION_FAILED",
+				"hit die semantics fail validation"
+			)
+		end
+		local after = scenario:snapshot()
+		harness:equal(after.revision, before.revision, "forged hit die does not advance authority")
+		harness:equal(
+			after.domains.character.characters[heroId].hitDice.remaining,
+			before.domains.character.characters[heroId].hitDice.remaining,
+			"forged hit die does not consume a die"
+		)
+		harness:equal(
+			mapCount(after.domains.rules.rollRecords),
+			mapCount(before.domains.rules.rollRecords),
+			"forged hit die creates no roll record"
+		)
+	end
+	local hitDieBefore = scenario:snapshot()
+	local hitDie = outcome(
+		scenario:execute("rules.sheet_roll", { actorId = heroId, rollKind = "hit_die" }),
+		"valid hit die roll consumes one trusted die"
+	)
+	if hitDie ~= nil then
+		harness:equal(
+			hitDie.data.remaining,
+			0,
+			"hit die result reports the authoritative remainder"
+		)
+	end
+	local hitDieAfter = scenario:snapshot()
+	harness:equal(
+		hitDieAfter.domains.character.characters[heroId].hitDice.remaining,
+		0,
+		"successful hit die roll consumes exactly one"
+	)
+	harness:equal(hitDieAfter.revision, hitDieBefore.revision + 1, "hit die commits once")
+	local exhaustedProjection = Projection.build(
+		hitDieAfter.domains,
+		{ userId = 101, role = "player" },
+		hitDieAfter.revision,
+		heroId
+	)
+	harness:equal(
+		exhaustedProjection.vitals.hitDieActionId,
+		nil,
+		"zero remaining removes hit die action"
+	)
+	local exhaustedIntent = nil
+	for _, action in exhaustedProjection.actions do
+		if action.id == "roll.hit_die" then
+			exhaustedIntent = action
+		end
+	end
+	harness:equal(exhaustedIntent, nil, "zero remaining is not exposed as an executable action")
+	local zeroBefore = scenario:snapshot()
+	local zeroRoll =
+		scenario:execute("rules.sheet_roll", { actorId = heroId, rollKind = "hit_die" })
+	harness:expect(not zeroRoll.ok, "direct hit die roll at zero fails closed")
+	local zeroAfter = scenario:snapshot()
+	harness:equal(
+		zeroAfter.revision,
+		zeroBefore.revision,
+		"failed zero hit die does not advance authority"
+	)
+	harness:equal(
+		mapCount(zeroAfter.domains.rules.rollRecords),
+		mapCount(zeroBefore.domains.rules.rollRecords),
+		"failed zero hit die creates no roll record"
+	)
+	harness:equal(
+		zeroAfter.domains.character.characters[heroId].hitDice.remaining,
+		zeroBefore.domains.character.characters[heroId].hitDice.remaining,
+		"failed zero hit die preserves remaining"
+	)
 	local forgedDamage = scenario:execute("rules.sheet_roll", {
 		actorId = heroId,
 		rollKind = "weapon_damage",
@@ -382,15 +510,138 @@ return function(harness: any)
 		harness:equal(stolen.error.code, "UNAUTHORIZED", "actor control denial is explicit")
 	end
 
+	local equipBefore = scenario:snapshot()
+	local forgedSlot = scenario:execute("inventory.equip", {
+		itemId = itemId,
+		characterId = heroId,
+		slot = "forged_slot",
+	})
+	harness:expect(not forgedSlot.ok, "forged equip slot fails closed")
+	local equipAfterForgery = scenario:snapshot()
+	harness:equal(
+		equipAfterForgery.revision,
+		equipBefore.revision,
+		"forged slot does not advance authority"
+	)
+	harness:equal(
+		equipAfterForgery.domains.inventory.items[itemId].revision,
+		equipBefore.domains.inventory.items[itemId].revision,
+		"forged slot does not mutate item revision"
+	)
+	local nonEquippableBefore = scenario:snapshot()
+	local nonEquippable = scenario:execute("inventory.equip", {
+		itemId = secondItemId,
+		characterId = heroId,
+	})
+	harness:expect(not nonEquippable.ok, "non-equippable item fails direct equip")
+	local nonEquippableAfter = scenario:snapshot()
+	harness:equal(
+		nonEquippableAfter.revision,
+		nonEquippableBefore.revision,
+		"non-equippable failure does not commit"
+	)
+	harness:equal(
+		nonEquippableAfter.domains.inventory.items[secondItemId].revision,
+		nonEquippableBefore.domains.inventory.items[secondItemId].revision,
+		"non-equippable failure preserves item revision"
+	)
+	local crossEquipBefore = scenario:snapshot()
+	local crossEquip = scenario:execute("inventory.equip", {
+		itemId = otherItemId,
+		characterId = heroId,
+	})
+	harness:expect(
+		not crossEquip.ok,
+		"another character's item cannot be equipped across characters"
+	)
+	local crossEquipAfter = scenario:snapshot()
+	harness:equal(
+		crossEquipAfter.revision,
+		crossEquipBefore.revision,
+		"cross-character equip does not commit"
+	)
+	harness:equal(
+		crossEquipAfter.domains.inventory.locations[otherItemId].characterId,
+		otherId,
+		"cross-character equip preserves the trusted location"
+	)
+	local validEquip = outcome(
+		scenario:execute("inventory.equip", { itemId = itemId, characterId = heroId }),
+		"equippable item uses its trusted slot"
+	)
+	if validEquip ~= nil then
+		harness:equal(
+			validEquip.location.slot,
+			"main_hand",
+			"trusted item snapshot selects the slot"
+		)
+	end
+	if
+		outcome(
+			scenario:execute("inventory.unequip", { itemId = itemId, characterId = heroId }),
+			"trusted equipped item returns to inventory"
+		) == nil
+	then
+		return
+	end
+
+	local hotbarBefore = scenario:snapshot()
+	local incapablePin = scenario:execute("character.sheet_set_hotbar", {
+		characterId = heroId,
+		targetKind = "item",
+		targetId = secondItemId,
+		pinned = true,
+	})
+	harness:expect(not incapablePin.ok, "non-hotbar-capable item cannot be pinned")
+	local incapableAfter = scenario:snapshot()
+	harness:equal(incapableAfter.revision, hotbarBefore.revision, "incapable pin does not commit")
+	harness:equal(
+		incapableAfter.domains.character.characters[heroId].revision,
+		hotbarBefore.domains.character.characters[heroId].revision,
+		"incapable pin does not mutate character revision"
+	)
+	local crossPinBefore = scenario:snapshot()
+	local crossPin = scenario:execute("character.sheet_set_hotbar", {
+		characterId = heroId,
+		targetKind = "item",
+		targetId = otherItemId,
+		pinned = true,
+	})
+	harness:expect(not crossPin.ok, "another character's capable item cannot be pinned")
+	local crossUnpin = scenario:execute("character.sheet_set_hotbar", {
+		characterId = heroId,
+		targetKind = "item",
+		targetId = otherItemId,
+		pinned = false,
+	})
+	harness:expect(not crossUnpin.ok, "unpin cannot bypass the item-character relationship guard")
+	local crossPinAfter = scenario:snapshot()
+	harness:equal(
+		crossPinAfter.revision,
+		crossPinBefore.revision,
+		"cross-character pin/unpin does not commit"
+	)
+	harness:equal(
+		crossPinAfter.domains.character.characters[heroId].revision,
+		crossPinBefore.domains.character.characters[heroId].revision,
+		"cross-character pin/unpin preserves character revision"
+	)
+	local pin = scenario:execute("character.sheet_set_hotbar", {
+		characterId = heroId,
+		targetKind = "item",
+		targetId = itemId,
+		pinned = true,
+	})
+	harness:expect(pin.ok, "own capable item pin succeeds")
+	local unpin = scenario:execute("character.sheet_set_hotbar", {
+		characterId = heroId,
+		targetKind = "item",
+		targetId = itemId,
+		pinned = false,
+	})
+	harness:expect(unpin.ok, "own capable item unpin succeeds through the same guard")
+
 	local productionActions: { { commandType: string, payload: any } } = {
-		{
-			commandType = "inventory.equip",
-			payload = { itemId = itemId, characterId = heroId, slot = "main_hand" },
-		},
-		{
-			commandType = "inventory.unequip",
-			payload = { itemId = itemId, characterId = heroId },
-		},
 		{
 			commandType = "inventory.set_attunement",
 			payload = { itemId = itemId, characterId = heroId, attuned = true },
@@ -401,15 +652,6 @@ return function(harness: any)
 		},
 		{ commandType = "inventory.split", payload = { itemId = itemId, quantity = 1 } },
 		{ commandType = "inventory.use", payload = { itemId = itemId } },
-		{
-			commandType = "character.sheet_set_hotbar",
-			payload = {
-				characterId = heroId,
-				targetKind = "item",
-				targetId = itemId,
-				pinned = true,
-			},
-		},
 		{
 			commandType = "character.sheet_set_prepared",
 			payload = { characterId = heroId, spellId = "spell:generic", prepared = true },

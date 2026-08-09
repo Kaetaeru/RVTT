@@ -240,10 +240,30 @@ function Domain.register(registry: any)
 				and Helpers.hasString(payload, "targetId")
 				and type(payload.pinned) == "boolean"
 		end,
-		execute = function(_: any, state: any, payload: any)
+		execute = function(_: any, state: any, payload: any, domains: any)
 			local character = state.characters[payload.characterId]
 			if character == nil then
 				return Helpers.notFound("character", payload.characterId)
+			end
+			local inventory = domains.inventory
+			local item = if type(inventory) == "table"
+				then inventory.items[payload.targetId]
+				else nil
+			local location = if type(inventory) == "table"
+				then inventory.locations[payload.targetId]
+				else nil
+			if type(item) ~= "table" then
+				return Helpers.notFound("item", payload.targetId)
+			end
+			if item.hotbarCapable ~= true then
+				return Helpers.conflict("item is not hotbar capable")
+			end
+			if
+				type(location) ~= "table"
+				or location.characterId ~= payload.characterId
+				or (location.kind ~= "inventory" and location.kind ~= "equipped")
+			then
+				return Helpers.conflict("item does not belong to the requested character")
 			end
 			character.hotbarPins = if type(character.hotbarPins) == "table"
 				then character.hotbarPins
