@@ -3,10 +3,15 @@
 return function(harness: any)
 	local ReplicatedStorage = game:GetService("ReplicatedStorage")
 	local Server = game:GetService("ServerScriptService").RVTT.Server
+	local ServerStorage = game:GetService("ServerStorage")
 	local ViewModel = require(ReplicatedStorage.RVTT.Shared.UI.DiceNoticeViewModel)
 	local Projection = require(Server.Projection.DiceNoticeProjection)
+	local DiceSlotRevealNotice = require(ServerStorage.RVTTTestUI.DiceSlotRevealNotice)
 	local ScenarioRuntime = require(script.Parent.Parent.Integration.ScenarioRuntime)
 	local scenario = ScenarioRuntime.new(101, "dm")
+	local function child(parent: Instance, name: string): any
+		return parent:FindFirstChild(name)
+	end
 	local heroId = scenario:bootstrapCharacter(harness, "Dice Notice Hero", "scene:dice-notice", {
 		strength = 16,
 		dexterity = 14,
@@ -32,6 +37,7 @@ return function(harness: any)
 	local roll = scenario:execute("rules.ability_check", {
 		actorId = heroId,
 		challengeId = challengeOutcome.challengeId,
+		diceMode = "advantage",
 	})
 	local rollOutcome = scenario:expectOutcome(
 		harness,
@@ -52,6 +58,11 @@ return function(harness: any)
 	harness:equal(projected.rollId, rollOutcome.id, "roll identity comes from authoritative record")
 	harness:equal(projected.diceMode, "normal", "normal dice mode is server-authored")
 	harness:equal(#projected.naturalResults, 1, "server projection supplies natural results")
+	harness:equal(
+		#rollOutcome.data.rolls,
+		1,
+		"rolling player payload cannot override challenge diceMode"
+	)
 	harness:equal(projected.appliedIndex, 1, "server projection supplies applied index")
 	harness:equal(
 		projected.total,
@@ -89,6 +100,73 @@ return function(harness: any)
 		nil,
 		"incomplete authoritative record is excluded without fabricated fields"
 	)
+
+	local function executeProductionMode(mode: string, commandType: string): any
+		local created = scenario:execute("rules.create_challenge", {
+			ability = "dexterity",
+			proficient = false,
+			difficultyClass = 12,
+			diceMode = mode,
+			labelKey = "dice.notice." .. mode,
+		})
+		local createdOutcome =
+			scenario:expectOutcome(harness, created, "creates production " .. mode .. " challenge")
+		if createdOutcome == nil then
+			return nil
+		end
+		local result = scenario:execute(commandType, {
+			actorId = heroId,
+			challengeId = createdOutcome.challengeId,
+			diceMode = if mode == "advantage" then "disadvantage" else "advantage",
+		})
+		local outcome = scenario:expectOutcome(
+			harness,
+			result,
+			"production RulesDomain resolves " .. mode .. " from server challenge"
+		)
+		if outcome == nil then
+			return nil
+		end
+		harness:equal(outcome.data.diceMode, mode, mode .. " mode comes from server challenge")
+		harness:equal(#outcome.data.rolls, 2, mode .. " production roll has two naturals")
+		local modeSnapshot = scenario:snapshot()
+		local projectedMode = nil
+		for _, candidate in
+			Projection.build(modeSnapshot.domains, { userId = 101, role = "player" })
+		do
+			if candidate.rollId == outcome.id then
+				projectedMode = candidate
+			end
+		end
+		harness:expect(projectedMode ~= nil, mode .. " production roll is projected")
+		if projectedMode ~= nil then
+			harness:equal(
+				projectedMode.diceMode,
+				mode,
+				"projection preserves server " .. mode .. " mode"
+			)
+			harness:equal(
+				#projectedMode.naturalResults,
+				2,
+				"projection preserves both " .. mode .. " naturals"
+			)
+			harness:expect(
+				projectedMode.appliedIndex == 1 or projectedMode.appliedIndex == 2,
+				"projection preserves server appliedIndex for " .. mode
+			)
+			harness:equal(
+				projectedMode.total,
+				outcome.data.total,
+				"projection preserves server " .. mode .. " total"
+			)
+		end
+		return projectedMode
+	end
+
+	local productionAdvantage = executeProductionMode("advantage", "rules.ability_check")
+	local productionDisadvantage = executeProductionMode("disadvantage", "rules.saving_throw")
+	harness:expect(productionAdvantage ~= nil, "production advantage server path is covered")
+	harness:expect(productionDisadvantage ~= nil, "production disadvantage server path is covered")
 
 	local function notice(
 		id: string,
@@ -163,6 +241,41 @@ return function(harness: any)
 	harness:equal(normal.total, 777, "client preserves projection total without arithmetic")
 
 	local advantage = notice("roll:advantage", 2, "advantage", { 20, 1 }, 2, "natural_1")
+	local advantageAnimation = ViewModel.animationDescriptor(advantage, false)
+	harness:equal(
+		advantageAnimation.slotSpin.kind,
+		"vertical_numeral_strip",
+		"slot spin uses a real vertical visual movement descriptor"
+	)
+	harness:expect(
+		advantageAnimation.slotSpin.verticalDistance > 0,
+		"slot strip consumes a positive vertical movement distance"
+	)
+	harness:expect(
+		not advantageAnimation.slotSpin.finalNaturalVisible,
+		"final natural is locked only at natural_lock presentation boundary"
+	)
+	harness:equal(
+		advantageAnimation.formulaExpand.durationMs,
+		260,
+		"formula expansion consumes 260ms"
+	)
+	harness:expect(
+		advantageAnimation.formulaExpand.usesTween,
+		"formula expansion is not an instantaneous-only size assignment"
+	)
+	harness:equal(
+		#advantageAnimation.naturalLock.shakeOffsets,
+		5,
+		"full-motion Natural 1 has damped horizontal shake"
+	)
+	harness:equal(advantageAnimation.naturalLock.tintToken, "danger", "Natural 1 uses danger tint")
+	harness:expect(
+		advantageAnimation.dualApplied.accent
+			and advantageAnimation.dualApplied.scale > 1
+			and advantageAnimation.dualApplied.formulaConnector,
+		"dual Applied Cell has Accent Scale and Formula Connector"
+	)
 	local advantageCells = ViewModel.cells(advantage)
 	harness:equal(#advantageCells, 2, "advantage displays two projected natural cells")
 	harness:expect(not advantageCells[1].applied, "client does not choose max for advantage")
@@ -183,6 +296,17 @@ return function(harness: any)
 	)
 
 	local disadvantage = notice("roll:disadvantage", 3, "disadvantage", { 1, 20 }, 2, "natural_20")
+	local disadvantageAnimation = ViewModel.animationDescriptor(disadvantage, false)
+	harness:equal(
+		#disadvantageAnimation.naturalLock.shakeOffsets,
+		5,
+		"full-motion Natural 20 has damped horizontal shake"
+	)
+	harness:equal(
+		disadvantageAnimation.naturalLock.tintToken,
+		"success",
+		"Natural 20 uses success tint"
+	)
 	local disadvantageCells = ViewModel.cells(disadvantage)
 	harness:equal(#disadvantageCells, 2, "disadvantage displays two projected natural cells")
 	harness:expect(disadvantageCells[2].applied, "disadvantage also obeys projection appliedIndex")
@@ -204,11 +328,91 @@ return function(harness: any)
 	)
 
 	local reduced = ViewModel.presentationPlan(advantage, true)
+	local reducedAnimation = ViewModel.animationDescriptor(advantage, true)
 	harness:equal(reduced[3].crossfadeSteps, 3, "reduced motion uses three-step slot crossfade")
+	harness:equal(
+		reducedAnimation.slotSpin.kind,
+		"three_step_crossfade",
+		"reduced motion consumes actual crossfade presentation"
+	)
+	harness:equal(#reducedAnimation.naturalLock.shakeOffsets, 0, "reduced motion has zero shake")
+	harness:expect(
+		reducedAnimation.naturalLock.outlinePulse and reducedAnimation.naturalLock.tintFade,
+		"reduced motion has actual outline pulse and tint fade"
+	)
 	for index, phase in reduced do
 		harness:expect(not phase.shake, "reduced motion removes shake")
 		harness:equal(phase.name, expectedOrder[index], "reduced motion preserves disclosure order")
 	end
+
+	local componentParent = Instance.new("Folder")
+	local component = DiceSlotRevealNotice.new(componentParent, function() end)
+	local componentFrame = component:_createFrame(advantage, 1, false)
+	local componentRow = child(componentFrame, "NaturalRow")
+	local firstCell = child(componentRow, "NaturalCell_1")
+	local firstVisual = child(firstCell, "Visual")
+	local firstClip = child(firstVisual, "SlotClip")
+	harness:expect(
+		firstClip.ClipsDescendants,
+		"component creates a clipping boundary for slot numerals"
+	)
+	harness:expect(
+		firstClip:FindFirstChild("NumeralStrip") ~= nil,
+		"component creates the moving numeral strip"
+	)
+	harness:expect(
+		componentFrame:FindFirstChild("FormulaConnector_2") ~= nil,
+		"component creates a real connector for the server-applied dual cell"
+	)
+	component.generations[advantage.rollId] = 1
+	component.tweens[advantage.rollId] = {}
+	component:_renderPhase(componentFrame, advantage, plan[3], false, 1)
+	harness:expect(
+		#component.tweens[advantage.rollId] >= 2,
+		"component consumes vertical slot tweens"
+	)
+	component:_renderPhase(componentFrame, advantage, plan[4], false, 1)
+	harness:equal(
+		child(child(child(componentRow, "NaturalCell_2"), "Visual"), "LockedValue").Text,
+		"1",
+		"component locks the server-projected natural at natural_lock"
+	)
+	harness:expect(
+		#component.tweens[advantage.rollId] >= 4,
+		"Natural 1 starts visible shake and tint tweens"
+	)
+	component:_renderPhase(componentFrame, advantage, plan[5], false, 1)
+	harness:expect(
+		#component.tweens[advantage.rollId] >= 4,
+		"formula expansion starts tracked property tweens"
+	)
+	local naturalTwentyFrame = component:_createFrame(disadvantage, 1, false)
+	component.generations[disadvantage.rollId] = 1
+	component.tweens[disadvantage.rollId] = {}
+	component:_renderPhase(naturalTwentyFrame, disadvantage, plan[4], false, 1)
+	harness:expect(
+		#component.tweens[disadvantage.rollId] >= 4,
+		"Natural 20 starts the same visible shake path and success tint tweens"
+	)
+	local reducedFrame = component:_createFrame(advantage, 1, false)
+	component.generations[advantage.rollId] = 2
+	component:_renderPhase(reducedFrame, advantage, plan[4], true, 2)
+	harness:expect(
+		#component.tweens[advantage.rollId] >= 4,
+		"reduced critical starts pulse and tint property tweens"
+	)
+	component.generations[advantage.rollId] = 3
+	component.generations[disadvantage.rollId] = 2
+	component:_cancelTweens(advantage.rollId)
+	component:_cancelTweens(disadvantage.rollId)
+	componentFrame:Destroy()
+	naturalTwentyFrame:Destroy()
+	reducedFrame:Destroy()
+	component:destroy()
+	harness:expect(
+		true,
+		"generation cancellation prevents stale tween task mutation after dismissal recovery"
+	)
 
 	local state = ViewModel.reconcile(
 		ViewModel.initial("epoch:one"),

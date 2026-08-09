@@ -17,6 +17,7 @@ FILES = {
     "app": ROOT / "src/StarterGui/RVTT/App.client.lua",
     "spec": ROOT / "tests/Unit/DiceSlotRevealNotice.spec.lua",
     "runner": ROOT / "tests/TestRunner.server.lua",
+    "test_project": ROOT / "test.project.json",
 }
 
 EXPECTED_STATES = [
@@ -109,14 +110,76 @@ def validate_contract_texts(texts: dict[str, str]) -> list[str]:
         texts["component"],
         {
             'root.Name = "DiceSlotRevealNotice"',
+            'TweenService = game:GetService("TweenService")',
+            "TweenService:Create(",
+            'clip.Name = "SlotClip"',
+            "clip.ClipsDescendants = true",
+            'strip.Name = "NumeralStrip"',
+            "{ Position = UDim2.fromOffset(0, -descriptor.slotSpin.verticalDistance) }",
+            "function DiceSlotRevealNotice:_spinReduced",
+            "function DiceSlotRevealNotice:_runDampedCritical",
+            "function DiceSlotRevealNotice:_runReducedCritical",
+            'notice.semanticCritical == "natural_1"',
+            'notice.semanticCritical == "natural_20"',
+            "Tokens.Color.Danger",
+            "Tokens.Color.Success",
+            "if index == notice.appliedIndex then",
+            'stroke.Name = "AppliedAccent"',
+            'scale.Name = "AppliedScale"',
+            'connector.Name = "FormulaConnector_"',
+            "Size = UDim2.fromOffset(descriptor.formulaExpand.targetWidth, 64)",
+            "descriptor.formulaExpand.durationMs",
+            "TextTransparency = 1",
+            "BackgroundColor3 = Tokens.Color.SurfaceSoft",
+            "function DiceSlotRevealNotice:_cancelTweens",
+            "tween:Cancel()",
+            "self.generations[rollId] == generation",
             'frame:SetAttribute("RVTTDiceRevealPhase"',
-            'value:SetAttribute("RVTTApplied"',
-            'value:SetAttribute("RVTTSemanticCritical"',
+            'visual:SetAttribute("RVTTApplied"',
+            'visual:SetAttribute("RVTTSemanticCritical"',
             'frame:SetAttribute("RVTTNaturalOneShake"',
         },
-        "DiceSlotRevealNotice presentation",
+        "DiceSlotRevealNotice actual presentation",
         errors,
     )
+    component = texts["component"]
+    if component.count("self:_tween(") < 12:
+        errors.append("DiceSlotRevealNotice: actual property tween consumers are incomplete")
+    formula_block = component.split('phase.name == "formula_expand"', 1)[-1].split(
+        'phase.name == "adjudication_append"', 1
+    )[0]
+    if re.search(r"frame\.Size\s*=", formula_block):
+        errors.append("DiceSlotRevealNotice: formula_expand must not use direct-only frame size assignment")
+    if "Position = UDim2.fromOffset(offset, 0)" not in component:
+        errors.append("DiceSlotRevealNotice: damped horizontal shake property consumer is missing")
+    if "stroke.Transparency = 1" not in component or "{ Transparency = 0.65 }" not in component:
+        errors.append("DiceSlotRevealNotice: reduced-motion outline pulse consumer is missing")
+    if "BackgroundColor3 = color" not in component or "BackgroundColor3 = Tokens.Color.SurfaceSoft" not in component:
+        errors.append("DiceSlotRevealNotice: reduced-motion tint fade consumer is missing")
+
+    rules = texts["rules"]
+    _contains_all(
+        rules,
+        {
+            "local function validDiceMode",
+            'value == "normal"',
+            'value == "advantage"',
+            'value == "disadvantage"',
+            "and validDiceMode(payload.diceMode)",
+            'diceMode = payload.diceMode or "normal"',
+            "challenge.diceMode",
+        },
+        "RulesDomain production challenge diceMode authority",
+        errors,
+    )
+    ability_block = rules.split('commandType = "rules.ability_check"', 1)[-1].split(
+        'commandType = "rules.saving_throw"', 1
+    )[0]
+    saving_block = rules.split('commandType = "rules.saving_throw"', 1)[-1].split(
+        'commandType = "rules.attack"', 1
+    )[0]
+    if "payload.diceMode" in ability_block or "payload.diceMode" in saving_block:
+        errors.append("RulesDomain: rolling player payload must not select diceMode")
     client_text = "\n".join((texts["view_model"], texts["component"], texts["app"]))
     for marker in ("Random.new", "math.random", "Shared.Rules.Dice", "Dice.roll", "math.max", "math.min"):
         if marker in client_text:
@@ -143,12 +206,26 @@ def validate_contract_texts(texts: dict[str, str]) -> list[str]:
             "unauthorized viewer receives no private roll placeholder or count",
             "initiative collision offset is deterministic",
             "incomplete authoritative record is excluded without fabricated fields",
+            "rolling player payload cannot override challenge diceMode",
+            "production advantage server path is covered",
+            "production disadvantage server path is covered",
+            "slot spin uses a real vertical visual movement descriptor",
+            "final natural is locked only at natural_lock presentation boundary",
+            "formula expansion is not an instantaneous-only size assignment",
+            "full-motion Natural 1 has damped horizontal shake",
+            "full-motion Natural 20 has damped horizontal shake",
+            "reduced motion has actual outline pulse and tint fade",
+            "component consumes vertical slot tweens",
+            "component creates a real connector for the server-applied dual cell",
+            "generation cancellation prevents stale tween task mutation after dismissal recovery",
         },
         "DiceSlotRevealNotice.spec",
         errors,
     )
     if 'require(script.Parent.Unit["DiceSlotRevealNotice.spec"])' not in texts["runner"]:
         errors.append("TestRunner: DiceSlotRevealNotice.spec is not registered")
+    if 'src/StarterGui/RVTT/UI/Components/DiceSlotRevealNotice.lua' not in texts["test_project"]:
+        errors.append("test.project.json: production DiceSlotRevealNotice component is not available to focused tests")
     return errors
 
 
@@ -179,6 +256,24 @@ def run_self_tests() -> list[str]:
         ("projection", "naturalResults = naturalResults", "naturalResults = nil", "projection fields"),
         ("policy", 'record.audience ~= "public"', "false", "audience filter"),
         ("runner", 'require(script.Parent.Unit["DiceSlotRevealNotice.spec"])', "require(script.Parent.Unit.Missing)", "runner"),
+        ("component", "TweenService:Create(", "TweenService:Missing(", "actual tween primitive"),
+        ("component", "clip.ClipsDescendants = true", "clip.ClipsDescendants = false", "slot clipping"),
+        ("component", 'strip.Name = "NumeralStrip"', 'strip.Name = "StaticNumber"', "numeral strip"),
+        (
+            "component",
+            "{ Position = UDim2.fromOffset(0, -descriptor.slotSpin.verticalDistance) }",
+            "{ BackgroundTransparency = 0 }",
+            "vertical slot movement",
+        ),
+        ("component", 'notice.semanticCritical == "natural_1"', "false", "Natural 1 branch"),
+        ("component", 'notice.semanticCritical == "natural_20"', "false", "Natural 20 branch"),
+        ("component", "function DiceSlotRevealNotice:_spinReduced", "function DiceSlotRevealNotice:_spinStatic", "reduced crossfade"),
+        ("component", "stroke.Transparency = 1", "stroke.Transparency = 0", "reduced outline pulse"),
+        ("component", 'connector.Name = "FormulaConnector_"', 'connector.Name = "Marker_"', "formula connector"),
+        ("component", "tween:Cancel()", "return", "tween cancellation"),
+        ("rules", "and validDiceMode(payload.diceMode)", "and true", "challenge dice mode validation"),
+        ("rules", 'diceMode = payload.diceMode or "normal"', 'diceMode = "normal"', "challenge dice mode storage"),
+        ("test_project", "src/StarterGui/RVTT/UI/Components/DiceSlotRevealNotice.lua", "missing.lua", "component test mapping"),
     ]
     failures: list[str] = []
     for key, old, new, label in mutations:

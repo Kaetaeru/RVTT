@@ -19,7 +19,15 @@
         "Integration": {"$path": "tests/Integration"}
       }
     },
-    "ServerStorage": {"RVTT": {"$path": "src/ServerStorage/RVTT"}},
+    "ServerStorage": {
+      "RVTT": {"$path": "src/ServerStorage/RVTT"},
+      "RVTTTestUI": {
+        "$className": "Folder",
+        "DiceSlotRevealNotice": {
+          "$path": "src/StarterGui/RVTT/UI/Components/DiceSlotRevealNotice.lua"
+        }
+      }
+    },
     "StarterPlayer": {
       "StarterPlayerScripts": {
         "RVTT": {"$path": "src/StarterPlayer/StarterPlayerScripts/RVTT"}

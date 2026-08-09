@@ -51,6 +51,10 @@ local function isFiniteInteger(value: any): boolean
 		and value % 1 == 0
 end
 
+local function validDiceMode(value: any): boolean
+	return value == nil or value == "normal" or value == "advantage" or value == "disadvantage"
+end
+
 function Domain.initialState()
 	return {
 		rollRecords = {},
@@ -385,6 +389,7 @@ function Domain.register(registry: any)
 				and Helpers.hasNumber(payload, "difficultyClass")
 				and payload.difficultyClass >= 1
 				and payload.difficultyClass <= 40
+				and validDiceMode(payload.diceMode)
 		end,
 		execute = function(_: any, state: any, payload: any)
 			local challengeId = Identity.new("challenge")
@@ -393,6 +398,7 @@ function Domain.register(registry: any)
 				ability = payload.ability,
 				proficient = payload.proficient == true,
 				difficultyClass = math.floor(payload.difficultyClass),
+				diceMode = payload.diceMode or "normal",
 				status = "open",
 				labelKey = payload.labelKey,
 			}
@@ -424,7 +430,7 @@ function Domain.register(registry: any)
 				challenge.ability,
 				challenge.proficient,
 				challenge.difficultyClass,
-				nil
+				challenge.diceMode
 			)
 			resolution.actorId = payload.actorId
 			resolution.challengeId = payload.challengeId
@@ -456,7 +462,7 @@ function Domain.register(registry: any)
 				challenge.ability,
 				true,
 				challenge.difficultyClass,
-				nil
+				challenge.diceMode
 			)
 			resolution.actorId = payload.actorId
 			resolution.challengeId = payload.challengeId

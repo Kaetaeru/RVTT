@@ -16,6 +16,8 @@ ViewModel.STACK_CAP = 2
 ViewModel.NORMAL_SIZE = { width = 64, height = 64 }
 ViewModel.DUAL_MIN_SIZE = { width = 148, height = 64 }
 ViewModel.DISCARDED_CONTRAST = 0.5
+ViewModel.SLOT_CELL_HEIGHT = 56
+ViewModel.SLOT_DECORATIVE_VALUES = { 2, 7, 13, 4, 18, 9 }
 
 local function cloneMap(source: any): any
 	local result = {}
@@ -166,6 +168,43 @@ function ViewModel.presentationPlan(notice: any, reducedMotion: boolean): { any 
 		})
 	end
 	return phases
+end
+
+function ViewModel.animationDescriptor(notice: any, reducedMotion: boolean): any
+	local critical = notice.semanticCritical == "natural_1"
+		or notice.semanticCritical == "natural_20"
+	return {
+		slotSpin = {
+			kind = if reducedMotion then "three_step_crossfade" else "vertical_numeral_strip",
+			durationMs = notice.timingProfile.slotSpinMs,
+			crossfadeSteps = if reducedMotion then 3 else nil,
+			verticalDistance = ViewModel.SLOT_CELL_HEIGHT * (#ViewModel.SLOT_DECORATIVE_VALUES - 1),
+			finalNaturalVisible = false,
+		},
+		naturalLock = {
+			durationMs = notice.timingProfile.naturalLockMs,
+			locksProjectedNatural = true,
+			shakeOffsets = if critical and not reducedMotion then { 10, -7, 4, -2, 0 } else {},
+			tintToken = if notice.semanticCritical == "natural_1"
+				then "danger"
+				elseif notice.semanticCritical == "natural_20" then "success"
+				else nil,
+			outlinePulse = critical,
+			tintFade = critical,
+		},
+		formulaExpand = {
+			durationMs = notice.timingProfile.formulaExpandMs,
+			targetWidth = 360,
+			usesTween = true,
+		},
+		dualApplied = {
+			enabled = notice.diceMode == "advantage" or notice.diceMode == "disadvantage",
+			appliedIndex = notice.appliedIndex,
+			accent = true,
+			scale = 1.08,
+			formulaConnector = true,
+		},
+	}
 end
 
 function ViewModel.cells(notice: any): { any }
