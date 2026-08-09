@@ -496,15 +496,15 @@ function DiceSlotRevealNotice:_renderPhase(
 			descriptor.formulaExpand.durationMs,
 			{ TextTransparency = 0 }
 		)
-		for _, child in frame:GetChildren() do
+		for _, connectorChild in frame:GetChildren() do
 			if
-				child:IsA("Frame")
-				and string.find(child.Name, "FormulaConnector_", 1, true) == 1
+				connectorChild:IsA("Frame")
+				and string.find(connectorChild.Name, "FormulaConnector_", 1, true) == 1
 			then
-				local targetWidth = child:GetAttribute("RVTTConnectorTargetWidth")
-				child.Visible = true
-				child.Size = UDim2.fromOffset(0, 2)
-				self:_tween(notice.rollId, child, descriptor.formulaExpand.durationMs, {
+				local targetWidth = connectorChild:GetAttribute("RVTTConnectorTargetWidth")
+				connectorChild.Visible = true
+				connectorChild.Size = UDim2.fromOffset(0, 2)
+				self:_tween(notice.rollId, connectorChild, descriptor.formulaExpand.durationMs, {
 					Size = UDim2.fromOffset(
 						if type(targetWidth) == "number" then targetWidth else 0,
 						2
