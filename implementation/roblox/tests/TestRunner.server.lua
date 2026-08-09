@@ -72,6 +72,11 @@ local specs: { Spec } = {
 		runner = require(script.Parent.Unit["Management.spec"]) :: any,
 	},
 	{
+		id = "unit-official-character-sheet",
+		name = "OfficialCharacterSheet.spec",
+		runner = require(script.Parent.Unit["OfficialCharacterSheet.spec"]) :: any,
+	},
+	{
 		id = "unit-dm-workspace",
 		name = "DmWorkspace.spec",
 		runner = require(script.Parent.Unit["DmWorkspace.spec"]) :: any,

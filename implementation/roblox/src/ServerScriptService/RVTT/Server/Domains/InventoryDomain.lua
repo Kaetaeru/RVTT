@@ -106,6 +106,146 @@ function Domain.register(registry: any)
 			})
 		end,
 	})
+
+	registry:register({
+		commandType = "inventory.unequip",
+		domainId = Domain.id,
+		authorize = function(context: any, domains: any, payload: any)
+			return Helpers.ownsItem(context, domains, payload.itemId)
+				and Helpers.ownsCharacter(context, domains, payload.characterId)
+		end,
+		validate = function(payload: any)
+			return Helpers.hasString(payload, "itemId")
+				and Helpers.hasString(payload, "characterId")
+		end,
+		execute = function(_: any, state: any, payload: any)
+			local item = state.items[payload.itemId]
+			local location = state.locations[payload.itemId]
+			if item == nil or type(location) ~= "table" then
+				return Helpers.notFound("item", payload.itemId)
+			end
+			if location.kind ~= "equipped" or location.characterId ~= payload.characterId then
+				return Helpers.conflict("item is not equipped by the requested character")
+			end
+			return move(state, payload.itemId, {
+				kind = "inventory",
+				characterId = payload.characterId,
+			})
+		end,
+	})
+
+	registry:register({
+		commandType = "inventory.use",
+		domainId = Domain.id,
+		authorize = function(context: any, domains: any, payload: any)
+			return Helpers.ownsItem(context, domains, payload.itemId)
+		end,
+		validate = function(payload: any)
+			return Helpers.hasString(payload, "itemId")
+		end,
+		execute = function(_: any, state: any, payload: any)
+			local item = state.items[payload.itemId]
+			if item == nil then
+				return Helpers.notFound("item", payload.itemId)
+			end
+			if item.usable ~= true then
+				return Helpers.conflict("item is not usable")
+			end
+			item.quantity = math.max(0, math.floor(item.quantity or 1) - 1)
+			item.revision += 1
+			local remaining = item.quantity
+			if remaining == 0 then
+				state.items[payload.itemId] = nil
+				state.locations[payload.itemId] = nil
+			end
+			return { itemId = payload.itemId, remaining = remaining }
+		end,
+	})
+
+	registry:register({
+		commandType = "inventory.split",
+		domainId = Domain.id,
+		authorize = function(context: any, domains: any, payload: any)
+			return Helpers.ownsItem(context, domains, payload.itemId)
+		end,
+		validate = function(payload: any)
+			return Helpers.hasString(payload, "itemId") and Helpers.hasNumber(payload, "quantity")
+		end,
+		execute = function(_: any, state: any, payload: any)
+			local item = state.items[payload.itemId]
+			local location = state.locations[payload.itemId]
+			if item == nil or type(location) ~= "table" then
+				return Helpers.notFound("item", payload.itemId)
+			end
+			local quantity = math.floor(payload.quantity)
+			if quantity < 1 or quantity >= (item.quantity or 1) then
+				return Helpers.conflict("split quantity is outside the available stack")
+			end
+			local splitId = Identity.new("item")
+			local splitItem = table.clone(item)
+			splitItem.id = splitId
+			splitItem.quantity = quantity
+			splitItem.revision = 1
+			item.quantity -= quantity
+			item.revision += 1
+			state.items[splitId] = splitItem
+			state.locations[splitId] = table.clone(location)
+			return { source = item, split = splitItem, location = state.locations[splitId] }
+		end,
+	})
+
+	registry:register({
+		commandType = "inventory.send",
+		domainId = Domain.id,
+		authorize = function(context: any, domains: any, payload: any)
+			return Helpers.ownsItem(context, domains, payload.itemId)
+				and Helpers.ownsCharacter(context, domains, payload.targetCharacterId)
+		end,
+		validate = function(payload: any)
+			return Helpers.hasString(payload, "itemId")
+				and Helpers.hasString(payload, "targetCharacterId")
+		end,
+		execute = function(_: any, state: any, payload: any)
+			local item = state.items[payload.itemId]
+			if item == nil then
+				return Helpers.notFound("item", payload.itemId)
+			end
+			if item.transferable == false then
+				return Helpers.conflict("item transfer is disabled")
+			end
+			return move(state, payload.itemId, {
+				kind = "inventory",
+				characterId = payload.targetCharacterId,
+			})
+		end,
+	})
+
+	registry:register({
+		commandType = "inventory.set_attunement",
+		domainId = Domain.id,
+		authorize = function(context: any, domains: any, payload: any)
+			return Helpers.ownsItem(context, domains, payload.itemId)
+				and Helpers.ownsCharacter(context, domains, payload.characterId)
+		end,
+		validate = function(payload: any)
+			return Helpers.hasString(payload, "itemId")
+				and Helpers.hasString(payload, "characterId")
+				and type(payload.attuned) == "boolean"
+		end,
+		execute = function(_: any, state: any, payload: any)
+			local item = state.items[payload.itemId]
+			local location = state.locations[payload.itemId]
+			if item == nil or type(location) ~= "table" then
+				return Helpers.notFound("item", payload.itemId)
+			end
+			if item.attunable ~= true or location.characterId ~= payload.characterId then
+				return Helpers.conflict("item cannot be attuned by the requested character")
+			end
+			item.attunedToCharacterId = if payload.attuned then payload.characterId else nil
+			item.revision += 1
+			return item
+		end,
+	})
 end
 
 return table.freeze(Domain)

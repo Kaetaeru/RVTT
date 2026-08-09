@@ -10,6 +10,7 @@ end
 local player = Players.LocalPlayer
 local SharedUI = ReplicatedStorage.RVTT.Shared.UI
 local Tokens = require(SharedUI.DesignTokens)
+local CharacterSheetViewModel = require(SharedUI.CharacterSheetViewModel)
 local GameplayHudViewModel = require(SharedUI.GameplayHudViewModel)
 local EntryRecoveryViewModel = require(SharedUI.EntryRecoveryViewModel)
 local ManagementViewModel = require(SharedUI.ManagementViewModel)
@@ -23,6 +24,7 @@ local GameplayHud = require(uiFolder.Components.GameplayHud)
 local ManagementPanel = require(uiFolder.Components.ManagementPanel)
 local EntryRecoveryPanel = require(uiFolder.Components.EntryRecoveryPanel)
 local DmWorkspacePanel = require(uiFolder.Components.DmWorkspacePanel)
+local OfficialCharacterSheet = require(uiFolder.Components.OfficialCharacterSheet)
 local components = uiFolder.Components
 
 local playerScripts = player:WaitForChild("PlayerScripts")
@@ -83,9 +85,13 @@ settingsStroke.Parent = settingsButton
 
 local settingsContextActive = false
 local managementContextActive = false
+local characterSheetContextActive = false
 local managementReturnSurface = "gameplay"
 local managementCommands: { [string]: any } = {}
 local managementAwaitingRevision: number? = nil
+local characterSheetCommands: { [string]: any } = {}
+local characterSheetFeedback =
+	CharacterSheetViewModel.initialFeedback(client.Replica.revision, client.Replica.epoch)
 local entryCommandId: string? = nil
 local entryAwaitingRevision: number? = nil
 local entryError: any = nil
@@ -96,11 +102,14 @@ local currentHudState: any = nil
 local settingsPanel: any
 local gameplayHud: any
 local managementPanel: any
+local characterSheet: any
 local entryRecoveryPanel: any
 local setSettingsVisible: (boolean) -> ()
 local setManagementVisible: (boolean, string?) -> ()
+local setCharacterSheetVisible: (boolean) -> ()
 local renderHud: () -> ()
 local renderManagement: () -> ()
+local renderCharacterSheet: () -> ()
 local renderEntryRecovery: () -> ()
 
 local function applyPreferences()
@@ -108,6 +117,9 @@ local function applyPreferences()
 	ThemeApplicator.apply(shell.Root, preferences)
 	if settingsPanel ~= nil then
 		settingsPanel:setPreferences(preferences)
+	end
+	if characterSheet ~= nil then
+		ThemeApplicator.apply(characterSheet.Root, preferences)
 	end
 	ThemeApplicator.apply(dmWorkspacePanel.Root, preferences)
 end
@@ -118,6 +130,8 @@ local function updatePrompt(settingsVisible: boolean)
 	end
 	if settingsVisible then
 		promptText.Text = "Q 설정 닫기"
+	elseif characterSheet ~= nil and characterSheet.Root.Visible then
+		promptText.Text = "Q 캐릭터 시트 닫기"
 	elseif managementPanel ~= nil and managementPanel.Root.Visible then
 		promptText.Text = "Q 캐릭터 콘솔 닫기"
 	elseif currentHudState ~= nil and currentHudState.preview ~= nil then
@@ -144,6 +158,9 @@ local function submitManagement(intent: any?, errorCode: string?)
 end
 
 setSettingsVisible = function(visible: boolean)
+	if visible and characterSheet ~= nil and characterSheet.Root.Visible then
+		setCharacterSheetVisible(false)
+	end
 	if visible and managementPanel ~= nil and managementPanel.Root.Visible then
 		setManagementVisible(false)
 	end
@@ -264,6 +281,9 @@ end
 setManagementVisible = function(visible: boolean, tab: string?)
 	if visible then
 		setSettingsVisible(false)
+		if characterSheet ~= nil and characterSheet.Root.Visible then
+			setCharacterSheetVisible(false)
+		end
 		managementReturnSurface = shell.surface
 		if not shell:setSurface("management") then
 			return
@@ -292,6 +312,82 @@ setManagementVisible = function(visible: boolean, tab: string?)
 	end
 end
 
+local function submitCharacterSheet(actionId: string, candidateRevision: number)
+	local intent, errorCode =
+		CharacterSheetViewModel.actionIntent(characterSheet.state, actionId, candidateRevision)
+	if intent == nil then
+		characterSheetFeedback = CharacterSheetViewModel.resolveReceipt(
+			CharacterSheetViewModel.pendingFeedback(
+				actionId,
+				"local-rejected",
+				candidateRevision,
+				client.Replica.epoch
+			),
+			false,
+			errorCode,
+			nil
+		)
+		renderCharacterSheet()
+		return
+	end
+	local commandId = client.Command:submit(intent.commandType, intent.payload)
+	characterSheetCommands[commandId] = { actionId = actionId, baseRevision = candidateRevision }
+	characterSheetFeedback = CharacterSheetViewModel.pendingFeedback(
+		actionId,
+		commandId,
+		candidateRevision,
+		client.Replica.epoch
+	)
+	renderCharacterSheet()
+end
+
+characterSheet = OfficialCharacterSheet.new(shell:getLayer("Overlay"), function()
+	setCharacterSheetVisible(false)
+end, submitCharacterSheet)
+
+renderCharacterSheet = function()
+	local state = CharacterSheetViewModel.build(
+		client.Replica.payload,
+		client.Replica.revision,
+		characterSheetFeedback,
+		shell.Root.AbsoluteSize.X
+	)
+	characterSheet:render(state)
+	if characterSheet.Root.Visible and state.canReadFullSheet ~= true then
+		setCharacterSheetVisible(false)
+	end
+	ThemeApplicator.apply(characterSheet.Root, client.Preferences:snapshot())
+end
+
+setCharacterSheetVisible = function(visible: boolean)
+	if visible then
+		setSettingsVisible(false)
+		if managementPanel.Root.Visible then
+			setManagementVisible(false)
+		end
+		renderCharacterSheet()
+		characterSheet:setVisible(true)
+	else
+		characterSheet:setVisible(false)
+	end
+	updatePrompt(settingsPanel:isVisible())
+	if visible and characterSheet.Root.Visible and not characterSheetContextActive then
+		characterSheetContextActive = true
+		client.Input:push("character_sheet_surface", 85, {
+			Cancel = function()
+				setCharacterSheetVisible(false)
+				return true
+			end,
+			Confirm = function()
+				return false
+			end,
+		})
+	elseif (not visible or not characterSheet.Root.Visible) and characterSheetContextActive then
+		characterSheetContextActive = false
+		client.Input:remove("character_sheet_surface")
+	end
+end
+
 gameplayHud = GameplayHud.new(shell:getLayer("Gameplay"), shell:getLayer("Toast"), function()
 	if
 		currentHudState == nil
@@ -308,6 +404,8 @@ end, function()
 	setManagementVisible(true, "inventory")
 end, function()
 	setManagementVisible(true, "journal")
+end, function()
+	setCharacterSheetVisible(true)
 end)
 
 renderHud = function()
@@ -363,6 +461,9 @@ end)
 
 local function render(payload: any, envelope: any)
 	local envelopeEpoch = if type(envelope) == "table" then envelope.authorityEpoch else nil
+	local revision = if type(envelope) == "table" and type(envelope.revision) == "number"
+		then envelope.revision
+		else client.Replica.revision
 	if type(envelopeEpoch) == "string" and envelopeEpoch ~= lastAuthorityEpoch then
 		lastAuthorityEpoch = envelopeEpoch
 		entryCommandId = nil
@@ -370,6 +471,8 @@ local function render(payload: any, envelope: any)
 		entryError = nil
 		managementCommands = {}
 		managementAwaitingRevision = nil
+		characterSheetCommands = {}
+		characterSheetFeedback = CharacterSheetViewModel.initialFeedback(revision, envelopeEpoch)
 	end
 	shell:applyProjection(payload, player.UserId)
 	local selectedActorId = client.WorldTokens.Renderer:getSelectedActorId()
@@ -382,9 +485,6 @@ local function render(payload: any, envelope: any)
 	local phase = if type(session) == "table" and type(session.phase) == "string"
 		then session.phase
 		else "loading"
-	local revision = if type(envelope) == "table" and type(envelope.revision) == "number"
-		then envelope.revision
-		else client.Replica.revision
 	banner.Text = string.format(
 		"RVTT · %s · %s · %s · revision %d",
 		shell.role,
@@ -393,6 +493,13 @@ local function render(payload: any, envelope: any)
 		revision
 	)
 	feedback = GameplayHudViewModel.reconcileFeedback(feedback, revision)
+	local sheetProjection = if type(payload) == "table" then payload.characterSheet else nil
+	characterSheetFeedback = CharacterSheetViewModel.reconcile(
+		characterSheetFeedback,
+		sheetProjection,
+		revision,
+		envelopeEpoch
+	)
 	if entryAwaitingRevision ~= nil and revision >= entryAwaitingRevision then
 		entryAwaitingRevision = nil
 		entryError = nil
@@ -409,6 +516,9 @@ local function render(payload: any, envelope: any)
 				client.Input:remove("management_surface")
 			end
 		end
+	end
+	if characterSheet.Root.Visible then
+		renderCharacterSheet()
 	end
 	dmWorkspacePanel:render(payload, player.UserId, revision)
 	ThemeApplicator.apply(dmWorkspacePanel.Root, client.Preferences:snapshot())
@@ -430,6 +540,30 @@ client.WorldTokens.ContextActionRequested:Connect(function(action, commandId, ba
 end)
 client.Command.Received:Connect(function(message)
 	dmWorkspacePanel:onReceipt(message)
+	if
+		type(message) == "table"
+		and message.phase == "terminal"
+		and characterSheetCommands[message.commandId] ~= nil
+	then
+		characterSheetCommands[message.commandId] = nil
+		local result = message.result
+		local code = if type(result) == "table" and type(result.error) == "table"
+			then result.error.code
+			else nil
+		local resultRevision = if type(result) == "table"
+				and type(result.value) == "table"
+				and type(result.value.revision) == "number"
+			then result.value.revision
+			else nil
+		characterSheetFeedback = CharacterSheetViewModel.resolveReceipt(
+			characterSheetFeedback,
+			type(result) == "table" and result.ok == true,
+			code,
+			resultRevision
+		)
+		renderCharacterSheet()
+		return
+	end
 	if
 		type(message) == "table"
 		and message.phase == "terminal"
@@ -504,6 +638,10 @@ client.Recovery.Changed:Connect(function(state)
 		managementCommands = {}
 		managementAwaitingRevision = nil
 		managementPanel:setPending(false)
+		characterSheetCommands = {}
+		characterSheetFeedback =
+			CharacterSheetViewModel.initialFeedback(client.Replica.revision, client.Replica.epoch)
+		setCharacterSheetVisible(false)
 		client.ViewerPreview:invalidate()
 		dmWorkspacePanel:purgeLocalState()
 	elseif state.state == "recovered" then

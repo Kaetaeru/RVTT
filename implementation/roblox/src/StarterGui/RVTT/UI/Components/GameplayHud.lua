@@ -109,7 +109,8 @@ function Hud.new(
 	toastParent: Instance,
 	onEndTurn: () -> (),
 	onOpenInventory: () -> (),
-	onOpenJournal: () -> ()
+	onOpenJournal: () -> (),
+	onOpenCharacterSheet: () -> ()
 ): any
 	local root = panel("GameplayHud")
 	root.AnchorPoint = Vector2.new(0.5, 1)
@@ -178,6 +179,14 @@ function Hud.new(
 	journal.Text = "Journal"
 	journal.Parent = root
 	journal.Activated:Connect(onOpenJournal)
+
+	local characterSheet = inventory:Clone()
+	characterSheet.Name = "OpenCharacterSheet"
+	characterSheet.Position = UDim2.fromOffset(16, 78)
+	characterSheet.Size = UDim2.fromOffset(150, 30)
+	characterSheet.Text = "캐릭터 시트"
+	characterSheet.Parent = root
+	characterSheet.Activated:Connect(onOpenCharacterSheet)
 
 	local reaction = textLabel("Reaction", Tokens.TextSize.Caption, "warning")
 	reaction.Position = UDim2.fromOffset(276, 92)

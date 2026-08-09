@@ -132,6 +132,98 @@ function Domain.register(registry: any)
 			return character
 		end,
 	})
+
+	registry:register({
+		commandType = "character.sheet_spend_inspiration",
+		domainId = Domain.id,
+		authorize = function(context: any, domains: any, payload: any)
+			return Helpers.ownsCharacter(context, domains, payload.characterId)
+		end,
+		validate = function(payload: any)
+			return Helpers.hasString(payload, "characterId")
+		end,
+		execute = function(_: any, state: any, payload: any)
+			local character = state.characters[payload.characterId]
+			if character == nil then
+				return Helpers.notFound("character", payload.characterId)
+			end
+			if character.inspiration ~= true then
+				return Helpers.conflict("inspiration is unavailable")
+			end
+			character.inspiration = false
+			character.revision += 1
+			return { characterId = payload.characterId, inspiration = false }
+		end,
+	})
+
+	registry:register({
+		commandType = "character.sheet_set_prepared",
+		domainId = Domain.id,
+		authorize = function(context: any, domains: any, payload: any)
+			return Helpers.ownsCharacter(context, domains, payload.characterId)
+		end,
+		validate = function(payload: any)
+			return Helpers.hasString(payload, "characterId")
+				and Helpers.hasString(payload, "spellId")
+				and type(payload.prepared) == "boolean"
+		end,
+		execute = function(_: any, state: any, payload: any)
+			local character = state.characters[payload.characterId]
+			if character == nil then
+				return Helpers.notFound("character", payload.characterId)
+			end
+			local spellcasting = character.spellcasting
+			local available = if type(spellcasting) == "table"
+				then spellcasting.availableSpells
+				else nil
+			if type(available) ~= "table" or available[payload.spellId] == nil then
+				return Helpers.notFound("spell", payload.spellId)
+			end
+			character.preparedSpells = if type(character.preparedSpells) == "table"
+				then character.preparedSpells
+				else {}
+			character.preparedSpells[payload.spellId] = if payload.prepared then true else nil
+			character.revision += 1
+			return {
+				characterId = payload.characterId,
+				spellId = payload.spellId,
+				prepared = payload.prepared,
+			}
+		end,
+	})
+
+	registry:register({
+		commandType = "character.sheet_set_hotbar",
+		domainId = Domain.id,
+		authorize = function(context: any, domains: any, payload: any)
+			if not Helpers.ownsCharacter(context, domains, payload.characterId) then
+				return false
+			end
+			if payload.targetKind == "item" then
+				return Helpers.ownsItem(context, domains, payload.targetId)
+			end
+			return false
+		end,
+		validate = function(payload: any)
+			return Helpers.hasString(payload, "characterId")
+				and payload.targetKind == "item"
+				and Helpers.hasString(payload, "targetId")
+				and type(payload.pinned) == "boolean"
+		end,
+		execute = function(_: any, state: any, payload: any)
+			local character = state.characters[payload.characterId]
+			if character == nil then
+				return Helpers.notFound("character", payload.characterId)
+			end
+			character.hotbarPins = if type(character.hotbarPins) == "table"
+				then character.hotbarPins
+				else {}
+			local key = payload.targetKind .. ":" .. payload.targetId
+			character.hotbarPins[key] = if payload.pinned then true else nil
+			character.revision += 1
+			return { characterId = payload.characterId, target = key, pinned = payload.pinned }
+		end,
+	})
 end
 
 return table.freeze(Domain)

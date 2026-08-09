@@ -2,11 +2,25 @@
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Identity = require(ReplicatedStorage.RVTT.Shared.Core.Identity)
+local Dice = require(ReplicatedStorage.RVTT.Shared.Rules.Dice)
 local Helpers = require(script.Parent.DomainHelpers)
 local ActorProfileResolver = require(script.Parent.Parent.Rules.ActorProfileResolver)
 local RuleResolver = require(script.Parent.Parent.Rules.RuleResolver)
 
 local Domain = { id = "rules", slice = 2 }
+local SHEET_ROLL_KINDS = {
+	ability = true,
+	saving_throw = true,
+	skill = true,
+	initiative = true,
+	weapon_attack = true,
+	weapon_damage = true,
+	damage_cantrip = true,
+	spell_attack = true,
+	hit_die = true,
+	death_save = true,
+	feature_roll = true,
+}
 
 function Domain.initialState()
 	return {
@@ -50,6 +64,125 @@ local function record(state: any, context: any, kind: string, data: any)
 end
 
 function Domain.register(registry: any)
+	registry:register({
+		commandType = "rules.sheet_roll",
+		domainId = Domain.id,
+		authorize = function(context: any, domains: any, payload: any)
+			return Helpers.controlsActor(context, domains, payload.actorId)
+		end,
+		validate = function(payload: any)
+			return Helpers.hasString(payload, "actorId")
+				and Helpers.hasString(payload, "rollKind", 64)
+				and SHEET_ROLL_KINDS[payload.rollKind] == true
+				and (payload.ability == nil or Helpers.hasString(payload, "ability", 32))
+		end,
+		execute = function(context: any, state: any, payload: any, domains: any)
+			local profile = ActorProfileResolver.resolve(payload.actorId, domains)
+			if profile == nil then
+				return Helpers.notFound("actor", payload.actorId)
+			end
+			if payload.rollKind == "hit_die" then
+				local actor = domains.scene.actors[payload.actorId]
+				local character = if type(actor) == "table"
+						and type(actor.sourceCharacterId) == "string"
+					then domains.character.characters[actor.sourceCharacterId]
+					else nil
+				local hitDice = if type(character) == "table" then character.hitDice else nil
+				if type(hitDice) ~= "table" or type(hitDice.sides) ~= "number" then
+					return Helpers.notFound("hit_dice", payload.actorId)
+				end
+				local modifier = RuleResolver.abilityModifier(profile, "constitution")
+				local total, rolls =
+					Dice.rollFormula(1, math.clamp(math.floor(hitDice.sides), 2, 100), modifier)
+				return record(state, context, payload.rollKind, {
+					actorId = payload.actorId,
+					rollKind = payload.rollKind,
+					rolls = rolls,
+					modifier = modifier,
+					total = math.max(0, total),
+				})
+			end
+			if payload.rollKind == "weapon_damage" or payload.rollKind == "damage_cantrip" then
+				local attack = if type(payload.profileId) == "string"
+					then profile.attacks[payload.profileId]
+					else nil
+				if type(attack) ~= "table" then
+					return Helpers.notFound("attack_profile", tostring(payload.profileId))
+				end
+				local damageModifier = RuleResolver.abilityModifier(
+					profile,
+					attack.ability or "strength"
+				) + (attack.damageModifier or 0)
+				local total, rolls = Dice.rollFormula(
+					math.clamp(math.floor(attack.count or 1), 0, 20),
+					math.clamp(math.floor(attack.sides or 4), 2, 100),
+					damageModifier
+				)
+				return record(state, context, payload.rollKind, {
+					actorId = payload.actorId,
+					rollKind = payload.rollKind,
+					profileId = payload.profileId,
+					rolls = rolls,
+					modifier = damageModifier,
+					total = math.max(0, total),
+				})
+			end
+			local natural, rolls = Dice.rollD20(payload.mode)
+			local modifier = 0
+			if type(payload.ability) == "string" then
+				modifier = RuleResolver.abilityModifier(profile, payload.ability)
+			end
+			if payload.proficient == true then
+				modifier += profile.proficiencyBonus
+			end
+			return record(state, context, payload.rollKind, {
+				actorId = payload.actorId,
+				rollKind = payload.rollKind,
+				natural = natural,
+				rolls = rolls,
+				modifier = modifier,
+				total = natural + modifier,
+			})
+		end,
+	})
+
+	registry:register({
+		commandType = "rules.update_vitals",
+		domainId = Domain.id,
+		authorize = function(context: any, domains: any, payload: any)
+			return Helpers.controlsActor(context, domains, payload.actorId)
+		end,
+		validate = function(payload: any)
+			local currentDelta = payload.deltaCurrentHitPoints
+			local temporaryDelta = payload.deltaTemporaryHitPoints
+			return Helpers.hasString(payload, "actorId")
+				and (currentDelta == nil or Helpers.hasNumber(payload, "deltaCurrentHitPoints"))
+				and (temporaryDelta == nil or Helpers.hasNumber(payload, "deltaTemporaryHitPoints"))
+				and (currentDelta ~= nil or temporaryDelta ~= nil)
+		end,
+		execute = function(_: any, state: any, payload: any, domains: any)
+			local actorState = ensureActorState(state, payload.actorId, domains)
+			if actorState == nil then
+				return Helpers.notFound("actor", payload.actorId)
+			end
+			if type(payload.deltaCurrentHitPoints) == "number" then
+				actorState.currentHitPoints = math.clamp(
+					actorState.currentHitPoints + math.floor(payload.deltaCurrentHitPoints),
+					0,
+					actorState.maximumHitPoints
+				)
+			end
+			if type(payload.deltaTemporaryHitPoints) == "number" then
+				actorState.temporaryHitPoints = math.max(
+					0,
+					actorState.temporaryHitPoints + math.floor(payload.deltaTemporaryHitPoints)
+				)
+			end
+			actorState.profileRevision += 1
+			return actorState
+		end,
+	})
+
 	registry:register({
 		commandType = "rules.create_challenge",
 		domainId = Domain.id,

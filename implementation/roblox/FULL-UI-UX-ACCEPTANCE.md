@@ -9,15 +9,15 @@
 
 ## 판정
 
-Phase 10은 49개 stable Acceptance 항목, 12개 실행 Batch 연결, 증거 상태 불변식과 drift validator를 등록했다. 현재 `STATIC_VERIFIED` 항목은 44개이며, 이는 Source·정적 계약만 확인했다는 뜻이다. Studio 또는 Human PASS가 아니다.
+Phase 10은 49개 stable Acceptance 항목, 12개 실행 Batch 연결, 증거 상태 불변식과 drift validator를 등록했다. 현재 `STATIC_VERIFIED` 항목은 45개이며, 이는 Source·정적 계약만 확인했다는 뜻이다. Studio 또는 Human PASS가 아니다.
 
-ADR-0091 Final Contract 중 Developer Asset Registry, Rules Profile/Release Leak Gate, Core Rules Reader가 Production Source와 focused regression으로 `STATIC_VERIFIED`다. Official 2024 Interactive Character Sheet와 Dice Slot Reveal Notice 2개가 남아 있으므로 Phase 10은 `DONE`이 아니라 `PARTIAL / HOLD`다. 다음 focused correction은 Official 2024 Character Sheet다.
+ADR-0091 Final Contract 중 Developer Asset Registry, Rules Profile/Release Leak Gate, Core Rules Reader, Official 2024 Interactive Character Sheet가 Production Source와 focused regression으로 `STATIC_VERIFIED`다. Dice Slot Reveal Notice 1개가 남아 있으므로 Phase 10은 `DONE`이 아니라 `PARTIAL / HOLD`다. 다음 focused correction은 Dice Slot Reveal Notice다.
 
 ## 증거 분류
 
 | Evidence class | 연결 항목 수 | 현재 판정 |
 |---|---:|---|
-| `STATIC` | 46 | 44개 `STATIC_VERIFIED`, 2개 final gap의 정적 등록만 확인 |
+| `STATIC` | 46 | 45개 `STATIC_VERIFIED`, 1개 final gap의 정적 등록만 확인 |
 | `STUDIO_SINGLE_CLIENT` | 21 | `NOT_EXECUTED` · G1 |
 | `STUDIO_MULTI_CLIENT` | 17 | `NOT_EXECUTED` · G2 |
 | `REAL_TRANSPORT` | 3 | `NOT_EXECUTED` · G3 |
@@ -27,7 +27,7 @@ ADR-0091 Final Contract 중 Developer Asset Registry, Rules Profile/Release Leak
 | `PERFORMANCE_DEFERRED` | 1 | `DEFERRED` |
 | `CONTENT_DEFERRED` | 2 | `BLOCKED` final-contract gaps |
 
-Matrix item 상태 합계는 `STATIC_VERIFIED=44`, `NOT_EXECUTED=1`, `DEFERRED=2`, `BLOCKED=2`다.
+Matrix item 상태 합계는 `STATIC_VERIFIED=45`, `NOT_EXECUTED=1`, `DEFERRED=2`, `BLOCKED=1`다.
 
 ## Runtime Batch 연결
 
@@ -123,10 +123,13 @@ BuiltinPackIndex pinned revision + integrated source-tree digest + expected coun
 
 현재 repository의 `rvtt.core.rules` Reader package에는 구조 검증용 공개-safe Reader Guide만 들어 있다. 전체 SRD corpus 또는 private 한국어 integrated corpus의 실제 content population/runtime evidence를 이 Static PASS로 확대하지 않는다. 특히 public CI의 synthetic importer/overlay PASS는 **실제 private corpus Studio Runtime PASS가 아니다**.
 
+### Official 2024 Interactive Character Sheet
+
+`CharacterSheetProjection.lua`는 owner/authorized DM만 전체 Character·Inventory·Rules authoritative state를 같은 revision으로 투영하고 Observer와 unrelated player에는 식별자·private field를 공개하지 않는다. `OfficialCharacterSheet.lua`와 `CharacterSheetLayout.lua`는 8.5:11 Page 1/2, 고정 구획 비율, Wide/Reference spread, Compact page tab을 유지한다. 모든 roll·vitals·equipment·spell·attunement·hotbar·inspiration 변경은 `CommandClient`와 server command를 통하며 receipt와 projection reconciliation을 구분한다. focused spec과 validator가 revision parity, stale/permission failure, action authority, 비율 산술과 client dice/Remote 직접 호출 금지를 정적으로 확인한다. Studio/Human 실행은 하지 않았다.
+
 ## 남은 ADR-0091 Final Contract Gap
 
-1. Official 2024 Interactive Character Sheet와 Inventory revision parity
-2. Dice Slot Reveal Notice state machine
+1. Dice Slot Reveal Notice state machine
 
 이 항목은 문서 존재나 matrix 등록으로 PASS 처리하지 않는다. Matrix의 실제 `BLOCKED` subset인 `finalContractGaps`가 후속 focused implementation correction의 입력이다.
 
@@ -147,7 +150,7 @@ Validator는 최소 다음을 거부한다.
 - Core Rules Reader lazy-load/nondisclosure evidence 없는 해제
 - private importer/overlay/owner-access positive path 누락 또는 base-project bypass
 - Session role→Reader permission marker wiring 누락
-- 남은 ADR-0091 2개 gap 누락 또는 거짓 해제
+- 남은 ADR-0091 Dice Notice gap 누락 또는 거짓 해제
 - Player persistent Minimap·별도 Map·Objective Tracker 재등록과 Source 재도입
 
 Validator 자체는 위 실패 유형의 negative fixture를 매 실행마다 확인한다.

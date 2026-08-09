@@ -48,7 +48,7 @@ ChatGPT Direct GitHub Implementation
 → 기능 동작·플레이 감각
 ```
 
-사용자가 `.github/CODEX-ACTIVE-TASK.md`의 최신 명령 실행을 명시적으로 요청해 `RVTT-PR2-ADR0091-CORE-RULES-PRIVATE-STABLE-LINK-FIX-001` Source·Static 경로를 Codex가 수행한다. 결과는 PR #2 top-level Conversation에 기록하며 Studio·Human Runtime은 이번 명령에서 실행하지 않는다.
+사용자가 `.github/CODEX-ACTIVE-TASK.md`의 최신 명령 실행을 명시적으로 요청해 `RVTT-PR2-ADR0091-OFFICIAL-2024-CHARACTER-SHEET-001` Source·Static 경로를 Codex가 수행했다. 결과는 PR #2 top-level Conversation에 기록하며 Studio·Human Runtime은 이번 명령에서 실행하지 않는다.
 
 기본적으로 **Codex ↔ Roblox Studio MCP 자동 Smoke를 필수 사용자 흐름으로 사용하지 않는다.** Studio MCP 자동화는 반복 작업 절감 효과가 명확하거나 사용자가 다시 명시적으로 요청할 때만 사용한다. Runtime 테스트를 생략한다는 뜻은 아니며 Studio Runtime 검증은 Batch 기반 사용자 직접 확인으로 진행한다.
 
@@ -60,18 +60,19 @@ ChatGPT Direct GitHub Implementation
 |---|---|---|
 | ADR/설계 및 Studio Preflight 문서 검수 | `PASS` | 마지막 Codex Delta 결과 `NO_SUPPORTED_FINDINGS` |
 | 마지막 별도 Implementation Static Gate | `PASS` | 역사적 검증 대상 `ef99a0740711b4f00fac0d5c8d0599f238ea48e9` |
-| Full UI·UX Source·Acceptance 정합화 | `PARTIAL` | Asset Registry·Rules Profile/Release Gate·Core Rules Reader STATIC_VERIFIED, ADR-0091 필수 구현 Gap 2개 |
+| Full UI·UX Source·Acceptance 정합화 | `PARTIAL` | Asset Registry·Rules Profile/Release Gate·Core Rules Reader·Official 2024 Character Sheet STATIC_VERIFIED, ADR-0091 필수 구현 Gap 1개 |
 | ADR-0091 Asset Registry foundation | `STATIC_VERIFIED` | Source·Server·Client-safe 경계, validation·negative disclosure focused regression |
 | ADR-0091 Rules Profile + Release Leak Gate | `STATIC_VERIFIED` | Builtin package single authority·private readiness·explicit fallback·actual filesystem staging·CI fail-closed regression |
 | ADR-0091 Core Rules Reader | `STATIC_VERIFIED` | private in-root/README/fragment/duplicate stable link·missing/out-of-root raw-path nondisclosure·reciprocal backlink·deterministic import + lazy/viewer filtering regression |
+| ADR-0091 Official 2024 Character Sheet | `STATIC_VERIFIED` | authoritative viewer-safe projection·revision parity·8.5:11 two-page layout·server command intents·receipt/reconciliation focused validation |
 | Shared Shell·Preference Foundation | `PASS` | `RVTT-PR2-UI-FOUNDATION-IMPLEMENTATION-002` 구현·로컬 정적 검증 완료 |
 | Input·Context Action 정합화 | `PASS` | `RVTT-PR2-INPUT-CONTEXT-IMPLEMENTATION-001` 구현·로컬 정적 검증 완료 |
 | Exploration·Encounter HUD | `PASS` | `RVTT-PR2-EXPLORATION-ENCOUNTER-HUD-IMPLEMENTATION-001` 구현·로컬 정적 검증 완료 |
 | Inventory·Journal·Settings | `PASS` | `RVTT-PR2-INVENTORY-JOURNAL-SETTINGS-IMPLEMENTATION-001` Source·Static 완료 |
 | Entry·Role·Recovery | `PASS` | `RVTT-PR2-ENTRY-ROLE-RECOVERY-IMPLEMENTATION-001` Source·Static 완료 |
 | DM Live Workspace | `PASS` | `RVTT-PR2-DM-LIVE-WORKSPACE-IMPLEMENTATION-001` Source·Static 완료 |
-| Full UI·UX Acceptance 확장 | `HOLD` | 49개 항목 등록, 남은 ADR-0091 correction 2개 필요 |
-| 현재 사용자 Studio Human Retest | `BLOCKED` | 남은 2개 구현 + 새 current-HEAD Static Gate가 먼저 |
+| Full UI·UX Acceptance 확장 | `HOLD` | 49개 항목 등록, 남은 ADR-0091 correction 1개 필요 |
+| 현재 사용자 Studio Human Retest | `BLOCKED` | 남은 Dice Notice 구현 + 새 current-HEAD Static Gate가 먼저 |
 | Codex Studio MCP Smoke | `NOT_DEFAULT` | 현재 운영에서는 사용자 수동 Runtime으로 대체 |
 | 일반 Runtime 실행 그룹 | `0 / 3 PASS` | G1도 아직 실행 가능 상태가 아님 |
 | Persistence 실행 그룹 | `0 / 7 PASS` | 전용 Milestone까지 `DEFERRED` |
@@ -129,12 +130,16 @@ phase10CoreRulesPrivateStableLinkFixCommand: RVTT-PR2-ADR0091-CORE-RULES-PRIVATE
 phase10CoreRulesPrivateStableLinkFixTargetShaAtStart: 783bce4e20aa2c1a843cdabf2b7937b45af7a9eb
 phase10CoreRulesPrivateStableLinkLocalValidation: PASS · public-safe synthetic document/README/fragment/duplicate graph + missing/out-of-root/invalid-link nondisclosure + reciprocal backlinks + deterministic double import + focused/full validators + 15 Rojo builds + 3 sourcemaps + production/tests Luau analysis + PowerShell SelfTests
 phase10CoreRulesReaderRuntime: NOT_EXECUTED
+phase10OfficialCharacterSheetCommand: RVTT-PR2-ADR0091-OFFICIAL-2024-CHARACTER-SHEET-001
+phase10OfficialCharacterSheetTargetShaAtStart: 67386abeba817faaea3c0031f6fc57735a977016
+phase10OfficialCharacterSheetLocalStaticValidation: PASS · authoritative projection/viewmodel/layout/command/focused validator + Rojo builds/sourcemaps + Luau analysis; Studio/Human NOT_EXECUTED
+phase10OfficialCharacterSheetState: IMPLEMENTED_PENDING_CHATGPT_VERIFICATION
 phase10StudioRuntime: NOT_EXECUTED
 phase10HumanEvidence: NOT_EXECUTED
-phase10Next: OFFICIAL_2024_CHARACTER_SHEET_CORRECTION
+phase10Next: DICE_SLOT_REVEAL_NOTICE_CORRECTION
 ```
 
-`ef99a07...` Static PASS는 역사적 증거로 유지한다. 이후 UI·UX Source가 계속 변경됐으므로 Studio Human Retest 전에는 남은 Official 2024 Character Sheet와 Dice Slot Reveal Notice를 완료하고 **별도의 새 current-HEAD Static Gate를 다시 통과해야 한다.** Core Rules Reader의 current-head CI 성공은 해당 correction의 Source/Static 증거이며 전체 제품 Runtime PASS가 아니다.
+`ef99a07...` Static PASS는 역사적 증거로 유지한다. 이후 UI·UX Source가 계속 변경됐으므로 Studio Human Retest 전에는 남은 Dice Slot Reveal Notice를 완료하고 **별도의 새 current-HEAD Static Gate를 다시 통과해야 한다.** Official Character Sheet의 current-head CI 성공은 해당 correction의 Source/Static 증거이며 전체 제품 Runtime PASS가 아니다.
 
 ---
 
@@ -150,7 +155,6 @@ Shared Shell·Preference Foundation
 → Entry·Role·Recovery
 → DM Live Workspace
 → Acceptance 확장
-→ Official 2024 Character Sheet correction
 → Dice Slot Reveal Notice correction
 → 새 current-HEAD Static Gate
 → Exploration·Context Input Studio Human Retest
@@ -243,8 +247,8 @@ result: NOT_EXECUTED
 passedChecks: 0
 failedChecks: 0
 blockedChecks: 19
-blocker: Official 2024 Sheet + Dice Notice + new current-HEAD Static Gate required
-next: ADR-0091 Official 2024 Character Sheet correction
+blocker: Dice Notice + new current-HEAD Static Gate required
+next: ADR-0091 Dice Slot Reveal Notice correction
 ```
 
 ### Historical Studio Evidence — 현재 계약 PASS로 사용 금지

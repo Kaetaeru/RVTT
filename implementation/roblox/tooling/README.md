@@ -1,5 +1,7 @@
 # RVTT Roblox Tooling
 
+`validate_official_character_sheet.py`는 ADR-0091 Official 2024 Character Sheet의 authoritative projection, revision parity, 고정 8.5:11 Page 1/2 비율, CommandClient 경계, focused spec 등록과 client dice/direct Remote 금지를 검사한다.
+
 Build, Validation, Schema Consistency, Grand Acceptance와 Local Developer Command를 둔다.
 
 ## 현재 Runner

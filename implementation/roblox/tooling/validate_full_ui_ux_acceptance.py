@@ -9,6 +9,8 @@ import sys
 from validate_asset_registry import run_self_tests as run_asset_registry_self_tests
 from validate_asset_registry import validate as validate_asset_registry
 from validate_core_rules_reader import validate as validate_core_rules_reader
+from validate_official_character_sheet import run_self_tests as run_official_sheet_self_tests
+from validate_official_character_sheet import validate as validate_official_character_sheet
 from validate_rules_profile_release_gate import run_self_tests as run_rules_profile_self_tests
 from validate_rules_profile_release_gate import validate as validate_rules_profile_gate
 
@@ -80,6 +82,7 @@ REQUIRED_FINAL_IDS = {
 }
 RESOLVED_FINAL_IDS = {
     "final.asset-registry-separation",
+    "final.official-2024-sheet-interactions",
     "final.core-rules-reader-filtering",
     "final.rules-profile-release-leak-gate",
 }
@@ -253,7 +256,7 @@ def validate_matrix_data(matrix: dict, manifest: dict) -> list[str]:
     if final_gaps != blocked_final_items:
         errors.append("matrix: finalContractGaps must equal the actual BLOCKED final-contract subset")
     if final_gaps != REMAINING_FINAL_GAPS:
-        errors.append("matrix: ADR-0091 remaining two final-contract gaps must stay BLOCKED")
+        errors.append("matrix: ADR-0091 unresolved final-contract gap set is incorrect")
     for gap_id in REMAINING_FINAL_GAPS:
         matching = next((item for item in items if isinstance(item, dict) and item.get("id") == gap_id), None)
         if matching is None or matching.get("currentState") != "BLOCKED":
@@ -310,6 +313,21 @@ def validate_matrix_data(matrix: dict, manifest: dict) -> list[str]:
         if not required_rules_evidence.issubset(set(rules_item.get("automatedRefs", []))):
             errors.append("matrix: rules profile gate cannot close without production and focused evidence")
 
+    sheet_item = final_items.get("final.official-2024-sheet-interactions")
+    if sheet_item is not None:
+        if sheet_item.get("currentState") != "STATIC_VERIFIED":
+            errors.append("matrix: Official Character Sheet must be STATIC_VERIFIED after focused implementation")
+        required_sheet_evidence = {
+            "implementation/roblox/src/ServerScriptService/RVTT/Server/Projection/CharacterSheetProjection.lua",
+            "implementation/roblox/src/ReplicatedStorage/RVTT/Shared/UI/CharacterSheetViewModel.lua",
+            "implementation/roblox/src/StarterGui/RVTT/UI/Components/OfficialCharacterSheet.lua",
+            "implementation/roblox/src/StarterGui/RVTT/UI/Components/SheetItemActionPopover.lua",
+            "implementation/roblox/tests/Unit/OfficialCharacterSheet.spec.lua",
+            "implementation/roblox/tooling/validate_official_character_sheet.py",
+        }
+        if not required_sheet_evidence.issubset(set(sheet_item.get("automatedRefs", []))):
+            errors.append("matrix: Official Character Sheet cannot close without production and focused evidence")
+
     return errors
 
 
@@ -340,6 +358,7 @@ def validate(root: Path = ROOT) -> list[str]:
     errors.extend(validate_asset_registry(ROOT))
     errors.extend(validate_rules_profile_gate(ROOT))
     errors.extend(validate_core_rules_reader(ROOT))
+    errors.extend(validate_official_character_sheet(ROOT))
     errors.extend(validate_forbidden_player_sources())
     return errors
 
@@ -392,15 +411,10 @@ def run_self_tests(matrix: dict, manifest: dict) -> list[str]:
     rules_item["automatedRefs"] = []
     fixtures.append((missing_rules_evidence, "rules profile gate cannot close without production and focused evidence"))
 
-    false_remaining_sheet = deepcopy(matrix)
-    sheet_item = next(item for item in false_remaining_sheet["acceptanceItems"] if item["id"] == "final.official-2024-sheet-interactions")
-    sheet_item["currentState"] = "STATIC_VERIFIED"
-    sheet_item["evidenceClasses"] = ["STATIC"]
-    sheet_item["evidenceStatus"] = {"STATIC": "PASS"}
-    sheet_item["automatedRefs"] = ["implementation/roblox/tooling/validate_full_ui_ux_acceptance.py"]
-    sheet_item.pop("blockerReason", None)
-    false_remaining_sheet["finalContractGaps"].remove("final.official-2024-sheet-interactions")
-    fixtures.append((false_remaining_sheet, "remaining two final-contract gaps must stay BLOCKED"))
+    missing_sheet_evidence = deepcopy(matrix)
+    sheet_item = next(item for item in missing_sheet_evidence["acceptanceItems"] if item["id"] == "final.official-2024-sheet-interactions")
+    sheet_item["automatedRefs"] = []
+    fixtures.append((missing_sheet_evidence, "Official Character Sheet cannot close without production and focused evidence"))
 
     for fixture, expected in fixtures:
         fixture_errors = validate_matrix_data(fixture, manifest)
@@ -417,6 +431,7 @@ def main() -> int:
         errors.extend(run_self_tests(matrix, manifest))
     errors.extend(run_asset_registry_self_tests())
     errors.extend(run_rules_profile_self_tests())
+    errors.extend(run_official_sheet_self_tests())
     if errors:
         print("Full UI/UX acceptance validation failed:")
         for error in errors:
