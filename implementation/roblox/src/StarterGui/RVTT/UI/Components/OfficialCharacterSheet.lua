@@ -233,7 +233,7 @@ function Sheet.new(parent: Instance, onClose: () -> (), onAction: (string, numbe
 	self.Combat.Position = UDim2.fromOffset(6, 6)
 	local combatActions = Instance.new("Frame")
 	combatActions.Name = "CombatActions"
-	combatActions.Position = UDim2.new(0, 6, 0, 46)
+	combatActions.Position = UDim2.fromOffset(6, 46)
 	combatActions.Size = UDim2.new(1, -12, 0, 30)
 	combatActions.BackgroundTransparency = 1
 	combatActions.Parent = page1Right
@@ -255,7 +255,7 @@ function Sheet.new(parent: Instance, onClose: () -> (), onAction: (string, numbe
 	self.Weapons.Position = UDim2.fromOffset(6, 6)
 	local weaponActions = Instance.new("Frame")
 	weaponActions.Name = "WeaponActions"
-	weaponActions.Position = UDim2.new(0, 6, 0, 42)
+	weaponActions.Position = UDim2.fromOffset(6, 42)
 	weaponActions.Size = UDim2.new(1, -12, 1, -48)
 	weaponActions.BackgroundTransparency = 1
 	weaponActions.Parent = weapons
@@ -274,7 +274,7 @@ function Sheet.new(parent: Instance, onClose: () -> (), onAction: (string, numbe
 	self.ClassFeatures.Position = UDim2.fromOffset(6, 6)
 	local classFeatureActions = Instance.new("Frame")
 	classFeatureActions.Name = "ClassFeatureActions"
-	classFeatureActions.Position = UDim2.new(0, 6, 0, 42)
+	classFeatureActions.Position = UDim2.fromOffset(6, 42)
 	classFeatureActions.Size = UDim2.new(1, -12, 1, -48)
 	classFeatureActions.BackgroundTransparency = 1
 	classFeatureActions.Parent = classFeatures
