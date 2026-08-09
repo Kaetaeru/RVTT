@@ -64,7 +64,7 @@ ChatGPT Direct GitHub Implementation
 | ADR-0091 Asset Registry foundation | `STATIC_VERIFIED` | Source·Server·Client-safe 경계, validation·negative disclosure focused regression |
 | ADR-0091 Rules Profile + Release Leak Gate | `STATIC_VERIFIED` | Builtin package single authority·private readiness·explicit fallback·actual filesystem staging·CI fail-closed regression |
 | ADR-0091 Core Rules Reader | `STATIC_VERIFIED` | private in-root/README/fragment/duplicate stable link·missing/out-of-root raw-path nondisclosure·reciprocal backlink·deterministic import + lazy/viewer filtering regression |
-| ADR-0091 Official 2024 Character Sheet | `STATIC_VERIFIED` | authoritative viewer-safe projection·revision parity·8.5:11 two-page layout·server command intents·receipt/reconciliation focused validation |
+| ADR-0091 Official 2024 Character Sheet | `STATIC_VERIFIED_PENDING_CHATGPT_VERIFICATION` | server-resolved roll semantics·active Content definition hydration·canonical attack parity·all-row equipment/details/send·structured slots·out-of-order receipt safety focused validation |
 | Shared Shell·Preference Foundation | `PASS` | `RVTT-PR2-UI-FOUNDATION-IMPLEMENTATION-002` 구현·로컬 정적 검증 완료 |
 | Input·Context Action 정합화 | `PASS` | `RVTT-PR2-INPUT-CONTEXT-IMPLEMENTATION-001` 구현·로컬 정적 검증 완료 |
 | Exploration·Encounter HUD | `PASS` | `RVTT-PR2-EXPLORATION-ENCOUNTER-HUD-IMPLEMENTATION-001` 구현·로컬 정적 검증 완료 |
@@ -134,6 +134,10 @@ phase10OfficialCharacterSheetCommand: RVTT-PR2-ADR0091-OFFICIAL-2024-CHARACTER-S
 phase10OfficialCharacterSheetTargetShaAtStart: 67386abeba817faaea3c0031f6fc57735a977016
 phase10OfficialCharacterSheetLocalStaticValidation: PASS · authoritative projection/viewmodel/layout/command/focused validator + Rojo builds/sourcemaps + Luau analysis; Studio/Human NOT_EXECUTED
 phase10OfficialCharacterSheetState: IMPLEMENTED_PENDING_CHATGPT_VERIFICATION
+phase10OfficialCharacterSheetAuthorityRepairCommand: RVTT-PR2-ADR0091-OFFICIAL-2024-CHARACTER-SHEET-FIX-002
+phase10OfficialCharacterSheetAuthorityRepairTargetShaAtStart: 6ee5cc953fdfe3015f18edb9a5ee5dd2318cbbe5
+phase10OfficialCharacterSheetAuthorityRepairLocalStaticValidation: PASS · server-owned Content character/item definition hydration + forged roll semantics/domain negatives + canonical ActorProfile attacks + exact header/left/right information structure + all equipment rows/popover/details/authorized send targets + structured slots + out-of-order receipt regression + strengthened validator + 15 Rojo builds + 3 sourcemaps + production/tests Luau analysis
+phase10OfficialCharacterSheetAuthorityRepairStudioHuman: NOT_EXECUTED
 phase10StudioRuntime: NOT_EXECUTED
 phase10HumanEvidence: NOT_EXECUTED
 phase10Next: DICE_SLOT_REVEAL_NOTICE_CORRECTION

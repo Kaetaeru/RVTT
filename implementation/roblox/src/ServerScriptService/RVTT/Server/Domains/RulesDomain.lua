@@ -21,6 +21,25 @@ local SHEET_ROLL_KINDS = {
 	death_save = true,
 	feature_roll = true,
 }
+local SOURCE_REQUIRED = {
+	ability = true,
+	saving_throw = true,
+	skill = true,
+	weapon_attack = true,
+	weapon_damage = true,
+	damage_cantrip = true,
+	feature_roll = true,
+}
+local CLIENT_RULE_FIELDS = {
+	"ability",
+	"proficient",
+	"mode",
+	"profileId",
+	"count",
+	"sides",
+	"attackModifier",
+	"damageModifier",
+}
 
 function Domain.initialState()
 	return {
@@ -63,6 +82,40 @@ local function record(state: any, context: any, kind: string, data: any)
 	return state.rollRecords[id]
 end
 
+local function characterForActor(actorId: string, domains: any): any?
+	local actor = domains.scene.actors[actorId]
+	if type(actor) ~= "table" or type(actor.sourceCharacterId) ~= "string" then
+		return nil
+	end
+	return domains.character.characters[actor.sourceCharacterId]
+end
+
+local function sheetD20(
+	state: any,
+	context: any,
+	profile: any,
+	payload: any,
+	ability: string?,
+	proficient: boolean,
+	additionalModifier: number?
+): any
+	local natural, rolls = Dice.rollD20(nil)
+	local modifier = if ability ~= nil then RuleResolver.abilityModifier(profile, ability) else 0
+	if proficient then
+		modifier += profile.proficiencyBonus
+	end
+	modifier += additionalModifier or 0
+	return record(state, context, payload.rollKind, {
+		actorId = payload.actorId,
+		rollKind = payload.rollKind,
+		sourceId = payload.sourceId,
+		natural = natural,
+		rolls = rolls,
+		modifier = modifier,
+		total = natural + modifier,
+	})
+end
+
 function Domain.register(registry: any)
 	registry:register({
 		commandType = "rules.sheet_roll",
@@ -71,22 +124,33 @@ function Domain.register(registry: any)
 			return Helpers.controlsActor(context, domains, payload.actorId)
 		end,
 		validate = function(payload: any)
-			return Helpers.hasString(payload, "actorId")
-				and Helpers.hasString(payload, "rollKind", 64)
-				and SHEET_ROLL_KINDS[payload.rollKind] == true
-				and (payload.ability == nil or Helpers.hasString(payload, "ability", 32))
+			if
+				not (
+					Helpers.hasString(payload, "actorId")
+					and Helpers.hasString(payload, "rollKind", 64)
+					and SHEET_ROLL_KINDS[payload.rollKind] == true
+					and (
+						SOURCE_REQUIRED[payload.rollKind] ~= true
+						or Helpers.hasString(payload, "sourceId", 128)
+					)
+				)
+			then
+				return false
+			end
+			for _, field in CLIENT_RULE_FIELDS do
+				if payload[field] ~= nil then
+					return false
+				end
+			end
+			return true
 		end,
 		execute = function(context: any, state: any, payload: any, domains: any)
 			local profile = ActorProfileResolver.resolve(payload.actorId, domains)
 			if profile == nil then
 				return Helpers.notFound("actor", payload.actorId)
 			end
+			local character = characterForActor(payload.actorId, domains)
 			if payload.rollKind == "hit_die" then
-				local actor = domains.scene.actors[payload.actorId]
-				local character = if type(actor) == "table"
-						and type(actor.sourceCharacterId) == "string"
-					then domains.character.characters[actor.sourceCharacterId]
-					else nil
 				local hitDice = if type(character) == "table" then character.hitDice else nil
 				if type(hitDice) ~= "table" or type(hitDice.sides) ~= "number" then
 					return Helpers.notFound("hit_dice", payload.actorId)
@@ -103,11 +167,9 @@ function Domain.register(registry: any)
 				})
 			end
 			if payload.rollKind == "weapon_damage" or payload.rollKind == "damage_cantrip" then
-				local attack = if type(payload.profileId) == "string"
-					then profile.attacks[payload.profileId]
-					else nil
+				local attack = profile.attacks[payload.sourceId]
 				if type(attack) ~= "table" then
-					return Helpers.notFound("attack_profile", tostring(payload.profileId))
+					return Helpers.notFound("attack_profile", tostring(payload.sourceId))
 				end
 				local damageModifier = RuleResolver.abilityModifier(
 					profile,
@@ -121,28 +183,89 @@ function Domain.register(registry: any)
 				return record(state, context, payload.rollKind, {
 					actorId = payload.actorId,
 					rollKind = payload.rollKind,
-					profileId = payload.profileId,
+					sourceId = payload.sourceId,
 					rolls = rolls,
 					modifier = damageModifier,
 					total = math.max(0, total),
 				})
 			end
-			local natural, rolls = Dice.rollD20(payload.mode)
-			local modifier = 0
-			if type(payload.ability) == "string" then
-				modifier = RuleResolver.abilityModifier(profile, payload.ability)
+			if payload.rollKind == "death_save" then
+				local actorState = ensureActorState(state, payload.actorId, domains)
+				if actorState == nil then
+					return Helpers.notFound("actor_state", payload.actorId)
+				end
+				if actorState.currentHitPoints > 0 then
+					return Helpers.conflict("death save requires zero hit points")
+				end
+				return sheetD20(state, context, profile, payload, nil, false, nil)
 			end
-			if payload.proficient == true then
-				modifier += profile.proficiencyBonus
+			if payload.rollKind == "initiative" then
+				return sheetD20(state, context, profile, payload, "dexterity", false, nil)
 			end
-			return record(state, context, payload.rollKind, {
-				actorId = payload.actorId,
-				rollKind = payload.rollKind,
-				natural = natural,
-				rolls = rolls,
-				modifier = modifier,
-				total = natural + modifier,
-			})
+			if payload.rollKind == "ability" then
+				if type(profile.abilities[payload.sourceId]) ~= "number" then
+					return Helpers.notFound("ability", payload.sourceId)
+				end
+				return sheetD20(state, context, profile, payload, payload.sourceId, false, nil)
+			end
+			if payload.rollKind == "saving_throw" or payload.rollKind == "skill" then
+				local collection = if type(character) == "table"
+					then character[if payload.rollKind == "skill" then "skills" else "saves"]
+					else nil
+				local source = if type(collection) == "table"
+					then collection[payload.sourceId]
+					else nil
+				if type(source) ~= "table" or type(source.ability) ~= "string" then
+					return Helpers.notFound(payload.rollKind, payload.sourceId)
+				end
+				return sheetD20(
+					state,
+					context,
+					profile,
+					payload,
+					source.ability,
+					source.proficient == true,
+					nil
+				)
+			end
+			if payload.rollKind == "weapon_attack" then
+				local attack = profile.attacks[payload.sourceId]
+				if type(attack) ~= "table" then
+					return Helpers.notFound("attack_profile", payload.sourceId)
+				end
+				return sheetD20(
+					state,
+					context,
+					profile,
+					payload,
+					attack.ability or "strength",
+					attack.proficient == true,
+					attack.attackModifier
+				)
+			end
+			if payload.rollKind == "spell_attack" then
+				local spellcasting = if type(character) == "table"
+					then character.spellcasting
+					else nil
+				if type(spellcasting) ~= "table" or type(spellcasting.ability) ~= "string" then
+					return Helpers.notFound("spellcasting", payload.actorId)
+				end
+				return sheetD20(state, context, profile, payload, spellcasting.ability, true, nil)
+			end
+			local features = if type(character) == "table" then character.classFeatures else nil
+			local feature = if type(features) == "table" then features[payload.sourceId] else nil
+			if type(feature) ~= "table" or type(feature.rollAbility) ~= "string" then
+				return Helpers.notFound("feature", payload.sourceId)
+			end
+			return sheetD20(
+				state,
+				context,
+				profile,
+				payload,
+				feature.rollAbility,
+				feature.proficient == true,
+				nil
+			)
 		end,
 	})
 

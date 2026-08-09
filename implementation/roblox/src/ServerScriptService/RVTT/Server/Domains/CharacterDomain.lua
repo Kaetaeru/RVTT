@@ -4,6 +4,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Identity = require(ReplicatedStorage.RVTT.Shared.Core.Identity)
 local Result = require(ReplicatedStorage.RVTT.Shared.Core.Result)
 local Helpers = require(script.Parent.DomainHelpers)
+local ContentDefinitionResolver = require(script.Parent.Parent.Rules.ContentDefinitionResolver)
 
 local Domain = { id = "character", slice = 5 }
 local DRAFT_FIELDS = {
@@ -13,6 +14,25 @@ local DRAFT_FIELDS = {
 	backgroundId = true,
 	classId = true,
 	choices = true,
+}
+local SHEET_FIELDS = {
+	appearance = true,
+	attacks = true,
+	backstoryAndPersonality = true,
+	classFeatures = true,
+	coins = true,
+	deathSaves = true,
+	hitDice = true,
+	inspiration = true,
+	languages = true,
+	passivePerception = true,
+	preparedSpells = true,
+	saves = true,
+	size = true,
+	skills = true,
+	spellcasting = true,
+	speciesTraitsAndFeats = true,
+	training = true,
 }
 
 function Domain.initialState()
@@ -92,13 +112,23 @@ function Domain.register(registry: any)
 		validate = function(payload: any)
 			return Helpers.hasString(payload, "characterId")
 		end,
-		execute = function(_: any, state: any, payload: any)
+		execute = function(_: any, state: any, payload: any, domains: any)
 			local draft = state.drafts[payload.characterId]
 			if draft == nil then
 				return Helpers.notFound("character_draft", payload.characterId)
 			end
 			if #draft.name == 0 or not Helpers.validateAbilityScores(draft.abilities) then
 				return Helpers.conflict("character draft is incomplete")
+			end
+			if type(draft.classId) == "string" then
+				local definition =
+					ContentDefinitionResolver.resolve(domains, "characterSheets", draft.classId)
+				if type(definition) == "table" then
+					for field, value in Helpers.copyFields(definition, SHEET_FIELDS) do
+						draft[field] = value
+					end
+					draft.sheetDefinitionId = draft.classId
+				end
 			end
 			draft.status = "active"
 			draft.revision += 1

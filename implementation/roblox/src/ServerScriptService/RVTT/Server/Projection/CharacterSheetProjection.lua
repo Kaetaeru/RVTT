@@ -88,14 +88,6 @@ local function addAction(actions: any, id: string, commandType: string, payload:
 	})
 end
 
-local function addDisabledAction(actions: any, id: string, reason: string)
-	table.insert(actions, {
-		id = id,
-		enabled = false,
-		disabledReason = reason,
-	})
-end
-
 local function listFromMap(source: any): { any }
 	local result = {}
 	for _, id in sortedKeys(source) do
@@ -111,6 +103,7 @@ end
 
 local function inventoryProjection(
 	domains: any,
+	viewer: any,
 	character: any,
 	characterId: string,
 	canControl: boolean,
@@ -124,6 +117,21 @@ local function inventoryProjection(
 		return result
 	end
 	local hotbarPins = if type(character.hotbarPins) == "table" then character.hotbarPins else {}
+	local characters = domains.character.characters
+	local sendTargets = {}
+	for _, targetCharacterId in sortedKeys(characters) do
+		local target = characters[targetCharacterId]
+		if
+			targetCharacterId ~= characterId
+			and type(target) == "table"
+			and (viewer.role == "dm" or target.ownerUserId == viewer.userId)
+		then
+			table.insert(sendTargets, {
+				id = targetCharacterId,
+				label = tostring(target.name or targetCharacterId),
+			})
+		end
+	end
 	for _, itemId in sortedKeys(items) do
 		local item = items[itemId]
 		local location = locations[itemId]
@@ -161,14 +169,18 @@ local function inventoryProjection(
 					table.insert(itemActions, { id = id, label = "나누기" })
 				end
 				if item.transferable ~= false then
-					local id = "item." .. itemId .. ".send"
-					addDisabledAction(actions, id, "보낼 캐릭터를 먼저 선택하세요")
-					table.insert(itemActions, {
-						id = id,
-						label = "보내기",
-						enabled = false,
-						disabledReason = "보낼 캐릭터를 먼저 선택하세요",
-					})
+					for _, target in sendTargets do
+						local id = "item." .. itemId .. ".send." .. target.id
+						addAction(actions, id, "inventory.send", {
+							itemId = itemId,
+							targetCharacterId = target.id,
+						})
+						table.insert(itemActions, {
+							id = id,
+							label = "보내기 → " .. target.label,
+							targetPicker = true,
+						})
+					end
 				end
 				if item.attunable == true then
 					local attuned = item.attunedToCharacterId == characterId
@@ -204,7 +216,8 @@ local function inventoryProjection(
 			)
 			table.insert(result, {
 				id = itemId,
-				label = tostring(item.definitionId or itemId),
+				label = tostring(item.label or item.definitionId or itemId),
+				details = tostring(item.details or item.definitionId or itemId),
 				quantity = item.quantity,
 				equipped = location.kind == "equipped",
 				slot = location.slot,
@@ -258,7 +271,7 @@ function CharacterSheetProjection.build(
 			addAction(actions, actionId, "rules.sheet_roll", {
 				actorId = actorId,
 				rollKind = "ability",
-				ability = definition.id,
+				sourceId = definition.id,
 			})
 		end
 		table.insert(abilities, {
@@ -289,8 +302,7 @@ function CharacterSheetProjection.build(
 					addAction(actions, actionId, "rules.sheet_roll", {
 						actorId = actorId,
 						rollKind = rollKind,
-						ability = abilityId,
-						proficient = value.proficient == true,
+						sourceId = id,
 					})
 				end
 				table.insert(entries, {
@@ -317,8 +329,7 @@ function CharacterSheetProjection.build(
 				addAction(actions, actionId, "rules.sheet_roll", {
 					actorId = actorId,
 					rollKind = "feature_roll",
-					ability = feature.rollAbility,
-					proficient = feature.proficient == true,
+					sourceId = featureId,
 				})
 				copy.actionId = actionId
 			end
@@ -326,8 +337,9 @@ function CharacterSheetProjection.build(
 		end
 	end
 	local weapons = {}
-	for _, profileId in sortedKeys(character.attacks) do
-		local attack = character.attacks[profileId]
+	local authoritativeAttacks = if profile ~= nil then profile.attacks else {}
+	for _, profileId in sortedKeys(authoritativeAttacks) do
+		local attack = authoritativeAttacks[profileId]
 		if type(attack) == "table" then
 			local attackActionId = nil
 			local damageActionId = nil
@@ -337,14 +349,12 @@ function CharacterSheetProjection.build(
 				addAction(actions, attackActionId, "rules.sheet_roll", {
 					actorId = actorId,
 					rollKind = "weapon_attack",
-					ability = attack.ability,
-					proficient = attack.proficient == true,
-					profileId = profileId,
+					sourceId = profileId,
 				})
 				addAction(actions, damageActionId, "rules.sheet_roll", {
 					actorId = actorId,
 					rollKind = "weapon_damage",
-					profileId = profileId,
+					sourceId = profileId,
 				})
 			end
 			table.insert(weapons, {
@@ -360,7 +370,6 @@ function CharacterSheetProjection.build(
 		addAction(actions, "roll.initiative", "rules.sheet_roll", {
 			actorId = actorId,
 			rollKind = "initiative",
-			ability = "dexterity",
 		})
 		if type(actorState) == "table" then
 			addAction(actions, "vitals.hp.decrease", "rules.update_vitals", {
@@ -411,8 +420,6 @@ function CharacterSheetProjection.build(
 		addAction(actions, "roll.spell_attack", "rules.sheet_roll", {
 			actorId = actorId,
 			rollKind = "spell_attack",
-			ability = spellcasting.ability,
-			proficient = true,
 		})
 	end
 	for _, spellId in sortedKeys(availableSpells) do
@@ -499,6 +506,7 @@ function CharacterSheetProjection.build(
 		languages = listFromMap(character.languages),
 		equipment = inventoryProjection(
 			domains,
+			viewer,
 			character,
 			characterId :: string,
 			canControl,

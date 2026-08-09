@@ -8,13 +8,19 @@ Popover.__index = Popover
 
 local function clearButtons(parent: Instance)
 	for _, child in parent:GetChildren() do
-		if child:IsA("TextButton") or child:IsA("TextLabel") then
+		if child:GetAttribute("RVTTCharacterSheetDynamic") == true then
 			child:Destroy()
 		end
 	end
 end
 
-local function actionButton(parent: Instance, action: any, callback: (string) -> ()): TextButton
+local function actionButton(
+	parent: Instance,
+	action: any,
+	item: any,
+	callback: (string) -> (),
+	localCallback: (any, any) -> ()
+): TextButton
 	local button = Instance.new("TextButton")
 	button.Name = "SheetItemAction_" .. tostring(action.id)
 	button.Size = UDim2.new(1, 0, 0, 28)
@@ -28,20 +34,29 @@ local function actionButton(parent: Instance, action: any, callback: (string) ->
 	button:SetAttribute("RVTTBackgroundToken", if button.Active then "surfaceSoft" else "disabled")
 	button:SetAttribute("RVTTTextToken", if button.Active then "textPrimary" else "disabled")
 	button:SetAttribute("RVTTDisabledReason", action.disabledReason)
+	button:SetAttribute("RVTTCharacterSheetDynamic", true)
 	button.Parent = parent
-	if button.Active and action.localOnly ~= true then
+	if button.Active then
 		button.Activated:Connect(function()
-			callback(action.id)
+			if action.localOnly == true then
+				localCallback(action, item)
+			else
+				callback(action.id)
+			end
 		end)
 	end
 	return button
 end
 
-function Popover.new(parent: Instance, callback: (string) -> ()): any
+function Popover.new(
+	parent: Instance,
+	callback: (string) -> (),
+	localCallback: (any, any) -> ()
+): any
 	local root = Instance.new("Frame")
 	root.Name = "SheetItemActionPopover"
-	root.Size = UDim2.new(1, -12, 0, 232)
-	root.Position = UDim2.fromOffset(6, 44)
+	root.Size = UDim2.new(1, -12, 0.46, -6)
+	root.Position = UDim2.new(0, 6, 0.54, 0)
 	root.BorderSizePixel = 0
 	root:SetAttribute("RVTTBackgroundToken", "surfaceRaised")
 	root.Parent = parent
@@ -54,7 +69,10 @@ function Popover.new(parent: Instance, callback: (string) -> ()): any
 	padding.PaddingLeft = UDim.new(0, 6)
 	padding.PaddingRight = UDim.new(0, 6)
 	padding.Parent = root
-	return setmetatable({ Root = root, callback = callback }, Popover)
+	return setmetatable(
+		{ Root = root, callback = callback, localCallback = localCallback },
+		Popover
+	)
 end
 
 function Popover.render(self: any, item: any?)
@@ -67,11 +85,12 @@ function Popover.render(self: any, item: any?)
 		empty.Text = "조작 가능한 장비가 없습니다"
 		empty.TextSize = Tokens.TextSize.Caption
 		empty:SetAttribute("RVTTTextToken", "textSecondary")
+		empty:SetAttribute("RVTTCharacterSheetDynamic", true)
 		empty.Parent = self.Root
 		return
 	end
 	for _, action in item.actions do
-		actionButton(self.Root, action, self.callback)
+		actionButton(self.Root, action, item, self.callback, self.localCallback)
 	end
 end
 

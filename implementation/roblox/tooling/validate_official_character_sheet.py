@@ -22,6 +22,8 @@ FILES = {
     "character_domain": ROOT / "src/ServerScriptService/RVTT/Server/Domains/CharacterDomain.lua",
     "inventory_domain": ROOT / "src/ServerScriptService/RVTT/Server/Domains/InventoryDomain.lua",
     "rules_domain": ROOT / "src/ServerScriptService/RVTT/Server/Domains/RulesDomain.lua",
+    "content_domain": ROOT / "src/ServerScriptService/RVTT/Server/Domains/ContentDomain.lua",
+    "definition_resolver": ROOT / "src/ServerScriptService/RVTT/Server/Rules/ContentDefinitionResolver.lua",
     "spec": ROOT / "tests/Unit/OfficialCharacterSheet.spec.lua",
     "runner": ROOT / "tests/TestRunner.server.lua",
 }
@@ -118,6 +120,21 @@ def validate_client_boundary(view_model: str, surface: str, popover: str) -> lis
     return errors
 
 
+def validate_forbidden_patterns(projection: str, rules_domain: str, surface: str) -> list[str]:
+    errors: list[str] = []
+    if "character.attacks" in projection:
+        errors.append("CharacterSheetProjection: attack rows must use canonical profile.attacks")
+    if "state.equipment[1]" in surface:
+        errors.append("OfficialCharacterSheet: first-row-only equipment shortcut is forbidden")
+    if re.search(r"(?:tostring|valueText)\(spellcasting\.slots\)", surface):
+        errors.append("OfficialCharacterSheet: spell slot tables require structured rendering")
+    sheet_block = rules_domain.split('commandType = "rules.update_vitals"', 1)[0]
+    for trusted in ("payload.ability", "payload.proficient", "payload.mode"):
+        if trusted in sheet_block:
+            errors.append(f"RulesDomain: sheet roll must not trust client semantics {trusted}")
+    return errors
+
+
 def validate(root: Path = ROOT) -> list[str]:
     if root != ROOT:
         raise ValueError("validate_official_character_sheet only supports its repository checkout")
@@ -133,6 +150,11 @@ def validate(root: Path = ROOT) -> list[str]:
 
     errors.extend(validate_layout_text(texts["layout"]))
     errors.extend(validate_client_boundary(texts["view_model"], texts["surface"], texts["popover"]))
+    errors.extend(
+        validate_forbidden_patterns(
+            texts["projection"], texts["rules_domain"], texts["surface"]
+        )
+    )
 
     _contains_all(
         texts["projection"],
@@ -182,6 +204,15 @@ def validate(root: Path = ROOT) -> list[str]:
             "Page1MainLeft35",
             "Page2Left68",
             "Page2Right32",
+            "LevelXP",
+            "ArmorClassShield",
+            "HitPointsTemp",
+            "HitDice",
+            "DeathSaves",
+            "ProficiencyInspirationTraining",
+            "AllEquipmentRows",
+            "EquipmentDetailsSurface",
+            "structuredSlots",
         },
         "OfficialCharacterSheet",
         errors,
@@ -206,8 +237,28 @@ def validate(root: Path = ROOT) -> list[str]:
     )
     _contains_all(
         texts["rules_domain"],
-        {'commandType = "rules.sheet_roll"', 'commandType = "rules.update_vitals"'},
+        {
+            'commandType = "rules.sheet_roll"',
+            'commandType = "rules.update_vitals"',
+            "CLIENT_RULE_FIELDS",
+            "SOURCE_REQUIRED",
+            "profile.attacks[payload.sourceId]",
+            'Dice.rollD20(nil)',
+            'death save requires zero hit points',
+        },
         "RulesDomain",
+        errors,
+    )
+    _contains_all(
+        texts["definition_resolver"] + texts["content_domain"],
+        {
+            "ContentDefinitionResolver.resolve",
+            "characterSheets",
+            'collectionName ~= "characterSheets"',
+            'collectionName ~= "items"',
+            "active[packId] == pack.version",
+        },
+        "server-owned content definitions",
         errors,
     )
     _contains_all(
@@ -242,6 +293,13 @@ def validate(root: Path = ROOT) -> list[str]:
             "receipt success does not mutate local sheet state",
             "Page 1 header ratio is locked",
             "Page 2 right sections fill the page without reflow",
+            "forged ability roll semantics are rejected",
+            "forged proficient roll semantics are rejected",
+            "forged mode roll semantics are rejected",
+            "forged damage formula is rejected",
+            "another user's actor roll is rejected",
+            "production inventory path snapshots trusted capabilities",
+            "out-of-order terminal receipt cannot replace latest feedback",
         },
         "OfficialCharacterSheet.spec",
         errors,
@@ -279,6 +337,13 @@ def run_self_tests() -> list[str]:
     boundary_errors = validate_client_boundary("", "remote:FireServer()", "")
     if not boundary_errors:
         failures.append("self-test: direct Remote invocation was not rejected")
+    authority_errors = validate_forbidden_patterns(
+        "character.attacks",
+        'payload.ability\ncommandType = "rules.update_vitals"',
+        "state.equipment[1]\nvalueText(spellcasting.slots)",
+    )
+    if len(authority_errors) != 4:
+        failures.append("self-test: authority/UI shortcut regressions were not all rejected")
     return failures
 
 

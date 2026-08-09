@@ -64,6 +64,20 @@ function CharacterSheetViewModel.resolveReceipt(
 	}
 end
 
+function CharacterSheetViewModel.resolveMatchingReceipt(
+	current: any,
+	pending: any,
+	commandId: string,
+	ok: boolean,
+	code: string?,
+	resultRevision: number?
+): any
+	if current.commandId ~= commandId or pending.commandId ~= commandId then
+		return current
+	end
+	return CharacterSheetViewModel.resolveReceipt(pending, ok, code, resultRevision)
+end
+
 function CharacterSheetViewModel.reconcile(
 	current: any,
 	projection: any,

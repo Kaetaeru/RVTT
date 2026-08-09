@@ -331,13 +331,18 @@ local function submitCharacterSheet(actionId: string, candidateRevision: number)
 		return
 	end
 	local commandId = client.Command:submit(intent.commandType, intent.payload)
-	characterSheetCommands[commandId] = { actionId = actionId, baseRevision = candidateRevision }
-	characterSheetFeedback = CharacterSheetViewModel.pendingFeedback(
+	local pending = CharacterSheetViewModel.pendingFeedback(
 		actionId,
 		commandId,
 		candidateRevision,
 		client.Replica.epoch
 	)
+	characterSheetCommands[commandId] = {
+		actionId = actionId,
+		baseRevision = candidateRevision,
+		feedback = pending,
+	}
+	characterSheetFeedback = pending
 	renderCharacterSheet()
 end
 
@@ -545,6 +550,7 @@ client.Command.Received:Connect(function(message)
 		and message.phase == "terminal"
 		and characterSheetCommands[message.commandId] ~= nil
 	then
+		local commandRecord = characterSheetCommands[message.commandId]
 		characterSheetCommands[message.commandId] = nil
 		local result = message.result
 		local code = if type(result) == "table" and type(result.error) == "table"
@@ -555,13 +561,18 @@ client.Command.Received:Connect(function(message)
 				and type(result.value.revision) == "number"
 			then result.value.revision
 			else nil
-		characterSheetFeedback = CharacterSheetViewModel.resolveReceipt(
+		local resolvedFeedback = CharacterSheetViewModel.resolveMatchingReceipt(
 			characterSheetFeedback,
+			commandRecord.feedback,
+			message.commandId,
 			type(result) == "table" and result.ok == true,
 			code,
 			resultRevision
 		)
-		renderCharacterSheet()
+		if resolvedFeedback ~= characterSheetFeedback then
+			characterSheetFeedback = resolvedFeedback
+			renderCharacterSheet()
+		end
 		return
 	end
 	if

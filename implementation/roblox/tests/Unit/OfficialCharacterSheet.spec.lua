@@ -7,164 +7,256 @@ return function(harness: any)
 	local Layout = require(UI.CharacterSheetLayout)
 	local ViewModel = require(UI.CharacterSheetViewModel)
 	local Projection = require(Server.Projection.CharacterSheetProjection)
+	local ScenarioRuntime = require(script.Parent.Parent.Integration.ScenarioRuntime)
+	local scenario = ScenarioRuntime.new(101, "dm")
 
-	local domains: any = {
-		session = {
-			memberships = {
-				["101"] = { role = "player" },
-				["202"] = { role = "player" },
-				["303"] = { role = "dm" },
-				["404"] = { role = "observer" },
-			},
-			selectedCharacter = {
-				["101"] = "character:hero",
-				["303"] = "character:hero",
-			},
-		},
-		character = {
-			drafts = {},
-			characters = {
-				["character:hero"] = {
-					id = "character:hero",
-					ownerUserId = 101,
-					name = "테스트 영웅",
-					level = 5,
-					classId = "class.test",
-					subclassId = "subclass.test",
-					speciesId = "species.test",
-					backgroundId = "background.test",
-					abilities = {
-						strength = 16,
-						dexterity = 14,
-						constitution = 12,
-						intelligence = 10,
-						wisdom = 13,
-						charisma = 8,
-					},
-					saves = {
-						strength = {
-							label = "근력 내성",
-							ability = "strength",
-							proficient = true,
-						},
-					},
-					skills = {
-						athletics = { label = "운동", ability = "strength", proficient = true },
-					},
-					inspiration = true,
-					hitDice = { sides = 10, remaining = 3 },
-					classFeatures = {
-						["feature.test"] = {
-							label = "Test feature",
-							rollAbility = "wisdom",
-						},
-					},
-					attacks = {
-						["attack.test"] = {
-							label = "테스트 무기",
-							ability = "strength",
-							proficient = true,
-							count = 1,
-							sides = 8,
-						},
-					},
-					spellcasting = {
-						ability = "wisdom",
-						availableSpells = {
-							["spell.test"] = { label = "테스트 주문" },
-						},
-					},
-					preparedSpells = {},
-					coins = { gp = 10 },
-				},
-				["character:other"] = {
-					id = "character:other",
-					ownerUserId = 202,
-					name = "다른 플레이어",
-					level = 1,
-					abilities = {
-						strength = 10,
-						dexterity = 10,
-						constitution = 10,
-						intelligence = 10,
-						wisdom = 10,
-						charisma = 10,
-					},
-				},
-			},
-		},
-		scene = {
-			actors = {
-				["actor:hero"] = {
-					id = "actor:hero",
-					sourceCharacterId = "character:hero",
-					ownerUserId = 101,
-					controllerUserId = 101,
-				},
-			},
-		},
-		rules = {
-			actorStates = {
-				["actor:hero"] = {
-					currentHitPoints = 20,
-					maximumHitPoints = 30,
-					temporaryHitPoints = 4,
-					profileRevision = 1,
-				},
-			},
-			rollRecords = {},
-			challenges = {},
-			conditions = {},
-		},
-		inventory = {
-			items = {
-				["item:test"] = {
-					id = "item:test",
-					definitionId = "item.test",
-					quantity = 2,
-					revision = 1,
-					equipSlot = "main_hand",
-					usable = true,
-					attunable = true,
-					hotbarCapable = true,
-				},
-			},
-			locations = {
-				["item:test"] = { kind = "inventory", characterId = "character:hero" },
-			},
-		},
-	}
+	local function outcome(result: any, label: string): any
+		return scenario:expectOutcome(harness, result, label)
+	end
 
-	local owner = Projection.build(domains, { userId = 101, role = "player" }, 42, nil)
+	local registered = scenario:execute("content.register_pack", {
+		manifest = {
+			packId = "pack:sheet-original",
+			version = "1.0.0",
+			rightsStatus = "original",
+			dependencies = {},
+			definitions = {
+				characterSheets = {
+					["class:generic-sheet"] = {
+						saves = {
+							strength = {
+								label = "Strength Save",
+								ability = "strength",
+								proficient = true,
+							},
+						},
+						skills = {
+							athletics = {
+								label = "Athletics",
+								ability = "strength",
+								proficient = true,
+							},
+						},
+						training = { armor = { label = "Generic armor training" } },
+						inspiration = true,
+						hitDice = { sides = 10, remaining = 3 },
+						classFeatures = {
+							["feature:generic"] = {
+								label = "Generic feature",
+								rollAbility = "wisdom",
+							},
+						},
+						attacks = {
+							["attack:generic"] = {
+								label = "Generic weapon",
+								ability = "strength",
+								proficient = true,
+								count = 1,
+								sides = 8,
+								damageModifier = 1,
+							},
+						},
+						spellcasting = {
+							ability = "wisdom",
+							slots = { [1] = { remaining = 2, maximum = 3 } },
+							availableSpells = {
+								["spell:generic"] = { label = "Generic spell" },
+							},
+						},
+						preparedSpells = {},
+						coins = { gp = 10 },
+						size = "medium",
+						passivePerception = 12,
+					},
+				},
+				items = {
+					["item:generic-tool"] = {
+						label = "Generic tool",
+						details = "An original generic item used by the focused regression.",
+						equipSlot = "main_hand",
+						usable = true,
+						attunable = true,
+						hotbarCapable = true,
+						transferable = true,
+					},
+					["item:generic-pack"] = {
+						label = "Generic pack",
+						details = "A second row proves equipment is not first-row-only.",
+						transferable = true,
+					},
+				},
+			},
+		},
+	})
+	if outcome(registered, "focused spec registers server-owned generic definitions") == nil then
+		return
+	end
+	if
+		outcome(
+			scenario:execute("content.activate_pack", { packId = "pack:sheet-original" }),
+			"focused spec activates the authoritative content pack"
+		) == nil
+	then
+		return
+	end
+	if outcome(scenario:execute("session.join", {}), "sheet owner joins the session") == nil then
+		return
+	end
+
+	local function createCharacter(name: string): string?
+		local draft = outcome(
+			scenario:execute("character.create_draft", { name = name }),
+			"production path creates " .. name
+		)
+		if draft == nil then
+			return nil
+		end
+		local updated = scenario:execute("character.update_draft", {
+			characterId = draft.id,
+			patch = {
+				classId = "class:generic-sheet",
+				ancestryId = "species:generic",
+				backgroundId = "background:generic",
+				abilities = {
+					strength = 16,
+					dexterity = 14,
+					constitution = 12,
+					intelligence = 10,
+					wisdom = 13,
+					charisma = 8,
+				},
+			},
+		})
+		if outcome(updated, "production path selects a server-owned sheet definition") == nil then
+			return nil
+		end
+		if
+			outcome(
+				scenario:execute("character.activate", { characterId = draft.id }),
+				"activation hydrates authoritative sheet state"
+			) == nil
+		then
+			return nil
+		end
+		return draft.id
+	end
+
+	local heroId = createCharacter("Generic Hero")
+	local otherId = createCharacter("Generic Recipient")
+	if heroId == nil or otherId == nil then
+		return
+	end
+	if
+		outcome(
+			scenario:execute("session.select_character", { characterId = heroId }),
+			"owner selects the sheet character"
+		) == nil
+	then
+		return
+	end
+	if
+		outcome(scenario:execute("session.ready", { ready = true }), "owner becomes ready") == nil
+	then
+		return
+	end
+	if
+		outcome(
+			scenario:execute("session.start", { sceneId = "scene:sheet" }),
+			"session starts for the sheet actor"
+		) == nil
+	then
+		return
+	end
+	if
+		outcome(
+			scenario:execute("scene.enter", { sceneId = "scene:sheet", actorId = heroId }),
+			"production scene path creates the controlled actor"
+		) == nil
+	then
+		return
+	end
+	if
+		outcome(
+			scenario:execute("rules.set_actor_state", {
+				actorId = heroId,
+				currentHitPoints = 20,
+				maximumHitPoints = 30,
+				temporaryHitPoints = 4,
+			}),
+			"authoritative rules path creates vitals"
+		) == nil
+	then
+		return
+	end
+
+	local itemResult = outcome(
+		scenario:execute("inventory.create_item", {
+			definitionId = "item:generic-tool",
+			quantity = 3,
+			location = { kind = "inventory", characterId = heroId },
+		}),
+		"production inventory path snapshots trusted capabilities"
+	)
+	local secondItemResult = outcome(
+		scenario:execute("inventory.create_item", {
+			definitionId = "item:generic-pack",
+			location = { kind = "inventory", characterId = heroId },
+		}),
+		"production inventory path creates a second equipment row"
+	)
+	if itemResult == nil or secondItemResult == nil then
+		return
+	end
+	local itemId = itemResult.item.id
+	local domains = scenario:snapshot().domains
+	harness:equal(
+		domains.character.characters[heroId].sheetDefinitionId,
+		"class:generic-sheet",
+		"activation records the authoritative definition used for hydration"
+	)
+	harness:expect(
+		domains.inventory.items[itemId].usable == true,
+		"created item receives capability metadata from the active server-owned definition"
+	)
+
+	local revision = scenario:snapshot().revision
+	local owner = Projection.build(domains, { userId = 101, role = "player" }, revision, heroId)
 	harness:expect(owner.canReadFullSheet, "owner receives a full CharacterSheetProjection")
 	harness:expect(owner.canControl, "owner receives projected control metadata")
-	harness:equal(owner.characterId, "character:hero", "owner sheet targets the selected character")
-	harness:equal(owner.revision, 42, "sheet revision equals the authoritative envelope revision")
+	harness:equal(
+		owner.revision,
+		revision,
+		"sheet revision equals the authoritative envelope revision"
+	)
 	harness:equal(owner.vitals.hpCurrent, 20, "vitals come from authoritative rules state")
+	harness:equal(#owner.equipment, 2, "all production-created equipment rows are projected")
+	harness:equal(
+		owner.weaponsAndDamageCantrips[1].id,
+		"attack:generic",
+		"projection uses the ActorProfileResolver canonical attack catalog"
+	)
 
-	local unrelated =
-		Projection.build(domains, { userId = 202, role = "player" }, 42, "character:hero")
+	local unrelated = Projection.build(domains, { userId = 202, role = "player" }, revision, heroId)
 	harness:expect(not unrelated.canReadFullSheet, "unrelated player cannot read the full sheet")
 	harness:equal(unrelated.characterId, nil, "denied projection exposes no character identifier")
 	harness:equal(unrelated.identity, nil, "denied projection exposes no private identity")
-	local observer = Projection.build(domains, { userId = 404, role = "observer" }, 42, nil)
+	local observer = Projection.build(domains, { userId = 404, role = "observer" }, revision, nil)
 	harness:expect(not observer.canReadFullSheet, "observer receives a safe unavailable projection")
-	local dm = Projection.build(domains, { userId = 303, role = "dm" }, 42, nil)
+	local dm = Projection.build(domains, { userId = 303, role = "dm" }, revision, heroId)
 	harness:expect(
 		dm.canReadFullSheet and dm.canControl,
 		"authorized DM can read and control the sheet"
 	)
 
-	local payload = { characterSheet = owner }
-	local feedback = ViewModel.initialFeedback(42, "epoch:test")
-	local state = ViewModel.build(payload, 42, feedback, 1600)
+	local feedback = ViewModel.initialFeedback(revision, "epoch:test")
+	local state = ViewModel.build({ characterSheet = owner }, revision, feedback, 1600)
 	harness:equal(
 		state.layoutMode,
 		"WideReference",
 		"wide/reference viewport uses a two-page spread"
 	)
-	harness:equal(state.revision, 42, "view model preserves projection revision parity")
-	local staleIntent, staleError = ViewModel.actionIntent(state, "roll.ability.strength", 41)
+	local staleIntent, staleError =
+		ViewModel.actionIntent(state, "roll.ability.strength", revision - 1)
 	harness:equal(staleIntent, nil, "stale candidate revision fails closed")
 	harness:equal(staleError, "STALE_PROJECTION", "stale intent reports the stable failure")
 
@@ -173,80 +265,208 @@ return function(harness: any)
 		["roll.saving_throw.strength"] = "rules.sheet_roll",
 		["roll.skill.athletics"] = "rules.sheet_roll",
 		["roll.initiative"] = "rules.sheet_roll",
-		["roll.weapon_attack.attack.test"] = "rules.sheet_roll",
-		["roll.weapon_damage.attack.test"] = "rules.sheet_roll",
+		["roll.weapon_attack.attack:generic"] = "rules.sheet_roll",
+		["roll.weapon_damage.attack:generic"] = "rules.sheet_roll",
 		["roll.spell_attack"] = "rules.sheet_roll",
 		["roll.hit_die"] = "rules.sheet_roll",
-		["roll.feature.feature.test"] = "rules.sheet_roll",
-		["item.item:test.equip"] = "inventory.equip",
-		["item.item:test.use"] = "inventory.use",
-		["item.item:test.split"] = "inventory.split",
-		["item.item:test.attune"] = "inventory.set_attunement",
-		["item.item:test.pin"] = "character.sheet_set_hotbar",
-		["spell.spell.test.prepare"] = "character.sheet_set_prepared",
+		["roll.feature.feature:generic"] = "rules.sheet_roll",
+		["item." .. itemId .. ".equip"] = "inventory.equip",
+		["item." .. itemId .. ".use"] = "inventory.use",
+		["item." .. itemId .. ".split"] = "inventory.split",
+		["item." .. itemId .. ".attune"] = "inventory.set_attunement",
+		["item." .. itemId .. ".pin"] = "character.sheet_set_hotbar",
+		["item." .. itemId .. ".send." .. otherId] = "inventory.send",
+		["spell.spell:generic.prepare"] = "character.sheet_set_prepared",
 		["inspiration.spend"] = "character.sheet_spend_inspiration",
 	}
 	for actionId, commandType in requiredActions do
-		local intent, errorCode = ViewModel.actionIntent(state, actionId, 42)
+		local intent, errorCode = ViewModel.actionIntent(state, actionId, revision)
 		harness:expect(
 			intent ~= nil and errorCode == nil,
-			tostring(actionId) .. " creates an authoritative intent"
+			actionId .. " creates an authoritative intent"
 		)
 		if intent ~= nil then
 			harness:equal(
 				intent.commandType,
 				commandType,
-				tostring(actionId) .. " uses the server command pipeline"
+				actionId .. " uses the server command pipeline"
 			)
 		end
 	end
-	harness:equal(
-		state.abilities[1].score,
-		16,
-		"view model does not replace projected ability values"
+
+	local validSkill = outcome(
+		scenario:execute("rules.sheet_roll", {
+			actorId = heroId,
+			rollKind = "skill",
+			sourceId = "athletics",
+		}),
+		"authoritative skill roll resolves through the real command registry"
 	)
-	harness:equal(state.abilities[1].modifier, 3, "ability modifier is projected by the server")
-
-	local sendIntent, sendError = ViewModel.actionIntent(state, "item.item:test.send", 42)
-	harness:equal(sendIntent, nil, "disabled send action cannot submit")
-	harness:equal(sendError, "ACTION_DISABLED", "disabled action preserves explicit semantics")
-	domains.inventory.locations["item:test"] = {
-		kind = "equipped",
-		characterId = "character:hero",
-		slot = "main_hand",
+	if validSkill ~= nil then
+		harness:equal(validSkill.data.modifier, 5, "skill modifier is derived from server state")
+	end
+	local forgedCases: { any } = {
+		{
+			field = "ability",
+			value = "charisma",
+			label = "forged ability roll semantics are rejected",
+		},
+		{
+			field = "proficient",
+			value = true,
+			label = "forged proficient roll semantics are rejected",
+		},
+		{
+			field = "mode",
+			value = "advantage",
+			label = "forged mode roll semantics are rejected",
+		},
 	}
-	local equipped = Projection.build(domains, { userId = 101, role = "player" }, 43, nil)
-	local equippedState = ViewModel.build({ characterSheet = equipped }, 43, feedback, 900)
-	harness:equal(equippedState.layoutMode, "Compact", "compact viewport uses page tabs")
-	local unequip = ViewModel.actionIntent(equippedState, "item.item:test.unequip", 43)
-	harness:expect(unequip ~= nil, "equipped item exposes authoritative unequip")
+	for _, forgedCase in forgedCases do
+		local payload = {
+			actorId = heroId,
+			rollKind = "skill",
+			sourceId = "athletics",
+		}
+		payload[forgedCase.field] = forgedCase.value
+		local forged = scenario:execute("rules.sheet_roll", payload)
+		harness:expect(not forged.ok, forgedCase.label)
+		if not forged.ok then
+			harness:equal(
+				forged.error.code,
+				"VALIDATION_FAILED",
+				"forged semantics fail validation"
+			)
+		end
+	end
+	local forgedDamage = scenario:execute("rules.sheet_roll", {
+		actorId = heroId,
+		rollKind = "weapon_damage",
+		sourceId = "attack:generic",
+		sides = 100,
+	})
+	harness:expect(not forgedDamage.ok, "forged damage formula is rejected")
+	local missingAttack = scenario:execute("rules.sheet_roll", {
+		actorId = heroId,
+		rollKind = "weapon_attack",
+		sourceId = "attack:missing",
+	})
+	harness:expect(not missingAttack.ok, "nonexistent authoritative attack is rejected")
+	local damage = outcome(
+		scenario:execute("rules.sheet_roll", {
+			actorId = heroId,
+			rollKind = "weapon_damage",
+			sourceId = "attack:generic",
+		}),
+		"weapon damage uses the authoritative attack formula"
+	)
+	if damage ~= nil then
+		harness:equal(
+			damage.data.modifier,
+			4,
+			"damage modifier comes from profile ability and definition"
+		)
+	end
+	local deathSave = scenario:execute("rules.sheet_roll", {
+		actorId = heroId,
+		rollKind = "death_save",
+	})
+	harness:expect(not deathSave.ok, "HP above zero rejects death saves")
+	local stolen = scenario:executeAs("player", 999, "rules.sheet_roll", {
+		actorId = heroId,
+		rollKind = "ability",
+		sourceId = "strength",
+	})
+	harness:expect(not stolen.ok, "another user's actor roll is rejected")
+	if not stolen.ok then
+		harness:equal(stolen.error.code, "UNAUTHORIZED", "actor control denial is explicit")
+	end
 
-	local pending =
-		ViewModel.pendingFeedback("roll.ability.strength", "command:sheet", 42, "epoch:test")
-	harness:equal(pending.state, "pending_receipt", "submission waits for a receipt")
-	local accepted = ViewModel.resolveReceipt(pending, true, nil, 43)
+	local productionActions: { { commandType: string, payload: any } } = {
+		{
+			commandType = "inventory.equip",
+			payload = { itemId = itemId, characterId = heroId, slot = "main_hand" },
+		},
+		{
+			commandType = "inventory.unequip",
+			payload = { itemId = itemId, characterId = heroId },
+		},
+		{
+			commandType = "inventory.set_attunement",
+			payload = { itemId = itemId, characterId = heroId, attuned = true },
+		},
+		{
+			commandType = "inventory.set_attunement",
+			payload = { itemId = itemId, characterId = heroId, attuned = false },
+		},
+		{ commandType = "inventory.split", payload = { itemId = itemId, quantity = 1 } },
+		{ commandType = "inventory.use", payload = { itemId = itemId } },
+		{
+			commandType = "character.sheet_set_hotbar",
+			payload = {
+				characterId = heroId,
+				targetKind = "item",
+				targetId = itemId,
+				pinned = true,
+			},
+		},
+		{
+			commandType = "character.sheet_set_prepared",
+			payload = { characterId = heroId, spellId = "spell:generic", prepared = true },
+		},
+		{
+			commandType = "inventory.send",
+			payload = { itemId = itemId, targetCharacterId = otherId },
+		},
+	}
+	for _, command in productionActions do
+		harness:expect(
+			scenario:execute(command.commandType, command.payload).ok,
+			command.commandType .. " succeeds for production-hydrated state"
+		)
+	end
+
+	local pendingFirst = ViewModel.pendingFeedback("first", "command:first", revision, "epoch:test")
+	local pendingSecond =
+		ViewModel.pendingFeedback("second", "command:second", revision, "epoch:test")
+	local outOfOrder = ViewModel.resolveMatchingReceipt(
+		pendingSecond,
+		pendingFirst,
+		"command:first",
+		true,
+		nil,
+		revision + 1
+	)
+	harness:equal(
+		outOfOrder.commandId,
+		"command:second",
+		"out-of-order terminal receipt cannot replace latest feedback"
+	)
+	local accepted = ViewModel.resolveMatchingReceipt(
+		pendingSecond,
+		pendingSecond,
+		"command:second",
+		true,
+		nil,
+		revision + 1
+	)
 	harness:equal(
 		accepted.state,
 		"accepted_awaiting_projection",
 		"receipt success does not mutate local sheet state"
 	)
 	harness:equal(
-		ViewModel.reconcile(accepted, owner, 42, "epoch:test").state,
+		ViewModel.reconcile(accepted, owner, revision, "epoch:test").state,
 		"accepted_awaiting_projection",
 		"old projection cannot reconcile an accepted command"
 	)
 	harness:equal(
-		ViewModel.reconcile(accepted, equipped, 43, "epoch:test").state,
-		"reconciled",
-		"matching authoritative projection completes reconciliation"
-	)
-	harness:equal(
-		ViewModel.resolveReceipt(pending, false, "STALE_REVISION", nil).state,
+		ViewModel.resolveReceipt(pendingFirst, false, "STALE_REVISION", nil).state,
 		"stale_projection",
 		"stale receipt is distinct from denial"
 	)
 	harness:equal(
-		ViewModel.reconcile(accepted, unrelated, 43, "epoch:test").state,
+		ViewModel.reconcile(accepted, unrelated, revision + 1, "epoch:test").state,
 		"permission_revoked",
 		"permission loss invalidates the sheet safely"
 	)

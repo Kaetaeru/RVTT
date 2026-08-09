@@ -13,6 +13,30 @@ local function dm(context: any): boolean
 end
 
 local function validManifest(manifest: any): boolean
+	local definitions = if type(manifest) == "table" then manifest.definitions else nil
+	if definitions ~= nil then
+		if type(definitions) ~= "table" then
+			return false
+		end
+		for collectionName, collection in definitions do
+			if
+				(collectionName ~= "characterSheets" and collectionName ~= "items")
+				or type(collection) ~= "table"
+			then
+				return false
+			end
+			for definitionId, definition in collection do
+				if
+					type(definitionId) ~= "string"
+					or definitionId == ""
+					or #definitionId > 128
+					or type(definition) ~= "table"
+				then
+					return false
+				end
+			end
+		end
+	end
 	return type(manifest) == "table"
 		and Helpers.hasString(manifest, "packId", 128)
 		and Helpers.hasString(manifest, "version", 64)

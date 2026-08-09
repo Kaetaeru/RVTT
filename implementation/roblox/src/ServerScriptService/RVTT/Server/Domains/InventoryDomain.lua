@@ -3,8 +3,18 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Identity = require(ReplicatedStorage.RVTT.Shared.Core.Identity)
 local Helpers = require(script.Parent.DomainHelpers)
+local ContentDefinitionResolver = require(script.Parent.Parent.Rules.ContentDefinitionResolver)
 
 local Domain = { id = "inventory", slice = 6 }
+local ITEM_CAPABILITY_FIELDS = {
+	attunable = true,
+	details = true,
+	equipSlot = true,
+	hotbarCapable = true,
+	label = true,
+	transferable = true,
+	usable = true,
+}
 
 function Domain.initialState()
 	return { items = {}, locations = {} }
@@ -51,14 +61,22 @@ function Domain.register(registry: any)
 				and payload.location ~= nil
 				and validLocation(payload.location)
 		end,
-		execute = function(_: any, state: any, payload: any)
+		execute = function(_: any, state: any, payload: any, domains: any)
 			local itemId = Identity.new("item")
-			state.items[itemId] = {
+			local item = {
 				id = itemId,
 				definitionId = payload.definitionId,
 				quantity = math.clamp(math.floor(payload.quantity or 1), 1, 9999),
 				revision = 1,
 			}
+			local definition =
+				ContentDefinitionResolver.resolve(domains, "items", payload.definitionId)
+			if type(definition) == "table" then
+				for field, value in Helpers.copyFields(definition, ITEM_CAPABILITY_FIELDS) do
+					item[field] = value
+				end
+			end
+			state.items[itemId] = item
 			state.locations[itemId] = payload.location
 			return { item = state.items[itemId], location = payload.location }
 		end,

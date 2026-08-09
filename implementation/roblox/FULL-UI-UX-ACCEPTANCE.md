@@ -125,7 +125,7 @@ BuiltinPackIndex pinned revision + integrated source-tree digest + expected coun
 
 ### Official 2024 Interactive Character Sheet
 
-`CharacterSheetProjection.lua`는 owner/authorized DM만 전체 Character·Inventory·Rules authoritative state를 같은 revision으로 투영하고 Observer와 unrelated player에는 식별자·private field를 공개하지 않는다. `OfficialCharacterSheet.lua`와 `CharacterSheetLayout.lua`는 8.5:11 Page 1/2, 고정 구획 비율, Wide/Reference spread, Compact page tab을 유지한다. 모든 roll·vitals·equipment·spell·attunement·hotbar·inspiration 변경은 `CommandClient`와 server command를 통하며 receipt와 projection reconciliation을 구분한다. focused spec과 validator가 revision parity, stale/permission failure, action authority, 비율 산술과 client dice/Remote 직접 호출 금지를 정적으로 확인한다. Studio/Human 실행은 하지 않았다.
+`CharacterSheetProjection.lua`는 owner/authorized DM만 전체 Character·Inventory·Rules authoritative state를 같은 revision으로 투영하고 Observer와 unrelated player에는 식별자·private field를 공개하지 않는다. Sheet roll payload는 `actorId + rollKind + sourceId`만 전달하고 서버가 ability/proficiency/mode/damage/eligibility를 active Content pack으로 수화된 Character state와 canonical `ActorProfileResolver` attack catalog에서 해석한다. Item capability도 active server-owned definition에서 `inventory.create_item` 시 snapshot된다. `OfficialCharacterSheet.lua`와 `CharacterSheetLayout.lua`는 8.5:11 Page 1/2, 정확한 Header/Left/Right 정보 구조, Wide/Reference spread, Compact page tab을 유지하며 모든 Equipment row, local details, authorized target send와 structured spell slots를 제공한다. focused real-command regression과 validator가 forged semantics, unauthorized actor, invalid attack, HP>0 death save, revision/permission/epoch 및 out-of-order terminal receipt 안전성을 정적으로 확인한다. Studio/Human 실행은 하지 않았다.
 
 ## 남은 ADR-0091 Final Contract Gap
 

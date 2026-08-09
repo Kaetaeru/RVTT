@@ -67,6 +67,30 @@ local function valueText(value: any): string
 	return tostring(value)
 end
 
+local function structuredSlots(slots: any): string
+	if type(slots) ~= "table" then
+		return "없음"
+	end
+	local rows = {}
+	for level, slot in slots do
+		if type(slot) == "table" then
+			table.insert(
+				rows,
+				string.format(
+					"%s레벨  %s/%s",
+					tostring(level),
+					valueText(slot.remaining or slot.current),
+					valueText(slot.maximum or slot.max)
+				)
+			)
+		elseif type(slot) == "number" then
+			table.insert(rows, tostring(level) .. "레벨  " .. tostring(slot))
+		end
+	end
+	table.sort(rows)
+	return if #rows > 0 then table.concat(rows, "\n") else "없음"
+end
+
 local function clearDynamic(parent: Instance)
 	for _, child in parent:GetChildren() do
 		if child:GetAttribute("RVTTCharacterSheetDynamic") == true then
@@ -204,6 +228,22 @@ function Sheet.new(parent: Instance, onClose: () -> (), onAction: (string, numbe
 		UDim2.fromScale(1, Layout.PAGE_1.TOP_HEADER)
 	)
 	self.Identity = label(page1Header, "Identity", "")
+	self.Identity.Size = UDim2.fromScale(0.36, 1)
+	self.LevelXP = label(page1Header, "LevelXP", "")
+	self.LevelXP.Position = UDim2.fromScale(0.36, 0)
+	self.LevelXP.Size = UDim2.fromScale(0.11, 1)
+	self.ArmorClassShield = label(page1Header, "ArmorClassShield", "")
+	self.ArmorClassShield.Position = UDim2.fromScale(0.47, 0)
+	self.ArmorClassShield.Size = UDim2.fromScale(0.10, 1)
+	self.HitPointsTemp = label(page1Header, "HitPointsTemp", "")
+	self.HitPointsTemp.Position = UDim2.fromScale(0.57, 0)
+	self.HitPointsTemp.Size = UDim2.fromScale(0.17, 1)
+	self.HitDiceHeader = label(page1Header, "HitDice", "")
+	self.HitDiceHeader.Position = UDim2.fromScale(0.74, 0)
+	self.HitDiceHeader.Size = UDim2.fromScale(0.12, 1)
+	self.DeathSavesHeader = label(page1Header, "DeathSaves", "")
+	self.DeathSavesHeader.Position = UDim2.fromScale(0.86, 0)
+	self.DeathSavesHeader.Size = UDim2.fromScale(0.14, 1)
 	local page1Main = section(
 		page1,
 		"Page1Main87",
@@ -224,10 +264,19 @@ function Sheet.new(parent: Instance, onClose: () -> (), onAction: (string, numbe
 	)
 
 	local abilities = section(page1Left, "AbilitiesAndTraining", UDim2.new(), UDim2.fromScale(1, 1))
+	self.LeftSummary = label(abilities, "ProficiencyInspirationTraining", "")
+	self.LeftSummary.Size = UDim2.new(1, -10, 0, 66)
+	self.LeftSummary.Position = UDim2.fromOffset(5, 5)
+	local abilityRows = Instance.new("Frame")
+	abilityRows.Name = "AbilitySaveSkillRows"
+	abilityRows.Position = UDim2.fromOffset(0, 72)
+	abilityRows.Size = UDim2.new(1, 0, 1, -72)
+	abilityRows.BackgroundTransparency = 1
+	abilityRows.Parent = abilities
 	local abilityLayout = Instance.new("UIListLayout")
 	abilityLayout.Padding = UDim.new(0, 3)
-	abilityLayout.Parent = abilities
-	self.Abilities = abilities
+	abilityLayout.Parent = abilityRows
+	self.Abilities = abilityRows
 	self.Combat = label(page1Right, "CombatHeader", "")
 	self.Combat.Size = UDim2.new(1, -12, 0, 40)
 	self.Combat.Position = UDim2.fromOffset(6, 6)
@@ -379,10 +428,31 @@ function Sheet.new(parent: Instance, onClose: () -> (), onAction: (string, numbe
 	self.EquipmentTitle = label(equipment, "EquipmentTitle", "장비")
 	self.EquipmentTitle.Size = UDim2.new(1, -12, 0, 38)
 	self.EquipmentTitle.Position = UDim2.fromOffset(6, 6)
+	local equipmentRows = Instance.new("ScrollingFrame")
+	equipmentRows.Name = "AllEquipmentRows"
+	equipmentRows.Position = UDim2.fromOffset(6, 42)
+	equipmentRows.Size = UDim2.new(1, -12, 0.42, -42)
+	equipmentRows.BackgroundTransparency = 1
+	equipmentRows.AutomaticCanvasSize = Enum.AutomaticSize.Y
+	equipmentRows.CanvasSize = UDim2.new()
+	equipmentRows.ScrollBarThickness = 4
+	equipmentRows.Parent = equipment
+	local equipmentLayout = Instance.new("UIListLayout")
+	equipmentLayout.Padding = UDim.new(0, 3)
+	equipmentLayout.Parent = equipmentRows
+	self.EquipmentRows = equipmentRows
+	self.SelectedItemId = nil
+	self.LocalDetails = label(equipment, "EquipmentDetailsSurface", "")
+	self.LocalDetails.Position = UDim2.new(0, 6, 0.42, 0)
+	self.LocalDetails.Size = UDim2.new(1, -12, 0.12, 0)
+	self.LocalDetails.Visible = false
 	self.ItemPopover = SheetItemActionPopover.new(equipment, function(actionId: string)
 		if self.state ~= nil then
 			self.onAction(actionId, self.state.revision)
 		end
+	end, function(_: any, item: any)
+		self.LocalDetails.Text = "상세 · " .. tostring(item.details or item.label or item.id)
+		self.LocalDetails.Visible = true
 	end)
 	self.Coins = label(
 		section(
@@ -430,13 +500,34 @@ function Sheet.render(self: any, state: any)
 	end
 	local identity = state.identity or {}
 	self.Identity.Text = string.format(
-		"%s\n%s · %s · %s · %s · Level %s",
+		"Character Name  %s\nBackground %s · Species %s\nClass %s · Subclass %s",
 		valueText(identity.name),
 		valueText(identity.background),
 		valueText(identity.species),
 		valueText(identity.class),
-		valueText(identity.subclass),
-		valueText(identity.level)
+		valueText(identity.subclass)
+	)
+	local combat = state.combat or {}
+	local vitals = state.vitals or {}
+	self.LevelXP.Text = "Level/XP\n"
+		.. valueText(identity.level)
+		.. " / "
+		.. valueText(identity.xpOrProgress)
+	self.ArmorClassShield.Text = "AC Shield\n" .. valueText(combat.armorClass)
+	self.HitPointsTemp.Text = "HP / Temp HP\n"
+		.. valueText(vitals.hpCurrent)
+		.. "/"
+		.. valueText(vitals.hpMax)
+		.. " +"
+		.. valueText(vitals.tempHp)
+	self.HitDiceHeader.Text = "Hit Dice\n"
+		.. valueText(type(vitals.hitDice) == "table" and vitals.hitDice.sides or nil)
+	self.DeathSavesHeader.Text = "Death Saves\n" .. valueText(vitals.deathSaves)
+	self.LeftSummary.Text = string.format(
+		"Proficiency Bonus %s\nInspiration %s\nTraining %s",
+		valueText(state.proficiencyBonus),
+		valueText(state.inspiration),
+		tostring(#(state.training or {}))
 	)
 	clearDynamic(self.Abilities)
 	for index, ability in state.abilities or {} do
@@ -483,14 +574,8 @@ function Sheet.render(self: any, state: any)
 			end
 		)
 	end
-	local combat = state.combat or {}
-	local vitals = state.vitals or {}
 	self.Combat.Text = string.format(
-		"AC %s · HP %s/%s (+%s)\n우선권 %s · 속도 %s · 크기 %s · 수동 지각 %s",
-		valueText(combat.armorClass),
-		valueText(vitals.hpCurrent),
-		valueText(vitals.hpMax),
-		valueText(vitals.tempHp),
+		"Initiative %s · Speed %s · Size %s · Passive Perception %s",
 		valueText(combat.initiative),
 		valueText(combat.speed),
 		valueText(combat.size),
@@ -571,7 +656,7 @@ function Sheet.render(self: any, state: any)
 		.. "개"
 	local spellcasting = state.spellcasting or {}
 	self.SpellAbility.Text = "주문 능력\n" .. valueText(spellcasting.ability)
-	self.SpellSlots.Text = "주문 슬롯\n" .. valueText(spellcasting.slots)
+	self.SpellSlots.Text = "주문 슬롯\n" .. structuredSlots(spellcasting.slots)
 	clearDynamic(self.Spells)
 	if projectedActionId(state, "roll.spell_attack") ~= nil then
 		dynamicButton(
@@ -600,11 +685,27 @@ function Sheet.render(self: any, state: any)
 	self.Appearance.Text = "외모\n" .. valueText(state.appearance)
 	self.Backstory.Text = "배경 이야기와 성격\n" .. valueText(state.backstoryAndPersonality)
 	self.Languages.Text = "언어\n" .. tostring(#(state.languages or {})) .. "개"
-	local firstItem = if type(state.equipment) == "table" then state.equipment[1] else nil
-	self.EquipmentTitle.Text = if firstItem ~= nil
-		then "장비 · " .. firstItem.label .. " ×" .. valueText(firstItem.quantity)
-		else "장비 · 없음"
-	self.ItemPopover:render(firstItem)
+	clearDynamic(self.EquipmentRows)
+	local selectedItem = nil
+	for index, item in state.equipment or {} do
+		if self.SelectedItemId == item.id then
+			selectedItem = item
+		end
+		dynamicButton(
+			self.EquipmentRows,
+			"EquipmentRow_" .. item.id,
+			item.label .. " ×" .. valueText(item.quantity),
+			index,
+			"local.select." .. item.id,
+			function()
+				self.SelectedItemId = item.id
+				self.LocalDetails.Visible = false
+				self.ItemPopover:render(item)
+			end
+		)
+	end
+	self.EquipmentTitle.Text = "장비 · " .. tostring(#(state.equipment or {})) .. "개"
+	self.ItemPopover:render(selectedItem)
 	local coinParts = {}
 	for coin, amount in state.coins or {} do
 		table.insert(coinParts, tostring(coin) .. " " .. tostring(amount))

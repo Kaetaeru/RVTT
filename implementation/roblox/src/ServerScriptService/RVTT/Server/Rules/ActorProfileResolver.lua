@@ -5,6 +5,7 @@ local Ability = require(ReplicatedStorage.RVTT.Shared.Rules.Ability)
 
 export type AbilityScores = { [string]: number }
 export type AttackProfile = {
+	label: string?,
 	ability: string?,
 	proficient: boolean?,
 	count: number?,
