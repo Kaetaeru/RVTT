@@ -43,10 +43,10 @@ Grand Persistence Published Runner·Config·CI
 → Full UI·UX Acceptance Matrix 등록 완료
 → ADR-0091 Asset Registry + Rules Profile/Release Leak Gate + Core Rules Reader STATIC_VERIFIED
 → Core Rules private importer + stable document/README/fragment links + raw-path safe downgrade + reciprocal backlinks + generated Rojo overlay + owner-only access positive path STATIC/BUILD VERIFIED
-→ Official 2024 Character Sheet STATIC_VERIFIED_PENDING_CHATGPT_VERIFICATION (authority/production-path repair), Dice Slot Reveal Notice 1개 Gap으로 Phase 10 HOLD
+→ Official 2024 Character Sheet + Dice Slot Reveal Notice STATIC_VERIFIED_PENDING_CHATGPT_VERIFICATION, Source/Static Gap 0개로 Phase 10 HOLD
 ```
 
-Input·Context Action, Exploration·Encounter HUD, Inventory·Journal·Settings, Entry·Role·Recovery, DM Workspace Source는 현재 계약에 정합화됐다. ADR-0091 Asset Registry, Rules Profile/Release Leak Gate, Core Rules Reader, Official 2024 Character Sheet는 server-side viewer filtering, stable rule anchor, lazy chunk loading, authoritative session-role marker, actual filesystem public staging과 focused validation까지 정적으로 확인됐다. Core Rules private positive path는 pinned private source revision·subtree digest·12/48/16/10/75/391 count·dirty-source 검증, 임시 RuleContentPackage/search index 생성, in-root document·README·fragment·duplicate anchor stable URI, missing/out-of-root raw-path safe downgrade, reciprocal backlink, explicit server-only UserId allowlist, generated `RVTTPrivateRuleContent` Rojo overlay, unauthorized query nondisclosure까지 연결했다. Public CI는 private body를 읽지 않고 synthetic source로 동일 importer/preparer/overlay build를 검증하므로 실제 private corpus Studio Runtime PASS로 확대하지 않는다. 남은 필수 구현 Gap 1개와 그 뒤의 새 current-HEAD Static Gate 전에는 Studio Retest를 시작하지 않는다.
+Input·Context Action, Exploration·Encounter HUD, Inventory·Journal·Settings, Entry·Role·Recovery, DM Workspace Source는 현재 계약에 정합화됐다. ADR-0091 Asset Registry, Rules Profile/Release Leak Gate, Core Rules Reader, Official 2024 Character Sheet, Dice Slot Reveal Notice는 server-side viewer filtering, stable rule anchor, lazy chunk loading, authoritative session-role marker, actual filesystem public staging과 focused validation까지 정적으로 확인됐다. Core Rules private positive path는 pinned private source revision·subtree digest·12/48/16/10/75/391 count·dirty-source 검증, 임시 RuleContentPackage/search index 생성, in-root document·README·fragment·duplicate anchor stable URI, missing/out-of-root raw-path safe downgrade, reciprocal backlink, explicit server-only UserId allowlist, generated `RVTTPrivateRuleContent` Rojo overlay, unauthorized query nondisclosure까지 연결했다. Public CI는 private body를 읽지 않고 synthetic source로 동일 importer/preparer/overlay build를 검증하므로 실제 private corpus Studio Runtime PASS로 확대하지 않는다. 필수 Source/Static Gap은 0개지만 새 current-HEAD 전체 Static Gate 전에는 Studio Retest를 시작하지 않는다.
 
 ## 2. 목표 입력 계약
 
@@ -242,8 +242,8 @@ HEAD 582c1c4
 | 7 | DONE | Inventory·Journal·Settings | 화면·Intent·Permission·Preference |
 | 8 | DONE | Entry·Role·Recovery | Projection rebuild·Reconnect·Error Boundary |
 | 9 | DONE | DM Live Workspace 정합화 | Player Preview·Override·Queue |
-| 10 | HOLD | Acceptance 확장 | Asset Registry·Rules Profile/Release Gate·Core Rules Reader·Official Character Sheet + private import/overlay/access positive path STATIC_VERIFIED, ADR-0091 필수 구현 Gap 1개 |
-| 11 | BLOCKED | Studio Human Retest | 남은 Dice Notice 구현 + 새 current-HEAD Static Gate PASS 후 실행 |
+| 10 | HOLD | Acceptance 확장 | ADR-0091 필수 Source/Static Gap 0개, Asset Registry·Rules Profile/Release Gate·Core Rules Reader·Official Character Sheet·Dice Notice focused STATIC_VERIFIED, 새 전체 Static Gate 대기 |
+| 11 | BLOCKED | Studio Human Retest | 새 current-HEAD 전체 Static Gate PASS 후 실행 |
 | 12 | QUEUED | UI·Accessibility Evidence | Scale·Focus·Contrast·Motion·Screenshot |
 | 13 | QUEUED | DM·Player·Observer Test | 권한별 Projection·Role Change |
 | 14 | QUEUED | Grand Persistence Runtime | Published 7개 Phase |
@@ -254,9 +254,8 @@ HEAD 582c1c4
 ## 11. 다음 Gate
 
 ```text
-ADR-0091 Dice Slot Reveal Notice correction
-→ Acceptance Matrix Gap 재검증
-→ 새 current-HEAD Static Gate
+새 current-HEAD 전체 Static Gate
+→ Acceptance Matrix 0-gap 재검증
 → Exploration·Context Input Studio Retest
 → Inventory·Journal·Settings Human Evidence
 → Player·DM·Observer Role·Permission·Recovery Test

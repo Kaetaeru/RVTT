@@ -206,7 +206,18 @@ local function projectExploration(state: any, viewer: any): any
 end
 
 local function recordVisible(record: any, viewer: any, domains: any): boolean
-	if viewer.role == "dm" or type(record) ~= "table" then
+	if type(record) ~= "table" then
+		return false
+	end
+	if record.audience ~= "public" then
+		if
+			viewer.role ~= "dm"
+			and not (record.audience == "owner" and record.ownerUserId == viewer.userId)
+		then
+			return false
+		end
+	end
+	if viewer.role == "dm" then
 		return true
 	end
 	local data = record.data

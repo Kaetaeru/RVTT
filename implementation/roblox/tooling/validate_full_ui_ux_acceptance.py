@@ -9,6 +9,8 @@ import sys
 from validate_asset_registry import run_self_tests as run_asset_registry_self_tests
 from validate_asset_registry import validate as validate_asset_registry
 from validate_core_rules_reader import validate as validate_core_rules_reader
+from validate_dice_slot_reveal_notice import run_self_tests as run_dice_notice_self_tests
+from validate_dice_slot_reveal_notice import validate as validate_dice_slot_reveal_notice
 from validate_official_character_sheet import run_self_tests as run_official_sheet_self_tests
 from validate_official_character_sheet import validate as validate_official_character_sheet
 from validate_rules_profile_release_gate import run_self_tests as run_rules_profile_self_tests
@@ -85,6 +87,7 @@ RESOLVED_FINAL_IDS = {
     "final.official-2024-sheet-interactions",
     "final.core-rules-reader-filtering",
     "final.rules-profile-release-leak-gate",
+    "final.dice-slot-reveal-notice",
 }
 REMAINING_FINAL_GAPS = REQUIRED_FINAL_IDS - RESOLVED_FINAL_IDS
 
@@ -328,6 +331,20 @@ def validate_matrix_data(matrix: dict, manifest: dict) -> list[str]:
         if not required_sheet_evidence.issubset(set(sheet_item.get("automatedRefs", []))):
             errors.append("matrix: Official Character Sheet cannot close without production and focused evidence")
 
+    dice_item = final_items.get("final.dice-slot-reveal-notice")
+    if dice_item is not None:
+        if dice_item.get("currentState") != "STATIC_VERIFIED":
+            errors.append("matrix: Dice Slot Reveal Notice must be STATIC_VERIFIED after focused implementation")
+        required_dice_evidence = {
+            "implementation/roblox/src/ServerScriptService/RVTT/Server/Projection/DiceNoticeProjection.lua",
+            "implementation/roblox/src/ReplicatedStorage/RVTT/Shared/UI/DiceNoticeViewModel.lua",
+            "implementation/roblox/src/StarterGui/RVTT/UI/Components/DiceSlotRevealNotice.lua",
+            "implementation/roblox/tests/Unit/DiceSlotRevealNotice.spec.lua",
+            "implementation/roblox/tooling/validate_dice_slot_reveal_notice.py",
+        }
+        if not required_dice_evidence.issubset(set(dice_item.get("automatedRefs", []))):
+            errors.append("matrix: Dice Slot Reveal Notice cannot close without production and focused evidence")
+
     return errors
 
 
@@ -359,6 +376,7 @@ def validate(root: Path = ROOT) -> list[str]:
     errors.extend(validate_rules_profile_gate(ROOT))
     errors.extend(validate_core_rules_reader(ROOT))
     errors.extend(validate_official_character_sheet(ROOT))
+    errors.extend(validate_dice_slot_reveal_notice(ROOT))
     errors.extend(validate_forbidden_player_sources())
     return errors
 
@@ -381,7 +399,8 @@ def run_self_tests(matrix: dict, manifest: dict) -> list[str]:
     fixtures.append((false_runtime_pass, "cannot claim runtime or human PASS"))
 
     missing_reason = deepcopy(matrix)
-    blocked = next(item for item in missing_reason["acceptanceItems"] if item["currentState"] == "BLOCKED")
+    blocked = missing_reason["acceptanceItems"][0]
+    blocked["currentState"] = "BLOCKED"
     blocked.pop("blockerReason", None)
     blocked.pop("deferReason", None)
     fixtures.append((missing_reason, "requires blockerReason or deferReason"))
@@ -416,6 +435,11 @@ def run_self_tests(matrix: dict, manifest: dict) -> list[str]:
     sheet_item["automatedRefs"] = []
     fixtures.append((missing_sheet_evidence, "Official Character Sheet cannot close without production and focused evidence"))
 
+    missing_dice_evidence = deepcopy(matrix)
+    dice_item = next(item for item in missing_dice_evidence["acceptanceItems"] if item["id"] == "final.dice-slot-reveal-notice")
+    dice_item["automatedRefs"] = []
+    fixtures.append((missing_dice_evidence, "Dice Slot Reveal Notice cannot close without production and focused evidence"))
+
     for fixture, expected in fixtures:
         fixture_errors = validate_matrix_data(fixture, manifest)
         if not any(expected in error for error in fixture_errors):
@@ -432,6 +456,7 @@ def main() -> int:
     errors.extend(run_asset_registry_self_tests())
     errors.extend(run_rules_profile_self_tests())
     errors.extend(run_official_sheet_self_tests())
+    errors.extend(run_dice_notice_self_tests())
     if errors:
         print("Full UI/UX acceptance validation failed:")
         for error in errors:

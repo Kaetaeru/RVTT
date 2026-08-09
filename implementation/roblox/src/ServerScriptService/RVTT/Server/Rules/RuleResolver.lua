@@ -45,6 +45,7 @@ function RuleResolver.rollCheck(
 		total = total,
 		difficultyClass = difficultyClass,
 		success = total >= difficultyClass,
+		diceMode = mode or "normal",
 	}
 end
 
@@ -93,6 +94,7 @@ function RuleResolver.rollAttack(
 		critical = critical,
 		damage = damageTotal,
 		damageRolls = damageRolls,
+		diceMode = mode or "normal",
 	}
 end
 

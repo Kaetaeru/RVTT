@@ -54,6 +54,7 @@ end
 function Domain.initialState()
 	return {
 		rollRecords = {},
+		nextRollRevision = 0,
 		actorStates = {},
 		challenges = {},
 		conditions = {},
@@ -81,6 +82,28 @@ end
 
 local function record(state: any, context: any, kind: string, data: any)
 	local id = Identity.new("roll")
+	state.nextRollRevision = (state.nextRollRevision or 0) + 1
+	local naturalResults = if type(data.rolls) == "table" then table.clone(data.rolls) else nil
+	local appliedIndex = nil
+	if type(naturalResults) == "table" and type(data.natural) == "number" then
+		for index, value in naturalResults do
+			if appliedIndex == nil and value == data.natural then
+				appliedIndex = index
+			end
+		end
+	end
+	local semanticCritical = "none"
+	if data.natural == 1 then
+		semanticCritical = "natural_1"
+	elseif data.natural == 20 then
+		semanticCritical = "natural_20"
+	end
+	local adjudication = "resolved"
+	if data.success == true or data.hit == true then
+		adjudication = "success"
+	elseif data.success == false or data.hit == false then
+		adjudication = "failure"
+	end
 	state.rollRecords[id] = {
 		id = id,
 		commandId = context.commandId,
@@ -88,6 +111,30 @@ local function record(state: any, context: any, kind: string, data: any)
 		data = data,
 		createdAt = os.time(),
 		audience = "public",
+		ownerUserId = context.playerId,
+		revealRevision = state.nextRollRevision,
+		notice = if appliedIndex ~= nil and type(data.total) == "number"
+			then {
+				diceMode = data.diceMode or "normal",
+				naturalResults = naturalResults,
+				appliedIndex = appliedIndex,
+				modifierTerms = {
+					{ label = "modifier", value = data.modifier or 0 },
+				},
+				total = data.total,
+				adjudication = adjudication,
+				semanticCritical = semanticCritical,
+				timingProfile = {
+					squareEnterMs = 120,
+					slotSpinMs = 560,
+					naturalLockMs = 180,
+					formulaExpandMs = 260,
+					adjudicationAppendMs = 180,
+					holdMs = 2000,
+					dismissMs = 240,
+				},
+			}
+			else nil,
 	}
 	return state.rollRecords[id]
 end
@@ -123,6 +170,7 @@ local function sheetD20(
 		rolls = rolls,
 		modifier = modifier,
 		total = natural + modifier,
+		diceMode = "normal",
 	})
 end
 

@@ -11,6 +11,7 @@ local player = Players.LocalPlayer
 local SharedUI = ReplicatedStorage.RVTT.Shared.UI
 local Tokens = require(SharedUI.DesignTokens)
 local CharacterSheetViewModel = require(SharedUI.CharacterSheetViewModel)
+local DiceNoticeViewModel = require(SharedUI.DiceNoticeViewModel)
 local GameplayHudViewModel = require(SharedUI.GameplayHudViewModel)
 local EntryRecoveryViewModel = require(SharedUI.EntryRecoveryViewModel)
 local ManagementViewModel = require(SharedUI.ManagementViewModel)
@@ -25,6 +26,7 @@ local ManagementPanel = require(uiFolder.Components.ManagementPanel)
 local EntryRecoveryPanel = require(uiFolder.Components.EntryRecoveryPanel)
 local DmWorkspacePanel = require(uiFolder.Components.DmWorkspacePanel)
 local OfficialCharacterSheet = require(uiFolder.Components.OfficialCharacterSheet)
+local DiceSlotRevealNotice = require(uiFolder.Components.DiceSlotRevealNotice)
 local components = uiFolder.Components
 
 local playerScripts = player:WaitForChild("PlayerScripts")
@@ -92,6 +94,7 @@ local managementAwaitingRevision: number? = nil
 local characterSheetCommands: { [string]: any } = {}
 local characterSheetFeedback =
 	CharacterSheetViewModel.initialFeedback(client.Replica.revision, client.Replica.epoch)
+local diceNoticeState = DiceNoticeViewModel.initial(client.Replica.epoch)
 local entryCommandId: string? = nil
 local entryAwaitingRevision: number? = nil
 local entryError: any = nil
@@ -103,6 +106,7 @@ local settingsPanel: any
 local gameplayHud: any
 local managementPanel: any
 local characterSheet: any
+local diceNotice: any
 local entryRecoveryPanel: any
 local setSettingsVisible: (boolean) -> ()
 local setManagementVisible: (boolean, string?) -> ()
@@ -111,6 +115,7 @@ local renderHud: () -> ()
 local renderManagement: () -> ()
 local renderCharacterSheet: () -> ()
 local renderEntryRecovery: () -> ()
+local renderDiceNotices: () -> ()
 
 local function applyPreferences()
 	local preferences = client.Preferences:snapshot()
@@ -350,6 +355,21 @@ characterSheet = OfficialCharacterSheet.new(shell:getLayer("Overlay"), function(
 	setCharacterSheetVisible(false)
 end, submitCharacterSheet)
 
+diceNotice = DiceSlotRevealNotice.new(shell:getLayer("Toast"), function(rollId: string)
+	diceNoticeState = DiceNoticeViewModel.complete(diceNoticeState, rollId)
+	renderDiceNotices()
+end)
+
+renderDiceNotices = function()
+	local payload = client.Replica.payload
+	local domains = if type(payload) == "table" then (payload :: any).domains else nil
+	local encounter = if type(domains) == "table" then domains.encounter else nil
+	local initiativeVisible = type(encounter) == "table" and type(encounter.active) == "table"
+	local preferences = client.Preferences:snapshot()
+	diceNotice:render(diceNoticeState, preferences.motion ~= "full", initiativeVisible)
+	ThemeApplicator.apply(diceNotice.Root, preferences)
+end
+
 renderCharacterSheet = function()
 	local state = CharacterSheetViewModel.build(
 		client.Replica.payload,
@@ -441,6 +461,7 @@ client.Preferences.Changed:Connect(function()
 	applyPreferences()
 	renderEntryRecovery()
 	renderHud()
+	renderDiceNotices()
 	if managementPanel.Root.Visible then
 		renderManagement()
 	end
@@ -466,6 +487,9 @@ end)
 
 local function render(payload: any, envelope: any)
 	local envelopeEpoch = if type(envelope) == "table" then envelope.authorityEpoch else nil
+	local projectionEpoch = if type(envelopeEpoch) == "string"
+		then envelopeEpoch
+		else client.Replica.epoch
 	local revision = if type(envelope) == "table" and type(envelope.revision) == "number"
 		then envelope.revision
 		else client.Replica.revision
@@ -505,12 +529,16 @@ local function render(payload: any, envelope: any)
 		revision,
 		envelopeEpoch
 	)
+	local projectedDiceNotices = if type(payload) == "table" then payload.diceNotices else nil
+	diceNoticeState =
+		DiceNoticeViewModel.reconcile(diceNoticeState, projectedDiceNotices, projectionEpoch)
 	if entryAwaitingRevision ~= nil and revision >= entryAwaitingRevision then
 		entryAwaitingRevision = nil
 		entryError = nil
 	end
 	renderEntryRecovery()
 	renderHud()
+	renderDiceNotices()
 	if managementPanel.Root.Visible then
 		if shell.surface == "management" then
 			renderManagement()
@@ -652,6 +680,8 @@ client.Recovery.Changed:Connect(function(state)
 		characterSheetCommands = {}
 		characterSheetFeedback =
 			CharacterSheetViewModel.initialFeedback(client.Replica.revision, client.Replica.epoch)
+		diceNoticeState = DiceNoticeViewModel.suspend(diceNoticeState, client.Replica.epoch)
+		renderDiceNotices()
 		setCharacterSheetVisible(false)
 		client.ViewerPreview:invalidate()
 		dmWorkspacePanel:purgeLocalState()

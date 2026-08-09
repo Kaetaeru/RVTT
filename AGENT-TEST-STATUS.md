@@ -1,7 +1,7 @@
 # RVTT Agent Test Status
 
 - 상태: `ACTIVE`
-- 최종 갱신일: `2026-08-09`
+- 최종 갱신일: `2026-08-10`
 - 목적: 새 에이전트가 저장소를 열었을 때 현재 구현·테스트 진행 상태, 다음 Gate, 남은 사용자 Runtime 범위를 한눈에 확인하게 한다.
 - 적용 범위: RVTT 구현·Runtime·Acceptance·검증·Release 작업
 
@@ -60,19 +60,20 @@ ChatGPT Direct GitHub Implementation
 |---|---|---|
 | ADR/설계 및 Studio Preflight 문서 검수 | `PASS` | 마지막 Codex Delta 결과 `NO_SUPPORTED_FINDINGS` |
 | 마지막 별도 Implementation Static Gate | `PASS` | 역사적 검증 대상 `ef99a0740711b4f00fac0d5c8d0599f238ea48e9` |
-| Full UI·UX Source·Acceptance 정합화 | `PARTIAL` | Asset Registry·Rules Profile/Release Gate·Core Rules Reader·Official 2024 Character Sheet STATIC_VERIFIED, ADR-0091 필수 구현 Gap 1개 |
+| Full UI·UX Source·Acceptance 정합화 | `PARTIAL` | ADR-0091 필수 Source/Static Gap 0개, 새 current-HEAD 전체 Static Gate 재검증 대기 |
 | ADR-0091 Asset Registry foundation | `STATIC_VERIFIED` | Source·Server·Client-safe 경계, validation·negative disclosure focused regression |
 | ADR-0091 Rules Profile + Release Leak Gate | `STATIC_VERIFIED` | Builtin package single authority·private readiness·explicit fallback·actual filesystem staging·CI fail-closed regression |
 | ADR-0091 Core Rules Reader | `STATIC_VERIFIED` | private in-root/README/fragment/duplicate stable link·missing/out-of-root raw-path nondisclosure·reciprocal backlink·deterministic import + lazy/viewer filtering regression |
 | ADR-0091 Official 2024 Character Sheet | `STATIC_VERIFIED_PENDING_CHATGPT_VERIFICATION` | server-resolved roll semantics·active Content definition hydration·canonical attack parity·all-row equipment/details/send·structured slots·out-of-order receipt safety focused validation |
+| ADR-0091 Dice Slot Reveal Notice | `STATIC_VERIFIED_PENDING_CHATGPT_VERIFICATION` | server-authored projection·8-state reveal·advantage/disadvantage applied-index authority·reduced motion·FIFO/stack/reconciliation·nondisclosure focused validation |
 | Shared Shell·Preference Foundation | `PASS` | `RVTT-PR2-UI-FOUNDATION-IMPLEMENTATION-002` 구현·로컬 정적 검증 완료 |
 | Input·Context Action 정합화 | `PASS` | `RVTT-PR2-INPUT-CONTEXT-IMPLEMENTATION-001` 구현·로컬 정적 검증 완료 |
 | Exploration·Encounter HUD | `PASS` | `RVTT-PR2-EXPLORATION-ENCOUNTER-HUD-IMPLEMENTATION-001` 구현·로컬 정적 검증 완료 |
 | Inventory·Journal·Settings | `PASS` | `RVTT-PR2-INVENTORY-JOURNAL-SETTINGS-IMPLEMENTATION-001` Source·Static 완료 |
 | Entry·Role·Recovery | `PASS` | `RVTT-PR2-ENTRY-ROLE-RECOVERY-IMPLEMENTATION-001` Source·Static 완료 |
 | DM Live Workspace | `PASS` | `RVTT-PR2-DM-LIVE-WORKSPACE-IMPLEMENTATION-001` Source·Static 완료 |
-| Full UI·UX Acceptance 확장 | `HOLD` | 49개 항목 등록, 남은 ADR-0091 correction 1개 필요 |
-| 현재 사용자 Studio Human Retest | `BLOCKED` | 남은 Dice Notice 구현 + 새 current-HEAD Static Gate가 먼저 |
+| Full UI·UX Acceptance 확장 | `HOLD` | 49개 항목 등록, Source/Static Gap 0개, 새 current-HEAD 전체 Static Gate 재검증 필요 |
+| 현재 사용자 Studio Human Retest | `BLOCKED` | 새 current-HEAD 전체 Static Gate 재검증이 먼저 |
 | Codex Studio MCP Smoke | `NOT_DEFAULT` | 현재 운영에서는 사용자 수동 Runtime으로 대체 |
 | 일반 Runtime 실행 그룹 | `0 / 3 PASS` | G1도 아직 실행 가능 상태가 아님 |
 | Persistence 실행 그룹 | `0 / 7 PASS` | 전용 Milestone까지 `DEFERRED` |
@@ -114,7 +115,7 @@ newCurrentHeadStaticGate: REQUIRED_BEFORE_STUDIO
 studioManualRuntimeCurrentContract: NOT_EXECUTED
 humanPlaytestCurrentContract: NOT_EXECUTED
 phase10AcceptanceTargetShaAtStart: e20853c3bc1e36fb78a1888809e13a8c8577ebb0
-phase10AcceptanceRegistration: PARTIAL · 49 items · 12 batches · 2 final-contract blockers
+phase10AcceptanceRegistration: PARTIAL · 49 items · 12 batches · 0 final-contract source/static gaps
 phase10AssetRegistryCommand: RVTT-PR2-ADR0091-ASSET-REGISTRY-IMPLEMENTATION-001
 phase10AssetRegistryTargetShaAtStart: 4321d104a597e530bf57748874ce42b13c42c1c4
 phase10AssetRegistryStaticValidation: PASS · empty production registry + source/server/client-safe boundary + 11 focused fixtures
@@ -142,12 +143,17 @@ phase10OfficialCharacterSheetEligibilityRepairCommand: RVTT-PR2-ADR0091-OFFICIAL
 phase10OfficialCharacterSheetEligibilityRepairTargetShaAtStart: 7bda8950d703028606d8a46404461fad13dc375d
 phase10OfficialCharacterSheetEligibilityRepairLocalStaticValidation: PASS · atomic finite Hit Die consumption/exhaustion + trusted equipSlot and character-location enforcement + hotbar capability/character relation enforcement + attack fallback non-invention + focused negative regressions + strengthened validator/self-tests + public release leak gate + StyLua + 15 Rojo builds + 3 sourcemaps + production/tests Luau analysis; Selene delegated to current-head Actions
 phase10OfficialCharacterSheetEligibilityRepairStudioHuman: NOT_EXECUTED
+phase10DiceSlotRevealNoticeCommand: RVTT-PR2-ADR0091-DICE-SLOT-REVEAL-NOTICE-001
+phase10DiceSlotRevealNoticeTargetShaAtStart: 276ceb267fb01cd5adfd1e0c19ebf51bbba7ec0e
+phase10DiceSlotRevealNoticeLocalStaticValidation: PASS · server projection authority + exact reveal state/timing + advantage/disadvantage appliedIndex + semantic critical presentation + reduced motion + FIFO/stack/dedupe/stale/reconnect + nondisclosure + focused/full validators + public release leak gate + private synthetic pipeline + 15 Rojo builds + 3 sourcemaps + production/tests Luau analysis; Selene delegated to current-head Actions
+phase10DiceSlotRevealNoticeState: STATIC_VERIFIED_PENDING_CHATGPT_VERIFICATION
+phase10DiceSlotRevealNoticeStudioHuman: NOT_EXECUTED
 phase10StudioRuntime: NOT_EXECUTED
 phase10HumanEvidence: NOT_EXECUTED
-phase10Next: DICE_SLOT_REVEAL_NOTICE_CORRECTION
+phase10Next: BROAD_CURRENT_HEAD_STATIC_REVALIDATION
 ```
 
-`ef99a07...` Static PASS는 역사적 증거로 유지한다. 이후 UI·UX Source가 계속 변경됐으므로 Studio Human Retest 전에는 남은 Dice Slot Reveal Notice를 완료하고 **별도의 새 current-HEAD Static Gate를 다시 통과해야 한다.** Official Character Sheet의 current-head CI 성공은 해당 correction의 Source/Static 증거이며 전체 제품 Runtime PASS가 아니다.
+`ef99a07...` Static PASS는 역사적 증거로 유지한다. ADR-0091 필수 Source/Static Gap은 0개가 됐지만 이후 UI·UX Source가 계속 변경됐으므로 Studio Human Retest 전에는 **별도의 새 current-HEAD 전체 Static Gate를 다시 통과해야 한다.** Dice Slot Reveal Notice의 focused Source/Static 성공은 전체 제품 Runtime PASS가 아니다.
 
 ---
 
@@ -163,7 +169,6 @@ Shared Shell·Preference Foundation
 → Entry·Role·Recovery
 → DM Live Workspace
 → Acceptance 확장
-→ Dice Slot Reveal Notice correction
 → 새 current-HEAD Static Gate
 → Exploration·Context Input Studio Human Retest
 → UI·Accessibility Evidence
@@ -173,7 +178,7 @@ Shared Shell·Preference Foundation
 → Slice 16 Release Campaign
 ```
 
-따라서 **현재는 사용자에게 Studio 실행을 요청하지 않는다.** `Studio Human Retest`는 남은 구현·Acceptance 정합화가 끝난 후 새 Head의 Static Gate가 PASS했을 때만 `PENDING/READY`로 전환한다.
+따라서 **현재는 사용자에게 Studio 실행을 요청하지 않는다.** `Studio Human Retest`는 새 Head의 전체 Static Gate가 PASS했을 때만 `PENDING/READY`로 전환한다.
 
 ---
 

@@ -388,8 +388,8 @@ def validate(root: Path = ROOT) -> list[str]:
         errors.append("acceptance matrix: Official Sheet must be STATIC_VERIFIED")
     elif not REQUIRED_EVIDENCE.issubset(set(item.get("automatedRefs", []))):
         errors.append("acceptance matrix: Official Sheet production/focused evidence is incomplete")
-    if matrix.get("finalContractGaps") != ["final.dice-slot-reveal-notice"]:
-        errors.append("acceptance matrix: Dice Slot Reveal Notice must be the sole remaining gap")
+    if matrix.get("finalContractGaps") != []:
+        errors.append("acceptance matrix: focused final-contract source/static gaps must be closed")
     return errors
 
 

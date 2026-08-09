@@ -214,6 +214,7 @@ required = [
     "tooling/run-studio-acceptance-batch.ps1",
     "tooling/run-grand-acceptance.ps1",
     "tooling/validate_full_ui_ux_acceptance.py",
+    "tooling/validate_dice_slot_reveal_notice.py",
     "tooling/validate_asset_registry.py",
     "tooling/validate_rules_profile_release_gate.py",
     "tooling/build_public_release_staging.py",

@@ -2,6 +2,7 @@
 
 local Version = require(game:GetService("ReplicatedStorage").RVTT.Shared.Core.Version)
 local CharacterSheetProjection = require(script.Parent.CharacterSheetProjection)
+local DiceNoticeProjection = require(script.Parent.DiceNoticeProjection)
 local DomainProjectionPolicy = require(script.Parent.DomainProjectionPolicy)
 
 local ProjectionBuilder = {}
@@ -37,6 +38,7 @@ function ProjectionBuilder:build(state, userId: number, role: string)
 				state.revision,
 				nil
 			),
+			diceNotices = DiceNoticeProjection.build(state.domains, viewer),
 		},
 	}
 end
