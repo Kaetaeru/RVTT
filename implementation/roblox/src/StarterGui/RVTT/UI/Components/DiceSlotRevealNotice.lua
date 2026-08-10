@@ -160,6 +160,18 @@ function DiceSlotRevealNotice:_createNaturalCell(cell: any): Frame
 		numeral.TextTransparency = 1 - cell.contrast
 		numeral.Parent = strip
 	end
+	local crossfadeA = label("CrossfadeA", 24)
+	crossfadeA.Size = UDim2.fromScale(1, 1)
+	crossfadeA.Text = ""
+	crossfadeA.TextTransparency = 1
+	crossfadeA.Visible = false
+	crossfadeA.Parent = visual
+	local crossfadeB = label("CrossfadeB", 24)
+	crossfadeB.Size = UDim2.fromScale(1, 1)
+	crossfadeB.Text = ""
+	crossfadeB.TextTransparency = 1
+	crossfadeB.Visible = false
+	crossfadeB.Parent = visual
 	local locked = label("LockedValue", 24)
 	locked.Size = UDim2.fromScale(1, 1)
 	locked.Text = ""
@@ -259,16 +271,23 @@ function DiceSlotRevealNotice:_spinVertical(frame: Frame, notice: any, descripto
 		local visual = child(cell, "Visual")
 		local slotClip = child(visual, "SlotClip")
 		local strip = child(slotClip, "NumeralStrip") :: Frame
+		local crossfadeA = child(visual, "CrossfadeA") :: TextLabel
+		local crossfadeB = child(visual, "CrossfadeB") :: TextLabel
 		local locked = child(visual, "LockedValue") :: TextLabel
 		locked.Text = ""
 		locked.TextTransparency = 1
-		strip.Position = UDim2.fromOffset(0, 0)
+		crossfadeA.Visible = false
+		crossfadeB.Visible = false
+		strip:SetAttribute("RVTTSlotFlowDirection", descriptor.slotSpin.flowDirection)
+		strip:SetAttribute("RVTTSlotInitialOffsetY", descriptor.slotSpin.initialOffsetY)
+		strip:SetAttribute("RVTTSlotFinalOffsetY", descriptor.slotSpin.finalOffsetY)
+		strip.Position = UDim2.fromOffset(0, descriptor.slotSpin.initialOffsetY)
 		strip.Visible = true
 		self:_tween(
 			notice.rollId,
 			strip,
 			descriptor.slotSpin.durationMs,
-			{ Position = UDim2.fromOffset(0, -descriptor.slotSpin.verticalDistance) },
+			{ Position = UDim2.fromOffset(0, descriptor.slotSpin.finalOffsetY) },
 			Enum.EasingStyle.Linear,
 			Enum.EasingDirection.InOut
 		)
@@ -287,26 +306,31 @@ function DiceSlotRevealNotice:_spinReduced(
 		local visual = child(cell, "Visual")
 		local slotClip = child(visual, "SlotClip")
 		local strip = child(slotClip, "NumeralStrip") :: Frame
+		local crossfadeA = child(visual, "CrossfadeA") :: TextLabel
+		local crossfadeB = child(visual, "CrossfadeB") :: TextLabel
 		local locked = child(visual, "LockedValue") :: TextLabel
 		strip.Visible = false
 		locked.Visible = true
-		for step = 1, descriptor.slotSpin.crossfadeSteps do
-			self:_schedule(
-				notice.rollId,
-				generation,
-				((step - 1) * descriptor.slotSpin.durationMs / descriptor.slotSpin.crossfadeSteps)
-					/ 1000,
-				function()
-					locked.Text = tostring(DiceNoticeViewModel.SLOT_DECORATIVE_VALUES[step])
-					locked.TextTransparency = 1
-					self:_tween(
-						notice.rollId,
-						locked,
-						descriptor.slotSpin.durationMs / (descriptor.slotSpin.crossfadeSteps * 2),
-						{ TextTransparency = 0 }
-					)
-				end
-			)
+		locked.Text = ""
+		locked.TextTransparency = 1
+		crossfadeA.Visible = true
+		crossfadeA.Text = tostring(DiceNoticeViewModel.SLOT_DECORATIVE_VALUES[1])
+		crossfadeA.TextTransparency = 0
+		crossfadeB.Visible = true
+		crossfadeB.Text = ""
+		crossfadeB.TextTransparency = 1
+		visual:SetAttribute("RVTTReducedCrossfadeLayers", descriptor.slotSpin.crossfadeLayerCount)
+		local transitionMs = descriptor.slotSpin.durationMs / descriptor.slotSpin.crossfadeSteps
+		for step = 2, descriptor.slotSpin.crossfadeSteps do
+			local decorativeStep = step
+			local outgoing = if step % 2 == 0 then crossfadeA else crossfadeB
+			local incoming = if step % 2 == 0 then crossfadeB else crossfadeA
+			self:_schedule(notice.rollId, generation, ((step - 1) * transitionMs) / 1000, function()
+				incoming.Text = tostring(DiceNoticeViewModel.SLOT_DECORATIVE_VALUES[decorativeStep])
+				incoming.TextTransparency = 1
+				self:_tween(notice.rollId, outgoing, transitionMs, { TextTransparency = 1 })
+				self:_tween(notice.rollId, incoming, transitionMs, { TextTransparency = 0 })
+			end)
 		end
 	end
 end
@@ -384,8 +408,12 @@ function DiceSlotRevealNotice:_lockNaturals(
 		local visual = child(cell, "Visual") :: Frame
 		local slotClip = child(visual, "SlotClip")
 		local strip = child(slotClip, "NumeralStrip") :: Frame
+		local crossfadeA = child(visual, "CrossfadeA") :: TextLabel
+		local crossfadeB = child(visual, "CrossfadeB") :: TextLabel
 		local locked = child(visual, "LockedValue") :: TextLabel
 		strip.Visible = false
+		crossfadeA.Visible = false
+		crossfadeB.Visible = false
 		locked.Text = tostring(natural)
 		locked.TextTransparency = if index == notice.appliedIndex then 0 else 0.5
 		if index == notice.appliedIndex then

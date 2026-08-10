@@ -241,6 +241,7 @@ return function(harness: any)
 	harness:equal(normal.total, 777, "client preserves projection total without arithmetic")
 
 	local advantage = notice("roll:advantage", 2, "advantage", { 20, 1 }, 2, "natural_1")
+	local normalAnimation = ViewModel.animationDescriptor(normal, false)
 	local advantageAnimation = ViewModel.animationDescriptor(advantage, false)
 	harness:equal(
 		advantageAnimation.slotSpin.kind,
@@ -250,6 +251,20 @@ return function(harness: any)
 	harness:expect(
 		advantageAnimation.slotSpin.verticalDistance > 0,
 		"slot strip consumes a positive vertical movement distance"
+	)
+	harness:equal(
+		advantageAnimation.slotSpin.flowDirection,
+		"top_to_bottom",
+		"dual slot strips declare top-to-bottom flow"
+	)
+	harness:expect(
+		advantageAnimation.slotSpin.initialOffsetY < advantageAnimation.slotSpin.finalOffsetY,
+		"top-to-bottom slot direction starts above and ends below"
+	)
+	harness:equal(
+		normalAnimation.slotSpin.flowDirection,
+		advantageAnimation.slotSpin.flowDirection,
+		"normal and dual slot direction semantics are identical"
 	)
 	harness:expect(
 		not advantageAnimation.slotSpin.finalNaturalVisible,
@@ -335,6 +350,15 @@ return function(harness: any)
 		"three_step_crossfade",
 		"reduced motion consumes actual crossfade presentation"
 	)
+	harness:expect(
+		reducedAnimation.slotSpin.crossfadeLayerCount == 2
+			and reducedAnimation.slotSpin.overlappingTransparencyTweens,
+		"reduced motion requires two visual layers with outgoing and incoming overlap"
+	)
+	harness:expect(
+		not reducedAnimation.slotSpin.finalNaturalVisible,
+		"reduced decorative crossfade does not disclose the final natural before natural_lock"
+	)
 	harness:equal(#reducedAnimation.naturalLock.shakeOffsets, 0, "reduced motion has zero shake")
 	harness:expect(
 		reducedAnimation.naturalLock.outlinePulse and reducedAnimation.naturalLock.tintFade,
@@ -371,6 +395,20 @@ return function(harness: any)
 		#component.tweens[advantage.rollId] >= 2,
 		"component consumes vertical slot tweens"
 	)
+	for cellIndex = 1, 2 do
+		local cellVisual =
+			child(child(componentRow, "NaturalCell_" .. tostring(cellIndex)), "Visual")
+		local slotStrip = child(child(cellVisual, "SlotClip"), "NumeralStrip")
+		harness:equal(
+			slotStrip:GetAttribute("RVTTSlotFlowDirection"),
+			"top_to_bottom",
+			"Production component consumes top-to-bottom direction for every dual cell"
+		)
+		harness:expect(
+			slotStrip.Position.Y.Offset < slotStrip:GetAttribute("RVTTSlotFinalOffsetY"),
+			"Production strip initial Y is above its tween target"
+		)
+	end
 	component:_renderPhase(componentFrame, advantage, plan[4], false, 1)
 	harness:equal(
 		child(child(child(componentRow, "NaturalCell_2"), "Visual"), "LockedValue").Text,
@@ -396,6 +434,19 @@ return function(harness: any)
 	)
 	local reducedFrame = component:_createFrame(advantage, 1, false)
 	component.generations[advantage.rollId] = 2
+	component.tweens[advantage.rollId] = {}
+	component:_renderPhase(reducedFrame, advantage, reduced[3], true, 2)
+	local reducedVisual = child(child(child(reducedFrame, "NaturalRow"), "NaturalCell_1"), "Visual")
+	harness:expect(
+		reducedVisual:FindFirstChild("CrossfadeA") ~= nil
+			and reducedVisual:FindFirstChild("CrossfadeB") ~= nil,
+		"reduced motion component creates two alternating crossfade layers"
+	)
+	harness:equal(
+		child(reducedVisual, "LockedValue").Text,
+		"",
+		"reduced decorative steps keep the projected natural hidden before natural_lock"
+	)
 	component:_renderPhase(reducedFrame, advantage, plan[4], true, 2)
 	harness:expect(
 		#component.tweens[advantage.rollId] >= 4,

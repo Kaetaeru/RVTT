@@ -115,7 +115,10 @@ def validate_contract_texts(texts: dict[str, str]) -> list[str]:
             'clip.Name = "SlotClip"',
             "clip.ClipsDescendants = true",
             'strip.Name = "NumeralStrip"',
-            "{ Position = UDim2.fromOffset(0, -descriptor.slotSpin.verticalDistance) }",
+            'crossfadeA = label("CrossfadeA", 24)',
+            'crossfadeB = label("CrossfadeB", 24)',
+            "strip.Position = UDim2.fromOffset(0, descriptor.slotSpin.initialOffsetY)",
+            "{ Position = UDim2.fromOffset(0, descriptor.slotSpin.finalOffsetY) }",
             "function DiceSlotRevealNotice:_spinReduced",
             "function DiceSlotRevealNotice:_runDampedCritical",
             "function DiceSlotRevealNotice:_runReducedCritical",
@@ -156,6 +159,47 @@ def validate_contract_texts(texts: dict[str, str]) -> list[str]:
         errors.append("DiceSlotRevealNotice: reduced-motion outline pulse consumer is missing")
     if "BackgroundColor3 = color" not in component or "BackgroundColor3 = Tokens.Color.SurfaceSoft" not in component:
         errors.append("DiceSlotRevealNotice: reduced-motion tint fade consumer is missing")
+    _contains_all(
+        view_model,
+        {
+            'flowDirection = "top_to_bottom"',
+            "initialOffsetY = -ViewModel.SLOT_CELL_HEIGHT",
+            "finalOffsetY = 0",
+            "crossfadeLayerCount = if reducedMotion then 2 else nil",
+            "overlappingTransparencyTweens = reducedMotion",
+        },
+        "DiceNoticeViewModel direction and reduced-motion descriptor",
+        errors,
+    )
+    vertical_block = component.split("function DiceSlotRevealNotice:_spinVertical", 1)[-1].split(
+        "function DiceSlotRevealNotice:_spinReduced", 1
+    )[0]
+    if "descriptor.slotSpin.initialOffsetY" not in vertical_block or "descriptor.slotSpin.finalOffsetY" not in vertical_block:
+        errors.append("DiceSlotRevealNotice: top-to-bottom Position consumer is incomplete")
+    if "-descriptor.slotSpin.verticalDistance" in vertical_block:
+        errors.append("DiceSlotRevealNotice: bottom-to-top negative-Y tween consumer is forbidden")
+    reduced_block = component.split("function DiceSlotRevealNotice:_spinReduced", 1)[-1].split(
+        "function DiceSlotRevealNotice:_runDampedCritical", 1
+    )[0]
+    _contains_all(
+        reduced_block,
+        {
+            'local crossfadeA = child(visual, "CrossfadeA") :: TextLabel',
+            'local crossfadeB = child(visual, "CrossfadeB") :: TextLabel',
+            "local outgoing = if step % 2 == 0 then crossfadeA else crossfadeB",
+            "local incoming = if step % 2 == 0 then crossfadeB else crossfadeA",
+            "outgoing,",
+            "incoming,",
+            "{ TextTransparency = 1 }",
+            "{ TextTransparency = 0 }",
+        },
+        "DiceSlotRevealNotice reduced outgoing/incoming crossfade consumer",
+        errors,
+    )
+    if "locked.Text = tostring(DiceNoticeViewModel.SLOT_DECORATIVE_VALUES" in reduced_block:
+        errors.append("DiceSlotRevealNotice: reduced slot spin must not replace one LockedValue label")
+    if reduced_block.count("self:_tween(") < 2:
+        errors.append("DiceSlotRevealNotice: reduced crossfade requires outgoing and incoming tweens")
 
     rules = texts["rules"]
     _contains_all(
@@ -210,12 +254,21 @@ def validate_contract_texts(texts: dict[str, str]) -> list[str]:
             "production advantage server path is covered",
             "production disadvantage server path is covered",
             "slot spin uses a real vertical visual movement descriptor",
+            "dual slot strips declare top-to-bottom flow",
+            "top-to-bottom slot direction starts above and ends below",
+            "normal and dual slot direction semantics are identical",
             "final natural is locked only at natural_lock presentation boundary",
             "formula expansion is not an instantaneous-only size assignment",
             "full-motion Natural 1 has damped horizontal shake",
             "full-motion Natural 20 has damped horizontal shake",
             "reduced motion has actual outline pulse and tint fade",
+            "reduced motion requires two visual layers with outgoing and incoming overlap",
+            "reduced decorative crossfade does not disclose the final natural before natural_lock",
             "component consumes vertical slot tweens",
+            "Production component consumes top-to-bottom direction for every dual cell",
+            "Production strip initial Y is above its tween target",
+            "reduced motion component creates two alternating crossfade layers",
+            "reduced decorative steps keep the projected natural hidden before natural_lock",
             "component creates a real connector for the server-applied dual cell",
             "generation cancellation prevents stale tween task mutation after dismissal recovery",
         },
@@ -261,13 +314,25 @@ def run_self_tests() -> list[str]:
         ("component", 'strip.Name = "NumeralStrip"', 'strip.Name = "StaticNumber"', "numeral strip"),
         (
             "component",
-            "{ Position = UDim2.fromOffset(0, -descriptor.slotSpin.verticalDistance) }",
-            "{ BackgroundTransparency = 0 }",
-            "vertical slot movement",
+            "strip.Position = UDim2.fromOffset(0, descriptor.slotSpin.initialOffsetY)",
+            "strip.Position = UDim2.fromOffset(0, descriptor.slotSpin.finalOffsetY)",
+            "top-to-bottom slot direction",
         ),
         ("component", 'notice.semanticCritical == "natural_1"', "false", "Natural 1 branch"),
         ("component", 'notice.semanticCritical == "natural_20"', "false", "Natural 20 branch"),
         ("component", "function DiceSlotRevealNotice:_spinReduced", "function DiceSlotRevealNotice:_spinStatic", "reduced crossfade"),
+        (
+            "component",
+            'local crossfadeB = child(visual, "CrossfadeB") :: TextLabel\n\t\tlocal locked = child(visual, "LockedValue") :: TextLabel\n\t\tstrip.Visible = false\n\t\tlocked.Visible = true',
+            'local crossfadeB = child(visual, "CrossfadeA") :: TextLabel\n\t\tlocal locked = child(visual, "LockedValue") :: TextLabel\n\t\tstrip.Visible = false\n\t\tlocked.Visible = true',
+            "reduced second visual layer consumer",
+        ),
+        (
+            "component",
+            "local incoming = if step % 2 == 0 then crossfadeB else crossfadeA",
+            "local incoming = outgoing",
+            "reduced outgoing/incoming overlap",
+        ),
         ("component", "stroke.Transparency = 1", "stroke.Transparency = 0", "reduced outline pulse"),
         ("component", 'connector.Name = "FormulaConnector_"', 'connector.Name = "Marker_"', "formula connector"),
         ("component", "tween:Cancel()", "return", "tween cancellation"),
@@ -285,6 +350,36 @@ def run_self_tests() -> list[str]:
     forbidden["view_model"] += "\nlocal forged = math.max(1, 20)"
     if not validate_contract_texts(forbidden):
         failures.append("self-test: client max-based adjudication was not rejected")
+    bottom_to_top = dict(texts)
+    bottom_to_top["component"] = bottom_to_top["component"].replace(
+        "strip.Position = UDim2.fromOffset(0, descriptor.slotSpin.initialOffsetY)",
+        "strip.Position = UDim2.fromOffset(0, descriptor.slotSpin.finalOffsetY)",
+        1,
+    ).replace(
+        "{ Position = UDim2.fromOffset(0, descriptor.slotSpin.finalOffsetY) }",
+        "{ Position = UDim2.fromOffset(0, descriptor.slotSpin.initialOffsetY) }",
+        1,
+    )
+    if not validate_contract_texts(bottom_to_top):
+        failures.append("self-test: bottom-to-top Position consumer was not rejected")
+    fade_in_only = dict(texts)
+    component_prefix, reduced_suffix = fade_in_only["component"].split(
+        "function DiceSlotRevealNotice:_spinReduced", 1
+    )
+    reduced_suffix = reduced_suffix.replace(
+        'local crossfadeB = child(visual, "CrossfadeB") :: TextLabel',
+        "local crossfadeB = locked",
+        1,
+    ).replace(
+        "local outgoing = if step % 2 == 0 then crossfadeA else crossfadeB",
+        "local outgoing = incoming",
+        1,
+    )
+    fade_in_only["component"] = (
+        component_prefix + "function DiceSlotRevealNotice:_spinReduced" + reduced_suffix
+    )
+    if not validate_contract_texts(fade_in_only):
+        failures.append("self-test: single-label fade-in-only reduced motion was not rejected")
     return failures
 
 

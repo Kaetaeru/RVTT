@@ -178,7 +178,12 @@ function ViewModel.animationDescriptor(notice: any, reducedMotion: boolean): any
 			kind = if reducedMotion then "three_step_crossfade" else "vertical_numeral_strip",
 			durationMs = notice.timingProfile.slotSpinMs,
 			crossfadeSteps = if reducedMotion then 3 else nil,
+			crossfadeLayerCount = if reducedMotion then 2 else nil,
+			overlappingTransparencyTweens = reducedMotion,
 			verticalDistance = ViewModel.SLOT_CELL_HEIGHT * (#ViewModel.SLOT_DECORATIVE_VALUES - 1),
+			flowDirection = "top_to_bottom",
+			initialOffsetY = -ViewModel.SLOT_CELL_HEIGHT * (#ViewModel.SLOT_DECORATIVE_VALUES - 1),
+			finalOffsetY = 0,
 			finalNaturalVisible = false,
 		},
 		naturalLock = {
