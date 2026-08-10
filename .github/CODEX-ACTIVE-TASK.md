@@ -1,31 +1,31 @@
 # RVTT Execution State
 
 - status: `READY_FOR_CODEX_EXECUTION`
-- commandId: `RVTT-PR2-ADR0091-DICE-SLOT-REVEAL-NOTICE-FIX-002`
+- commandId: `RVTT-PR2-ADR0091-DICE-SLOT-REVEAL-NOTICE-FIX-003`
 - repository: `Kaetaeru/RVTT`
 - pullRequest: `2`
 - branch: `agent/survival-logistics-token-authoring`
 - taskType: `FOCUSED_IMPLEMENTATION_REPAIR`
 - executionMode: `CODEX_IMPLEMENTATION_CHATGPT_VERIFICATION`
-- phase: `FULL_UI_UX_ALIGNMENT_PHASE_10_ADR0091_DICE_SLOT_REVEAL_PRESENTATION_REPAIR`
-- commandPath: `.github/CODEX-FIX-ADR0091-DICE-SLOT-REVEAL-NOTICE-002.md`
+- phase: `FULL_UI_UX_ALIGNMENT_PHASE_10_ADR0091_DICE_SLOT_DIRECTION_REPAIR`
+- commandPath: `.github/CODEX-FIX-ADR0091-DICE-SLOT-REVEAL-NOTICE-003.md`
 - targetMode: `CURRENT_PR_HEAD_AT_START`
-- resultMarker: `<!-- RVTT_CODEX_ADR0091_DICE_SLOT_REVEAL_NOTICE_FIX_002_RESULT -->`
+- resultMarker: `<!-- RVTT_CODEX_ADR0091_DICE_SLOT_REVEAL_NOTICE_FIX_003_RESULT -->`
 - resultStatus: `PENDING`
-- setupBaseHeadBeforeCommand: `e7a8adf6ef142b55aa08020f2075928b5b2f44e9`
-- commandFileCommit: `f41ca0c050f8216fc81e866edd46f23288f3ab0a`
+- setupBaseHeadBeforeCommand: `e798f1ef56f022b231e344824eaa0fc583574d32`
+- commandFileCommit: `36b74dabdfac276bbad2d52dfcfe3b61caaebdf4`
 - phase9Status: `FINAL_PASS`
-- phase10Status: `PARTIAL_HOLD_DICE_PRESENTATION_REPAIR`
-- completedCorrections: `ASSET_REGISTRY_FOUNDATION,RULES_PROFILE_RELEASE_ENFORCEMENT,CORE_RULES_READER_ENGINE,PRIVATE_RULES_READER_IMPORT_OVERLAY,PRIVATE_STABLE_LINK_NORMALIZATION,OFFICIAL_2024_CHARACTER_SHEET_FINAL_STATIC_PASS,DICE_NOTICE_SERVER_AUTHORITY_QUEUE_DISCLOSURE_BASELINE`
-- currentCorrection: `DICE_SLOT_REVEAL_ACTUAL_PRESENTATION_ANIMATION`
+- phase10Status: `PARTIAL_HOLD_DICE_DIRECTION_REPAIR`
+- completedCorrections: `ASSET_REGISTRY_FOUNDATION,RULES_PROFILE_RELEASE_ENFORCEMENT,CORE_RULES_READER_FINAL_STATIC_PASS,OFFICIAL_2024_CHARACTER_SHEET_FINAL_STATIC_PASS,DICE_NOTICE_SERVER_AUTHORITY_QUEUE_DISCLOSURE,DICE_NOTICE_PRESENTATION_PRIMITIVES`
+- currentCorrection: `DICE_SLOT_TOP_TO_BOTTOM_DIRECTION_AND_TRUE_REDUCED_CROSSFADE`
 - coreRulesReaderAcceptanceState: `FINAL_STATIC_PASS`
 - rulesProfileReleaseAcceptanceState: `STATIC_PASS`
 - officialCharacterSheetAcceptanceState: `FINAL_STATIC_PASS`
-- diceSlotRevealNoticeState: `HOLD_PENDING_PRESENTATION_REPAIR`
-- matrixRecordedDiceState: `STATIC_VERIFIED_STALE_OVERSTATEMENT`
-- matrixRecordedFinalContractGaps: `0_STALE_OVERSTATEMENT`
+- diceSlotRevealNoticeState: `HOLD_PENDING_DIRECTION_REPAIR`
+- matrixRecordedDiceState: `BLOCKED`
 - effectiveRemainingFinalContractGaps: `1`
 - nextCorrectionOnVerifiedSuccess: `CHATGPT_BROAD_CURRENT_HEAD_STATIC_REVALIDATION`
+- nextRuntimeOnBroadStaticPass: `EXPLORATION_CONTEXT_INPUT_STUDIO_RETEST`
 - newCurrentHeadStaticGate: `NOT_YET`
 - studioRuntimeState: `NOT_EXECUTED`
 - studioHumanRetestState: `NOT_EXECUTED`
@@ -38,24 +38,19 @@
 Codex는 아래 command를 가장 먼저 읽고 그대로 실행한다.
 
 ```text
-.github/CODEX-FIX-ADR0091-DICE-SLOT-REVEAL-NOTICE-002.md
+.github/CODEX-FIX-ADR0091-DICE-SLOT-REVEAL-NOTICE-003.md
 ```
 
 ## ChatGPT 독립 재검증 판정
 
-current pre-command HEAD `e7a8adf6ef142b55aa08020f2075928b5b2f44e9`에서 Dice Notice의 server authority/disclosure/queue baseline은 확인됐지만 실제 presentation은 아직 Final Static PASS가 아니다.
+pre-command HEAD `e798f1ef56f022b231e344824eaa0fc583574d32`에서 FIX-002의 server authority, disclosure, queue, formula tween, Natural 1/20 effects, dual Applied emphasis, Production advantage/disadvantage path는 확인됐다.
 
-남은 blocker:
+남은 blocker는 두 가지다.
 
-1. slot 숫자 위→아래 flow가 실제 animation primitive로 구현되지 않음.
-2. `formula_expand`가 260ms tween이 아니라 즉시 size assignment.
-3. Natural 1/20 effect가 실제 shake/tint animation이 아니라 marker 수준이며 Natural 20 full-motion shake가 없음.
-4. Reduced Motion crossfade/outline pulse/tint fade가 실제 property animation이 아님.
-5. dual Applied Cell Accent + Scale + Formula Connector가 실제 presentation에 없음.
-6. Advantage/Disadvantage는 synthetic notice table 위주이고 Production `RulesDomain` server-mode positive path가 없음.
-7. focused validator가 marker-only implementation을 허용함.
+1. Full-motion numeral strip이 실제 화면에서 bottom-to-top으로 흐르며 accepted `top-to-bottom` 방향과 반대다.
+2. Reduced Motion은 한 label의 text replacement + fade-in 위주라 true outgoing/incoming crossfade 증거가 부족하다.
 
-따라서 현재 안전 판정은:
+따라서 현재 안전 판정:
 
 ```text
 Asset Registry = STATIC PASS
@@ -65,36 +60,50 @@ Official 2024 Character Sheet = FINAL STATIC PASS
 Dice Slot Reveal Notice = HOLD
 Effective Final Contract gaps = 1
 Phase 10 = PARTIAL / HOLD
+Broad current-head Static Gate = NOT_STARTED
 Studio/Human = NOT_EXECUTED
 ```
 
-## 이번 FIX-002 핵심 축
+## 이번 FIX-003 핵심 축
 
 ```text
-real slot-flow animation
-→ real 260ms formula expansion
-→ Natural 1 + Natural 20 full-motion effects
-→ real Reduced Motion crossfade/pulse/tint
-→ dual Applied Accent/Scale/Connector
-→ Production Advantage/Disadvantage server path
-→ component-level focused regressions
-→ validator hardening + negative self-tests
+actual top-to-bottom slot direction
+→ direction regression + validator negative self-test
+→ true reduced-motion outgoing/incoming crossfade
+→ preserve all FIX-002 authority/presentation successes
 → current-head Actions
 ```
 
-Server projection authority, audience nondisclosure, FIFO/stack/replay suppression은 이미 통과한 baseline이므로 회귀 금지다.
+## 플레이테스트 진입 조건
 
-## Acceptance 상태 정직성
+FIX-003 자체에서는 Studio/Human을 실행하지 않는다.
 
-현재 Matrix의 Dice `STATIC_VERIFIED` / empty final gaps는 stale overstatement이며 성공 근거로 사용하지 않는다.
+Codex 완료 후 ChatGPT가 FIX-003를 독립 검증해 PASS하면:
 
-ChatGPT 검증 전에는 schema-safe한 방식으로 Dice를 HOLD/BLOCKED로 유지하고 effective gap 1개를 보존한다. Codex는 성공 시 result comment에서만 `STATIC_VERIFIED_PENDING_CHATGPT_VERIFICATION`을 주장한다.
+```text
+CHATGPT_BROAD_CURRENT_HEAD_STATIC_REVALIDATION
+```
+
+을 수행한다.
+
+그 전체 Static Gate가 PASS하면 즉시 Runtime/Playtest lane으로 진입한다.
+
+```text
+Exploration · Context Input Studio Retest
+→ Role · Recovery Runtime Evidence
+→ Accessibility / UI·UX Human Playtest
+→ DM · Player · Observer multi-client evidence
+→ Grand Persistence Runtime
+→ Performance · Soak
+```
+
+즉 현재 기준으로 **이 FIX-003 + broad current-head Static Gate가 플레이테스트 전 마지막 두 Gate**다.
 
 ## 범위 밖
 
 - Official Sheet 재설계
 - Core Rules Reader 변경
-- Persistence
+- Persistence 구현
 - ADR-0092 Production
 - 3D Dice physics
 - Studio/MCP/Human execution
@@ -105,10 +114,10 @@ ChatGPT 검증 전에는 schema-safe한 방식으로 Dice를 HOLD/BLOCKED로 유
 
 ## 결과 전달
 
-PR #2 top-level Conversation에 다음 marker를 사용한다.
+PR #2 top-level Conversation에:
 
 ```text
-<!-- RVTT_CODEX_ADR0091_DICE_SLOT_REVEAL_NOTICE_FIX_002_RESULT -->
+<!-- RVTT_CODEX_ADR0091_DICE_SLOT_REVEAL_NOTICE_FIX_003_RESULT -->
 ```
 
-세부 필수 결과 필드는 command 파일을 따른다. Codex는 `FINAL_PASS`, `PHASE_10_PASS`, `STUDIO_PASS`, `HUMAN_PASS`를 쓰지 않는다.
+Codex는 `FINAL_PASS`, `PHASE_10_PASS`, `STUDIO_PASS`, `HUMAN_PASS`를 쓰지 않는다.
