@@ -60,20 +60,20 @@ ChatGPT Direct GitHub Implementation
 |---|---|---|
 | ADR/설계 및 Studio Preflight 문서 검수 | `PASS` | 마지막 Codex Delta 결과 `NO_SUPPORTED_FINDINGS` |
 | 마지막 별도 Implementation Static Gate | `PASS` | 역사적 검증 대상 `ef99a0740711b4f00fac0d5c8d0599f238ea48e9` |
-| Full UI·UX Source·Acceptance 정합화 | `PARTIAL` | Dice presentation repair 로컬 구현 완료, ChatGPT 독립 검증 전 Matrix Gap 1개 보존 |
+| Full UI·UX Source·Acceptance 정합화 | `CANDIDATE_PASS` | ADR-0091 Source/Static final-contract Gap 0, current-head Actions 대기 |
 | ADR-0091 Asset Registry foundation | `STATIC_VERIFIED` | Source·Server·Client-safe 경계, validation·negative disclosure focused regression |
 | ADR-0091 Rules Profile + Release Leak Gate | `STATIC_VERIFIED` | Builtin package single authority·private readiness·explicit fallback·actual filesystem staging·CI fail-closed regression |
 | ADR-0091 Core Rules Reader | `STATIC_VERIFIED` | private in-root/README/fragment/duplicate stable link·missing/out-of-root raw-path nondisclosure·reciprocal backlink·deterministic import + lazy/viewer filtering regression |
-| ADR-0091 Official 2024 Character Sheet | `STATIC_VERIFIED_PENDING_CHATGPT_VERIFICATION` | server-resolved roll semantics·active Content definition hydration·canonical attack parity·all-row equipment/details/send·structured slots·out-of-order receipt safety focused validation |
-| ADR-0091 Dice Slot Reveal Notice | `BLOCKED_PENDING_CHATGPT_VERIFICATION` | 실제 slot/tween/critical/reduced-motion/dual connector + server challenge mode repair 구현, 독립 검증 전 HOLD |
+| ADR-0091 Official 2024 Character Sheet | `STATIC_VERIFIED` | server-resolved roll semantics·active Content definition hydration·canonical attack parity·all-row equipment/details/send·structured slots·out-of-order receipt safety focused validation |
+| ADR-0091 Dice Slot Reveal Notice | `STATIC_VERIFIED` | top-to-bottom strip·two-layer reduced crossfade·server authority·nondisclosure·queue·critical presentation focused validation |
 | Shared Shell·Preference Foundation | `PASS` | `RVTT-PR2-UI-FOUNDATION-IMPLEMENTATION-002` 구현·로컬 정적 검증 완료 |
 | Input·Context Action 정합화 | `PASS` | `RVTT-PR2-INPUT-CONTEXT-IMPLEMENTATION-001` 구현·로컬 정적 검증 완료 |
 | Exploration·Encounter HUD | `PASS` | `RVTT-PR2-EXPLORATION-ENCOUNTER-HUD-IMPLEMENTATION-001` 구현·로컬 정적 검증 완료 |
 | Inventory·Journal·Settings | `PASS` | `RVTT-PR2-INVENTORY-JOURNAL-SETTINGS-IMPLEMENTATION-001` Source·Static 완료 |
 | Entry·Role·Recovery | `PASS` | `RVTT-PR2-ENTRY-ROLE-RECOVERY-IMPLEMENTATION-001` Source·Static 완료 |
 | DM Live Workspace | `PASS` | `RVTT-PR2-DM-LIVE-WORKSPACE-IMPLEMENTATION-001` Source·Static 완료 |
-| Full UI·UX Acceptance 확장 | `HOLD` | 49개 항목 등록, 보수적 final-contract Gap 1개, Dice 독립 검증 필요 |
-| 현재 사용자 Studio Human Retest | `BLOCKED` | Dice 독립 검증 + 새 current-HEAD 전체 Static Gate 재검증이 먼저 |
+| Full UI·UX Acceptance 확장 | `CANDIDATE_PASS` | 49개 항목, ADR-0091 Source/Static final-contract Gap 0, current-head Actions 대기 |
+| 현재 사용자 Studio Human Retest | `BLOCKED` | broad result HEAD Actions + ChatGPT 최종 확인이 먼저 |
 | Codex Studio MCP Smoke | `NOT_DEFAULT` | 현재 운영에서는 사용자 수동 Runtime으로 대체 |
 | 일반 Runtime 실행 그룹 | `0 / 3 PASS` | G1도 아직 실행 가능 상태가 아님 |
 | Persistence 실행 그룹 | `0 / 7 PASS` | 전용 Milestone까지 `DEFERRED` |
@@ -111,11 +111,11 @@ phase9ReconciliationLocalStaticValidation: PASS · recovery/control/terminal-fee
 phase9ControlRevisionFix: PASS · RVTT-PR2-PHASE9-CONTROL-REVISION-FIX-001
 phase9ControlRevisionTargetShaAtStart: 068b6f35a5f4db2e527ad64ee30e6d9310b47a13
 phase9ControlRevisionLocalStaticValidation: PASS · same/base-revision guard + cases A-D + previous reconciliation regressions + validators + format + lint + 15 Rojo builds + default/test/multi-client sourcemaps + production/test Luau analysis
-newCurrentHeadStaticGate: REQUIRED_BEFORE_STUDIO
+newCurrentHeadStaticGate: CANDIDATE_PASS_PENDING_CURRENT_HEAD_ACTIONS
 studioManualRuntimeCurrentContract: NOT_EXECUTED
 humanPlaytestCurrentContract: NOT_EXECUTED
 phase10AcceptanceTargetShaAtStart: e20853c3bc1e36fb78a1888809e13a8c8577ebb0
-phase10AcceptanceRegistration: PARTIAL · 49 items · 12 batches · 1 pending-verification final-contract gap
+phase10AcceptanceRegistration: SOURCE_STATIC_CANDIDATE_PASS · 49 items · 12 batches · 0 final-contract gaps
 phase10AssetRegistryCommand: RVTT-PR2-ADR0091-ASSET-REGISTRY-IMPLEMENTATION-001
 phase10AssetRegistryTargetShaAtStart: 4321d104a597e530bf57748874ce42b13c42c1c4
 phase10AssetRegistryStaticValidation: PASS · empty production registry + source/server/client-safe boundary + 11 focused fixtures
@@ -134,7 +134,7 @@ phase10CoreRulesReaderRuntime: NOT_EXECUTED
 phase10OfficialCharacterSheetCommand: RVTT-PR2-ADR0091-OFFICIAL-2024-CHARACTER-SHEET-001
 phase10OfficialCharacterSheetTargetShaAtStart: 67386abeba817faaea3c0031f6fc57735a977016
 phase10OfficialCharacterSheetLocalStaticValidation: PASS · authoritative projection/viewmodel/layout/command/focused validator + Rojo builds/sourcemaps + Luau analysis; Studio/Human NOT_EXECUTED
-phase10OfficialCharacterSheetState: IMPLEMENTED_PENDING_CHATGPT_VERIFICATION
+phase10OfficialCharacterSheetState: FINAL_STATIC_PASS
 phase10OfficialCharacterSheetAuthorityRepairCommand: RVTT-PR2-ADR0091-OFFICIAL-2024-CHARACTER-SHEET-FIX-002
 phase10OfficialCharacterSheetAuthorityRepairTargetShaAtStart: 6ee5cc953fdfe3015f18edb9a5ee5dd2318cbbe5
 phase10OfficialCharacterSheetAuthorityRepairLocalStaticValidation: PASS · server-owned Content character/item definition hydration + forged roll semantics/domain negatives + canonical ActorProfile attacks + exact header/left/right information structure + all equipment rows/popover/details/authorized send targets + structured slots + out-of-order receipt regression + strengthened validator + 15 Rojo builds + 3 sourcemaps + production/tests Luau analysis
@@ -146,18 +146,22 @@ phase10OfficialCharacterSheetEligibilityRepairStudioHuman: NOT_EXECUTED
 phase10DiceSlotRevealNoticeCommand: RVTT-PR2-ADR0091-DICE-SLOT-REVEAL-NOTICE-001
 phase10DiceSlotRevealNoticeTargetShaAtStart: 276ceb267fb01cd5adfd1e0c19ebf51bbba7ec0e
 phase10DiceSlotRevealNoticeLocalStaticValidation: PASS · server projection authority + exact reveal state/timing + advantage/disadvantage appliedIndex + semantic critical presentation + reduced motion + FIFO/stack/dedupe/stale/reconnect + nondisclosure + focused/full validators + public release leak gate + private synthetic pipeline + 15 Rojo builds + 3 sourcemaps + production/tests Luau analysis; Selene delegated to current-head Actions
-phase10DiceSlotRevealNoticeState: STATIC_VERIFIED_PENDING_CHATGPT_VERIFICATION
+phase10DiceSlotRevealNoticeState: FINAL_STATIC_PASS
 phase10DiceSlotRevealNoticeStudioHuman: NOT_EXECUTED
 phase10DiceSlotRevealNoticePresentationRepairCommand: RVTT-PR2-ADR0091-DICE-SLOT-REVEAL-NOTICE-FIX-002
 phase10DiceSlotRevealNoticePresentationRepairStartHead: 4738b890b56cca18922714a5604f7fd9e787a95b
 phase10DiceSlotRevealNoticePresentationRepairLocalValidation: PASS · actual TweenService slot strip/formula expansion/Natural 1+20/reduced motion/applied connector + production challenge advantage/disadvantage + component-focused regression + hardened negative validator + public release leak gate + private synthetic pipeline + changed-file StyLua + 15 Rojo builds + 3 sourcemaps + production/tests Luau analysis; Selene delegated to current-head Actions
-phase10DiceSlotRevealNoticeMatrixState: BLOCKED · pending ChatGPT independent verification
+phase10DiceSlotRevealNoticeDirectionRepairCommand: RVTT-PR2-ADR0091-DICE-SLOT-REVEAL-NOTICE-FIX-003
+phase10DiceSlotRevealNoticeDirectionRepairResultHead: 936c27ed3bfbb123fbb62a2ee16e89a0f5cbe3ce
+phase10DiceSlotRevealNoticeMatrixState: STATIC_VERIFIED · STATIC PASS
+phase10BroadStaticGateCommand: RVTT-PR2-ADR0091-BROAD-STATIC-GATE-RELEASE-001
+phase10BroadStaticGateState: CANDIDATE_PASS_PENDING_CURRENT_HEAD_ACTIONS
 phase10StudioRuntime: NOT_EXECUTED
 phase10HumanEvidence: NOT_EXECUTED
-phase10Next: CHATGPT_DICE_PRESENTATION_VERIFICATION_THEN_BROAD_CURRENT_HEAD_STATIC_REVALIDATION
+phase10Next: CHATGPT_BROAD_RESULT_FINAL_CONFIRMATION_THEN_EXPLORATION_CONTEXT_INPUT_STUDIO_RETEST
 ```
 
-`ef99a07...` Static PASS는 역사적 증거로 유지한다. Dice presentation repair는 구현됐지만 ChatGPT 독립 검증 전 Matrix는 `BLOCKED`와 Gap 1개를 보존한다. 검증 성공 뒤에도 Studio Human Retest 전에는 **별도의 새 current-HEAD 전체 Static Gate를 다시 통과해야 한다.** focused Source/Static 성공은 전체 제품 Runtime PASS가 아니다.
+`ef99a07...` Static PASS는 역사적 증거로 유지한다. ADR-0091 Source/Static final-contract gap은 0이며 broad gate는 새 result HEAD Actions 전까지 candidate 상태다. Studio Human Retest는 current-head Actions와 ChatGPT broad result 최종 확인 뒤에만 시작한다. focused Source/Static 성공은 전체 제품 Runtime PASS가 아니다.
 
 ---
 
@@ -173,8 +177,8 @@ Shared Shell·Preference Foundation
 → Entry·Role·Recovery
 → DM Live Workspace
 → Acceptance 확장
-→ Dice presentation ChatGPT 독립 검증
-→ 새 current-HEAD Static Gate
+→ ADR-0091 broad current-HEAD Static Gate + Actions
+→ ChatGPT broad result 최종 확인
 → Exploration·Context Input Studio Human Retest
 → UI·Accessibility Evidence
 → DM·Player·Observer Test
@@ -183,7 +187,7 @@ Shared Shell·Preference Foundation
 → Slice 16 Release Campaign
 ```
 
-따라서 **현재는 사용자에게 Studio 실행을 요청하지 않는다.** `Studio Human Retest`는 새 Head의 전체 Static Gate가 PASS했을 때만 `PENDING/READY`로 전환한다.
+따라서 **현재는 사용자에게 Studio 실행을 요청하지 않는다.** `Studio Human Retest`는 broad result HEAD Actions와 ChatGPT 최종 확인 뒤에만 `PENDING/READY`로 전환한다.
 
 ---
 
@@ -227,7 +231,7 @@ Persistence 7개는 `GRAND-ACCEPTANCE-CAMPAIGN.md`의 Persistence 전용 Milesto
 
 ## 6. 다음 사용자 Human Retest 체크리스트 — 준비 중
 
-아래 체크리스트는 `CURRENT-WORK-ORDER.md`의 Acceptance 재작성 범위다. **현재 상태는 `BLOCKED / NOT READY`이며 아직 실행하지 않는다.** 남은 ADR-0091 Source correction과 새 current-HEAD Static Gate가 끝나면 G1 Runtime에 포함해 한 번의 Batch로 확인한다.
+아래 체크리스트는 `CURRENT-WORK-ORDER.md`의 Acceptance 재작성 범위다. **현재 상태는 `BLOCKED / NOT READY`이며 아직 실행하지 않는다.** broad result HEAD Actions와 ChatGPT 최종 확인이 끝나면 G1 Runtime에 포함해 한 번의 Batch로 확인한다.
 
 ### Input·Direct Play — 11개
 
@@ -265,8 +269,8 @@ result: NOT_EXECUTED
 passedChecks: 0
 failedChecks: 0
 blockedChecks: 19
-blocker: Dice Notice independent verification + new current-HEAD Static Gate required
-next: ChatGPT Dice presentation verification
+blocker: Broad current-HEAD Static Gate Actions + ChatGPT final confirmation required
+next: ChatGPT broad result final confirmation
 ```
 
 ### Historical Studio Evidence — 현재 계약 PASS로 사용 금지

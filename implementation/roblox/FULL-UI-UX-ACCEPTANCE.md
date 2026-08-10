@@ -1,6 +1,6 @@
 # RVTT Full UI·UX Acceptance Contract
 
-- 상태: `PHASE_10_PARTIAL_HOLD`
+- 상태: `PHASE_10_SOURCE_STATIC_CANDIDATE_PASS`
 - Matrix: [`full-ui-ux-acceptance-matrix.json`](full-ui-ux-acceptance-matrix.json)
 - Validator: [`tooling/validate_full_ui_ux_acceptance.py`](tooling/validate_full_ui_ux_acceptance.py)
 - Matrix authority snapshot: `82dc4a1071a7147b0f2066f6246eff34259161ee`
@@ -9,25 +9,25 @@
 
 ## 판정
 
-Phase 10은 49개 stable Acceptance 항목, 12개 실행 Batch 연결, 증거 상태 불변식과 drift validator를 등록했다. 현재 `STATIC_VERIFIED` 항목은 45개이며, 이는 Source·정적 계약만 확인했다는 뜻이다. Studio 또는 Human PASS가 아니다.
+Phase 10은 49개 stable Acceptance 항목, 12개 실행 Batch 연결, 증거 상태 불변식과 drift validator를 등록했다. 현재 `STATIC_VERIFIED` 항목은 46개이며, 이는 Source·정적 계약만 확인했다는 뜻이다. Studio 또는 Human PASS가 아니다.
 
-ADR-0091 Final Contract 중 Developer Asset Registry, Rules Profile/Release Leak Gate, Core Rules Reader, Official 2024 Interactive Character Sheet가 Production Source와 focused regression으로 `STATIC_VERIFIED`다. Dice Slot Reveal Notice 1개가 남아 있으므로 Phase 10은 `DONE`이 아니라 `PARTIAL / HOLD`다. 다음 focused correction은 Dice Slot Reveal Notice다.
+ADR-0091 Final Contract의 Developer Asset Registry, Rules Profile/Release Leak Gate, Core Rules Reader, Official 2024 Interactive Character Sheet, Dice Slot Reveal Notice가 Production Source와 focused regression으로 모두 `STATIC_VERIFIED`다. Source/Static `finalContractGaps`는 0이며, broad gate는 새 result HEAD Actions 전까지 `CANDIDATE_PASS_PENDING_CURRENT_HEAD_ACTIONS`다.
 
 ## 증거 분류
 
 | Evidence class | 연결 항목 수 | 현재 판정 |
 |---|---:|---|
-| `STATIC` | 46 | 45개 `STATIC_VERIFIED`, 1개 final gap의 정적 등록만 확인 |
-| `STUDIO_SINGLE_CLIENT` | 21 | `NOT_EXECUTED` · G1 |
+| `STATIC` | 46 | 46개 `STATIC_VERIFIED` · Source/Static evidence |
+| `STUDIO_SINGLE_CLIENT` | 22 | `NOT_EXECUTED` · G1 |
 | `STUDIO_MULTI_CLIENT` | 17 | `NOT_EXECUTED` · G2 |
 | `REAL_TRANSPORT` | 3 | `NOT_EXECUTED` · G3 |
-| `HUMAN_UI_UX` | 4 | `NOT_EXECUTED` · Human evidence |
+| `HUMAN_UI_UX` | 5 | `NOT_EXECUTED` · Human evidence |
 | `HUMAN_ACCESSIBILITY` | 4 | `NOT_EXECUTED` · Human evidence |
 | `PERSISTENCE_DEFERRED` | 1 | `DEFERRED` · P1–P7 |
 | `PERFORMANCE_DEFERRED` | 1 | `DEFERRED` |
-| `CONTENT_DEFERRED` | 2 | `BLOCKED` final-contract gaps |
+| `CONTENT_DEFERRED` | 0 | 현재 Matrix 연결 없음 |
 
-Matrix item 상태 합계는 `STATIC_VERIFIED=45`, `NOT_EXECUTED=1`, `DEFERRED=2`, `BLOCKED=1`다.
+Matrix item 상태 합계는 `STATIC_VERIFIED=46`, `NOT_EXECUTED=1`, `DEFERRED=2`, `BLOCKED=0`이다.
 
 ## Runtime Batch 연결
 
@@ -127,11 +127,13 @@ BuiltinPackIndex pinned revision + integrated source-tree digest + expected coun
 
 `CharacterSheetProjection.lua`는 owner/authorized DM만 전체 Character·Inventory·Rules authoritative state를 같은 revision으로 투영하고 Observer와 unrelated player에는 식별자·private field를 공개하지 않는다. Sheet roll payload는 `actorId + rollKind + sourceId`만 전달하고 서버가 ability/proficiency/mode/damage/eligibility를 active Content pack으로 수화된 Character state와 canonical `ActorProfileResolver` attack catalog에서 해석한다. Item capability도 active server-owned definition에서 `inventory.create_item` 시 snapshot된다. `OfficialCharacterSheet.lua`와 `CharacterSheetLayout.lua`는 8.5:11 Page 1/2, 정확한 Header/Left/Right 정보 구조, Wide/Reference spread, Compact page tab을 유지하며 모든 Equipment row, local details, authorized target send와 structured spell slots를 제공한다. focused real-command regression과 validator가 forged semantics, unauthorized actor, invalid attack, HP>0 death save, revision/permission/epoch 및 out-of-order terminal receipt 안전성을 정적으로 확인한다. Studio/Human 실행은 하지 않았다.
 
+### Dice Slot Reveal Notice
+
+`DiceNoticeProjection.lua`, `DiceNoticeViewModel.lua`, `DiceSlotRevealNotice.lua`는 server-authored 결과·audience와 deterministic queue를 유지한다. Full motion은 top-to-bottom strip Position tween을 사용하고 Reduced Motion은 `CrossfadeA/B` outgoing/incoming transparency tween을 겹쳐 실행한다. focused component regression과 validator negative self-test는 방향 반전, single-label fade-in-only, 조기 natural 공개를 거부한다. Studio/Human 실행은 하지 않았다.
+
 ## 남은 ADR-0091 Final Contract Gap
 
-1. Dice Slot Reveal Notice state machine
-
-이 항목은 문서 존재나 matrix 등록으로 PASS 처리하지 않는다. Matrix의 실제 `BLOCKED` subset인 `finalContractGaps`가 후속 focused implementation correction의 입력이다.
+없음. Matrix의 실제 `BLOCKED` final item subset과 `finalContractGaps`는 모두 빈 집합이다. 이는 Source/Static 0-gap 판정이며 Runtime/Human PASS가 아니다.
 
 ## Validator 불변식
 
@@ -150,7 +152,8 @@ Validator는 최소 다음을 거부한다.
 - Core Rules Reader lazy-load/nondisclosure evidence 없는 해제
 - private importer/overlay/owner-access positive path 누락 또는 base-project bypass
 - Session role→Reader permission marker wiring 누락
-- 남은 ADR-0091 Dice Notice gap 누락 또는 거짓 해제
+- Dice Notice `STATIC_VERIFIED/PASS` 상태 또는 required production/test/validator evidence의 회귀
+- 빈 `finalContractGaps`와 실제 `BLOCKED` final item subset의 불일치
 - Player persistent Minimap·별도 Map·Objective Tracker 재등록과 Source 재도입
 
 Validator 자체는 위 실패 유형의 negative fixture를 매 실행마다 확인한다.

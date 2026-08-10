@@ -85,6 +85,7 @@ REQUIRED_FINAL_IDS = {
 RESOLVED_FINAL_IDS = {
     "final.asset-registry-separation",
     "final.official-2024-sheet-interactions",
+    "final.dice-slot-reveal-notice",
     "final.core-rules-reader-filtering",
     "final.rules-profile-release-leak-gate",
 }
@@ -332,8 +333,10 @@ def validate_matrix_data(matrix: dict, manifest: dict) -> list[str]:
 
     dice_item = final_items.get("final.dice-slot-reveal-notice")
     if dice_item is not None:
-        if dice_item.get("currentState") != "BLOCKED":
-            errors.append("matrix: Dice Slot Reveal Notice must remain BLOCKED pending ChatGPT verification")
+        if dice_item.get("currentState") != "STATIC_VERIFIED":
+            errors.append("matrix: Dice Slot Reveal Notice must be STATIC_VERIFIED after ChatGPT verification")
+        if dice_item.get("evidenceStatus", {}).get("STATIC") != "PASS":
+            errors.append("matrix: Dice Slot Reveal Notice STATIC evidence must be PASS")
         required_dice_evidence = {
             "implementation/roblox/src/ServerScriptService/RVTT/Server/Projection/DiceNoticeProjection.lua",
             "implementation/roblox/src/ReplicatedStorage/RVTT/Shared/UI/DiceNoticeViewModel.lua",
@@ -438,6 +441,33 @@ def run_self_tests(matrix: dict, manifest: dict) -> list[str]:
     dice_item = next(item for item in missing_dice_evidence["acceptanceItems"] if item["id"] == "final.dice-slot-reveal-notice")
     dice_item["automatedRefs"] = []
     fixtures.append((missing_dice_evidence, "Dice Slot Reveal Notice repair evidence is incomplete"))
+
+    dice_blocked = deepcopy(matrix)
+    dice_item = next(item for item in dice_blocked["acceptanceItems"] if item["id"] == "final.dice-slot-reveal-notice")
+    dice_item["currentState"] = "BLOCKED"
+    dice_item["evidenceStatus"]["STATIC"] = "BLOCKED"
+    dice_item["blockerReason"] = "negative fixture"
+    fixtures.append((dice_blocked, "Dice Slot Reveal Notice must be STATIC_VERIFIED"))
+
+    dice_static_not_pass = deepcopy(matrix)
+    dice_item = next(
+        item for item in dice_static_not_pass["acceptanceItems"] if item["id"] == "final.dice-slot-reveal-notice"
+    )
+    dice_item["evidenceStatus"]["STATIC"] = "NOT_EXECUTED"
+    fixtures.append((dice_static_not_pass, "Dice Slot Reveal Notice STATIC evidence must be PASS"))
+
+    stale_dice_gap = deepcopy(matrix)
+    stale_dice_gap["finalContractGaps"] = ["final.dice-slot-reveal-notice"]
+    fixtures.append((stale_dice_gap, "finalContractGaps must equal the actual BLOCKED final-contract subset"))
+
+    hidden_blocked_final = deepcopy(matrix)
+    asset_item = next(
+        item for item in hidden_blocked_final["acceptanceItems"] if item["id"] == "final.asset-registry-separation"
+    )
+    asset_item["currentState"] = "BLOCKED"
+    asset_item["evidenceStatus"]["STATIC"] = "BLOCKED"
+    asset_item["blockerReason"] = "negative fixture"
+    fixtures.append((hidden_blocked_final, "finalContractGaps must equal the actual BLOCKED final-contract subset"))
 
     for fixture, expected in fixtures:
         fixture_errors = validate_matrix_data(fixture, manifest)
