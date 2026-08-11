@@ -50,8 +50,24 @@ G0_SHARED_CONTRACTS
 → Rojo 재현 확인
 → Focused Test
 → 현재 문서 충돌 재검색
+→ Checkpoint Promotion Commit
 → ACCEPTED
 → 다음 Checkpoint
+```
+
+Promotion Commit 규칙:
+
+```text
+checkpoint(<CHECKPOINT_ID>): accept <short behavior summary>
+```
+
+필수 Trailer:
+
+```text
+RVTT-Checkpoint: <CHECKPOINT_ID>
+RVTT-User-Acceptance: CONFIRMED
+RVTT-Authority-Reconciliation: COMPLETE
+RVTT-Unresolved-Conflicts: NONE
 ```
 
 - 반복 수정 중에는 상위 문서를 매번 고치지 않는다.
@@ -59,7 +75,9 @@ G0_SHARED_CONTRACTS
 - 과거 Audit·Acceptance·Review·Codex Command는 Historical Evidence이므로 새 결정에 맞춰 다시 쓰지 않는다.
 - 화면/동작 수용을 내부 Architecture 변경의 승인으로 확대 해석하지 않는다.
 - Reconciliation 중 미승인 Authority·Architecture 변경이 필요하면 사용자에게 먼저 제안한다.
-- `UNRESOLVED CONFLICTS`가 하나라도 남으면 Checkpoint를 `ACCEPTED`로 바꾸지 않는다.
+- `UNRESOLVED CONFLICTS`가 하나라도 남으면 Promotion Commit 또는 `ACCEPTED` 처리를 하지 않는다.
+- Promotion Commit이 생성되기 전에는 다음 Checkpoint를 `IMPLEMENTING`으로 바꾸지 않는다.
+- Promotion Commit SHA를 해당 Checkpoint의 복원 기준점으로 보고한다.
 
 ## 안전 규칙
 
@@ -96,6 +114,7 @@ Prototype이라도 다음을 우회하지 않는다.
 - G0~G5 순서 건너뛰기
 - Selection 수용 전 Camera/Move 선행 구현
 - 사용자 수용 직후 Authority Reconciliation 없이 다음 Checkpoint 진행
+- Promotion Commit 없이 다음 Checkpoint 진행
 - 과거 Codex Command 재개
 - Acceptance/Grand Campaign을 개발 시작 Gate로 사용
 - ADR-0092 Phase 선행 착수
