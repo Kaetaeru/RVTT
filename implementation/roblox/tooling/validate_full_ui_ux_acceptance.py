@@ -15,26 +15,13 @@ from validate_official_character_sheet import run_self_tests as run_official_she
 from validate_official_character_sheet import validate as validate_official_character_sheet
 from validate_rules_profile_release_gate import run_self_tests as run_rules_profile_self_tests
 from validate_rules_profile_release_gate import validate as validate_rules_profile_gate
+import validate_studio_runtime_contract as studio_runtime_contract
 
 
 ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = ROOT.parents[1]
 MATRIX_PATH = ROOT / "full-ui-ux-acceptance-matrix.json"
 MANIFEST_PATH = ROOT / "grand-acceptance-manifest.json"
-WORLD_ACCEPTANCE_PATH = ROOT / "tests/WorldTokenAcceptance/WorldTokenAcceptance.client.lua"
-CONTEXT_ACCEPTANCE_PATH = ROOT / "tests/ContextInputAcceptance/ContextInputAcceptance.client.lua"
-G1_TEST_CONSOLE_PATH = ROOT / "tests/AcceptanceShared/G1TestConsole.lua"
-WORLD_RUNTIME_PATH = ROOT / "src/StarterPlayer/StarterPlayerScripts/RVTT/Client/World/WorldTokenRuntime.lua"
-CONTEXT_RESOLVER_PATH = ROOT / "src/StarterPlayer/StarterPlayerScripts/RVTT/Client/World/WorldContextActionResolver.lua"
-INPUT_CONTROLLER_PATH = ROOT / "src/StarterPlayer/StarterPlayerScripts/RVTT/Client/World/WorldTokenInputController.lua"
-WORLD_ACTION_MENU_PATH = ROOT / "src/StarterPlayer/StarterPlayerScripts/RVTT/Client/World/WorldActionMenu.lua"
-WORLD_ACTION_MENU_POLICY_PATH = ROOT / "src/StarterPlayer/StarterPlayerScripts/RVTT/Client/World/WorldActionMenuPolicy.lua"
-UI_RECOVERY_COORDINATOR_PATH = ROOT / "src/StarterPlayer/StarterPlayerScripts/RVTT/Client/UIRecoveryCoordinator.lua"
-ENTRY_RECOVERY_SPEC_PATH = ROOT / "tests/Unit/EntryRecovery.spec.lua"
-INPUT_CONTEXT_SPEC_PATH = ROOT / "tests/Unit/InputContext.spec.lua"
-SLICE01_ACCEPTANCE_PROJECT_PATH = ROOT / "slice01-acceptance.project.json"
-DEFAULT_PROJECT_PATH = ROOT / "default.project.json"
-EXECUTION_RULES_PATH = ROOT / "EXECUTION-TEST-RULES.md"
 
 EVIDENCE_CLASSES = {
     "STATIC",
@@ -224,7 +211,7 @@ def validate_matrix_data(matrix: dict, manifest: dict) -> list[str]:
     }
     for batch in batches:
         if not isinstance(batch, dict):
-            errors.append("matrix: runtime batch entry must be an object")
+            errors.append("matrix: runtimeBatches entry must be an object")
             continue
         batch_id = batch.get("id", "<unknown>")
         if batch.get("evidenceClass") not in EVIDENCE_CLASSES:
@@ -254,7 +241,18 @@ def validate_matrix_data(matrix: dict, manifest: dict) -> list[str]:
             errors.append("matrix: acceptance entry must be an object")
             continue
         item_id = item.get("id", "<unknown>")
-        for field in ("area", "requirement", "authorityRefs", "roles", "surfaces", "evidenceClasses", "automatedRefs", "runtimeBatchIds", "currentState", "evidenceStatus"):
+        for field in (
+            "area",
+            "requirement",
+            "authorityRefs",
+            "roles",
+            "surfaces",
+            "evidenceClasses",
+            "automatedRefs",
+            "runtimeBatchIds",
+            "currentState",
+            "evidenceStatus",
+        ):
             if field not in item:
                 errors.append(f"{item_id}: missing {field}")
         classes = item.get("evidenceClasses", [])
@@ -428,348 +426,6 @@ def validate_forbidden_player_sources() -> list[str]:
     return errors
 
 
-def validate_studio_retest_harness_texts(
-    world_acceptance: str,
-    context_acceptance: str,
-    world_runtime: str,
-    execution_rules: str,
-    context_resolver: str,
-    input_controller: str,
-    shared_console: str,
-) -> list[str]:
-    errors: list[str] = []
-    visible_acceptance = world_acceptance + "\n" + shared_console
-
-    world_markers = {
-        'id = "camera-orbit", label = "3D Camera Middle-button Orbit"': "middle-button Orbit summary",
-        '["camera-orbit"] = "middle-click drag to orbit"': "middle-button Orbit requirement",
-        'action == "orbit" and source == "mouse-middle-screen-delta"': "exact middle-button Orbit signal",
-        'action == "pan" and source == "keyboard-wasd"': "separate WASD Pan signal",
-        "applied == true": "applied camera evidence",
-        "changed == true": "changed camera evidence",
-        "2 Camera: WASD Pan / Middle drag Orbit / Wheel Zoom / Frame": (
-            "unambiguous visible camera instruction"
-        ),
-    }
-    for marker, description in world_markers.items():
-        if marker not in visible_acceptance:
-            errors.append(f"studio retest harness: missing {description}")
-    if 'id = "camera-pan"' in world_acceptance or 'action == "pan" then "camera-pan"' in world_acceptance:
-        errors.append("studio retest harness: middle-button Camera Pan regression is forbidden")
-    if "Middle-button drag = Pan" in visible_acceptance or "중클릭 드래그=Pan" in visible_acceptance:
-        errors.append("studio retest harness: visible middle-button Pan instruction is forbidden")
-
-    arm_markers = {
-        '{ id = "ArmTokenPick", label = "Arm Token Pick"': "explicit Arm Token Pick control",
-        "1 Arm Token Pick → left-click Hero": (
-            "manual token-pick instruction"
-        ),
-        "tokenPickArmed = true": "manual arm state",
-        "worldTokens.SelectionChanged:Connect": "arm invalidation observer",
-        "invalidateTokenPickArm": "explicit re-arm invalidation",
-        'summary:pending("token-pick"': "token-pick pending/re-arm state",
-        'summary:pending("selection-highlight"': "selection-highlight pending/re-arm state",
-    }
-    for marker, description in arm_markers.items():
-        if marker not in visible_acceptance:
-            errors.append(f"studio retest harness: missing {description}")
-
-    arm_start = world_acceptance.find('testConsole:registerAction("ArmTokenPick", function()')
-    arm_end = world_acceptance.find('testConsole:registerAction("Frame", function()', arm_start)
-    arm_handler = world_acceptance[arm_start:arm_end] if arm_start >= 0 and arm_end >= 0 else ""
-    if not arm_handler:
-        errors.append("studio retest harness: token-pick selection clear requires an explicit user arm handler")
-    else:
-        if "worldTokens.Renderer:getTokenModel(heroActorId)" not in arm_handler:
-            errors.append("studio retest harness: Arm Token Pick must verify the Hero token exists")
-        if "worldTokens.Renderer:setSelected(nil)" not in arm_handler:
-            errors.append("studio retest harness: Arm Token Pick must clear only local Renderer selection")
-        if arm_handler.find("tokenPickArmed = true") > arm_handler.find("worldTokens.Renderer:setSelected(nil)"):
-            errors.append("studio retest harness: arm state must be explicit before local selection clear")
-        if re.search(r'pass\s*\(\s*"(?:token-pick|selection-highlight)"', arm_handler):
-            errors.append("studio retest harness: arm handler cannot directly PASS token-pick or Highlight")
-        for forbidden in ("PickResolved:Fire", ":_pick(", "submit("):
-            if forbidden in arm_handler:
-                errors.append(f"studio retest harness: arm handler cannot invoke {forbidden}")
-        if re.search(r"\b(?:selectedCharacter|ownerUserId|controllerUserId|role)\s*=(?!=)", arm_handler):
-            errors.append("studio retest harness: arm handler cannot mutate authority fields")
-        if re.search(r"client\.Replica(?:\.payload)?[^\n]*=(?!=)", arm_handler):
-            errors.append("studio retest harness: arm handler cannot mutate Replica state")
-
-    if world_acceptance.count("worldTokens.Renderer:setSelected(nil)") != 1 or (
-        arm_handler and "worldTokens.Renderer:setSelected(nil)" not in arm_handler
-    ):
-        errors.append("studio retest harness: local selection clear must exist only in the manual arm handler")
-
-    pick_start = world_acceptance.find("worldTokens.PickResolved:Connect(function(")
-    pick_end = world_acceptance.find("worldTokens.SelectionChanged:Connect(function(", pick_start)
-    pick_handler = world_acceptance[pick_start:pick_end] if pick_start >= 0 and pick_end >= 0 else ""
-    pick_markers = {
-        "realArmedPick": "armed real-pick guard",
-        'method == "ray"': "real ray-pick method guard",
-        'pass("token-pick"': "token-pick PASS from PickResolved",
-        "worldTokens.Renderer:isSelectedHighlighted(actorId)": "actual Highlight observation",
-        'pass("selection-highlight"': "selection-highlight PASS from PickResolved",
-    }
-    for marker, description in pick_markers.items():
-        if marker not in pick_handler:
-            errors.append(f"studio retest harness: missing {description}")
-    for pass_id in ("token-pick", "selection-highlight"):
-        matches = list(re.finditer(rf'pass\s*\(\s*"{pass_id}"', world_acceptance))
-        if len(matches) != 1 or not pick_handler or not (pick_start <= matches[0].start() < pick_end):
-            errors.append(f"studio retest harness: {pass_id} may PASS only from real PickResolved")
-
-    context_markers = {
-        'id = "esc-gameplay-noop"': "ESC gameplay no-op summary",
-        'id = "q-one-context-back"': "Q one-context Back summary",
-        'id = "right-click-camera-noop"': "right-click camera no-op summary",
-        "UserInputService.InputBegan": "user-input observer",
-        "input.KeyCode == Enum.KeyCode.Escape": "explicit ESC input evidence",
-        "input.KeyCode == Enum.KeyCode.Q": "explicit Q input evidence",
-        "worldTokens.ActionMenu:isOpen()": "production action-menu observable",
-        'close.reason == "context-cancel"': "production context-cancel signal",
-        'pass("esc-gameplay-noop"': "ESC no-op PASS evidence",
-        'pass("q-one-context-back"': "Q close PASS evidence",
-        "cameraInputResolutionCount == cameraCountBefore": "right-click camera no-op evidence",
-    }
-    for marker, description in context_markers.items():
-        if marker not in context_acceptance:
-            errors.append(f"studio retest harness: missing {description}")
-    if "→Esc→" in context_acceptance or "→Escape→" in context_acceptance:
-        errors.append("studio retest harness: stale Esc-close instruction is forbidden")
-    for forbidden in ('id = "setup-dummy"', 'id = "attack-menu"', 'id = "attack-default"'):
-        if forbidden in context_acceptance:
-            errors.append("studio retest harness: G1 single-client DM cannot require attack checks")
-    for forbidden in ("training-dummy", "npc.spawn", "combatButton", "Dummy"):
-        if forbidden in context_acceptance:
-            errors.append("studio retest harness: G1 cannot retain Dummy combat setup or instructions")
-
-    if "mouse-middle-orbit" in world_runtime:
-        errors.append("studio retest harness: fake middle-button Pan compatibility signal is forbidden")
-    if world_runtime.count("self.Input:ensureSemanticSelection()") < 2:
-        errors.append("studio retest harness: Production ensureSemanticSelection must remain at startup and Replica change")
-
-    resolver_markers = {
-        'if membershipRole(allDomains, playerId) == "dm" then\n\t\treturn true': "DM controls scene actors",
-        "type(targetActor) ~= \"table\" or controlsActor(allDomains, playerId, target.actorId)": (
-            "controlled target attack exclusion"
-        ),
-    }
-    for marker, description in resolver_markers.items():
-        if marker not in context_resolver:
-            errors.append(f"studio retest harness: Production authority drifted: {description}")
-
-    selection_marker = """if
-\t\ttarget.actorId ~= nil
-\t\tand target.actorId ~= selectedActorId
-\t\tand self.resolver:isControllable(target.actorId)
-\tthen
-\t\tself:_pick(target.actorId, \"ray\", target.instance)
-\t\treturn
-\tend"""
-    left_click_start = input_controller.find("function Controller:_leftClick()")
-    left_click_end = input_controller.find("function Controller:refreshPreview()", left_click_start)
-    left_click = input_controller[left_click_start:left_click_end]
-    if left_click_start < 0 or left_click_end < 0 or selection_marker not in left_click:
-        errors.append("studio retest harness: Production controllable-target selection precedence drifted")
-    elif left_click.index(selection_marker) > left_click.index("local actions = self:resolveActionsForTarget(target)"):
-        errors.append("studio retest harness: controllable-target selection must precede default action resolution")
-    if left_click.count("self:_pick(") != 2:
-        errors.append("studio retest harness: Production _leftClick pick reachability semantics drifted")
-
-    rules_markers = {
-        "`planning/rvtt-remake`": "general planning branch default",
-        "PR-bound Batch Acceptance 예외": "narrow PR-bound exception",
-        '$repository = "Kaetaeru/RVTT"': "exact repository",
-        "$pullRequest = 2": "exact Pull Request",
-        '$branch = "agent/survival-logistics-token-authoring"': "exact branch",
-        "git fetch origin $branch": "exact branch fetch",
-        "git switch $branch": "exact branch switch",
-        "git pull --ff-only origin $branch": "exact branch pull",
-        "git rev-parse --short=7 HEAD": "exact 7-character HEAD check",
-        "REQUESTED-NON-PERSISTENCE-ACCEPTANCE-PROJECT": "requested non-persistence project",
-        "branch나 project를 추론하지 않는다": "no-inference boundary",
-        "current-head Static Gate": "static-gate boundary",
-        "중클릭 Camera Orbit": "current batch middle-button Orbit instruction",
-    }
-    for marker, description in rules_markers.items():
-        if marker not in execution_rules:
-            errors.append(f"studio retest harness: missing execution-rule {description}")
-
-    return errors
-
-
-def validate_g1_usability_fix_texts(
-    world_acceptance: str,
-    context_acceptance: str,
-    shared_console: str,
-    action_menu: str,
-    action_menu_policy: str,
-    recovery_coordinator: str,
-    entry_recovery_spec: str,
-    input_context_spec: str,
-    slice_project: str,
-    default_project: str,
-) -> list[str]:
-    errors: list[str] = []
-
-    for old_name in ("RVTT_WorldInteraction_Batch", "RVTT_ContextInput_Acceptance"):
-        if old_name in world_acceptance or old_name in context_acceptance or old_name in shared_console:
-            errors.append("G1 usability fix: independent legacy acceptance ScreenGui returned")
-    if 'Instance.new("ScreenGui")' in world_acceptance or 'Instance.new("ScreenGui")' in context_acceptance:
-        errors.append("G1 usability fix: World and Context scripts must not create independent ScreenGuis")
-    if shared_console.count('Instance.new("ScreenGui")') != 1:
-        errors.append("G1 usability fix: exactly one shared G1 ScreenGui is required")
-
-    shared_markers = {
-        'gui.Name = "RVTT_G1_Test_Console"': "shared G1 Test Console singleton",
-        'panel.Name = "G1TestConsole"': "single floating console window",
-        'header.Name = "DragHeader"': "title/header drag handle",
-        "header.InputBegan:Connect": "mouse drag start",
-        "UserInputService.InputChanged:Connect": "mouse drag movement",
-        "Enum.UserInputType.MouseButton1": "left-mouse drag gesture",
-        "clampPosition": "viewport clamp",
-        'button.Selectable = false': "non-selectable acceptance buttons",
-        '"Combined progress  %d / %d"': "combined visible progress",
-        '"Evidence details (secondary)"': "secondary low-level evidence",
-        "0 Projection / Runtime Ready": "step 0 Projection readiness",
-        "1 Arm Token Pick → left-click Hero": "step 1 token pick",
-        "2 Camera: WASD Pan / Middle drag Orbit / Wheel Zoom / Frame": "step 2 camera",
-        "3 Surface: right-click → ESC no-op → Q close → left-click default move": "step 3 surface",
-        "4 Console: right-click → ESC no-op → Q close → left-click default interaction": "step 4 console",
-        "5 Final Summary": "step 5 final summary",
-    }
-    for marker, description in shared_markers.items():
-        if marker not in shared_console:
-            errors.append(f"G1 usability fix: missing {description}")
-    if "TextBox" in shared_console or "GuiService.SelectedObject" in shared_console:
-        errors.append("G1 usability fix: shared console cannot capture text or mutate SelectedObject")
-
-    for source, batch_name in (
-        (world_acceptance, "slice01-world-interaction"),
-        (context_acceptance, "contextual-pointer-actions"),
-    ):
-        if 'WaitForChild("AcceptanceShared"):WaitForChild("G1TestConsole")' not in source:
-            errors.append(f"G1 usability fix: {batch_name} does not use the shared console")
-        if "testConsole:registerBatch(BATCH_NAME, summary)" not in source:
-            errors.append(f"G1 usability fix: {batch_name} does not register combined progress")
-        if "summary:log(client.Replica.revision)" not in source:
-            errors.append(f"G1 usability fix: {batch_name} authoritative Output summary was removed")
-    for action_id in ("Prepare", "ArmTokenPick", "Frame"):
-        if f'testConsole:registerAction("{action_id}"' not in world_acceptance:
-            errors.append(f"G1 usability fix: missing shared World action {action_id}")
-    for action_id in ("Exploration", "FinalSummary"):
-        if f'testConsole:registerAction("{action_id}"' not in context_acceptance:
-            errors.append(f"G1 usability fix: missing shared Context action {action_id}")
-
-    if '"AcceptanceShared": {' not in slice_project or '"$path": "tests/AcceptanceShared"' not in slice_project:
-        errors.append("G1 usability fix: Slice 01 project does not mount acceptance-only shared UI")
-    if "AcceptanceShared" in default_project or "tests/AcceptanceShared" in default_project:
-        errors.append("G1 usability fix: production default project mounted acceptance-only UI")
-
-    menu_markers = {
-        "local WorldActionMenuPolicy = require(script.Parent.WorldActionMenuPolicy)": "local menu focus policy",
-        "button.Selectable = WorldActionMenuPolicy.actionButtonSelectable": "non-selectable action button",
-        "button.MouseEnter:Connect": "disabled-reason pointer hover",
-        "button.MouseLeave:Connect": "disabled-reason pointer leave",
-        "button.Activated:Connect": "pointer action activation",
-        "if not action.enabled then": "disabled action invocation guard",
-    }
-    for marker, description in menu_markers.items():
-        if marker not in action_menu:
-            errors.append(f"G1 usability fix: WorldActionMenu missing {description}")
-    if re.search(r"GuiService\.SelectedObject\s*=", action_menu):
-        errors.append("G1 usability fix: WorldActionMenu cannot assign GuiService.SelectedObject")
-    if "previousSelectedObject" in action_menu:
-        errors.append("G1 usability fix: obsolete WorldActionMenu selected-object restore returned")
-    if "AutoSelectGuiEnabled" in action_menu:
-        errors.append("G1 usability fix: global AutoSelectGuiEnabled mutation is forbidden")
-    policy_markers = {
-        "actionButtonSelectable = false": "PC pointer buttons non-selectable policy",
-        "mutatesSelectedObject = false": "selected-object preservation policy",
-    }
-    for marker, description in policy_markers.items():
-        if marker not in action_menu_policy:
-            errors.append(f"G1 usability fix: missing {description}")
-
-    changed_start = recovery_coordinator.find("replica.Changed:Connect(function()")
-    changed_end = recovery_coordinator.find("replica.RebuildStarted:Connect(function()", changed_start)
-    changed_handler = recovery_coordinator[changed_start:changed_end] if changed_start >= 0 and changed_end >= 0 else ""
-    recovery_markers = {
-        "self.state.state == ViewState.LOADING": "initial LOADING-only guard",
-        "replica.revision >= 0": "valid Replica revision guard",
-        "self:_set(ViewState.READY, nil, false)": "normal Projection READY transition",
-    }
-    for marker, description in recovery_markers.items():
-        if marker not in changed_handler:
-            errors.append(f"G1 usability fix: recovery coordinator missing {description}")
-    for forbidden in (
-        "ViewState.REBUILDING",
-        "ViewState.RECOVERY",
-        "ViewState.NETWORK_ERROR",
-        "ViewState.STALE",
-        "ViewState.CONFLICT",
-        "ViewState.FATAL",
-    ):
-        if forbidden in changed_handler:
-            errors.append("G1 usability fix: Replica.Changed handler must not clear explicit recovery/error states")
-    if 'phase = "loading"' in recovery_coordinator or 'phase = "ready"' in recovery_coordinator:
-        errors.append("G1 usability fix: recovery coordinator cannot forge Session phase")
-
-    recovery_spec_markers = {
-        '"a normal first Projection releases initial loading"': "normal first Projection regression",
-        '"Replica changes do not clear explicit "': "protected recovery/error regression",
-        "ViewState.REBUILDING": "REBUILDING protected state",
-        "ViewState.RECOVERY": "RECOVERY protected state",
-        "ViewState.NETWORK_ERROR": "NETWORK_ERROR protected state",
-        "ViewState.STALE": "STALE protected state",
-        "ViewState.CONFLICT": "CONFLICT protected state",
-        "ViewState.FATAL": "FATAL protected state",
-    }
-    for marker, description in recovery_spec_markers.items():
-        if marker not in entry_recovery_spec:
-            errors.append(f"G1 usability fix: EntryRecovery spec missing {description}")
-    input_spec_markers = {
-        "not WorldActionMenuPolicy.actionButtonSelectable": "non-selectable action-menu spec",
-        "not WorldActionMenuPolicy.mutatesSelectedObject": "selected-object preservation spec",
-        '"right click is consumed while the action table is open"': "existing pointer input spec",
-        '"Q closes the action table"': "existing Q grammar spec",
-        '"middle drag remains available to the independent camera controller"': "existing camera grammar spec",
-    }
-    for marker, description in input_spec_markers.items():
-        if marker not in input_context_spec:
-            errors.append(f"G1 usability fix: InputContext spec missing {description}")
-
-    return errors
-
-
-def validate_studio_retest_harness() -> list[str]:
-    return validate_studio_retest_harness_texts(
-        WORLD_ACCEPTANCE_PATH.read_text(encoding="utf-8"),
-        CONTEXT_ACCEPTANCE_PATH.read_text(encoding="utf-8"),
-        WORLD_RUNTIME_PATH.read_text(encoding="utf-8"),
-        EXECUTION_RULES_PATH.read_text(encoding="utf-8"),
-        CONTEXT_RESOLVER_PATH.read_text(encoding="utf-8"),
-        INPUT_CONTROLLER_PATH.read_text(encoding="utf-8"),
-        G1_TEST_CONSOLE_PATH.read_text(encoding="utf-8"),
-    )
-
-
-def validate_g1_usability_fix() -> list[str]:
-    return validate_g1_usability_fix_texts(
-        WORLD_ACCEPTANCE_PATH.read_text(encoding="utf-8"),
-        CONTEXT_ACCEPTANCE_PATH.read_text(encoding="utf-8"),
-        G1_TEST_CONSOLE_PATH.read_text(encoding="utf-8"),
-        WORLD_ACTION_MENU_PATH.read_text(encoding="utf-8"),
-        WORLD_ACTION_MENU_POLICY_PATH.read_text(encoding="utf-8"),
-        UI_RECOVERY_COORDINATOR_PATH.read_text(encoding="utf-8"),
-        ENTRY_RECOVERY_SPEC_PATH.read_text(encoding="utf-8"),
-        INPUT_CONTEXT_SPEC_PATH.read_text(encoding="utf-8"),
-        SLICE01_ACCEPTANCE_PROJECT_PATH.read_text(encoding="utf-8"),
-        DEFAULT_PROJECT_PATH.read_text(encoding="utf-8"),
-    )
-
-
 def validate(root: Path = ROOT) -> list[str]:
     if root != ROOT:
         raise ValueError("validate_full_ui_ux_acceptance only supports its repository checkout")
@@ -784,14 +440,13 @@ def validate(root: Path = ROOT) -> list[str]:
     errors.extend(validate_official_character_sheet(ROOT))
     errors.extend(validate_dice_slot_reveal_notice(ROOT))
     errors.extend(validate_forbidden_player_sources())
-    errors.extend(validate_studio_retest_harness())
-    errors.extend(validate_g1_usability_fix())
+    errors.extend(studio_runtime_contract.validate())
     return errors
 
 
 def run_self_tests(matrix: dict, manifest: dict) -> list[str]:
     failures: list[str] = []
-    fixtures = []
+    fixtures: list[tuple[dict, str]] = []
 
     duplicate = deepcopy(matrix)
     duplicate["acceptanceItems"].append(deepcopy(duplicate["acceptanceItems"][0]))
@@ -819,12 +474,16 @@ def run_self_tests(matrix: dict, manifest: dict) -> list[str]:
     fixtures.append((stale_surface, "forbidden Player surface was registered as required"))
 
     missing_asset_evidence = deepcopy(matrix)
-    asset_item = next(item for item in missing_asset_evidence["acceptanceItems"] if item["id"] == "final.asset-registry-separation")
+    asset_item = next(
+        item for item in missing_asset_evidence["acceptanceItems"] if item["id"] == "final.asset-registry-separation"
+    )
     asset_item["automatedRefs"] = []
     fixtures.append((missing_asset_evidence, "asset registry blocker cannot close without production and focused evidence"))
 
     missing_reader_evidence = deepcopy(matrix)
-    reader_item = next(item for item in missing_reader_evidence["acceptanceItems"] if item["id"] == "final.core-rules-reader-filtering")
+    reader_item = next(
+        item for item in missing_reader_evidence["acceptanceItems"] if item["id"] == "final.core-rules-reader-filtering"
+    )
     reader_item["automatedRefs"] = []
     fixtures.append(
         (
@@ -834,17 +493,23 @@ def run_self_tests(matrix: dict, manifest: dict) -> list[str]:
     )
 
     missing_rules_evidence = deepcopy(matrix)
-    rules_item = next(item for item in missing_rules_evidence["acceptanceItems"] if item["id"] == "final.rules-profile-release-leak-gate")
+    rules_item = next(
+        item for item in missing_rules_evidence["acceptanceItems"] if item["id"] == "final.rules-profile-release-leak-gate"
+    )
     rules_item["automatedRefs"] = []
     fixtures.append((missing_rules_evidence, "rules profile gate cannot close without production and focused evidence"))
 
     missing_sheet_evidence = deepcopy(matrix)
-    sheet_item = next(item for item in missing_sheet_evidence["acceptanceItems"] if item["id"] == "final.official-2024-sheet-interactions")
+    sheet_item = next(
+        item for item in missing_sheet_evidence["acceptanceItems"] if item["id"] == "final.official-2024-sheet-interactions"
+    )
     sheet_item["automatedRefs"] = []
     fixtures.append((missing_sheet_evidence, "Official Character Sheet cannot close without production and focused evidence"))
 
     missing_dice_evidence = deepcopy(matrix)
-    dice_item = next(item for item in missing_dice_evidence["acceptanceItems"] if item["id"] == "final.dice-slot-reveal-notice")
+    dice_item = next(
+        item for item in missing_dice_evidence["acceptanceItems"] if item["id"] == "final.dice-slot-reveal-notice"
+    )
     dice_item["automatedRefs"] = []
     fixtures.append((missing_dice_evidence, "Dice Slot Reveal Notice repair evidence is incomplete"))
 
@@ -889,7 +554,9 @@ def run_self_tests(matrix: dict, manifest: dict) -> list[str]:
     fixtures.append((g2_attack_in_g1, "Player-vs-hostile attack runtime evidence must belong only to G2"))
 
     pointer_loses_g2 = deepcopy(matrix)
-    pointer_item = next(item for item in pointer_loses_g2["acceptanceItems"] if item["id"] == "input.pointer-grammar")
+    pointer_item = next(
+        item for item in pointer_loses_g2["acceptanceItems"] if item["id"] == "input.pointer-grammar"
+    )
     pointer_item["runtimeBatchIds"] = ["G1"]
     pointer_item["evidenceClasses"] = ["STATIC", "STUDIO_SINGLE_CLIENT"]
     pointer_item["evidenceStatus"].pop("STUDIO_MULTI_CLIENT")
@@ -900,304 +567,7 @@ def run_self_tests(matrix: dict, manifest: dict) -> list[str]:
         if not any(expected in error for error in fixture_errors):
             failures.append(f"validator self-test did not reject fixture: {expected}")
 
-    world = WORLD_ACCEPTANCE_PATH.read_text(encoding="utf-8")
-    context = CONTEXT_ACCEPTANCE_PATH.read_text(encoding="utf-8")
-    runtime = WORLD_RUNTIME_PATH.read_text(encoding="utf-8")
-    rules = EXECUTION_RULES_PATH.read_text(encoding="utf-8")
-    resolver = CONTEXT_RESOLVER_PATH.read_text(encoding="utf-8")
-    controller = INPUT_CONTROLLER_PATH.read_text(encoding="utf-8")
-    shared = G1_TEST_CONSOLE_PATH.read_text(encoding="utf-8")
-    harness_fixtures = [
-        (
-            world.replace('action == "orbit" and source == "mouse-middle-screen-delta"', 'action == "pan"'),
-            context,
-            runtime,
-            rules,
-            "exact middle-button Orbit signal",
-        ),
-        (
-            world,
-            context.replace("input.KeyCode == Enum.KeyCode.Q", "input.KeyCode == Enum.KeyCode.Unknown"),
-            runtime,
-            rules,
-            "explicit Q input evidence",
-        ),
-        (
-            world,
-            context.replace("input.KeyCode == Enum.KeyCode.Escape", "input.KeyCode == Enum.KeyCode.Unknown"),
-            runtime,
-            rules,
-            "explicit ESC input evidence",
-        ),
-        (
-            world,
-            context + '\nlocal staleInstruction = "→Esc→"\n',
-            runtime,
-            rules,
-            "stale Esc-close instruction",
-        ),
-        (
-            world.replace('action == "pan" and source == "keyboard-wasd"', 'action == "orbit"'),
-            context,
-            runtime,
-            rules,
-            "separate WASD Pan signal",
-        ),
-        (
-            world,
-            context,
-            runtime + '\nlocal source = "mouse-middle-orbit"\n',
-            rules,
-            "fake middle-button Pan compatibility signal",
-        ),
-        (
-            world,
-            context,
-            runtime,
-            rules,
-            "visible middle-button Pan instruction",
-        ),
-        (
-            world,
-            context + '\nlocal required = { id = "attack-menu" }\n',
-            runtime,
-            rules,
-            "G1 single-client DM cannot require attack checks",
-        ),
-        (
-            world,
-            context + '\nlocal instruction = "Attack the Dummy"\n',
-            runtime,
-            rules,
-            "G1 cannot retain Dummy combat setup or instructions",
-        ),
-        (
-            world.replace(
-                'testConsole:registerAction("ArmTokenPick", function()',
-                'testConsole:registerAction("MissingArm", function()',
-                1,
-            ),
-            context,
-            runtime,
-            rules,
-            "selection clear requires an explicit user arm handler",
-        ),
-        (
-            world.replace("\tlocal cleared = worldTokens.Renderer:setSelected(nil)\n", "", 1).replace(
-                "local function prepareScene()",
-                "worldTokens.Renderer:setSelected(nil)\n\nlocal function prepareScene()",
-                1,
-            ),
-            context,
-            runtime,
-            rules,
-            "local selection clear must exist only in the manual arm handler",
-        ),
-        (
-            world.replace(
-                "\ttokenPickArmed = true\n",
-                '\tpass("token-pick", "fake arm PASS")\n\ttokenPickArmed = true\n',
-                1,
-            ),
-            context,
-            runtime,
-            rules,
-            "arm handler cannot directly PASS token-pick or Highlight",
-        ),
-        (
-            world.replace(
-                "\tlocal cleared = worldTokens.Renderer:setSelected(nil)\n",
-                "\tworldTokens.PickResolved:Fire(heroActorId, \"ray\", true, \"fake\")\n"
-                "\tlocal cleared = worldTokens.Renderer:setSelected(nil)\n",
-                1,
-            ),
-            context,
-            runtime,
-            rules,
-            "arm handler cannot invoke PickResolved:Fire",
-        ),
-        (
-            world.replace(
-                "\tlocal cleared = worldTokens.Renderer:setSelected(nil)\n",
-                '\tsubmit("session.select_character", { characterId = heroActorId })\n'
-                "\tlocal cleared = worldTokens.Renderer:setSelected(nil)\n",
-                1,
-            ),
-            context,
-            runtime,
-            rules,
-            "arm handler cannot invoke submit(",
-        ),
-        (
-            world.replace(
-                'testConsole:registerAction("ArmTokenPick", function()\n\tlocal state = currentState()\n',
-                'testConsole:registerAction("ArmTokenPick", function()\n'
-                '\tlocal state = currentState()\n\tstate.membership.role = "player"\n',
-                1,
-            ),
-            context,
-            runtime,
-            rules,
-            "arm handler cannot mutate authority fields",
-        ),
-        (
-            world,
-            context,
-            runtime.replace("\tself.Input:ensureSemanticSelection()\n", ""),
-            rules,
-            "Production ensureSemanticSelection must remain at startup and Replica change",
-        ),
-    ]
-    for world_fixture, context_fixture, runtime_fixture, rules_fixture, expected in harness_fixtures:
-        shared_fixture = (
-            shared.replace(
-                "2 Camera: WASD Pan / Middle drag Orbit / Wheel Zoom / Frame",
-                "2 Camera: WASD Pan / Middle-button drag = Pan / Wheel Zoom / Frame",
-            )
-            if expected == "visible middle-button Pan instruction"
-            else shared
-        )
-        fixture_errors = validate_studio_retest_harness_texts(
-            world_fixture,
-            context_fixture,
-            runtime_fixture,
-            rules_fixture,
-            resolver,
-            controller,
-            shared_fixture,
-        )
-        if not any(expected in error for error in fixture_errors):
-            failures.append(f"validator self-test did not reject harness fixture: {expected}")
-
-    authority_fixtures = [
-        (
-            resolver.replace(
-                'if membershipRole(allDomains, playerId) == "dm" then\n\t\treturn true',
-                'if membershipRole(allDomains, playerId) == "dm" then\n\t\treturn false',
-            ),
-            controller,
-            "DM controls scene actors",
-        ),
-        (
-            resolver.replace(
-                'type(targetActor) ~= "table" or controlsActor(allDomains, playerId, target.actorId)',
-                'type(targetActor) ~= "table"',
-            ),
-            controller,
-            "controlled target attack exclusion",
-        ),
-        (
-            resolver,
-            controller.replace(
-                "and target.actorId ~= selectedActorId\n\t\tand self.resolver:isControllable(target.actorId)",
-                "and target.actorId ~= selectedActorId\n\t\tand false",
-                1,
-            ),
-            "controllable-target selection precedence",
-        ),
-        (
-            resolver,
-            controller.replace(
-                "\t\treturn\n\tend\n\n\tlocal actions = self:resolveActionsForTarget(target)\n",
-                "\t\treturn\n\tend\n\n"
-                '\tself:_pick(selectedActorId, "acceptance-reclick", target.instance)\n'
-                "\tlocal actions = self:resolveActionsForTarget(target)\n",
-                1,
-            ),
-            "Production _leftClick pick reachability semantics drifted",
-        ),
-    ]
-    for resolver_fixture, controller_fixture, expected in authority_fixtures:
-        fixture_errors = validate_studio_retest_harness_texts(
-            world,
-            context,
-            runtime,
-            rules,
-            resolver_fixture,
-            controller_fixture,
-            shared,
-        )
-        if not any(expected in error for error in fixture_errors):
-            failures.append(f"validator self-test did not reject authority fixture: {expected}")
-
-    fix004_sources = {
-        "world_acceptance": world,
-        "context_acceptance": context,
-        "shared_console": shared,
-        "action_menu": WORLD_ACTION_MENU_PATH.read_text(encoding="utf-8"),
-        "action_menu_policy": WORLD_ACTION_MENU_POLICY_PATH.read_text(encoding="utf-8"),
-        "recovery_coordinator": UI_RECOVERY_COORDINATOR_PATH.read_text(encoding="utf-8"),
-        "entry_recovery_spec": ENTRY_RECOVERY_SPEC_PATH.read_text(encoding="utf-8"),
-        "input_context_spec": INPUT_CONTEXT_SPEC_PATH.read_text(encoding="utf-8"),
-        "slice_project": SLICE01_ACCEPTANCE_PROJECT_PATH.read_text(encoding="utf-8"),
-        "default_project": DEFAULT_PROJECT_PATH.read_text(encoding="utf-8"),
-    }
-    fix004_fixtures = [
-        (
-            "world_acceptance",
-            world + '\nlocal duplicateGui = Instance.new("ScreenGui")\n',
-            "World and Context scripts must not create independent ScreenGuis",
-        ),
-        (
-            "shared_console",
-            shared.replace('local gui = Instance.new("ScreenGui")', 'local gui = Instance.new("Frame")', 1),
-            "exactly one shared G1 ScreenGui is required",
-        ),
-        (
-            "shared_console",
-            shared.replace("header.InputBegan:Connect", "header.MouseEnter:Connect", 1),
-            "missing mouse drag start",
-        ),
-        (
-            "shared_console",
-            shared.replace("button.Selectable = false", "button.Selectable = true", 1),
-            "missing non-selectable acceptance buttons",
-        ),
-        (
-            "shared_console",
-            shared + "\nGuiService.SelectedObject = panel\n",
-            "shared console cannot capture text or mutate SelectedObject",
-        ),
-        (
-            "action_menu",
-            fix004_sources["action_menu"] + "\nGuiService.SelectedObject = firstButton\n",
-            "WorldActionMenu cannot assign GuiService.SelectedObject",
-        ),
-        (
-            "action_menu",
-            fix004_sources["action_menu"] + "\nlocal previousSelectedObject = GuiService.SelectedObject\n",
-            "obsolete WorldActionMenu selected-object restore returned",
-        ),
-        (
-            "recovery_coordinator",
-            fix004_sources["recovery_coordinator"].replace(
-                "self.state.state == ViewState.LOADING and replica.revision >= 0",
-                "replica.revision >= 0",
-                1,
-            ),
-            "initial LOADING-only guard",
-        ),
-        (
-            "recovery_coordinator",
-            fix004_sources["recovery_coordinator"].replace(
-                "self.state.state == ViewState.LOADING and replica.revision >= 0",
-                "self.state.state == ViewState.NETWORK_ERROR or replica.revision >= 0",
-                1,
-            ),
-            "must not clear explicit recovery/error states",
-        ),
-        (
-            "default_project",
-            fix004_sources["default_project"] + '\n"AcceptanceShared": {"$path": "tests/AcceptanceShared"}\n',
-            "production default project mounted acceptance-only UI",
-        ),
-    ]
-    for key, value, expected in fix004_fixtures:
-        fixture_sources = dict(fix004_sources)
-        fixture_sources[key] = value
-        fixture_errors = validate_g1_usability_fix_texts(**fixture_sources)
-        if not any(expected in error for error in fixture_errors):
-            failures.append(f"validator self-test did not reject FIX-004 fixture: {expected}")
+    failures.extend(studio_runtime_contract.run_self_tests())
     return failures
 
 
