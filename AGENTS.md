@@ -31,6 +31,7 @@ Product·ADR
 → 즉시 수정 또는 수용
 → Authority Reconciliation
 → Canonical Source 정규화
+→ Checkpoint Promotion Commit
 → 다음 Capability
 ```
 
@@ -97,6 +98,7 @@ CHANGE_REQUESTED
 → greenfield/src 정규화
 → Focused Test
 → 남은 현재 문서 충돌 재검색
+→ Checkpoint Promotion Commit
 → ACCEPTED
 → 다음 Checkpoint
 ```
@@ -106,6 +108,8 @@ CHANGE_REQUESTED
 - 과거 Audit·Acceptance·Review·Codex Command는 역사 기록이므로 새 결정에 맞춰 다시 쓰지 않는다.
 - 사용자가 화면 동작을 수용했다는 이유로 보이지 않는 Architecture·Authority 변경까지 승인받은 것으로 해석하지 않는다.
 - 정합화 중 미승인 Architecture 변경이 필요해지면 사용자에게 먼저 보고한다.
+- Promotion Commit이 생성되기 전에는 다음 Checkpoint를 시작하지 않는다.
+- Promotion Commit은 `checkpoint(<CHECKPOINT_ID>): accept <summary>` 형식의 복원 기준점으로 사용한다.
 
 ## 7. Module Contract
 
@@ -136,7 +140,7 @@ PLANNED
 → DEPRECATED
 ```
 
-`PLANNED`는 Source가 아직 없어도 된다. `IMPLEMENTED`부터 실제 Source와 Entry Point가 존재해야 한다. `ACCEPTED`는 사용자 수용뿐 아니라 Authority Reconciliation, Canonical Source, Focused Test까지 완료된 상태다.
+`PLANNED`는 Source가 아직 없어도 된다. `IMPLEMENTED`부터 실제 Source와 Entry Point가 존재해야 한다. `ACCEPTED`는 사용자 수용뿐 아니라 Authority Reconciliation, Canonical Source, Focused Test, Checkpoint Promotion Commit까지 완료된 상태다.
 
 private/helper 함수 분해와 모든 `require()` Call Graph는 수동 문서로 복제하지 않는다. 현재 Source에서 읽는다.
 
