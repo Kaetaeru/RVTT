@@ -1,22 +1,19 @@
 # RVTT Module Contracts
 
-- 상태: `ACTIVE · GREENFIELD_V2`
+- 상태: `ACTIVE · GREENFIELD_V3`
 - 최종 갱신일: 2026-08-12
 - 현재 Registry: [`manifests/module-contracts.json`](manifests/module-contracts.json)
 - Legacy Reference: [`manifests/legacy-module-contracts.json`](manifests/legacy-module-contracts.json)
+- 시스템 순서: [`GREENFIELD-SYSTEM-SEQUENCE.md`](GREENFIELD-SYSTEM-SEQUENCE.md)
 - Validator: [`tooling/validate_module_contracts.py`](tooling/validate_module_contracts.py)
 
-## 1. 두 Registry의 역할
+## 1. 역할
 
-### `module-contracts.json`
+`module-contracts.json`은 현재 새 RVTT의 **목표 Architecture + 시스템 구축 단계 + 사용자 Checkpoint 상태**를 기록한다.
 
-현재 새 RVTT의 **목표 Architecture**다. Source가 생기기 전에 `PLANNED` 상태로 책임을 먼저 정의한다.
+기존 Production 계약은 `legacy-module-contracts.json`에 보존하며 현재 구현 Authority가 아니다.
 
-### `legacy-module-contracts.json`
-
-기존 Production Source의 구조를 보존한 역사적 Reference다. 현재 Greenfield 구현의 Authority가 아니며 자동 TODO나 재사용 목록이 아니다.
-
-## 2. Lifecycle
+## 2. Module Lifecycle
 
 ```text
 PLANNED
@@ -25,12 +22,50 @@ PLANNED
 → DEPRECATED
 ```
 
-- `PLANNED`: 책임·경계·예정 경로가 합의됐고 Source는 없어도 된다.
-- `IMPLEMENTED`: 실제 Source와 Stable Entry Point가 존재하고 Studio에서 연결됐다.
-- `ACCEPTED`: 사용자가 해당 Checkpoint/기능을 수용했고 Focused Test까지 정규화됐다.
-- `DEPRECATED`: 새 구조에서 더 이상 사용하지 않는다.
+- `PLANNED`: 책임·Authority·예정 경로가 먼저 존재한다. Source는 없어도 된다.
+- `IMPLEMENTED`: 실제 `greenfield/src` Source와 Stable Entry Point가 존재하고 Studio에 연결됐다.
+- `ACCEPTED`: 사용자 Checkpoint 수용과 Focused Test까지 정규화됐다.
+- `DEPRECATED`: 새 구조에서 사용하지 않는다.
 
-## 3. Module Contract 필드
+## 3. System Stage
+
+Registry의 `systemStages`가 Foundation 순서를 기계적으로 표현한다.
+
+```text
+G0_SHARED_CONTRACTS
+→ G1_SERVER_AUTHORITY_CORE
+→ G2_COMMAND_TRANSPORT
+→ G3_PROJECTION_PIPELINE
+→ G4_CLIENT_WORLD_SHELL
+→ G5_COMPOSITION_BOOT
+```
+
+Validator는 다음을 막는다.
+
+- Stage module 누락·중복
+- Foundation dependency가 미래 Stage를 참조하는 구조
+- 이전 Stage가 끝나기 전에 다음 Stage Module을 `IMPLEMENTED`로 승격
+- `foundationRequired`와 Stage union의 불일치
+
+## 4. User Checkpoint
+
+`deliveryCheckpoints`는 별도 상태를 가진다.
+
+```text
+PLANNED
+IMPLEMENTING
+READY_FOR_USER
+ACCEPTED
+BLOCKED
+```
+
+- 이전 Checkpoint가 `ACCEPTED`가 아니면 다음 Checkpoint를 시작할 수 없다.
+- `READY_FOR_USER`/`ACCEPTED`는 필요한 Module이 최소 `IMPLEMENTED`여야 한다.
+- `ACCEPTED` Checkpoint의 직접 Module은 Focused Test와 함께 `ACCEPTED` 상태여야 한다.
+
+이 상태는 Codex가 임의로 사용자 수용을 추측하기 위한 것이 아니다. 사용자의 실제 피드백에 맞춰 갱신한다.
+
+## 5. Module 필드
 
 ```text
 id
@@ -46,57 +81,45 @@ legacyCandidates
 testRefs
 ```
 
-`dependsOn`은 Architecture-level 의존만 기록한다. 모든 `require()`를 복제하지 않는다.
+`dependsOn`은 Architecture-level dependency만 기록한다. 모든 `require()`를 복제하지 않는다.
 
-`legacyCandidates`는 참고할 수 있는 이전 Source 경로다. 재사용 의무를 뜻하지 않는다.
+`legacyCandidates`는 참고할 이전 Source 경로이며 재사용 의무가 아니다.
 
-## 4. System-first 원칙
+## 6. 안전 경계
 
-보이는 기능을 만들기 전에 그 기능을 책임지는 경계를 먼저 `PLANNED`로 만든다.
+Registry의 `technicalSafety`는 개발 중에도 유지할 비협상 기술 규칙을 기계적으로 고정한다.
 
-Bootstrap은 별도 계약을 가지지만 Composition Root 역할만 한다.
+대표 규칙:
 
-```text
-Bootstrap
-→ App Composition
-→ System/Controller/Runtime
-```
+- Server authority
+- untrusted client input
+- client role claim 불신
+- bounded network payload
+- no Instance over network
+- command idempotency / revision
+- viewer-safe Projection
+- Bootstrap gameplay logic 금지
+- Studio-only Production truth 금지
+- Foundation DataStore 비활성
+- lifecycle cleanup
 
-한 Bootstrap이나 Manager에 기능을 몰아서 Contract 수를 줄이는 것을 최적화로 보지 않는다.
+정확한 의미는 `GREENFIELD-SYSTEM-SEQUENCE.md`를 따른다.
 
-반대로 현재 Checkpoint와 무관한 미래 시스템을 미리 계약하지 않는다.
-
-## 5. Source 정합화
+## 7. Source 정합화
 
 `IMPLEMENTED` 또는 `ACCEPTED` Module은:
 
-- `greenfield/src/` 아래 실제 Source가 존재해야 한다.
-- Stable Entry Point Token이 Source에 존재해야 한다.
-- `dependsOn` 대상이 Registry에 존재해야 한다.
-- 선언한 Focused Test가 있으면 실제 파일이 존재해야 한다.
+- `greenfield/src/` 아래 Source가 존재한다.
+- Stable Entry Point Token이 Source에 존재한다.
+- `dependsOn` 대상이 Registry에 존재한다.
+- 선언된 Focused Test가 있으면 실제 파일이 존재한다.
 
-`PLANNED` Source는 아직 없어도 된다.
-
-## 6. 사용자 결정 Gate
-
-Module 책임을 실질적으로 새로 분리하거나 합치려면 Product/Architecture 영향 여부를 확인한다.
-
-- 현재 계약 안의 helper 분해: 즉시 가능
-- Architecture 경계 변경: 사용자에게 먼저 제안
-
-## 7. Legacy 재사용
-
-Codex는 `legacyCandidates`를 다음 순서로 본다.
-
-```text
-역할 확인
-→ 현재 Contract와 비교
-→ 좋은 부분만 선택
-→ Greenfield 구조에 맞게 조립
-```
-
-Legacy의 파일 구조와 Manager 구성을 복제하는 것이 목표가 아니다.
+`ACCEPTED` Module은 최소 하나의 `greenfield/tests/` Focused Test를 가진다.
 
 ## 8. Call Graph
 
-private/helper 호출 순서와 모든 `require()` 관계는 현재 Source에서 읽는다. 수동 Call Graph를 별도 Authority로 유지하지 않는다.
+private/helper 호출 순서와 모든 `require()`는 현재 Source에서 읽는다. 수동 Call Graph를 별도 Authority로 유지하지 않는다.
+
+## 9. Architecture 변경
+
+Module 책임 분리·통합, Stage 순서, Authority, Command/Projection 방향을 바꾸려면 사용자에게 먼저 제안한다. helper 내부 구현은 Contract 경계가 유지되는 한 Codex가 판단할 수 있다.

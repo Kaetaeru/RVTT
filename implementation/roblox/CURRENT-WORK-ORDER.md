@@ -3,6 +3,7 @@
 - 상태: `GREENFIELD_ARCHITECTURE_FIRST_CONTEXT`
 - 최종 갱신일: 2026-08-12
 - 현재 실행 포인터: [`../../.github/CODEX-ACTIVE-TASK.md`](../../.github/CODEX-ACTIVE-TASK.md)
+- 시스템 순서 권위: [`GREENFIELD-SYSTEM-SEQUENCE.md`](GREENFIELD-SYSTEM-SEQUENCE.md)
 - Greenfield 정책: [`GREENFIELD-BUILD-POLICY.md`](GREENFIELD-BUILD-POLICY.md)
 - Module Contract: [`MODULE-CONTRACTS.md`](MODULE-CONTRACTS.md)
 
@@ -10,29 +11,59 @@
 
 Active Task는 `RVTT-GREENFIELD-FOUNDATION-EXPLORATION-001`이다.
 
+현재 실행 순서는 고정되어 있다.
+
 ```text
-System Foundation
-→ Boot
+G0 Shared Contracts
+→ G1 Server Authority Core
+→ G2 Command Transport
+→ G3 Projection Pipeline
+→ G4 Client World Shell
+→ G5 Composition Boot
 → S1 Selection
 → 사용자 확인
-→ 수정 반복 또는 수용
+```
+
+현재 Foundation을 만들 때 이전 monolithic Studio prototype을 Canonical 기준으로 사용하지 않는다.
+
+## Exploration Checkpoint
+
+```text
+S1 Selection
 → C1 Camera
 → M1 Move
 → X1 Context
 → I1 Interaction
 ```
 
+각 Checkpoint는 사용자 수용 전 다음 단계로 넘어가지 않는다. 수정 요청은 현재 Checkpoint에서 즉시 반영한다.
+
+## 이후 큰 순서
+
+```text
+Foundation
+→ Exploration
+→ Session·Role·Reconnect·Recovery
+→ Encounter + Character Console
+→ Character Data Surfaces
+→ DM Live Workspace
+→ Rules·Content Runtime
+→ Persistence·Migration·Rollback
+→ ADR-0092
+→ Hardening
+→ Release Acceptance
+```
+
+세부 이유와 기술 안전 경계는 `GREENFIELD-SYSTEM-SEQUENCE.md`가 소유한다.
+
 ## 완료 방식
 
-각 Checkpoint는 다음을 만족해야 한다.
+1. Stage dependency가 맞다.
+2. 기능이 명확한 Module 책임을 통해 동작한다.
+3. Studio에서 실제 Play된다.
+4. 사용자 피드백은 다음 작업보다 먼저 반영된다.
+5. 수용된 결과는 `greenfield/src`와 Rojo Mapping에서 재현된다.
+6. Module/Checkpoint status가 실제 상태와 일치한다.
+7. 필요한 Focused Test가 있다.
 
-1. 기능이 명확한 Module 책임을 통해 동작한다.
-2. Studio에서 실제로 Play된다.
-3. 사용자 피드백이 있으면 다음 작업보다 먼저 반영된다.
-4. 사용자가 수용한 결과는 `greenfield/src`에 정규화된다.
-5. Module Contract status가 실제 구현 상태와 일치한다.
-6. 필요한 Focused Test가 추가된다.
-
-## Legacy
-
-기존 `src/`, Acceptance Harness, Grand Runner, 과거 Evidence는 보존하지만 현재 Build의 구현 순서와 PASS를 결정하지 않는다.
+Legacy `src/`, Acceptance Harness, Grand Runner와 과거 Evidence는 Reference이며 현재 구현 순서나 PASS를 결정하지 않는다.

@@ -1,13 +1,14 @@
 # RVTT Current Executable Task
 
 - executionAuthority: `ONLY_CURRENT_EXECUTABLE_TASK`
-- status: `READY_FOR_ARCHITECTURE_FIRST_GREENFIELD_BUILD`
+- status: `READY_FOR_ORDERED_GREENFIELD_FOUNDATION`
 - commandId: `RVTT-GREENFIELD-FOUNDATION-EXPLORATION-001`
 - repository: `Kaetaeru/RVTT`
 - pullRequest: `2`
 - branch: `agent/survival-logistics-token-authoring`
 - taskMode: `STUDIO_IMPLEMENTATION`
 - buildMode: `GREENFIELD_ARCHITECTURE_FIRST`
+- sequenceAuthority: `implementation/roblox/GREENFIELD-SYSTEM-SEQUENCE.md`
 - feedbackMode: `TIGHT_USER_FEEDBACK_LOOP`
 - legacySourcePolicy: `REFERENCE_OR_EXPLICIT_REUSE_ONLY`
 - legacyPlacePolicy: `DO_NOT_USE_AS_BASELINE`
@@ -17,58 +18,60 @@
 
 ## 지금 바로 해야 할 일
 
-**기능을 한두 Script에 몰아 빠르게 흉내 내는 작업이 아니다. 새 RVTT의 시스템 골격을 먼저 세우고, 그 골격을 통해 첫 플레이 기능을 만든다.**
+**`GREENFIELD-SYSTEM-SEQUENCE.md`의 Foundation 순서를 그대로 실행한다.**
 
 ```text
-Product·ADR 확인
-→ Greenfield Module Contract 확인
-→ 필요한 시스템 책임·Authority 확정
-→ 새 Studio Build에 Client/Server Composition Root 구축
-→ Command·Authorization·Projection·Input·World System 경계 구축
-→ Foundation Boot 확인
-→ 첫 사용자 기능: Hero Token Selection 구현
-→ 사용자가 직접 테스트
-→ 마음에 안 들면 Selection을 즉시 수정·재테스트
-→ 사용자 수용 후 Camera → Move → Context → Interaction 순으로 확장
+G0_SHARED_CONTRACTS
+→ G1_SERVER_AUTHORITY_CORE
+→ G2_COMMAND_TRANSPORT
+→ G3_PROJECTION_PIPELINE
+→ G4_CLIENT_WORLD_SHELL
+→ G5_COMPOSITION_BOOT
+→ S1_SELECTION
 ```
 
-## 첫 사용자 체크포인트
+- 이전 Stage가 Gate를 만족하기 전 다음 Stage를 구현하지 않는다.
+- Foundation을 만들기 위해 미래 기능 Manager를 미리 만들지 않는다.
+- G5가 Boot되면 Foundation 확장을 멈추고 S1 Selection을 구현한다.
+- S1이 `READY_FOR_USER`가 되면 Camera 작업을 시작하지 않는다.
+- 사용자가 Selection을 수정하라고 하면 즉시 같은 Checkpoint를 수정·재Play한다.
 
-첫 Human Checkpoint는 `Hero Token Selection`이다.
+## 안전 규칙
 
-- Selection이 마음에 들지 않으면 다음 기능으로 넘어가지 않는다.
-- 피드백을 "나중에 정리할 UX"로 적재하지 않는다.
-- 같은 Checkpoint에서 즉시 수정하고 다시 Play 가능한 상태로 만든다.
-- 사용자가 명시적으로 수용하거나 다음으로 가라고 할 때만 Camera 작업으로 넘어간다.
+Prototype이라도 다음을 우회하지 않는다.
 
-## 반드시 이해할 것
+- Server authoritative mutation
+- untrusted client input
+- bounded/rate-limited Remote
+- client role claim 불신
+- commandId + epoch/revision 검증
+- viewer-safe Projection
+- no Roblox Instance over network
+- UI→Remote 직접 호출 금지
+- Bootstrap gameplay logic 금지
+- Studio-only Production truth 금지
 
-- Bootstrap Script는 Client/Server 각각 하나여도 되지만 **조립과 start 호출만** 한다.
-- Bootstrap, LocalScript, ServerScript에 Selection·Camera·Move·Context·Rules 로직을 몰아넣지 않는다.
-- 시스템 책임은 `module-contracts.json`의 Greenfield 계약을 따른다.
-- 기존 `src/` Module Contract와 Source는 Legacy Reference다. 재사용은 opt-in이다.
-- 기존 Production Place/UI/Instance Tree는 새 Build의 Baseline이 아니다.
-- 과거 Acceptance PASS/FAIL은 현재 Greenfield 구현의 TODO나 PASS가 아니다.
+## 스캔 순서
 
-## 사용자에게 먼저 보고해야 하는 것
-
-현재보다 더 좋아 보이는 방향이 있더라도 다음을 바꾸려면 먼저 사용자에게 제안한다.
-
-- Product·Accepted ADR
-- 핵심 입력 의미
-- Server/Client Authority 또는 Data ownership
-- Greenfield Module 책임의 실질적인 분리·통합
-- 개발 방식
-- Release 범위·우선순위
-
-기존 결정 안에서의 버그 수정, UX 미세 조정, helper 분해는 즉시 수행할 수 있다.
+1. `AGENTS.md`
+2. `.github/README.md`
+3. 이 파일
+4. `implementation/roblox/GREENFIELD-SYSTEM-SEQUENCE.md`
+5. 현재 `commandPath`
+6. `implementation/roblox/MODULE-CONTRACTS.md`
+7. `implementation/roblox/manifests/module-contracts.json`
+8. 관련 Product·ADR·Spec
+9. 필요한 Legacy Source — 참고용
 
 ## 지금 하지 않는 것
 
-- 기존 Production Place를 열고 이어서 수정
-- 기능 데모용 monolithic LocalScript/ServerScript 작성
-- Foundation 없이 Selection·Move부터 직접 구현
+- 기존 Production Place 이어서 수정
+- monolithic LocalScript/ServerScript로 기능 완성
+- G0~G5 순서 건너뛰기
+- Selection 수용 전 Camera/Move 선행 구현
 - 과거 Codex Command 재개
 - Acceptance/Grand Campaign을 개발 시작 Gate로 사용
 - ADR-0092 Phase 선행 착수
 - ready-for-review / merge / force push
+
+더 좋은 Architecture·순서·Authority 방향이 보이면 적용하지 말고 사용자에게 먼저 제안한다.
