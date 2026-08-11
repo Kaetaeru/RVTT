@@ -17,7 +17,7 @@
 3. 네트워크 입력 전에 Server Authority가 존재한다.
 4. Client는 viewer-safe Projection만 읽는다.
 5. S1 Selection을 사용자가 직접 테스트하고 즉시 수정할 수 있다.
-6. 사용자가 최종 수용한 뒤에는 현재 상위 문서·Contract·Source·Test를 정합화한 후에만 S1을 `ACCEPTED`로 만든다.
+6. 사용자가 최종 수용한 뒤에는 현재 상위 문서·Contract·Source·Test를 정합화하고 Promotion Commit을 만든 후에만 S1을 `ACCEPTED`로 만든다.
 
 ## 구현 전 읽기
 
@@ -118,7 +118,7 @@ S1 status → IMPLEMENTING
 
 ## 사용자가 S1을 최종 수용했을 때
 
-사용자가 `좋다`, `이걸로`, `확정`, `다음`처럼 최종 수용하면 Camera로 가지 않는다. 먼저 Authority Reconciliation을 수행한다.
+사용자가 `좋다`, `이걸로`, `확정`, `다음`처럼 최종 수용하면 Camera로 가지 않는다. 먼저 Authority Reconciliation과 Promotion을 수행한다.
 
 ```text
 사용자 최종 수용
@@ -131,9 +131,13 @@ S1 status → IMPLEMENTING
 → Focused Test 추가·실행
 → 현재 문서 충돌 재검색
 → UNRESOLVED CONFLICTS = none 확인
-→ S1 / 관련 Module ACCEPTED
+→ S1 / 관련 Module을 ACCEPTED 상태로 준비
+→ checkpoint(S1_SELECTION): accept <summary> Promotion Commit 생성
+→ Promotion Commit SHA 기록
 → C1_CAMERA 시작
 ```
+
+Promotion Commit은 확정 Authority + Module Contract + Canonical Source + Rojo Mapping + Focused Test를 한 기준점에 묶는다. 다음 기능이나 임시 디버그 변경을 섞지 않는다.
 
 화면/조작 수용을 내부 Architecture·Authority 변경의 승인으로 확대 해석하지 않는다. Reconciliation 중 미승인 Architecture 변경이 필요하면 중단하고 사용자에게 먼저 제안한다.
 
@@ -149,7 +153,7 @@ S1 Selection
 → I1 Interaction
 ```
 
-각 Checkpoint에서 동일하게 **수정 반복 → 사용자 최종 수용 → Authority Reconciliation → ACCEPTED → 다음** 순서를 사용한다.
+각 Checkpoint에서 동일하게 **수정 반복 → 사용자 최종 수용 → Authority Reconciliation → Promotion Commit → ACCEPTED → 다음** 순서를 사용한다.
 
 Move의 필수 경로:
 
@@ -179,10 +183,11 @@ MovementController
 - Stage skip
 - Checkpoint skip
 - 사용자 수용 직후 Authority Reconciliation 생략
+- Promotion Commit 없이 다음 Checkpoint 진행
 - Legacy Acceptance를 Greenfield PASS로 사용
 
 ## Canonicalization
 
 Stage가 실제 구현되면 `greenfield/src`에 정리하고 `module-contracts.json` 상태를 맞춘다.
 
-사용자 Checkpoint는 사용자 수용만으로 `ACCEPTED` 처리하지 않는다. `AUTHORITY-RECONCILIATION-POLICY.md`의 Top-down 문서 정합화, Canonical Source, Rojo 재현, Focused Test가 모두 끝난 뒤 관련 Module/Checkpoint를 `ACCEPTED`로 갱신한다.
+사용자 Checkpoint는 사용자 수용만으로 `ACCEPTED` 처리하지 않는다. `AUTHORITY-RECONCILIATION-POLICY.md`의 Top-down 문서 정합화, Canonical Source, Rojo 재현, Focused Test가 끝난 최종 상태를 Promotion Commit으로 고정하고 그 SHA를 복원 기준점으로 기록한 뒤 다음 Checkpoint로 간다.
