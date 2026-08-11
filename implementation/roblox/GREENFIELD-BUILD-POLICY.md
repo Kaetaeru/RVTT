@@ -3,6 +3,7 @@
 - 상태: `ACTIVE · CURRENT_IMPLEMENTATION_POLICY`
 - 최종 갱신일: 2026-08-12
 - 시스템 순서 권위: [`GREENFIELD-SYSTEM-SEQUENCE.md`](GREENFIELD-SYSTEM-SEQUENCE.md)
+- 확정 동기화 Gate: [`AUTHORITY-RECONCILIATION-POLICY.md`](AUTHORITY-RECONCILIATION-POLICY.md)
 
 ## 1. 기본 방식
 
@@ -13,7 +14,10 @@
 → 고정 System Sequence에 따라 Foundation 구현
 → 작은 Playable Capability
 → 사용자 직접 테스트
-→ 즉시 수정 또는 수용
+→ 즉시 수정 반복
+→ 사용자 최종 수용
+→ Authority Reconciliation
+→ Canonical Source·Focused Test
 → 다음 Capability
 ```
 
@@ -58,13 +62,33 @@ S1 Selection
 
 각 Checkpoint가 `READY_FOR_USER`가 되면 다음 기능을 멈춘다.
 
-- 좋음 / 다음 → `ACCEPTED`, 다음 Checkpoint 진행
 - 수정 요청 → 같은 Checkpoint를 즉시 수정·재Play
 - Block → 원인 해결 후 같은 Checkpoint 재시도
+- 좋음 / 이걸로 / 다음 → 사용자 수용으로 기록하고 Authority Reconciliation 시작
 
-피드백을 여러 기능 뒤에 모아서 고치지 않는다.
+사용자 수용 자체는 아직 `ACCEPTED`가 아니다.
 
-## 5. Legacy Source
+```text
+사용자 수용
+→ 현재 Authority 충돌 검색
+→ 상위 문서부터 정합화
+→ Module Contract / Source / Test 정규화
+→ 남은 충돌 없음 확인
+→ ACCEPTED
+→ 다음 Checkpoint
+```
+
+피드백을 여러 기능 뒤에 모아서 고치지 않고, 확정된 결정의 문서 정합화도 다음 기능 뒤로 미루지 않는다.
+
+## 5. 반복 중 문서 Churn 금지
+
+사용자가 같은 기능을 여러 차례 수정하게 하는 동안 Product·ADR·Architecture를 매 반복마다 갱신하지 않는다.
+
+현재 Checkpoint가 `IMPLEMENTING`/`READY_FOR_USER`인 동안에는 방금 요청된 동작이 임시 Working Truth가 될 수 있다. 사용자가 최종 수용한 뒤에만 영구 Authority를 갱신한다.
+
+단, 비협상 Security·Authority 규칙은 반복 중에도 항상 유지한다.
+
+## 6. Legacy Source
 
 기존 `src/`와 과거 Acceptance는 Reference다.
 
@@ -76,17 +100,20 @@ S1 Selection
 
 Legacy 파일 구조를 복제하는 것이 목표가 아니다.
 
-## 6. Canonicalization
+## 7. Canonicalization
 
-사용자가 수용한 구현은 다음 Checkpoint 전에 `greenfield/src`로 정규화한다.
+사용자가 수용한 구현은 `AUTHORITY-RECONCILIATION-POLICY.md`에 따라 현재 Authority를 먼저 맞춘 뒤 `greenfield/src`로 정규화한다.
 
 - Studio-only Production logic 제거
 - Rojo로 재현 가능한 Instance 구조
 - Module Contract status 갱신
 - Focused Test 추가
-- 관련 Checkpoint를 `ACCEPTED`로 기록
+- 현재 Authority 문서의 충돌 제거
+- 관련 Checkpoint를 마지막에 `ACCEPTED`로 기록
 
-## 7. 기술 안전
+사용자가 화면 동작을 수용했다고 해서 내부 Architecture·Authority 변경이 자동 승인되는 것은 아니다. 정합화 중 미승인 구조 변경이 발견되면 사용자에게 먼저 제안한다.
+
+## 8. 기술 안전
 
 Prototype 단계에서도 다음은 우회하지 않는다.
 
@@ -102,6 +129,6 @@ Prototype 단계에서도 다음은 우회하지 않는다.
 
 세부 안전 규칙은 `GREENFIELD-SYSTEM-SEQUENCE.md` 4절이 유일한 현재 기준이다.
 
-## 8. 변경 Gate
+## 9. 변경 Gate
 
 현재보다 더 좋아 보이는 Architecture, 순서, 핵심 UX, Authority 또는 개발 방식이 발견되면 자동 적용하지 않는다. 먼저 사용자에게 제안한다.
