@@ -449,6 +449,66 @@ def validate_studio_retest_harness_texts(
     if "Middle-button drag = Pan" in world_acceptance or "중클릭 드래그=Pan" in world_acceptance:
         errors.append("studio retest harness: visible middle-button Pan instruction is forbidden")
 
+    arm_markers = {
+        'makeButton("ArmTokenPick", "Arm Token Pick"': "explicit Arm Token Pick control",
+        "Wait until setup is ready → Arm Token Pick → left-click Hero → verify Highlight": (
+            "manual token-pick instruction"
+        ),
+        "tokenPickArmed = true": "manual arm state",
+        "worldTokens.SelectionChanged:Connect": "arm invalidation observer",
+        "invalidateTokenPickArm": "explicit re-arm invalidation",
+        'summary:pending("token-pick"': "token-pick pending/re-arm state",
+        'summary:pending("selection-highlight"': "selection-highlight pending/re-arm state",
+    }
+    for marker, description in arm_markers.items():
+        if marker not in world_acceptance:
+            errors.append(f"studio retest harness: missing {description}")
+
+    arm_start = world_acceptance.find("armPickButton.Activated:Connect(function()")
+    arm_end = world_acceptance.find("frameButton.Activated:Connect(function()", arm_start)
+    arm_handler = world_acceptance[arm_start:arm_end] if arm_start >= 0 and arm_end >= 0 else ""
+    if not arm_handler:
+        errors.append("studio retest harness: token-pick selection clear requires an explicit user arm handler")
+    else:
+        if "worldTokens.Renderer:getTokenModel(heroActorId)" not in arm_handler:
+            errors.append("studio retest harness: Arm Token Pick must verify the Hero token exists")
+        if "worldTokens.Renderer:setSelected(nil)" not in arm_handler:
+            errors.append("studio retest harness: Arm Token Pick must clear only local Renderer selection")
+        if arm_handler.find("tokenPickArmed = true") > arm_handler.find("worldTokens.Renderer:setSelected(nil)"):
+            errors.append("studio retest harness: arm state must be explicit before local selection clear")
+        if re.search(r'pass\s*\(\s*"(?:token-pick|selection-highlight)"', arm_handler):
+            errors.append("studio retest harness: arm handler cannot directly PASS token-pick or Highlight")
+        for forbidden in ("PickResolved:Fire", ":_pick(", "submit("):
+            if forbidden in arm_handler:
+                errors.append(f"studio retest harness: arm handler cannot invoke {forbidden}")
+        if re.search(r"\b(?:selectedCharacter|ownerUserId|controllerUserId|role)\s*=(?!=)", arm_handler):
+            errors.append("studio retest harness: arm handler cannot mutate authority fields")
+        if re.search(r"client\.Replica(?:\.payload)?[^\n]*=(?!=)", arm_handler):
+            errors.append("studio retest harness: arm handler cannot mutate Replica state")
+
+    if world_acceptance.count("worldTokens.Renderer:setSelected(nil)") != 1 or (
+        arm_handler and "worldTokens.Renderer:setSelected(nil)" not in arm_handler
+    ):
+        errors.append("studio retest harness: local selection clear must exist only in the manual arm handler")
+
+    pick_start = world_acceptance.find("worldTokens.PickResolved:Connect(function(")
+    pick_end = world_acceptance.find("worldTokens.SelectionChanged:Connect(function(", pick_start)
+    pick_handler = world_acceptance[pick_start:pick_end] if pick_start >= 0 and pick_end >= 0 else ""
+    pick_markers = {
+        "realArmedPick": "armed real-pick guard",
+        'method == "ray"': "real ray-pick method guard",
+        'pass("token-pick"': "token-pick PASS from PickResolved",
+        "worldTokens.Renderer:isSelectedHighlighted(actorId)": "actual Highlight observation",
+        'pass("selection-highlight"': "selection-highlight PASS from PickResolved",
+    }
+    for marker, description in pick_markers.items():
+        if marker not in pick_handler:
+            errors.append(f"studio retest harness: missing {description}")
+    for pass_id in ("token-pick", "selection-highlight"):
+        matches = list(re.finditer(rf'pass\s*\(\s*"{pass_id}"', world_acceptance))
+        if len(matches) != 1 or not pick_handler or not (pick_start <= matches[0].start() < pick_end):
+            errors.append(f"studio retest harness: {pass_id} may PASS only from real PickResolved")
+
     context_markers = {
         'id = "esc-gameplay-noop"': "ESC gameplay no-op summary",
         'id = "q-one-context-back"': "Q one-context Back summary",
@@ -476,6 +536,8 @@ def validate_studio_retest_harness_texts(
 
     if "mouse-middle-orbit" in world_runtime:
         errors.append("studio retest harness: fake middle-button Pan compatibility signal is forbidden")
+    if world_runtime.count("self.Input:ensureSemanticSelection()") < 2:
+        errors.append("studio retest harness: Production ensureSemanticSelection must remain at startup and Replica change")
 
     resolver_markers = {
         'if membershipRole(allDomains, playerId) == "dm" then\n\t\treturn true': "DM controls scene actors",
@@ -502,6 +564,8 @@ def validate_studio_retest_harness_texts(
         errors.append("studio retest harness: Production controllable-target selection precedence drifted")
     elif left_click.index(selection_marker) > left_click.index("local actions = self:resolveActionsForTarget(target)"):
         errors.append("studio retest harness: controllable-target selection must precede default action resolution")
+    if left_click.count("self:_pick(") != 2:
+        errors.append("studio retest harness: Production _leftClick pick reachability semantics drifted")
 
     rules_markers = {
         "`planning/rvtt-remake`": "general planning branch default",
@@ -735,6 +799,82 @@ def run_self_tests(matrix: dict, manifest: dict) -> list[str]:
             rules,
             "G1 cannot retain Dummy combat setup or instructions",
         ),
+        (
+            world.replace(
+                "armPickButton.Activated:Connect(function()",
+                "missingArmButton.Activated:Connect(function()",
+                1,
+            ),
+            context,
+            runtime,
+            rules,
+            "selection clear requires an explicit user arm handler",
+        ),
+        (
+            world.replace("\tlocal cleared = worldTokens.Renderer:setSelected(nil)\n", "", 1).replace(
+                "local function prepareScene()",
+                "worldTokens.Renderer:setSelected(nil)\n\nlocal function prepareScene()",
+                1,
+            ),
+            context,
+            runtime,
+            rules,
+            "local selection clear must exist only in the manual arm handler",
+        ),
+        (
+            world.replace(
+                "\ttokenPickArmed = true\n",
+                '\tpass("token-pick", "fake arm PASS")\n\ttokenPickArmed = true\n',
+                1,
+            ),
+            context,
+            runtime,
+            rules,
+            "arm handler cannot directly PASS token-pick or Highlight",
+        ),
+        (
+            world.replace(
+                "\tlocal cleared = worldTokens.Renderer:setSelected(nil)\n",
+                "\tworldTokens.PickResolved:Fire(heroActorId, \"ray\", true, \"fake\")\n"
+                "\tlocal cleared = worldTokens.Renderer:setSelected(nil)\n",
+                1,
+            ),
+            context,
+            runtime,
+            rules,
+            "arm handler cannot invoke PickResolved:Fire",
+        ),
+        (
+            world.replace(
+                "\tlocal cleared = worldTokens.Renderer:setSelected(nil)\n",
+                '\tsubmit("session.select_character", { characterId = heroActorId })\n'
+                "\tlocal cleared = worldTokens.Renderer:setSelected(nil)\n",
+                1,
+            ),
+            context,
+            runtime,
+            rules,
+            "arm handler cannot invoke submit(",
+        ),
+        (
+            world.replace(
+                "armPickButton.Activated:Connect(function()\n\tlocal state = currentState()\n",
+                "armPickButton.Activated:Connect(function()\n"
+                '\tlocal state = currentState()\n\tstate.membership.role = "player"\n',
+                1,
+            ),
+            context,
+            runtime,
+            rules,
+            "arm handler cannot mutate authority fields",
+        ),
+        (
+            world,
+            context,
+            runtime.replace("\tself.Input:ensureSemanticSelection()\n", ""),
+            rules,
+            "Production ensureSemanticSelection must remain at startup and Replica change",
+        ),
     ]
     for world_fixture, context_fixture, runtime_fixture, rules_fixture, expected in harness_fixtures:
         fixture_errors = validate_studio_retest_harness_texts(
@@ -773,6 +913,17 @@ def run_self_tests(matrix: dict, manifest: dict) -> list[str]:
                 1,
             ),
             "controllable-target selection precedence",
+        ),
+        (
+            resolver,
+            controller.replace(
+                "\t\treturn\n\tend\n\n\tlocal actions = self:resolveActionsForTarget(target)\n",
+                "\t\treturn\n\tend\n\n"
+                '\tself:_pick(selectedActorId, "acceptance-reclick", target.instance)\n'
+                "\tlocal actions = self:resolveActionsForTarget(target)\n",
+                1,
+            ),
+            "Production _leftClick pick reachability semantics drifted",
         ),
     ]
     for resolver_fixture, controller_fixture, expected in authority_fixtures:

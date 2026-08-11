@@ -125,11 +125,11 @@ title.Parent = panel
 
 local instructions = Instance.new("TextLabel")
 instructions.Position = UDim2.fromOffset(16, 44)
-instructions.Size = UDim2.new(1, -32, 0, 58)
+instructions.Size = UDim2.new(1, -32, 0, 72)
 instructions.BackgroundTransparency = 1
 instructions.Font = Enum.Font.Gotham
 instructions.Text =
-	"Required input: WASD = Pan · Middle-button drag = Orbit · Wheel = Zoom · F or Token Frame = Frame. Then verify token selection and surface movement. 이 Build는 DataStore를 사용하지 않습니다."
+	"WASD = Pan · Middle-button drag = Orbit · Wheel = Zoom · F or Token Frame = Frame. Wait until setup is ready → Arm Token Pick → left-click Hero → verify Highlight. 이 Build는 DataStore를 사용하지 않습니다."
 instructions.TextColor3 = Color3.fromRGB(184, 191, 202)
 instructions.TextSize = 12
 instructions.TextWrapped = true
@@ -138,7 +138,7 @@ instructions.TextYAlignment = Enum.TextYAlignment.Top
 instructions.Parent = panel
 
 local stateLabel = Instance.new("TextLabel")
-stateLabel.Position = UDim2.fromOffset(16, 104)
+stateLabel.Position = UDim2.fromOffset(16, 118)
 stateLabel.Size = UDim2.new(1, -32, 0, 74)
 stateLabel.BackgroundColor3 = Color3.fromRGB(19, 22, 27)
 stateLabel.BorderSizePixel = 0
@@ -155,8 +155,8 @@ stateCorner.CornerRadius = UDim.new(0, 5)
 stateCorner.Parent = stateLabel
 
 local checklist = Instance.new("TextLabel")
-checklist.Position = UDim2.fromOffset(16, 188)
-checklist.Size = UDim2.new(1, -32, 0, 268)
+checklist.Position = UDim2.fromOffset(16, 202)
+checklist.Size = UDim2.new(1, -32, 0, 254)
 checklist.BackgroundColor3 = Color3.fromRGB(19, 22, 27)
 checklist.BorderSizePixel = 0
 checklist.Font = Enum.Font.Code
@@ -200,9 +200,10 @@ local function makeButton(name: string, text: string, x: number, width: number):
 	return button
 end
 
-local prepareButton = makeButton("Prepare", "자동 준비 재실행", 16, 146)
-local frameButton = makeButton("Frame", "Token Frame", 170, 120)
-local summaryButton = makeButton("Summary", "Final Summary", 298, 150)
+local prepareButton = makeButton("Prepare", "자동 준비", 16, 118)
+local armPickButton = makeButton("ArmTokenPick", "Arm Token Pick", 142, 134)
+local frameButton = makeButton("Frame", "Token Frame", 284, 94)
+local summaryButton = makeButton("Summary", "Final Summary", 386, 118)
 
 local terminalResults: { [string]: any } = {}
 local busy = false
@@ -211,6 +212,8 @@ local lastProjectedPosition = "none"
 local lastPickMethod = "none"
 local lastCommandId = "none"
 local moveStartPosition: Vector3? = nil
+local tokenPickArmed = false
+local armedHeroActorId: string? = nil
 
 local function setOperation(message: string, failed: boolean?)
 	operation.Text = message
@@ -431,7 +434,7 @@ local function renderState()
 		then string.format("(%.2f, %.2f, %.2f)", position.X, position.Y, position.Z)
 		else "none"
 	stateLabel.Text = string.format(
-		"revision=%d role=%s character=%s scene=%s\ntoken3D=%s selected=%s pick=%s destination=%s\nposition=%s command=%s",
+		"revision=%d role=%s character=%s scene=%s\ntoken3D=%s selected=%s pick=%s arm=%s destination=%s\nposition=%s command=%s",
 		client.Replica.revision,
 		if type(state.membership) == "table" then tostring(state.membership.role) else "none",
 		tostring(state.characterId),
@@ -439,11 +442,13 @@ local function renderState()
 		if tokenModel ~= nil then "PASS" else "WAIT",
 		tostring(selected),
 		lastPickMethod,
+		if tokenPickArmed then "ARMED" else "WAIT",
 		tostring(worldTokens.Renderer:getDestinationStatus()),
 		lastProjectedPosition,
 		lastCommandId
 	)
 	prepareButton.Active = not busy
+	armPickButton.Active = not busy and tokenModel ~= nil
 	frameButton.Active = not busy and tokenModel ~= nil
 	summaryButton.Active = true
 end
@@ -535,7 +540,28 @@ local function prepareScene()
 	until os.clock() >= deadline
 
 	markStateChecks(state)
-	setOperation("자동 준비 PASS · 실제 카메라 입력과 Token 이동을 확인하세요")
+	setOperation("자동 준비 PASS · Arm Token Pick을 누른 뒤 Hero를 좌클릭하세요")
+end
+
+local function setTokenPickPending(detail: string)
+	summary:pending("token-pick", detail)
+	summary:pending("selection-highlight", detail)
+	refresh()
+end
+
+local function invalidateTokenPickArm(reason: string)
+	if not tokenPickArmed then
+		return
+	end
+	tokenPickArmed = false
+	armedHeroActorId = nil
+	armPickButton.Text = "Re-arm Token Pick"
+	setTokenPickPending("re-arm required: " .. reason)
+	setOperation(
+		"Token Pick 준비가 Replica 선택 복원으로 취소됐습니다 · 다시 Arm 하세요",
+		true
+	)
+	renderState()
 end
 
 local function initializeCameraChecks()
@@ -579,6 +605,36 @@ prepareButton.Activated:Connect(function()
 			initializeCameraChecks()
 		end)
 	end)
+end)
+
+armPickButton.Activated:Connect(function()
+	local state = currentState()
+	local heroActorId = state.characterId
+	local tokenReady = type(heroActorId) == "string"
+		and type(state.membership) == "table"
+		and state.membership.role == "dm"
+		and state.session.phase == "active"
+		and state.scene.activeSceneId == SCENE_ID
+		and type(state.actor) == "table"
+		and worldTokens.Renderer:getTokenModel(heroActorId) ~= nil
+	if not tokenReady or type(heroActorId) ~= "string" then
+		setTokenPickPending("wait for automatic setup, then arm")
+		setOperation("Hero Token 준비가 끝난 뒤 Arm Token Pick을 누르세요", true)
+		renderState()
+		return
+	end
+
+	tokenPickArmed = true
+	armedHeroActorId = heroActorId
+	setTokenPickPending("armed; real left-click on Hero required")
+	local cleared = worldTokens.Renderer:setSelected(nil)
+	if not cleared or worldTokens.Renderer:getSelectedActorId() ~= nil then
+		invalidateTokenPickArm("local renderer selection did not clear")
+		return
+	end
+	armPickButton.Text = "Token Pick Armed"
+	setOperation("Token Pick ARMED · 보이는 Hero Token을 실제 좌클릭하세요")
+	renderState()
 end)
 
 frameButton.Activated:Connect(function()
@@ -636,6 +692,23 @@ end)
 
 worldTokens.PickResolved:Connect(function(actorId, method, selected, hitName)
 	lastPickMethod = tostring(method)
+	local expectedActorId = armedHeroActorId
+	local realArmedPick = tokenPickArmed
+		and type(expectedActorId) == "string"
+		and actorId == expectedActorId
+		and method == "ray"
+	tokenPickArmed = false
+	armedHeroActorId = nil
+	armPickButton.Text = "Arm Token Pick"
+	if not realArmedPick then
+		setTokenPickPending("press Arm Token Pick before the real Hero click")
+		setOperation(
+			"Arm되지 않은 Token Pick은 G1 evidence로 기록하지 않습니다",
+			true
+		)
+		renderState()
+		return
+	end
 	if selected then
 		pass("token-pick", string.format("method=%s hit=%s", tostring(method), tostring(hitName)))
 		if worldTokens.Renderer:isSelectedHighlighted(actorId) then
@@ -648,6 +721,16 @@ worldTokens.PickResolved:Connect(function(actorId, method, selected, hitName)
 		fail("token-pick", string.format("method=%s actor=%s", tostring(method), tostring(actorId)))
 	end
 	renderState()
+end)
+
+worldTokens.SelectionChanged:Connect(function(actorId)
+	if tokenPickArmed and actorId ~= nil then
+		task.defer(function()
+			if tokenPickArmed and worldTokens.Renderer:getSelectedActorId() ~= nil then
+				invalidateTokenPickArm("selection was restored before the real Hero click")
+			end
+		end)
+	end
 end)
 
 worldTokens.MoveRequested:Connect(function(actorId, destination, commandId, baseRevision)
