@@ -216,35 +216,15 @@ RELEASE_ACCEPTANCE
 
 `EnableStudioPersistence=false`, `Persistence 전용 Batch`, `Batch Summary` 같은 기존 Harness 계약은 해당 Acceptance Tooling 내부에서만 계속 유효하다.
 
+Validator는 정책 문서의 특정 문장, Branch 이름, PR 번호, SHA 예시 문자열을 존재 여부로 검사하지 않는다. 실행 가능한 Source·Manifest·Project·권한·입력·상태 전이와 Evidence 계약을 검사한다.
+
 ## 13. 재현 가능한 수동 Runner
 
 Release 또는 정확한 SHA Evidence를 위해 사용자가 로컬 Runner를 실행해야 하는 경우에는 그 시점의 실제 Branch, Project와 HEAD를 조회해 완전한 명령을 제공한다. 과거 Branch 이름을 기본값으로 하드코딩하지 않는다.
 
 과거 문서에서 사용하던 `완전한 다중 행 Windows PowerShell 블록`, `$ErrorActionPreference = "Stop"`, `git switch planning/rvtt-remake`, `git pull --ff-only origin planning/rvtt-remake`, `$head = (git rev-parse --short HEAD).Trim()`, `rojo build slice01-acceptance.project.json --output $output`, `Start-Process $output` 형식은 **historical acceptance bootstrap 예시**이며 현재 기본 개발 흐름이 아니다.
 
-## 14. 레거시 Validator 호환 표식
-
-아래 문자열은 기존 `validate_full_ui_ux_acceptance.py`가 과거 G1 Acceptance 문서 계약의 존재를 확인하기 위해 검색하는 **비권위 호환 표식**이다. 현재 개발 절차로 해석하지 않는다. 실제 개발 절차는 1–13절이 소유한다.
-
-```text
-`planning/rvtt-remake`
-PR-bound Batch Acceptance 예외
-$repository = "Kaetaeru/RVTT"
-$pullRequest = 2
-$branch = "agent/survival-logistics-token-authoring"
-git fetch origin $branch
-git switch $branch
-git pull --ff-only origin $branch
-git rev-parse --short=7 HEAD
-REQUESTED-NON-PERSISTENCE-ACCEPTANCE-PROJECT
-branch나 project를 추론하지 않는다
-current-head Static Gate
-중클릭 Camera Orbit
-```
-
-이 표식의 과거 실행 의미는 Release Regression Tooling에만 남아 있으며 Studio-first 개발을 제한하지 않는다.
-
-## 15. 완료 판정
+## 14. 완료 판정
 
 기능 구현 완료에는 최소 다음이 필요하다.
 
