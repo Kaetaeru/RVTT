@@ -18,6 +18,7 @@ IMPLEMENTING
 → 사용자 최종 수용
 → AUTHORITY_RECONCILIATION
 → Source·Contract·Test 정규화
+→ Promotion Commit
 → ACCEPTED
 → 다음 Checkpoint
 ```
@@ -34,6 +35,7 @@ IMPLEMENTING
 - 아직 확정되지 않은 변경을 Product·ADR의 새로운 영구 규칙처럼 기록하지 않는다.
 - 임시 구현을 다음 Checkpoint의 전제로 사용하지 않는다.
 - Server Authority·Security·Disclosure 같은 비협상 안전 경계는 실험 중에도 우회하지 않는다.
+- 실험 중간 상태를 `checkpoint(...): accept ...` Promotion Commit으로 남기지 않는다.
 
 ## 3. 사용자 수용의 범위
 
@@ -109,7 +111,7 @@ User Decision
 
 ## 7. Canonicalization Gate
 
-사용자 수용 뒤 다음을 모두 끝내야 Checkpoint를 `ACCEPTED`로 바꿀 수 있다.
+사용자 수용 뒤 다음을 모두 끝내야 Promotion Commit을 만들 수 있다.
 
 1. 확정된 사용자 동작을 한 문장으로 기록
 2. Authority Impact Scan 완료
@@ -120,11 +122,59 @@ User Decision
 7. 관련 Focused Test 추가·갱신
 8. 현재 문서·Source 재검색으로 남은 충돌 없음 확인
 9. 사용자 승인되지 않은 Architecture 변경 없음 확인
-10. Checkpoint와 관련 Module을 `ACCEPTED`로 승격
+10. Checkpoint와 관련 Module을 `ACCEPTED` 상태로 준비
 
-하나라도 미완료면 다음 Checkpoint로 넘어가지 않는다.
+하나라도 미완료면 Promotion Commit을 만들거나 다음 Checkpoint로 넘어가지 않는다.
 
-## 8. Reconciliation Report
+## 8. Checkpoint Promotion Commit
+
+Authority Reconciliation이 끝난 최종 상태는 **하나의 명확한 Promotion Commit**으로 고정한다.
+
+Promotion Commit이 포함해야 하는 범위:
+
+```text
+확정 동작에 영향을 받은 현재 Authority 문서
++ Module Contract / Checkpoint 상태
++ greenfield/src Canonical Source
++ Rojo Mapping 변경
++ Focused Test
++ 필요한 현재 Guide / Work Order
+```
+
+관련 없는 다음 기능, 미확정 실험, 임시 디버그 변경을 섞지 않는다.
+
+Commit 제목 형식:
+
+```text
+checkpoint(<CHECKPOINT_ID>): accept <short behavior summary>
+```
+
+예:
+
+```text
+checkpoint(S1_SELECTION): accept primary token selection
+```
+
+Commit 본문에는 최소 다음 Trailer를 남긴다.
+
+```text
+RVTT-Checkpoint: S1_SELECTION
+RVTT-User-Acceptance: CONFIRMED
+RVTT-Authority-Reconciliation: COMPLETE
+RVTT-Unresolved-Conflicts: NONE
+```
+
+규칙:
+
+- Promotion Commit은 해당 Checkpoint의 마지막 정합화 작업이어야 한다.
+- Promotion Commit 생성 전 Module/Checkpoint 상태를 `ACCEPTED`로 준비하고 Focused Test를 통과시킨다.
+- Commit이 성공한 뒤 그 SHA가 해당 Checkpoint의 복원 기준점이 된다.
+- 다음 Checkpoint는 이 Promotion Commit을 기반으로 시작한다.
+- 이미 Push된 실험 이력을 Promotion Commit을 예쁘게 만들기 위해 Force Push/Rebase하지 않는다. Promotion Commit 자체를 명확한 기준점으로 사용한다.
+- Foundation의 순수 기술 Stage Commit과 Checkpoint Promotion Commit을 혼동하지 않는다. `checkpoint(...): accept ...`는 사용자 수용이 완료된 Playable Checkpoint에만 사용한다.
+- Promotion Commit 이후 같은 Checkpoint의 확정 동작을 다시 바꿔야 하면 새 사용자 수용과 새 Reconciliation을 거쳐 새로운 Promotion Commit을 만든다. 이전 Promotion Commit은 역사적 복원점으로 남긴다.
+
+## 9. Reconciliation Report
 
 Codex는 확정 처리 시 짧게 다음을 보고한다.
 
@@ -144,13 +194,16 @@ CANONICALIZED
 TESTED
 - Focused Test
 
+PROMOTION COMMIT
+- checkpoint id / commit SHA
+
 UNRESOLVED CONFLICTS
 - none 또는 사용자 결정이 필요한 항목
 ```
 
-`UNRESOLVED CONFLICTS`가 남아 있으면 `ACCEPTED` 처리하지 않는다.
+`UNRESOLVED CONFLICTS`가 남아 있으면 Promotion Commit을 만들거나 `ACCEPTED` 처리하지 않는다.
 
-## 9. 다음 Checkpoint Gate
+## 10. 다음 Checkpoint Gate
 
 다음 기능 착수 조건은 단순 사용자 만족이 아니다.
 
@@ -159,6 +212,7 @@ UNRESOLVED CONFLICTS
 + Authority Reconciliation 완료
 + Canonical Source 완료
 + Focused Test 완료
++ Promotion Commit 완료
 = ACCEPTED
 ```
 
