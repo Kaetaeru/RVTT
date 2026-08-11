@@ -1,11 +1,14 @@
 # RVTT Full UI·UX Acceptance Contract
 
+- 현재 작업 지위: `RELEASE_REGRESSION_REFERENCE_ONLY · NOT_CURRENT_TASK`
 - 상태: `PHASE_10_SOURCE_STATIC_CANDIDATE_PASS`
 - Matrix: [`full-ui-ux-acceptance-matrix.json`](full-ui-ux-acceptance-matrix.json)
 - Validator: [`tooling/validate_full_ui_ux_acceptance.py`](tooling/validate_full_ui_ux_acceptance.py)
 - Matrix authority snapshot: `82dc4a1071a7147b0f2066f6246eff34259161ee`
 - Runtime evidence: `NOT_EXECUTED`
 - Human UI·Accessibility evidence: `NOT_EXECUTED`
+
+> **현재 실행 지시가 아니다.** 아래 `Phase 10`, `CANDIDATE_PASS`, Batch 상태는 당시 Static/Acceptance 계약의 보존 Snapshot이다. 현재 무엇을 실행할지는 `.github/CODEX-ACTIVE-TASK.md`만 따른다. 이 문서는 Stabilization·Release 회귀 시 참고한다.
 
 ## 판정
 
