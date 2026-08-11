@@ -1,10 +1,16 @@
 # RVTT Planning Agent Addendum
 
-이 문서는 리메이크 기획과 구현명세 작업에서 루트 `AGENTS.md`에 추가로 적용된다. 최신 확정 ADR과 충돌하는 기존 문구는 최신 ADR을 따른다.
+- 상태: `CURRENT`
+- 최종 갱신일: 2026-08-12
+- 적용 범위: 기획, Product, Architecture, UI 정책, Implementation Spec
 
-## 필수 규칙
+이 문서는 루트 `AGENTS.md`에 추가로 적용된다. 현재 작업 순서와 구현 방식은 `docs/remake/CURRENT-WORK-ORDER.md`와 `implementation/roblox/CURRENT-WORK-ORDER.md`가 소유한다.
 
-1. 새 기획 문서와 실질적으로 수정한 기획 문서에는 다음 중 하나를 적는다.
+## 1. 기획 문서의 목적
+
+기획은 구현자가 제품 결정을 추측하지 않게 만드는 것이 목적이다. Roblox Studio에서 몇 분 안에 확인할 수 있는 시각·조작 세부까지 문서에서 미리 고정하는 것이 목적은 아니다.
+
+새 문서와 실질적으로 수정한 기획 문서는 다음 중 하나로 준비도를 표시한다.
 
 ```text
 즉시 구현 명세 가능성: READY
@@ -12,63 +18,59 @@
 즉시 구현 명세 가능성: BLOCKED
 ```
 
-- `READY`: 추가 제품 결정 없이 구현명세 작성 가능
-- `READY_WITH_DEFAULTS`: 구조는 확정됐고 기본 수치·표시값만 남음. 남은 기본값을 함께 기재
-- `BLOCKED`: 구현자가 중요한 동작을 추측해야 함. 차단 이유와 결정 질문을 함께 기재
+- `READY`: 추가 제품 결정 없이 구현·Studio 실험을 시작할 수 있다.
+- `READY_WITH_DEFAULTS`: 구조는 확정됐고 되돌리기 쉬운 기본값만 남아 있다.
+- `BLOCKED`: 구현자가 중요한 제품·Authority 결정을 추측해야 한다.
 
-2. 한 요청에 두 번 이상의 연속 작업 또는 둘 이상의 독립 파일 수정이 필요하면 작업 시작 전에 사용자에게 짧은 체크리스트를 제시한다.
+## 2. 문서에 반드시 고정할 것
 
-3. 문서 완료 전에 준비도를 다시 평가한다. 권위, 상태 전이, 실패, 저장, 재접속, 롤백과 비목표 중 하나라도 중대한 추측이 필요하면 `READY`로 표시하지 않는다.
+- 사용자 목표와 비목표
+- Authority 소유자
+- 중요한 상태 전이
+- 권한·Disclosure 경계
+- 저장·Migration·Rollback이 필요한 의미
+- 실패 시 지켜야 할 불변식
+- 다른 System과의 공개 Contract
 
-## Codex 감독형 검수
+## 3. Studio에서 먼저 검증해도 되는 것
 
-기획, Slice 동기화, 구현명세와 테스트 계획을 실질적으로 변경하는 작업은 [`Codex 감독형 검수·테스트 정책`](docs/remake/product/codex-supervised-review-and-test-policy.md)을 따른다.
+Accepted Product·Architecture 범위를 바꾸지 않는 한 다음은 Studio Implementation에서 빠르게 탐색할 수 있다.
 
-역할:
+- Panel 크기와 배치
+- 정보 밀도
+- Hover·Focus·Animation timing
+- Camera 감각
+- Cursor·Outline·Preview 표현
+- 동일 의미를 전달하는 세부 Interaction 배치
 
-```text
-사용자
-→ 제품 결정·최종 수용
+Studio에서 좋은 결과가 확인되면 관련 UI·Spec 문서를 그 결과에 맞춰 정규화한다.
 
-ChatGPT Lead Reviewer
-→ Codex 명령 작성·권위 해석·Finding 분류·후속 지시
+## 4. 사용자 결정 Gate
 
-Codex Reviewer
-→ 독립 검수·반례·Finding·재현·최소 수정안
-```
+작업 중 더 좋아 보이는 방향이 발견되어 다음 중 하나를 바꿔야 하면 **적용하지 말고 사용자에게 먼저 제안한다.**
 
-필수 규칙:
+- 제품 목표·비목표
+- Accepted ADR
+- Authority 경계
+- 공개 API·Data ownership
+- 핵심 입력 문법
+- 개발·검증 방식 자체
+- Release 범위 또는 우선순위
 
-1. Codex 검수에는 정확한 PR·Target Commit SHA·검수 역할·권위 문서·비범위·출력 형식을 제공한다.
-2. Codex는 직접 PASS·Merge를 결정하지 않는다.
-3. Codex Finding은 `CONFIRMED`, `VALID_RISK`, `DESIGN_DECISION_REQUIRED`, `INTENTIONALLY_QUEUED`, `DUPLICATE`, `FALSE_POSITIVE`, `OUT_OF_SCOPE` 중 하나로 분류한다.
-4. `CONFIRMED` BLOCKER·HIGH Finding은 수정과 Delta Review 전까지 완료 처리하지 않는다.
-5. Codex 검수나 정적 CI를 Roblox Studio·Human Input·Multi-client·Persistence Runtime Evidence로 해석하지 않는다.
-6. 새 Batch Acceptance 또는 Merge Gate에는 Codex 명령문과 Finding Triage를 포함한다.
-7. Codex 접근 실패는 자동 면제가 아니다. `BLOCKED_CODEX_REVIEW_UNAVAILABLE`로 기록하거나 사용자의 명시적 면제를 받는다.
+제안에는 현재 문제, 대안, 영향받는 문서·Source를 짧게 포함한다. 사용자 승인 전에는 Accepted Authority를 수정하거나 구현으로 우회하지 않는다.
 
-명령문 템플릿:
+## 5. Codex 사용
 
-```text
-.github/CODEX-REVIEW-COMMAND-TEMPLATE.md
-```
+Codex Review는 모든 기획 수정의 선행조건이 아니다.
 
-테스트 Gate:
+독립 Review가 특히 필요한 경우:
 
-```text
-implementation/roblox/CODEX-REVIEW-TEST-GATE.md
-```
+- 새 ADR 또는 기존 Accepted ADR 변경
+- 서버 Authority·Security·Disclosure 변경
+- Persistence·Migration·Rollback 변경
+- 여러 Slice의 소유권을 바꾸는 변경
+- Merge·Release 전 고위험 검수
 
-## 최신 고정 전제
+일반 UI 문구, 정리, 기존 Authority 안의 구현 세부는 필요에 따라 Focused Review만 사용한다.
 
-- 5피트 논리 이동 격자를 사용하지 않는다.
-- 권위 이동은 연속 좌표이며 `5 ft = 4 studs` 비율을 사용한다.
-- 전투에서 토큰 WASD 이동을 지원하지 않는다.
-- 초기 지원 기기는 PC 키보드·마우스뿐이다.
-- NPC 대화 시스템을 만들지 않는다.
-- 음악, 환경음, 공격·주문·UI SFX를 만들지 않는다.
-- VFX, 토큰 모션, 카메라와 화면 효과만 PresentationRecipe로 처리한다.
-- 2024 기본 규칙의 플레이어 캐릭터 콘텐츠 전체를 최종 지원 범위로 삼는다.
-- 저장 한도를 넘는 데이터는 manifest와 chunk로 나눈다.
-
-관련 상세 규약은 `docs/remake/AGENTS-PLANNING-ADDENDUM.md`와 ADR-0048~ADR-0052를 따른다.
+과거 Codex Review Command와 Audit은 역사적 Evidence다. `.github/CODEX-ACTIVE-TASK.md`가 가리킬 때만 활성 지시로 취급한다.

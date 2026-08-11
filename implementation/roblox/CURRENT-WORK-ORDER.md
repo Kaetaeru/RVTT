@@ -1,265 +1,124 @@
 # RVTT Roblox Implementation 현재 작업 순서
 
-- 상태: `FULL_UI_UX_ALIGNMENT_REQUIRED`
-- 문서 종류: Production Implementation Work Order
-- 최종 갱신일: 2026-08-10
-- 상위 직접 플레이: [`ADR-0088`](../../docs/remake/decisions/ADR-0088-direct-play-pointer-grammar-and-feedback.md)
-- 구현 직전 UI·UX: [`Full UI·UX Specification`](../../docs/remake/ui/shared/implementation-ready-ui-ux-and-settings-spec.md)
-- UI·UX Gap Audit: [`Implementation Readiness Audit`](../../docs/remake/audits/ui-ux-implementation-readiness-gap-audit.md)
-- UI Review Checklist: [`UI·UX Review Checklist`](../../docs/remake/ui/policies/UI-UX-REVIEW-CHECKLIST.md)
-- Grand Campaign: [`GRAND-ACCEPTANCE-CAMPAIGN.md`](GRAND-ACCEPTANCE-CAMPAIGN.md)
-- Grand Persistence: [`GRAND-PERSISTENCE-MILESTONE.md`](GRAND-PERSISTENCE-MILESTONE.md)
-- Context Input: [`CONTEXTUAL-POINTER-ACTIONS.md`](CONTEXTUAL-POINTER-ACTIONS.md)
-- 실행 테스트 규칙: [`EXECUTION-TEST-RULES.md`](EXECUTION-TEST-RULES.md)
+- 상태: `STUDIO_FIRST_ITERATION`
+- 최종 갱신일: 2026-08-12
+- 상위 작업: [`docs/remake/CURRENT-WORK-ORDER.md`](../../docs/remake/CURRENT-WORK-ORDER.md)
+- 개발·검증 규칙: [`EXECUTION-TEST-RULES.md`](EXECUTION-TEST-RULES.md)
+- Studio MCP: [`ROBLOX-STUDIO-MCP-TEST-POLICY.md`](ROBLOX-STUDIO-MCP-TEST-POLICY.md)
 
 ## 1. 현재 상태
 
-```text
-16개 Slice Production Source
-→ IMPLEMENTED BASELINE
+16개 Slice Production Source와 Full UI·UX 관련 Source는 이미 넓게 존재하고 Static 검증도 상당 부분 완료됐다. 문제는 실제 Studio 결과와 사용자 경험을 너무 늦게 확인했다는 것이다.
 
-Static·Security·Formatter·Lint·Rojo·Luau Type
-→ CURRENT CORE RULES + PRIVATE IMPORT OVERLAY HEAD PASSED
+따라서 현재 작업은 **Acceptance를 더 확장하는 것**이 아니라 기존 Production Source를 Studio에서 직접 열고 실제 제품으로 다듬는 것이다.
 
-Historical Roblox Studio Baseline
-→ VERIFIED
-
-Slice 01 기존 Token Pick·Move·Projection
-→ USER VERIFIED · HEAD 582c1c4 · OLD INPUT CONTRACT
-
-ADR-0088 Direct Play UX
-→ TOP-LEVEL ACCEPTED
-
-Full Screen·Settings·Flow Specification
-→ IMPLEMENTATION READY
-
-기존 Contextual Pointer Actions Source
-→ ADR-0088 ALIGNED · LOCAL STATIC VERIFIED
-
-Grand Persistence Published Runner·Config·CI
-→ EXECUTION CONTRACT READY
-
-현재 작업
-→ Full UI·UX Acceptance Matrix 등록 완료
-→ ADR-0091 Asset Registry + Rules Profile/Release Leak Gate + Core Rules Reader STATIC_VERIFIED
-→ Core Rules private importer + stable document/README/fragment links + raw-path safe downgrade + reciprocal backlinks + generated Rojo overlay + owner-only access positive path STATIC/BUILD VERIFIED
-→ Official 2024 Character Sheet + Dice Slot Reveal Notice FINAL STATIC VERIFIED
-→ ADR-0091 Source/Static final-contract gaps 0, broad gate CANDIDATE_PASS_PENDING_CURRENT_HEAD_ACTIONS
-```
-
-Input·Context Action, Exploration·Encounter HUD, Inventory·Journal·Settings, Entry·Role·Recovery, DM Workspace Source는 현재 계약에 정합화됐다. ADR-0091 Asset Registry, Rules Profile/Release Leak Gate, Core Rules Reader, Official 2024 Character Sheet, Dice Slot Reveal Notice는 정적 확인됐고 Matrix final-contract gap은 0이다. Core Rules private positive path와 public synthetic CI 경계는 기존 계약을 유지하며 실제 private corpus Studio Runtime PASS로 확대하지 않는다. 새 current-HEAD Actions와 ChatGPT broad result 최종 확인 전에는 Studio Retest를 시작하지 않는다.
-
-## 2. 목표 입력 계약
+## 2. 기본 구현 루프
 
 ```text
-선택 전 왼쪽 클릭
-→ 조작 가능 Actor 선택
+A. GitHub 조사
+   관련 Product·ADR·UI·Spec
+   기존 Module·함수·Remote·Schema·Test
 
-선택 후 왼쪽 클릭
-→ 클릭 전에 표시된 기본 행동 요청 또는 Preview
+B. Studio 조사
+   현재 Instance Tree
+   실제 UI·World 상태
+   MCP Capability
 
-오른쪽 클릭
-→ Capability 기반 전체 Action Table
+C. 직접 구현
+   기존 함수 재사용
+   실제 UI·Instance·Script 연결
 
-마우스 휠 클릭 드래그
-→ Camera Orbit
+D. Play
+   Output·상태·화면 확인
 
-Q
-→ 최상위 Context 한 단계만 닫기·취소
+E. 즉시 수정
+   같은 흐름을 다시 Play
 
-E
-→ Preview·선택·승인·확정 실행
+F. 사용자 판단
+   입력 감각·Camera·가독성·흐름
 
-ESC
-→ Gameplay 의미 없음
+G. Canonicalize
+   Studio 결과를 GitHub Source·Rojo Mapping으로 정규화
+   Focused Test 실행
 ```
 
-### 기본 행동 우선순위
+## 3. 현재 우선 작업
+
+현재 `contextual-pointer-actions` 9/9 PASS는 해당 Acceptance Harness 동작 증거로 보존한다. 하지만 이 결과만으로 실제 제품 UX를 완료 처리하지 않는다.
+
+다음 개발 세션에서는 Acceptance 재실행을 기본 작업으로 삼지 않고 **Production Place에서 Exploration 흐름 자체를 직접 확인**한다.
+
+우선 확인할 흐름:
 
 ```text
-조작 가능한 다른 아군
-→ 선택 전환
-
-적대 Actor + Encounter
-→ 기본 공격 또는 지정된 기본 전투 행동
-
-우호·중립 Actor
-→ 대화·도움·상호작용
-
-Exploration Object
-→ 상태 기반 기본 상호작용
-
-Move Surface
-→ movement.commit
+Token 선택
+→ Camera
+→ Move
+→ Context Action
+→ 상호작용
+→ Character Console 진입
 ```
 
-## 3. Full UI 화면 범위
+이 흐름에서 실제 불편·Runtime 결함·UI 문제를 발견하면 즉시 고친다.
 
-### Shared Shell
+## 4. 기능군 진행 순서
 
-- ModeRoleBadge
-- PartyRail·ActiveActorPanel·ActionHotbar
-- Journal·System Entry
-- Tooltip·Toast·AuthorityPrompt·Recovery Layer
+1. Exploration·World Interaction
+2. Encounter·Character Console
+3. Inventory·Journal·Character Sheet·Settings
+4. Entry·Role·Recovery
+5. DM Workspace
+6. ADR-0091 Runtime Surface
+7. ADR-0092 Slice 06→07→11→12→15→16
 
-### Gameplay
+순서는 제품 방향을 바꾸지 않는 범위에서 실제 Studio 의존성에 따라 좁게 조정할 수 있다.
 
-- Exploration HUD·World Action Label·Movement Preview
-- Encounter Initiative·Resource·EndTurn·Reaction·Dice·HP 0
-- Downtime·Rest·Death Save
-- Observer HUD
+## 5. 기존 Acceptance 상태
 
-### Management
+다음은 유지하지만 **현재 개발 선행 Gate가 아니다.**
 
-- Inventory·Equipment·Loot·Transfer·Identification
-- Character Sheet
-- Journal·Ping (문서·Anchor 탐색; 별도 Player Map 없음)
-- Core Rules Reader (검색·stable anchor·lazy chunk·권한 필터)
-- Settings·Bindings·Accessibility
+- `FULL-UI-UX-ACCEPTANCE.md`
+- `slice01-acceptance.project.json`
+- `acceptance-batch.json`
+- `GRAND-ACCEPTANCE-CAMPAIGN.md`
+- `grand-acceptance-manifest.json`
+- Persistence acceptance projects
 
-### Session·DM
-
-- Entry·Character Assignment·Ready·Observer
-- Role Change·Reconnect·Resync·Recovery
-- DM Live Workspace·Player View Preview·Override
-
-## 4. Action Availability 목표
+사용 시점:
 
 ```text
-권한 없음·미인지
-→ UI에 표시하지 않음
-
-권한 있음·현재 불가능
-→ 비활성 색상 버튼
-→ 클릭 차단
-→ Hover·Focus 시 커서 또는 Control 근처에 이유
-
-권한 있음·현재 가능
-→ 활성 버튼
+Focused regression 필요
+Stabilization
+Merge candidate
+Release candidate
 ```
 
-버튼 옆에 가능 여부 문장을 상시 표시하지 않는다.
+## 6. Evidence
 
-## 5. 직접 플레이 피드백 목표
+현재 증거는 용도를 구분한다.
 
-- 클릭 전 기본 행동 이름·Cursor·Outline
-- 이동 경로·거리·남은 이동력·위험 Preview
-- 공격 사거리·범위·영향 대상·비용 Preview
-- 이동·공격·상호작용 후 Actor Selection 유지
-- 턴 전환 시 Camera 강제 이동 금지
-- Pending·Denied·Stale·Projection Reconciliation 구분
-- 일반 거부 사유를 Cursor·대상·관련 HUD 근처에 표시
-- World·Action Table·Hotbar·Turn UI의 Projection Revision 일치
+- 과거 Static PASS: Source 구조 회귀 참고
+- `contextual-pointer-actions` 9/9: 해당 Harness Runtime Observation
+- 과거 Slice 01 16/16: 과거 Contract Historical Evidence
+- 새 Studio Development Play: 현재 UX·Runtime 수정의 즉시 피드백
+- Release Evidence: 기능 안정 후 별도 실행
 
-## 6. 초기 사용자 설정 목표
+Historical Evidence를 현재 변경된 UX 전체 PASS로 사용하지 않는다.
 
-핵심 기본값:
+## 7. 사용자 결정 보호
+
+Studio 구현 중 현재 방향보다 더 나은 제품 방향, 입력 체계, Architecture, 개발 방식이 떠오르면 자동 적용하지 않는다. 사용자에게 현재 문제와 대안을 먼저 설명한다.
+
+## 8. 다음 Gate
+
+현재의 다음 Gate는 Batch가 아니라:
 
 ```text
-accent = gold
-uiScale = 1.00
-textScale = 1.00
-hotbarRows = 2
-partyRailMode = auto
-combatLog = recent
-tooltip = 0.25s
-detailedTooltip = 0.75s
-disabledReason = 0.15s
-motion = full
-turnFocus = soft_notification
-edgePan = false
+Production Studio 직접 실행
+→ Exploration 흐름 실제 확인
+→ 문제 즉시 수정
+→ 사용자 확인
+→ Source 정규화
 ```
 
-전체 Camera·Toast·Accessibility·Persistence 기본값은 상위 Full UI·UX Specification을 따른다.
-
-## 7. 카메라 기준
-
-사용자 제공 CameraManager 감각을 유지한다.
-
-- FOV 50
-- 거리 65, 범위 20–130
-- Pitch 45°, 범위 -85°–85°
-- 회전 감도 0.004
-- Wheel Step 5
-- WASD 55 studs/s
-- Smooth Speed 14
-- 중클릭 드래그 Orbit
-- Wheel Zoom
-- Ctrl+Wheel Pivot Y
-- F·Space Frame
-- 기본 Turn Focus는 Soft Notification
-- Edge Pan 기본 Off
-
-## 8. 기존 Evidence 경계
-
-이전 Context Input Source에서 Static Gate가 통과했으나 새 UI·UX 정합화 뒤 다시 실행해야 한다.
-
-기존 Studio Evidence:
-
-```text
-HEAD 582c1c4
-[RVTT Batch Summary] batch=slice01-world-interaction result=PASS passed=16 failed=0 pending=0 revision=12
-```
-
-검증된 범위는 변경 전 Camera·Token Pick·Move·Projection이다. 새 Pointer, Screen Shell, Settings와 Accessibility의 Runtime Evidence가 아니다.
-
-## 9. Acceptance 재작성 범위
-
-### Input·Direct Play
-
-- ESC Gameplay No-op
-- Q 단계별 Context Pop
-- 아군 좌클릭 선택 전환
-- 기본 행동 클릭 전 표시
-- 활성·비활성 Action Table
-- 비활성 Hover·Focus 사유
-- 권한 밖·미인지 Action 미노출
-- 중클릭 Orbit
-- 이동·공격·범위 Preview
-- Selection 유지·Camera Soft Focus
-- Pending·Denied·Stale·Revision 일관성
-
-### Screen·Preference
-
-- Exploration·Encounter Mode Composition
-- Inventory·Loot·Transfer·Identification
-- Journal Permission·Document Navigation
-- Core Rules Permission·Search·Anchor·Lazy Chunk Navigation
-- Settings 초기값·Reset·Binding Conflict
-- Accent·Scale·Motion 변경 중 Focus·Selection 유지
-- Entry·Role Change·Reconnect·Recovery
-- Player·DM·Observer Projection 분리
-
-## 10. 구현·검증 순서
-
-| 순서 | 상태 | 작업 | 완료 조건 |
-|---:|---|---|---|
-| 1 | DONE | Grand Persistence 실행 계약 | Published Place Runner·Config·Report |
-| 2 | DONE | ADR-0088 상위 기획 | Pointer·Q/E·Feedback·Continuity |
-| 3 | DONE | Full UI·UX 구현 직전 명세 | 화면·Settings·Flow·Acceptance |
-| 4 | DONE | Shared Shell·Preference Foundation | Layer·Mode·System·Theme·Settings Store |
-| 5 | DONE | Input·Context Action 정합화 | Q·ESC·Left·Right·Middle·Availability |
-| 6 | DONE | Exploration·Encounter HUD | Preview·Turn·Reaction·Selection Continuity |
-| 7 | DONE | Inventory·Journal·Settings | 화면·Intent·Permission·Preference |
-| 8 | DONE | Entry·Role·Recovery | Projection rebuild·Reconnect·Error Boundary |
-| 9 | DONE | DM Live Workspace 정합화 | Player Preview·Override·Queue |
-| 10 | CANDIDATE_PASS | Acceptance 확장 | ADR-0091 Source/Static gap 0, 새 current-HEAD Actions 대기 |
-| 11 | BLOCKED | Studio Human Retest | broad result HEAD Actions + ChatGPT 최종 확인 후 실행 |
-| 12 | QUEUED | UI·Accessibility Evidence | Scale·Focus·Contrast·Motion·Screenshot |
-| 13 | QUEUED | DM·Player·Observer Test | 권한별 Projection·Role Change |
-| 14 | QUEUED | Grand Persistence Runtime | Published 7개 Phase |
-| 15 | QUEUED | Performance·Soak | Budget·다중 Client·장시간 Session |
-| 16 | BLOCKED | Slices 13–15 Content | Source Version·Rights·Asset 승인 |
-| 17 | QUEUED | Slice 16 Release Campaign | 전체 Phase·Migration·Runbook Gate |
-
-## 11. 다음 Gate
-
-```text
-ADR-0091 broad current-HEAD Static Gate + Actions
-→ ChatGPT broad result 최종 확인
-→ Exploration·Context Input Studio Retest
-→ Inventory·Journal·Settings Human Evidence
-→ Player·DM·Observer Role·Permission·Recovery Test
-→ UI·Accessibility·Performance Evidence
-→ Grand Persistence Runtime
-```
+기능군이 안정된 뒤에만 해당 영역의 Stabilization Gate를 연다.

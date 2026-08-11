@@ -1,354 +1,235 @@
-# RVTT 실행 테스트 규칙
+# RVTT 개발·실행·검증 규칙
 
 - 상태: `ACTIVE`
-- 채택일: 2026-08-05
-- 최종 갱신일: 2026-08-06
-- 목적: Roblox Studio 게시·실행·수동 확인 횟수를 줄이면서, 한 번의 Acceptance에서 여러 기능과 실패 원인을 함께 검증한다.
+- 최종 갱신일: 2026-08-12
+- 목적: Studio-first 개발과 Release 검증을 분리해 빠른 제품 반복과 재현 가능한 품질 검증을 모두 유지한다.
 
-## 1. 기본 원칙
+## 1. 기본 개발 흐름
 
-수동 Studio 검사는 개별 커밋이나 단일 버그 수정마다 수행하지 않는다.
-
-```text
-여러 관련 기능 구현
-→ 자동 테스트·정적 CI
-→ 구조화된 진단 로그와 Self-check 추가
-→ 하나의 Acceptance Build 생성
-→ 한 번의 사용자 검증
-```
-
-사용자에게 새 Place 게시와 수동 검사를 요청할 수 있는 시점은 명시적인 `Batch Acceptance Gate`뿐이다.
-
-## 2. Batch 단위
-
-하나의 Batch는 서로 연결된 사용자 흐름 또는 기술 Milestone을 완성해야 한다.
-
-권장 범위:
-
-- 하나의 End-to-End 흐름
-- 여러 관련 동작과 Acceptance 항목
-- 정상 경로와 거부 경로
-- 필요한 진단 로그와 자동 회귀 테스트
-- 한 개의 재사용 가능한 Acceptance Place
-
-다음 변경만으로 별도 수동 게시를 요청하지 않는다.
-
-- 단일 입력 수정
-- 로그 한 줄 추가
-- 스타일 또는 문구 수정
-- 작은 타입 경계 수정
-- 자동 테스트로 확인 가능한 Domain 변경
-- CI에서 재현 가능한 Build·Format·Lint 오류
-
-## 3. 중간 검증 책임
-
-사용자 수동 검사 전까지 중간 변경은 다음 자동 Gate가 담당한다.
-
-- Structure·Security·Policy Validator
-- StyLua
-- Selene
-- Production·Test·Multi-client·Persistence·Acceptance Rojo 정적 Build
-- Production·Test Luau Type Analysis
-- Unit·Integration·Security·Recovery Test
-- Windows PowerShell 문서 계약 검사
-
-정적 Persistence Place Build는 계속 수행할 수 있지만, 실제 Studio DataStore 연결·Load·Save·Reconnect 검사는 일반 기능 Build에서 수행하지 않는다.
-
-자동 Gate가 실패한 상태에서는 사용자에게 Studio 검사를 요청하지 않는다.
-
-## 4. 일반 기능 Build와 Persistence Batch 분리
-
-### 일반 기능 Build
-
-`slice01-acceptance.project.json`은 Studio Persistence를 비활성화한다.
+Roblox 기능 개발의 기본은 **Studio-first development**다.
 
 ```text
-EnableStudioPersistence=false
+GitHub Source·함수 책임 조사
+→ Roblox Studio MCP로 현재 Place 조사
+→ 실제 기능을 Studio에서 구현·연결
+→ Development Loop: Play → 관찰 → 수정 → 다시 Play
+→ 사용자 판단이 필요한 부분 확인
+→ GitHub Source로 정규화
+→ Stabilization
+→ Release Acceptance
 ```
 
-일반 기능 Build의 범위:
+개발 중 작은 수정마다 Acceptance Build, 전체 CI, Grand Campaign 또는 사용자의 수동 배치를 선행조건으로 요구하지 않는다.
 
-- 입력
-- 카메라
-- Token 선택·이동
-- Command·Projection
-- UI 상태
-- 메모리 내 Authority 상태
+## 2. Development Loop
 
-일반 기능 Build에서는 다음을 요구하지 않는다.
+한 번에 작은 사용자 흐름 하나를 다룬다.
 
-- Experience 게시
-- DataStore API 연결
-- 저장 로그 대기
-- Stop·Play 재실행
-- 저장 상태 복구 확인
+예:
 
-### Persistence 전용 Batch
+```text
+Token 선택
+Move
+Attack
+Character Console
+Inventory
+Journal
+DM Window
+```
 
-DataStore 검증은 관련 Persistence 변경을 충분히 모은 뒤 `persistence-acceptance.project.json`을 사용해 한 번에 수행한다.
+순서:
 
-Persistence Batch 범위:
+1. 관련 Product·ADR·Source·Test를 읽는다.
+2. 기존 Module과 함수의 책임을 확인한다.
+3. Studio의 현재 Instance Tree와 Runtime 상태를 확인한다.
+4. MCP로 실제 Script·UI·Instance를 연결하거나 수정한다.
+5. Play한다.
+6. Output, 화면, Instance 상태, Server·Client 결과를 확인한다.
+7. 즉시 수정하고 필요한 만큼 반복한다.
+8. 사용자가 판단해야 하는 조작 감각·가독성·흐름은 사용자에게 보여준다.
+
+개발 Play는 빠른 피드백을 위한 관찰이다. Release Evidence가 아니다.
+
+## 3. GitHub와 Studio의 관계
+
+```text
+GitHub = Canonical Source
+Studio = 구현·조립·실행 환경
+Rojo = Source↔DataModel 연결과 재현 도구
+```
+
+- Studio에서 직접 만든 Production 변경은 최종적으로 GitHub Source와 Project Mapping으로 표현한다.
+- Studio에만 존재하는 Script, 필수 Instance, Attribute, 설정에 Production 동작을 의존하지 않는다.
+- GitHub Source만으로 같은 구조를 재구성할 수 있어야 한다.
+- Studio에서 실험 중인 임시 진단 Object는 정규화 전에 제거하거나 명확한 Test 전용 위치로 이동한다.
+
+## 4. Rojo 규칙
+
+Rojo를 적극 사용하되 역할을 개발 Gate와 혼동하지 않는다.
+
+Rojo의 역할:
+
+- Source Tree와 Roblox Service Mapping
+- 필요 시 live sync
+- Clean Source에서 Place 재현
+- CI Build·Sourcemap 검증
+- Test·Acceptance Place 생성
+
+기능이 안정되기 전 매 Play마다 `.rbxlx`를 새로 Build해서 사용자에게 전달할 필요는 없다.
+
+기능을 GitHub에 정규화하거나 Stabilization으로 넘길 때는 관련 Rojo Project가 Clean Source에서 Build되는지 확인한다.
+
+## 5. Codex + Studio MCP
+
+Codex Studio Implementer는 구현 시작 전에 GitHub를 읽는다.
+
+최소 확인:
+
+- 현재 Branch·PR
+- 관련 Authority
+- 대상 Module·함수
+- 직접 연결된 Server/Client 경계
+- 관련 Test
+
+그 뒤 MCP Capability를 확인하고 가능한 범위에서 Studio를 직접 조작한다.
+
+MCP가 제공하지 않는 기능은 추측하지 않는다. 자동화할 수 없는 Mouse·Keyboard 감각이나 시각 판단은 Human Action으로 남긴다.
+
+상세 MCP 규칙은 `ROBLOX-STUDIO-MCP-TEST-POLICY.md`를 따른다.
+
+## 6. Stabilization
+
+사용자가 기능 방향을 받아들이거나 구현이 충분히 안정됐을 때 수행한다.
+
+```text
+Studio 상태를 Source에 정규화
+→ Rojo 재현 확인
+→ Formatter·Lint·Type
+→ Unit·Integration·Security·Disclosure
+→ 변경 영역 Focused Runtime
+→ 필요한 Human 확인
+```
+
+이 단계부터 재현 가능한 결과에는 Branch와 정확한 Commit SHA를 연결한다.
+
+CI가 실패하면 실패 원인을 고치고 관련 검증을 다시 수행한다. 개발 단계의 한 결함 때문에 Grand Campaign 전체를 매번 다시 돌리지 않는다.
+
+## 7. Release Acceptance
+
+다음은 Stabilization 또는 Release에서 사용하는 Gate다.
+
+- Full UI·UX Acceptance Matrix
+- Multi-client DM·Player·Observer
+- Real Transport·Reconnect
+- Persistence·Restart·Outage·Lease
+- Migration·Rollback
+- Accessibility
+- Performance·Soak
+- Grand Acceptance Campaign
+
+이 Gate들은 제품 방향을 탐색하기 위한 개발 UI가 아니다.
+
+Acceptance Harness는 실제 Production 경로의 회귀를 검증하기 위한 도구다. Harness가 사용하기 불편하다고 해서 Product UX를 Harness에 맞추지 않는다.
+
+## 8. Focused Test와 Full Campaign
+
+개발·수정 중:
+
+```text
+변경 영역 Focused Test
+→ 필요한 Focused Studio Play
+```
+
+Release Candidate:
+
+```text
+자동 Gate 전체
+→ 필요한 Human·Multi-client·Persistence
+→ Grand Acceptance Campaign
+```
+
+수정 후 선택 Phase만 재실행해 원인을 빠르게 확인할 수 있다. 전체 Grand Campaign 재실행은 Release Candidate, 대규모 통합 변경 또는 사용자가 요청한 경우에 수행한다.
+
+## 9. Human Test
+
+Human Test가 필요한 대표 항목:
+
+- 실제 Mouse·Keyboard 감각
+- 화면 가독성
+- 정보 계층 이해
+- Camera 감각
+- DM 진행 부담
+- 전투·탐험 흐름
+- 재미와 만족도
+
+Codex와 MCP가 이 판단을 대신하지 않는다. 반대로 Human에게 자동화 가능한 정적·구조 검사를 반복해서 맡기지 않는다.
+
+## 10. Persistence
+
+일반 개발 Play에서는 필요하지 않으면 DataStore를 켜지 않는다.
+
+Persistence 변경을 다룰 때는 별도 안전 환경에서 다음을 검증한다.
 
 - Load·Save
 - Dirty·Flush
-- Stop·Play Restore
-- Reconnect Recovery
+- Restart Restore
+- Reconnect
 - Migration
 - Conflict·Failure Recovery
-- 필요한 경우 실제 Experience 게시
+- Lease·Fence
 
-일반 기능 PASS는 Persistence PASS를 의미하지 않는다. 두 Gate의 Evidence는 분리해서 기록한다.
+현재 `persistence-acceptance.project.json`과 관련 Runner는 Release/Stabilization Tooling으로 유지한다.
 
-## 5. WASD 입력 소유권
+## 11. Evidence
 
-WASD Character 이동 모드가 비활성화된 동안에는 World Camera가 WASD를 사용해 카메라를 이동한다.
-
-```text
-W → 카메라 전진
-A → 카메라 좌측 이동
-S → 카메라 후진
-D → 카메라 우측 이동
-```
-
-WASD Character 이동 모드가 활성화되면 해당 모드 소유자는 다음 계약을 호출한다.
-
-```lua
-worldTokens.Camera:setMovementModeActive(true)
-```
-
-이때 Camera는 눌린 WASD 상태를 해제하고 입력을 Character 이동 모드로 전달한다. 이동 모드 종료 시 다음을 호출한다.
-
-```lua
-worldTokens.Camera:setMovementModeActive(false)
-```
-
-TextBox에 포커스가 있을 때도 Camera는 WASD를 소비하지 않는다.
-
-## 6. 사용자에게 제공하는 Windows PowerShell Build 형식
-
-사용자가 실행할 수 있는 유일한 기본 제공 형식은 저장소를 직접 갱신하고 정확한 Head를 검사하는 완전한 다중 행 Windows PowerShell 블록이다.
-
-다음 형식을 그대로 사용한다.
-
-```powershell
-$ErrorActionPreference = "Stop"
-
-Get-Process RobloxStudioBeta -ErrorAction SilentlyContinue |
-    Stop-Process -Force
-
-$repo = Join-Path $HOME "RVTT"
-$roblox = Join-Path $repo "implementation\roblox"
-$output = Join-Path $env:TEMP "RVTT-<BUILD-NAME>-<EXPECTED-HEAD>.rbxlx"
-
-Set-Location $repo
-
-git fetch origin
-git switch planning/rvtt-remake
-git pull --ff-only origin planning/rvtt-remake
-
-$head = (git rev-parse --short HEAD).Trim()
-Write-Host "현재 Head: $head"
-
-if ($head -ne "<EXPECTED-HEAD>") {
-    throw "예상 Head는 <EXPECTED-HEAD>이지만 현재 Head는 $head입니다."
-}
-
-Set-Location $roblox
-
-Remove-Item $output -Force -ErrorAction SilentlyContinue
-rojo build slice01-acceptance.project.json --output $output
-
-Start-Process $output
-```
-
-필수 규칙:
-
-- `$repo = Join-Path $HOME "RVTT"`를 사용한다.
-- `planning/rvtt-remake` 브랜치를 fetch·switch·pull한다.
-- 매 Build마다 정확한 7자리 Head를 검사한다.
-- 결과 파일명에 기능명과 Head를 포함한다.
-- 기본 Project는 `slice01-acceptance.project.json`이다.
-- 사용자가 요청하지 않는 한 한 줄 명령으로 축약하지 않는다.
-- 원격 `Invoke-Expression`, 중첩 `powershell -Command`, 인수형 Runner만 단독으로 제공하지 않는다.
-- 코드 블록 일부가 아니라 처음부터 끝까지 실행 가능한 전체 블록을 제공한다.
-
-Persistence 전용 Batch일 때만 Project와 출력 이름을 명시적으로 다음처럼 바꾼다.
+Evidence Class를 구분한다.
 
 ```text
-Project → persistence-acceptance.project.json
-Output  → RVTT-persistence-batch-<EXPECTED-HEAD>.rbxlx
+DEVELOPMENT_OBSERVATION
+STATIC
+UNIT_INTEGRATION
+STUDIO_STABILIZATION
+HUMAN_UI_UX
+MULTI_CLIENT
+PERSISTENCE
+PERFORMANCE_SOAK
+RELEASE_ACCEPTANCE
 ```
 
-### PR-bound Batch Acceptance 예외
+- 실행하지 않은 Class를 PASS로 기록하지 않는다.
+- 과거 SHA의 Runtime 결과를 변경된 경로에 자동 재사용하지 않는다.
+- Development Observation은 빠른 의사결정에 사용할 수 있지만 Merge·Release Evidence로 승격하려면 정확한 Target SHA와 재현 범위를 기록한다.
 
-`planning/rvtt-remake`는 계속 일반 Build의 기본 예시다. 단, active coordinator task가 정확한 repository, Pull Request, branch, 검증된 target/result HEAD와 non-persistence acceptance project를 모두 지정한 경우에만 PR-bound Batch 예외를 사용할 수 있다.
+## 12. 기존 Acceptance Tooling
 
-```powershell
-$repository = "Kaetaeru/RVTT"
-$pullRequest = 2
-$branch = "agent/survival-logistics-token-authoring"
-$expectedHead = "<EXPECTED-7-CHAR-HEAD>"
-$project = "<REQUESTED-NON-PERSISTENCE-ACCEPTANCE-PROJECT>"
+다음은 삭제하지 않고 Release·Regression Tooling으로 유지한다.
 
-git fetch origin $branch
-git switch $branch
-git pull --ff-only origin $branch
+- `slice01-acceptance.project.json`
+- `acceptance-batch.json`
+- `FULL-UI-UX-ACCEPTANCE.md`
+- `grand-acceptance-manifest.json`
+- `GRAND-ACCEPTANCE-CAMPAIGN.md`
+- `tooling/run-studio-acceptance-batch.ps1`
+- `tooling/run-grand-acceptance.ps1`
 
-$head = (git rev-parse --short=7 HEAD).Trim()
-if ($head -ne $expectedHead) {
-    throw "PR #$pullRequest $repository expected Head $expectedHead but found $head"
-}
+기존 `Batch Acceptance Gate`는 **개발 시작 조건이 아니다.** Stabilization 또는 Release에서 필요한 범위만 활성화한다.
 
-rojo build $project --output (Join-Path $env:TEMP "RVTT-PR$pullRequest-$head.rbxlx")
-```
+`EnableStudioPersistence=false`, `Persistence 전용 Batch`, `Batch Summary` 같은 기존 Harness 계약은 해당 Acceptance Tooling 내부에서만 계속 유효하다.
 
-필수 경계:
+## 13. 재현 가능한 수동 Runner
 
-- coordinator가 지정하지 않은 branch나 project를 추론하지 않는다.
-- 정확한 7자리 result HEAD가 아니면 Build하지 않는다.
-- PR-bound 예외는 Persistence project에 사용하지 않는다.
-- current-head Static Gate와 필수 Actions가 완료되지 않았으면 이 예외를 열지 않는다.
-- 이 예외도 처음부터 끝까지 실행 가능한 전체 Windows PowerShell 블록으로 사용자에게 제공한다.
+Release 또는 정확한 SHA Evidence를 위해 사용자가 로컬 Runner를 실행해야 하는 경우에는 그 시점의 실제 Branch, Project와 HEAD를 조회해 완전한 명령을 제공한다. 과거 Branch 이름을 기본값으로 하드코딩하지 않는다.
 
-## 7. 진단 로그 규칙
+과거 문서에서 사용하던 `완전한 다중 행 Windows PowerShell 블록`, `$ErrorActionPreference = "Stop"`, `git switch planning/rvtt-remake`, `git pull --ff-only origin planning/rvtt-remake`, `$head = (git rev-parse --short HEAD).Trim()`, `rojo build slice01-acceptance.project.json --output $output`, `Start-Process $output` 형식은 **historical acceptance bootstrap 예시**이며 현재 기본 개발 흐름이 아니다.
 
-각 Batch는 실패 원인을 한 번의 실행으로 분리할 수 있는 로그를 포함한다.
+## 14. 완료 판정
 
-로그 형식:
+기능 구현 완료에는 최소 다음이 필요하다.
 
-```text
-[RVTT <Subsystem>] event=<event> key=value key=value
-```
+1. Studio에서 목표 사용자 흐름이 실제 동작한다.
+2. Production 변경이 GitHub Source에서 재현된다.
+3. 관련 Focused Test가 통과하거나 미실행 이유가 기록된다.
+4. 서버 Authority·Permission·Disclosure 경계를 유지한다.
+5. 후속 Release Gate가 필요한 경우 명확히 기록한다.
 
-일반 기능 Batch 필수 항목:
-
-- Boot Runtime Mode
-- Command 제출·승인·거부·Revision
-- 입력 대상과 해석 결과
-- Projection 생성·갱신·제거 요약
-- 최종 Batch Summary의 PASS·FAIL 항목
-
-Persistence Load·Save·Restore 로그는 Persistence 전용 Batch에서만 필수다.
-
-Render frame이나 반복 Raycast 같은 고빈도 경로의 무제한 출력은 금지한다. 지속 입력은 한 입력 세션당 최초 성공 또는 최종 요약만 기록한다.
-
-## 8. Acceptance Harness 규칙
-
-Acceptance Harness는 다음 기능을 제공한다.
-
-- 실제 Production Command·Projection 경로 사용
-- 단계별 수동 버튼보다 가능한 한 자동 준비 사용
-- 한 화면에서 전체 Batch 상태와 실패 항목 표시
-- 실제 사용자 입력을 받은 뒤에만 입력 Check PASS
-- 최종 `PASS` 또는 실패 항목 목록 출력
-- 테스트 전용 Flag·Board·Camera·Diagnostics를 Production 구성과 분리
-
-일반 Acceptance Harness는 Persistence를 사용하지 않는다. Persistence 전용 Harness만 실제 Production Persistence 경로를 사용한다.
-
-## 9. 현재 Slice 01 World Interaction Batch
-
-현재 일반 기능 Batch 범위:
-
-```text
-3D Token Projection
-→ 화면·월드 좌표 기반 Token Picking
-→ Raycast 실패 시 Screen-space Picking Fallback
-→ 선택 Highlight·선택 상태 표시
-→ Board Destination 표시
-→ 서버 권위 movement.commit
-→ Command Receipt·Revision 진단
-→ 중클릭 Camera Orbit
-→ WASD Camera Pan · Character 이동 모드 비활성 시
-→ Mouse Wheel Zoom
-→ F·Token Frame
-→ 최종 Batch Summary
-```
-
-현재 Batch에서 제외하고 Persistence 전용 Batch로 이관한 항목:
-
-```text
-DataStore 연결
-Persistence Save
-Stop·Play Restore
-Reconnect Recovery
-Migration·Conflict Recovery
-```
-
-## 10. 완료 판정
-
-일반 기능 Batch는 다음 조건을 모두 만족해야 수동 Gate로 이동한다.
-
-```text
-관련 기능 구현 완료
-자동 회귀 테스트 추가
-진단 로그와 최종 Summary 추가
-DataStore 비활성 Acceptance Project 적용
-Implementation·Documentation CI PASS
-검증 Head 고정
-전체 Windows PowerShell Build 블록 준비
-```
-
-Persistence Batch는 별도 Gate와 별도 Summary로 판정한다.
-
-## 11. Grand Acceptance Campaign
-
-개별 Batch 실행은 Grand Campaign Phase로 흡수한다.
-
-```text
-여러 Slice·복구·보안 변경 축적
-→ Grand Manifest에 Phase 등록
-→ 자동 Gate 전체 PASS
-→ PowerShell 실행 1회
-→ 여러 Studio Phase 순차 실행
-→ 모든 실패 수집
-→ JSON·Markdown 통합 Report
-```
-
-Grand Campaign은 하나의 Studio Play 세션이 아니다. 하나의 PowerShell Process가 필요한 Place를 모두 Build하고 Studio Phase를 순서대로 시작한다. 사용자가 각 Phase를 끝내고 Studio를 닫으면 다음 Phase가 자동으로 시작된다.
-
-핵심 규칙:
-
-- 첫 실패에서 Campaign을 중단하지 않는다.
-- Summary가 없는 Phase는 PASS가 아니라 `incomplete`다.
-- 아직 구현되지 않은 Phase는 `blocked`다.
-- `blocked` Phase가 존재하면 전체 결과는 `PARTIAL`이며 Release PASS가 아니다.
-- 일반 기능과 Persistence 결과는 같은 Report에서 별도 Phase로 보존한다.
-- Persistence는 관련 변경을 축적한 Milestone에서만 `-IncludePersistence`로 포함한다.
-- 공식 데이터·권리·Asset 승인이 필요한 Phase는 승인 전까지 실행하지 않는다.
-- 결함은 Phase별 Micro-fix가 아니라 동일 Root Cause별 수정 Batch로 처리한다.
-- 수정 후 선택 Phase만 재실행하지 않고 Grand Campaign 전체를 다시 실행한다.
-
-Grand Campaign 사용자 실행 형식도 완전한 다중 행 Windows PowerShell 블록이어야 한다.
-
-```powershell
-$ErrorActionPreference = "Stop"
-
-Get-Process RobloxStudioBeta -ErrorAction SilentlyContinue |
-    Stop-Process -Force
-
-$repo = Join-Path $HOME "RVTT"
-$runner = Join-Path $repo "implementation\roblox\tooling\run-grand-acceptance.ps1"
-
-Set-Location $repo
-
-git fetch origin
-git switch planning/rvtt-remake
-git pull --ff-only origin planning/rvtt-remake
-
-$head = (git rev-parse --short HEAD).Trim()
-Write-Host "현재 Head: $head"
-
-if ($head -ne "<EXPECTED-HEAD>") {
-    throw "예상 Head는 <EXPECTED-HEAD>이지만 현재 Head는 $head입니다."
-}
-
-& $runner -ExpectedHead $head
-```
-
-DataStore Grand Milestone에서만 마지막 줄을 다음처럼 변경한다.
-
-```powershell
-& $runner -ExpectedHead $head -IncludePersistence
-```
-
-Grand Campaign Runner만 한 줄로 보내지 않는다. 저장소 Update, Branch 이동, 정확한 Head 검사와 Runner 실행이 모두 포함된 전체 블록을 제공한다.
+Release 완료는 별도의 Release Acceptance 결과로 판단한다.

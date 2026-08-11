@@ -1,353 +1,175 @@
-# Roblox Studio MCP Runtime·Playtest 정책
+# Roblox Studio MCP 개발·Runtime 정책
 
-- 상태: `ACTIVE_POLICY_RUNTIME_NOT_CONNECTED_IN_THIS_SESSION`
-- 최종 갱신일: 2026-08-07
-- 상위 정책: [`Codex 감독형 검수·테스트 정책`](../../docs/remake/product/codex-supervised-review-and-test-policy.md)
-- Codex Gate: [`CODEX-REVIEW-TEST-GATE.md`](CODEX-REVIEW-TEST-GATE.md)
+- 상태: `ACTIVE_DEFAULT_DEVELOPMENT_PATH`
+- 최종 갱신일: 2026-08-12
+- 상위 규칙: [`AGENTS.md`](../../AGENTS.md)
 - 실행 규칙: [`EXECUTION-TEST-RULES.md`](EXECUTION-TEST-RULES.md)
 
 ## 1. 목적
 
-Roblox Studio와 MCP를 연결해 ChatGPT가 작성한 Runtime·Playtest 명령을 재현 가능하게 실행하고, Codex가 실행 전 계획과 실행 후 Evidence를 독립 검수하도록 한다.
+Roblox Studio MCP를 RVTT의 **직접 구현·실행·관찰 환경**으로 사용한다. MCP는 Release 테스트만 돌리는 도구가 아니라 Codex가 GitHub의 기존 구조를 이해한 뒤 실제 Studio 결과물을 만들고 빠르게 수정하기 위한 개발 도구다.
 
 ```text
-ChatGPT
-→ Runtime·Playtest 명령 작성
-
-Codex
-→ 실행 전 Source·Scenario·Evidence 계획 검수
-
-Roblox Studio MCP
-→ 자동화 가능한 Setup·Play·Log·Screenshot·State 수집
-
-Human Playtester
-→ 실제 Mouse·Keyboard 입력과 주관적 판단
-
-Codex
-→ 실행 후 Evidence·Claim 검수
-
-ChatGPT
-→ Finding·버그·UX Risk·제품 결정 분류
+GitHub 조사
+→ Studio 조사
+→ 직접 구현
+→ Play
+→ 관찰
+→ 수정
+→ Source 정규화
 ```
 
-MCP는 Human Playtest를 대체하지 않는다. Codex는 Roblox Studio Runtime을 대체하지 않는다.
+## 2. Capability Handshake
 
-## 2. 연결 상태와 Capability Handshake
+Studio 작업 시작 시 실제 제공 Tool을 확인한다. Tool 이름을 미리 있다고 가정하지 않는다.
 
-Studio Runtime을 시작하기 전에 MCP 연결 상태와 실제 Tool Capability를 기록한다.
+확인할 대표 Capability:
 
 ```text
-McpSessionDescriptor
-├─ sessionId
-├─ connectedAt
-├─ clientName
-├─ clientVersion?
-├─ studioVersion?
-├─ placeId?
-├─ universeId?
-├─ availableCapabilities[]
-├─ unavailableCapabilities[]
-├─ connectionScope
-└─ evidenceRoot
+Place·Session 확인
+Instance Tree 읽기
+Instance 생성·수정·삭제
+Script Source 읽기·수정
+Play Start·Stop
+Server·Client Output 읽기
+Attribute·Property 읽기
+Screenshot 또는 화면 상태 확인
+Multi-client 실행 여부
+Local Save·Export 여부
 ```
 
-초기 Capability ID:
+각 항목은 다음 중 하나로 분류한다.
 
 ```text
-studio.open_place
-studio.open_local_file
-studio.start_play_solo
-studio.start_server
-studio.start_clients
-studio.stop_play
-studio.execute_test_entrypoint
-studio.read_output
-studio.clear_output
-studio.capture_screenshot
-studio.capture_instance_snapshot
-studio.read_attributes
-studio.set_test_flag
-studio.save_local_copy
-studio.export_evidence
+MCP_AVAILABLE
+HUMAN_REQUIRED
+UNAVAILABLE
 ```
 
-Capability 이름은 연결된 MCP의 실제 Tool에 맞춰 Mapping한다. 위 목록이 존재한다고 가정하지 않는다.
+없는 Capability를 사용한 것처럼 보고하지 않는다.
 
-필수 Capability가 없으면 다음 중 하나로 분리한다.
+## 3. 구현 전 GitHub 조사
+
+Codex는 Studio를 수정하기 전에 관련 GitHub Source를 읽는다.
+
+필수 확인:
+
+- 현재 Branch·PR·HEAD
+- Product·ADR·UI·Spec Authority
+- 대상 Module과 공개 함수
+- Server Command·Authorization·Projection
+- Remote·Schema·Registry
+- 기존 UI·Controller·Runtime 연결
+- 관련 Test
+
+기존 책임을 찾지 않고 새 Manager, Remote, Registry 또는 병렬 Script를 만들지 않는다.
+
+## 4. Studio 직접 구현
+
+MCP가 허용하는 범위에서 Codex는 Studio에서 직접 다음을 수행할 수 있다.
+
+- 실제 UI Hierarchy 구성
+- Instance Property와 Layout 조정
+- 기존 Production Script 연결
+- Script Source 수정
+- Token·Camera·World Object 구성
+- Test Fixture 구성
+- Play 실행
+- Output·Runtime State 확인
+- 결함 즉시 수정
+
+작업 단위는 작은 사용자 흐름 하나를 권장한다.
 
 ```text
-MCP_AUTOMATED
-HUMAN_MANUAL
-NOT_AVAILABLE
+구현
+→ Play
+→ 확인
+→ 수정
+→ 다시 Play
 ```
 
-`NOT_AVAILABLE` 항목을 통과한 것으로 기록하지 않는다.
+이 과정에 전체 Acceptance Harness나 Grand Campaign을 선행시키지 않는다.
 
-## 3. Runtime Command
+## 5. Studio와 GitHub 동기화
 
-ChatGPT가 만드는 Runtime Command는 저장소에 Versioned Artifact로 둔다.
+Studio는 작업장이고 GitHub는 Canonical Source다.
+
+작업이 안정되면:
+
+1. Studio에서 확정된 Script Source를 Repository의 올바른 Module로 반영한다.
+2. 필요한 Production Instance 구조를 Rojo Project·Source Mapping으로 표현한다.
+3. 임시 Studio-only Object와 우회 코드를 제거한다.
+4. Clean Source에서 Rojo Build 또는 Sync로 재현 가능한지 확인한다.
+5. 관련 Test를 갱신한다.
+
+Studio 파일을 직접 저장한 것만으로 Production 완료 처리하지 않는다.
+
+## 6. 사용자 판단
+
+다음은 사용자에게 직접 확인받을 수 있다.
+
+- 입력 감각
+- Camera 감각
+- UI 크기·가독성
+- 정보 밀도
+- DM 작업 부담
+- 게임 흐름·리듬
+- 재미와 만족도
+
+MCP는 상태를 준비하고 Evidence를 수집할 수 있지만 Human Judgment를 대신하지 않는다.
+
+## 7. 새로운 방향 발견 시
+
+Codex가 구현 중 더 좋은 제품 방향, Architecture, 핵심 UX, 개발 방식 또는 범위 변경을 발견하면 **직접 적용하지 않는다.**
+
+다음을 보고한다.
 
 ```text
-RuntimeTestCommand
-├─ commandId
-├─ targetRepository
-├─ pullRequest
-├─ targetMode
-├─ resolvedTargetSha?
-├─ authorityRefs[]
-├─ projectFile
-├─ placeMode
-├─ requiredCapabilities[]
-├─ optionalCapabilities[]
-├─ serverCount
-├─ clientRoles[]
-├─ setupSteps[]
-├─ automatedActions[]
-├─ humanActions[]
-├─ assertions[]
-├─ expectedLogTokens[]
-├─ forbiddenLogTokens[]
-├─ screenshotCheckpoints[]
-├─ stateSnapshotCheckpoints[]
-├─ timeoutPolicy
-├─ cleanupSteps[]
-└─ evidenceOutputPath
+현재 문제
+제안 방향
+기대 효과
+비용·위험
+영향받는 Authority·Source
 ```
 
-`targetMode` 기본값:
+사용자 승인 후에만 Accepted 문서와 Production 의미를 변경한다.
 
-```text
-CURRENT_PR_HEAD_AT_RUNTIME_START
-```
+## 8. Development Runtime과 Stabilization Runtime
 
-MCP 실행자는 Runtime 시작 직전에 PR HEAD와 Local Checkout HEAD를 비교한다. 일치하지 않으면 실행하지 않는다.
+### Development Runtime
 
-## 4. Preflight Review
+- 빠른 Play와 수정용
+- Commit SHA 고정 필수 아님
+- Focused Observation 허용
+- Evidence Bundle 필수 아님
 
-Runtime 실행 전 Codex는 활성 ChatGPT 명령을 읽고 PR 댓글로 Preflight Finding을 남긴다.
+### Stabilization Runtime
 
-검수 항목:
+- 기능이 Source에 정규화된 뒤 수행
+- 정확한 Branch·SHA 기록
+- 실행 범위와 예상 결과 명시
+- 필요한 Log·Screenshot·State 보존
 
-- Authority·Slice 계약과 테스트 시나리오가 일치하는가
-- 정상 경로와 실패 경로가 모두 있는가
-- Client Intent와 Server Authority를 구분하는가
-- DM·Player·Observer Projection 누출을 검사하는가
-- Retry·Reconnect·Restart·Rollback이 필요한가
-- Human Input을 메서드 직접 호출로 대체하지 않는가
-- 필요한 MCP Capability와 수동 대체 절차가 명확한가
-- PASS·FAIL Log Token과 State Assertion이 모호하지 않은가
-- Evidence 경로가 정확한 Target SHA에 연결되는가
+### Release Runtime
 
-`CONFIRMED` BLOCKER·HIGH Finding이 있으면 Runtime을 시작하지 않는다.
+- Multi-client, Persistence, Migration, Accessibility, Performance, Grand Acceptance 등 필요한 Gate 수행
+- 실행하지 않은 범위를 PASS로 확대하지 않음
 
-## 5. Runtime 실행
+## 9. 실패 처리
 
-### 5.1 준비
+다음이면 현재 실행을 중단하고 원인을 먼저 고친다.
 
-```text
-활성 PR·HEAD 확인
-→ Clean Checkout 확인
-→ Pin된 Toolchain 확인
-→ Rojo Build
-→ Project·Place Open
-→ Output Clear
-→ Test Flag·Role·Persistence Mode 설정
-```
+- Studio crash
+- unhandled runtime error
+- Authority·Permission leak
+- DataStore mode 오사용
+- MCP disconnect로 결과가 불완전함
+- 수정한 흐름을 재현할 수 없음
 
-### 5.2 실행
+개발 단계에서는 해당 흐름만 빠르게 재실행한다. 전체 Release Campaign 재실행은 Release Candidate에서 수행한다.
 
-MCP가 지원하는 범위에서 다음을 자동화한다.
+## 10. MCP가 없을 때
 
-```text
-Play Solo 또는 Server Start
-→ Client 역할 연결
-→ Test Entrypoint 실행
-→ Runtime 상태 대기
-→ Log Token 수집
-→ Screenshot·Instance Snapshot
-→ Stop·Cleanup
-```
+MCP 연결이 없으면 GitHub Source + Rojo + 일반 Studio 실행으로 작업할 수 있다. 다만 MCP로 Studio를 직접 확인했다고 주장하지 않는다.
 
-실제 Mouse·Keyboard·Focus·Drag·Hover·가독성 검사가 필요한 단계는 Human Action으로 남긴다.
-
-### 5.3 중단 조건
-
-다음이면 즉시 중단하고 Evidence를 보존한다.
-
-```text
-Target SHA mismatch
-Unexpected Studio crash
-Forbidden log token
-Authority epoch mismatch
-Unhandled error
-Client role disclosure leak
-DataStore mode mismatch
-MCP disconnect
-Timeout
-```
-
-## 6. Evidence Bundle
-
-각 Runtime 실행은 다음 구조를 권장한다.
-
-```text
-implementation/roblox/evidence/<targetSha>/<commandId>/
-├─ run-metadata.json
-├─ capability-handshake.json
-├─ build-manifest.txt
-├─ studio-output.log
-├─ assertions.json
-├─ screenshots/
-├─ state-snapshots/
-├─ human-observations.md
-└─ summary.md
-```
-
-`run-metadata.json` 필수 항목:
-
-```text
-commandId
-targetSha
-branch
-projectFile
-studioVersion
-mcpSessionId
-startedAt
-finishedAt
-serverCount
-clientRoles
-persistenceMode
-result
-```
-
-`result`:
-
-```text
-PASS
-FAIL
-BLOCKED
-PARTIAL
-ABORTED_STALE_HEAD
-```
-
-Evidence Bundle에 Credential, Private Rulebook 본문, 실제 사용자 Save Data와 공개하면 안 되는 Asset 원문을 넣지 않는다.
-
-## 7. Post-runtime Review
-
-Runtime 종료 후 Codex는 Evidence Bundle과 Runtime Command를 검수하고 PR 댓글을 남긴다.
-
-검수 항목:
-
-- Evidence의 Target SHA·Project·Session이 일치하는가
-- PASS Summary가 실제 Assertion·Log와 일치하는가
-- Forbidden Token이나 누락된 Client Role을 숨기지 않았는가
-- Screenshot이 주장한 상태를 실제로 보여주는가
-- Human Action과 MCP Automated Action이 구분됐는가
-- 테스트하지 않은 Persistence·Multi-client·Performance를 PASS로 확대하지 않았는가
-- 실패 시 재현 절차와 첫 Root Cause가 보존됐는가
-
-Codex Post-runtime 결과는 다음 Marker를 사용한다.
-
-```text
-<!-- RVTT_CODEX_REVIEW_RESULT -->
-reviewPhase: POST_RUNTIME
-```
-
-## 8. Playtest Command
-
-Playtest는 Runtime Test보다 넓은 Human Judgment를 다룬다.
-
-```text
-PlaytestCommand
-├─ commandId
-├─ targetSha
-├─ campaignFixture
-├─ playerCount
-├─ roleAssignments
-├─ startingSaveOrSeed
-├─ sessionGoals[]
-├─ scenarioBeats[]
-├─ mandatoryInteractions[]
-├─ optionalExploration[]
-├─ bugCaptureProtocol
-├─ uxObservationPrompts[]
-├─ telemetryAndLogs[]
-├─ screenshotMoments[]
-├─ stopConditions[]
-└─ reportTemplate
-```
-
-Playtest Scenario는 스크립트대로 모든 행동을 강제하는 Acceptance와 다르다. 필수 Beat는 재현성을 보장하고, 선택 구간은 실제 사용자의 탐색과 진행 판단을 관찰한다.
-
-## 9. Playtest 단계
-
-```text
-ChatGPT가 Playtest Command 작성
-→ CODEX-ACTIVE-TASK를 PLAYTEST_PREFLIGHT로 설정
-→ 사용자가 Codex에 활성 명령 실행 지시
-→ Codex가 PR 댓글로 Scenario Finding 게시
-→ ChatGPT가 Finding 분류
-→ Studio MCP가 Campaign·Scene·Role·Save 준비
-→ Human Playtester가 실제 세션 수행
-→ MCP가 Log·Screenshot·State Capture
-→ Human Report 작성
-→ CODEX-ACTIVE-TASK를 POST_PLAYTEST로 전환
-→ Codex가 Evidence·Report 검수 댓글 게시
-→ ChatGPT가 결과 분류
-```
-
-## 10. Human Observation 분류
-
-Human Playtest Report는 최소 다음 범주를 지원한다.
-
-```text
-RUNTIME_BUG
-UX_FRICTION
-DM_WORKLOAD
-PLAYER_COMPREHENSION
-VISUAL_READABILITY
-INPUT_FRICTION
-FLOW_PACING
-CONTENT_GAP
-PERFORMANCE_PERCEPTION
-FUN_OR_ENGAGEMENT
-PRODUCT_DECISION_REQUIRED
-```
-
-`FUN_OR_ENGAGEMENT`는 자동 Test PASS·FAIL이 아니라 사용자·플레이테스터의 주관적 Evidence다.
-
-## 11. 문제 해결 Loop
-
-Runtime 또는 Playtest에서 문제가 발견되면 다음 순서를 사용한다.
-
-```text
-Evidence에서 재현 조건 고정
-→ ChatGPT Root Cause 범위 지정
-→ 필요 시 Codex Source Reviewer 활성화
-→ Finding 분류
-→ 최소 Patch
-→ 자동 CI
-→ Codex Delta Review
-→ 동일 Runtime Command 재실행
-→ Evidence Diff
-→ Post-runtime Review
-```
-
-재실행 시 Command ID를 유지하고 Attempt 번호를 증가시키거나 새 Command ID에 이전 Attempt를 연결한다.
-
-## 12. 현재 환경 경계
-
-이 정책 문서를 작성한 ChatGPT 세션에는 Roblox Studio MCP Tool이 연결되어 있지 않다. 따라서 이 변경은 Runtime 연결 계약과 향후 실행 흐름을 정의한 것이며, 현재 Roblox Studio 연결·실행·Playtest PASS를 의미하지 않는다.
-
-실제 MCP가 연결되면 첫 작업은 Capability Handshake와 최소 Smoke Command다.
-
-```text
-Studio Open
-→ 정확한 Place 확인
-→ Play Solo Start·Stop
-→ Output Log Read
-→ Screenshot 1회
-→ Evidence Export
-```
-
-이 Smoke가 성공한 뒤 Multi-client, Persistence와 Human Playtest 자동화를 단계적으로 추가한다.
+MCP 부재는 제품 개발 전체를 Block하지 않지만, MCP에서만 확인하려던 Evidence는 미실행으로 남긴다.

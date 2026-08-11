@@ -1,120 +1,107 @@
 # RVTT Remake 현재 작업 순서
 
-- 상태: `ACTIVE · FULL_UI_ALIGNMENT_WITH_ADR_0092_PHASED_SYNC`
-- 최종 갱신일: 2026-08-06
-- 최신 결정: [`ADR-0092`](decisions/ADR-0092-campaign-survival-logistics-and-dm-authored-actor-tokens.md)
-- Product Scope: [`Campaign Rules·Survival·Authored Actor`](product/campaign-rules-survival-and-authored-actor-scope.md)
-- Survival Runtime: [`campaign-survival-logistics-and-supply-settlement-runtime-contract.md`](architecture/campaign-survival-logistics-and-supply-settlement-runtime-contract.md)
-- Actor Token Runtime: [`dm-authored-actor-token-and-statblock-import-runtime-contract.md`](architecture/dm-authored-actor-token-and-statblock-import-runtime-contract.md)
-- Slice Sync: [`ADR-0092-SLICE-SYNC-PLAN.md`](specs/ADR-0092-SLICE-SYNC-PLAN.md)
-- DM Guide: [`CAMPAIGN-SURVIVAL-AND-ACTOR-TOKEN-AUTHORING.md`](user-guides/dm/CAMPAIGN-SURVIVAL-AND-ACTOR-TOKEN-AUTHORING.md)
-- Supplemental HTML: [`survival-and-token-authoring.html`](user-guides/html/survival-and-token-authoring.html)
+- 상태: `ACTIVE · STUDIO_FIRST_DEVELOPMENT`
+- 최종 갱신일: 2026-08-12
+- 구현 작업 기준: [`implementation/roblox/CURRENT-WORK-ORDER.md`](../../implementation/roblox/CURRENT-WORK-ORDER.md)
 
-## 현재 단계
+## 현재 결정
+
+기존 제품·Architecture·Accepted ADR은 유지한다. 바뀐 것은 **개발 방식**이다.
 
 ```text
-ADR-0088 Direct Play
-→ ACCEPTED
+이전
+대량 Source 구현
+→ Static Gate
+→ Acceptance Build
+→ 뒤늦은 Studio 검증
 
-ADR-0089 Observer-first Surface
-→ ACCEPTED
-
-ADR-0090 Console Matrix·DM Windows
-→ ACCEPTED
-
-ADR-0091 Asset·Official Sheet·Dice·Core Rules
-→ ACCEPTED
-
-ADR-0092 Survival Logistics·DM Actor Token Authoring
-→ ACCEPTED · PHASED SLICE SYNC
-
-High-Fidelity HTML
-→ BASE 33 + SUPPLEMENTAL 6 SCREENS
+현재
+GitHub Authority·Source 조사
+→ Studio MCP 직접 구현
+→ Play·관찰·즉시 수정
+→ 사용자 판단
+→ GitHub Source 정규화
+→ Stabilization·Release 검증
 ```
 
-## 실행 Lane A — 현재 Production 우선순위
+새 제품 방향이나 Architecture 변경 아이디어가 생기면 자동 적용하지 않고 사용자에게 먼저 제안한다.
 
-ADR-0092가 현재 진행 중인 UI·UX 정합화와 기존 Runtime 재검증을 선점하지 않는다.
+## 현재 Product Authority
+
+Accepted 상태를 유지한다.
+
+- ADR-0088 Direct Play
+- ADR-0089 Observer-first Surface
+- ADR-0090 Console Matrix·DM Windows
+- ADR-0091 Asset·Official Sheet·Dice·Core Rules
+- ADR-0092 Survival Logistics·DM Actor Token Authoring
+
+이 문서는 위 제품 결정을 다시 정의하지 않는다.
+
+## 현재 Production 우선순위
+
+현재는 기존 Full UI·UX Source를 **실제 Studio 제품으로 다시 확인하고 다듬는 단계**다.
 
 ```text
-Full UI·UX Source·Acceptance 정합화
-→ Structure·Security·Formatter·Lint·Rojo·Luau Gate
-→ Exploration·Context Input Studio Retest
-→ Player·DM·Observer Role·Recovery Test
-→ UI·Accessibility·Performance Evidence
-→ Grand Persistence Runtime
+1. Studio에서 현재 Production UI·입력·World 흐름 열기
+2. GitHub의 기존 함수·Module 책임과 실제 Studio 결과 대조
+3. 사용자에게 보이는 핵심 흐름을 작은 단위로 직접 수정
+4. Play하며 UX·Runtime 결함 즉시 수정
+5. 받아들인 결과를 GitHub Source로 정규화
+6. 관련 Focused Test·Static 검증
+7. 기능군이 안정되면 Multi-client·Persistence·Accessibility·Performance 검증
 ```
 
-실제 Script 순서는 [`implementation/roblox/CURRENT-WORK-ORDER.md`](../../implementation/roblox/CURRENT-WORK-ORDER.md)가 소유한다.
+기존 `slice01-world-interaction`, `contextual-pointer-actions`, Full UI Acceptance, Grand Campaign은 삭제하지 않는다. 이들은 개발 시작 Gate가 아니라 회귀·Stabilization·Release Tooling이다.
 
-## 실행 Lane B — ADR-0092 단계적 동기화
+## 현재 기능 작업 순서
 
-### 완료
+세부 순서는 Studio에서 실제 결과를 보면서 작은 사용자 흐름 기준으로 조정한다. 기본 우선순위는 다음과 같다.
 
-1. Product Authority 연결
-2. Architecture·User Guide·HTML·Schema·Prompt 계약
-3. 16-Slice Roadmap 책임 분배
-4. Slice 06 Supply Metadata·Allocation·Reservation Delta
-5. Slice 07 Campaign Policy·Settlement·Ledger Delta
+1. Exploration 직접 조작·Camera·Context Action
+2. Character Console·Encounter HUD
+3. Inventory·Journal·Character Sheet·Settings
+4. Entry·Role·Recovery
+5. DM Live Workspace
+6. ADR-0091 실제 Runtime Surface
+7. ADR-0092 Production — Slice 06 → 07 → 11 → 12 → 15 → 16
 
-### 다음 순서
+각 항목은 “문서상 구현됨”이 아니라 **실제 Studio에서 쓸 만한 상태**를 목표로 한다.
+
+## ADR-0092
+
+ADR-0092 Product·Architecture·Slice 06·07 Delta는 유효하다. Production 구현은 기존 Source Mapping을 읽고 Studio-first 방식으로 진행한다.
 
 ```text
-현재 UI·UX Gate 완료
-→ Slice 06 실제 Source Mapping
-→ Supply Metadata·Protection·Source·Reservation 구현
-→ Slice 07 Time·Policy·Settlement·Ledger 구현
-→ Slice 11 Campaign Rules·Preview·Reconcile DM Tool
-→ Slice 12 Requirement·Schema·Catalog Content Platform
-→ Slice 15 Model Registry·Stat Block·Template Pipeline
-→ Slice 16 Full-session Evidence
+Slice 06 Supply Foundation
+→ Slice 07 Policy·Settlement
+→ Slice 11 DM Tool
+→ Slice 12 Content Registry
+→ Slice 15 Actor·Token Pipeline
+→ Slice 16 Integration·Release Evidence
 ```
 
-후속 Slice의 Contract는 선행 Source와 API가 확인된 시점에 하나씩 흡수한다. 11·12·15·16을 지금 동시에 구현 Queue로 올리지 않는다.
+다음 Phase의 제품 의미를 선행 구현 중 임의로 확정하지 않는다.
 
-## ADR-0092 첫 Production Gate
+## 완료 판정
 
-### Slice 06
-
-- Versioned Supply Metadata
-- Quest·Protected·Reserved·Private Item 제외
-- 결정적 부분 Stack Allocation
-- Item·Location Revision 기반 Reservation
-- Retry·Restart·Rollback 중복 소비 방지
-
-### Slice 07
-
-- Narrative·Standard·Survival·Custom Candidate Snapshot
-- Toggle On·Off 비소급 동작
-- 3일 Advance의 일별 Supply Checkpoint
-- Time·Inventory·Shortage Atomic Commit
-- Hidden Consumer·Container 미노출
-- Ledger·Idempotency·Recovery
-
-### 후속 Actor Pipeline
-
-- 빈 Actor Model Catalog Prompt 생성
-- Catalog에 없는 Model ID Validation 거부
-- Script·Remote·미등록 Recipe Import 거부
-- Campaign Draft→Publish→SceneNpc Spawn·Migration
-
-## 판정 경계
+개발 중:
 
 ```text
-Upper Product·Roadmap Sync
-→ COMPLETE
-
-Slice 06·07 Delta Spec
-→ COMPLETE
-
-Slice 11·12·15·16 Contract Absorption
-→ QUEUED
-
-ADR-0092 Production Runtime
-→ NOT IMPLEMENTED
-
-Roblox Studio Evidence
-→ NOT PRODUCED BY THIS DOCUMENT SYNC
+Studio Development Observation
++ GitHub Source 정규화
++ Focused Test
 ```
 
-문서·HTML·Schema·GitHub Static PASS는 Roblox Runtime PASS가 아니다.
+Release 후보:
+
+```text
+Current-SHA CI
++ 필요한 Human UI·UX
++ 필요한 Multi-client
++ 필요한 Persistence·Migration
++ Accessibility·Performance
++ Release Acceptance
+```
+
+한 Evidence를 다른 Evidence로 확대 해석하지 않는다.
