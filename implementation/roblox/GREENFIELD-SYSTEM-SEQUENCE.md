@@ -4,6 +4,7 @@
 - 최종 갱신일: 2026-08-12
 - 적용 범위: 새 `greenfield/` RVTT 구현의 시스템 구축 순서와 기술 안전 경계
 - 기계 가독 계약: [`manifests/module-contracts.json`](manifests/module-contracts.json)
+- 확정 동기화 Gate: [`AUTHORITY-RECONCILIATION-POLICY.md`](AUTHORITY-RECONCILIATION-POLICY.md)
 
 이 문서는 **어떤 시스템을 어떤 순서로 만들지**를 소유한다. 현재 Active Task는 이 순서를 건너뛸 수 없다.
 
@@ -167,7 +168,25 @@ BLOCKED
 - `READY_FOR_USER`가 되면 다음 기능 개발을 멈춘다.
 - 사용자가 마음에 들지 않는다고 하면 같은 Checkpoint를 `IMPLEMENTING`으로 되돌려 즉시 수정한다.
 - 사용자 피드백을 나중 UX backlog로 미루지 않는다.
-- 사용자가 `ACCEPTED` 또는 다음 진행을 명시해야 다음 Checkpoint로 간다.
+- 사용자가 기능을 수용해도 즉시 `ACCEPTED`로 바꾸지 않는다. 먼저 Authority Reconciliation을 수행한다.
+- `ACCEPTED`는 사용자 수용 + 현재 상위 문서 정합화 + Canonical Source + Focused Test가 모두 끝난 상태다.
+
+### Checkpoint 확정 Gate
+
+```text
+READY_FOR_USER
+→ 사용자 수정 요청이면 IMPLEMENTING으로 복귀
+→ 사용자 최종 수용
+→ Authority Impact Scan
+→ 현재 상위 Authority부터 Top-down Reconciliation
+→ Module Contract / Source / Test 정규화
+→ 남은 현재 문서 충돌 없음 확인
+→ ACCEPTED
+```
+
+정확한 절차는 `AUTHORITY-RECONCILIATION-POLICY.md`가 소유한다.
+
+사용자가 화면 동작을 수용했다는 사실만으로 보이지 않는 Architecture·Authority 변경까지 승인받은 것으로 해석하지 않는다. 정합화 중 미승인 Architecture 변경이 필요하면 사용자에게 먼저 제안한다.
 
 ### S1 — Selection
 
@@ -218,7 +237,7 @@ Interaction도 X1과 동일한 Command/Authority/Projection 경로를 재사용�
 
 ## 3. Exploration 이후 제품 시스템 순서
 
-Exploration이 사용자에게 수용된 뒤의 큰 순서는 다음으로 고정한다.
+Exploration이 사용자에게 수용되고 Authority Reconciliation까지 끝난 뒤의 큰 순서는 다음으로 고정한다.
 
 ```text
 P0 Foundation
