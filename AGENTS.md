@@ -29,11 +29,12 @@ Product·ADR
 → Studio Play
 → 사용자 피드백
 → 즉시 수정 또는 수용
-→ 다음 Capability
+→ Authority Reconciliation
 → Canonical Source 정규화
+→ 다음 Capability
 ```
 
-상세 규칙은 `implementation/roblox/GREENFIELD-BUILD-POLICY.md`를 따른다.
+상세 규칙은 `implementation/roblox/GREENFIELD-BUILD-POLICY.md`와 `implementation/roblox/AUTHORITY-RECONCILIATION-POLICY.md`를 따른다.
 
 ## 3. GitHub Source의 구분
 
@@ -78,11 +79,35 @@ CHANGE_REQUESTED
 → 사용자 재검토
 ```
 
-피드백을 나중 UX 정리용 backlog로 미루지 않는다. 사용자가 수용하거나 다음으로 가라고 할 때만 다음 Checkpoint로 이동한다.
+피드백을 나중 UX 정리용 backlog로 미루지 않는다. 사용자가 수용하거나 다음으로 가라고 할 때만 현재 기능을 확정 단계로 보낸다.
 
 단, 피드백을 반영하려면 Product·Accepted ADR·Authority·핵심 Architecture를 바꿔야 하는 경우 자동 적용하지 않고 먼저 사용자에게 대안과 영향을 설명한다.
 
-## 6. Module Contract
+## 6. 사용자 확정 후 Authority Reconciliation
+
+사용자가 `좋다`, `이걸로`, `확정`, `다음`처럼 현재 변경을 최종 수용해도 즉시 Checkpoint를 `ACCEPTED`로 만들지 않는다.
+
+먼저 `implementation/roblox/AUTHORITY-RECONCILIATION-POLICY.md`에 따라 Repository 전체의 현재 Authority를 조사한다.
+
+```text
+사용자 최종 수용
+→ 현재 Product·ADR·Architecture·Spec 충돌 검색
+→ 상위 Authority부터 수정
+→ Module Contract 정합화
+→ greenfield/src 정규화
+→ Focused Test
+→ 남은 현재 문서 충돌 재검색
+→ ACCEPTED
+→ 다음 Checkpoint
+```
+
+- 반복 수정 중에는 Product·ADR 문서를 매번 흔들지 않는다.
+- 확정된 뒤에는 충돌하는 현재 상위 문서를 방치하지 않는다.
+- 과거 Audit·Acceptance·Review·Codex Command는 역사 기록이므로 새 결정에 맞춰 다시 쓰지 않는다.
+- 사용자가 화면 동작을 수용했다는 이유로 보이지 않는 Architecture·Authority 변경까지 승인받은 것으로 해석하지 않는다.
+- 정합화 중 미승인 Architecture 변경이 필요해지면 사용자에게 먼저 보고한다.
+
+## 7. Module Contract
 
 현재 Greenfield Contract는 구현보다 먼저 존재한다.
 
@@ -111,11 +136,11 @@ PLANNED
 → DEPRECATED
 ```
 
-`PLANNED`는 Source가 아직 없어도 된다. `IMPLEMENTED`부터 실제 Source와 Entry Point가 존재해야 한다.
+`PLANNED`는 Source가 아직 없어도 된다. `IMPLEMENTED`부터 실제 Source와 Entry Point가 존재해야 한다. `ACCEPTED`는 사용자 수용뿐 아니라 Authority Reconciliation, Canonical Source, Focused Test까지 완료된 상태다.
 
 private/helper 함수 분해와 모든 `require()` Call Graph는 수동 문서로 복제하지 않는다. 현재 Source에서 읽는다.
 
-## 7. 설계 권위
+## 8. 설계 권위
 
 제품·Architecture 의미가 충돌하면:
 
@@ -129,7 +154,7 @@ private/helper 함수 분해와 모든 `require()` Call Graph는 수동 문서�
 
 Greenfield Contract와 구현이 충돌하면 `CONTRACT_DRIFT`로 보고 임의로 덮지 않는다.
 
-## 8. 사용자 승인 없이 바꾸지 않는 것
+## 9. 사용자 승인 없이 바꾸지 않는 것
 
 - 제품 목표·비목표
 - Accepted ADR
@@ -141,7 +166,7 @@ Greenfield Contract와 구현이 충돌하면 `CONTRACT_DRIFT`로 보고 임의�
 
 기존 결정 안에서의 버그 수정, UX 미세 조정, helper 분해는 즉시 수행할 수 있다.
 
-## 9. 고정 제품 경계
+## 10. 고정 제품 경계
 
 별도 사용자 결정 없이 다음을 바꾸지 않는다.
 
@@ -157,7 +182,7 @@ Greenfield Contract와 구현이 충돌하면 `CONTRACT_DRIFT`로 보고 임의�
 - Private Rule Content와 Public Release Content를 분리한다.
 - 공식 Stat Block·CR을 시스템이 임의로 자동 재조정하지 않는다.
 
-## 10. Evidence
+## 11. Evidence
 
 ```text
 Development Observation
