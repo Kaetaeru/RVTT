@@ -19,11 +19,10 @@ Archive, 과거 Codex Command, PR 댓글, Audit, Acceptance Snapshot에서 현�
 
 현재 Roblox 구현은 `GREENFIELD_ARCHITECTURE_FIRST`다.
 
-**기존 Production Place를 고치는 작업도 아니고, 눈앞의 기능을 최소 Script로 흉내 내는 작업도 아니다.**
-
 ```text
 Product·ADR
 → Greenfield Module Contract
+→ Pre-G0 Workbench Gate
 → System Foundation
 → 첫 Playable Capability
 → Studio Play
@@ -35,18 +34,39 @@ Product·ADR
 → 다음 Capability
 ```
 
-상세 규칙은 `implementation/roblox/GREENFIELD-BUILD-POLICY.md`와 `implementation/roblox/AUTHORITY-RECONCILIATION-POLICY.md`를 따른다.
+상세 규칙은 `implementation/roblox/GREENFIELD-BUILD-POLICY.md`, `implementation/roblox/GREENFIELD-PREFLIGHT.md`, `implementation/roblox/AUTHORITY-RECONCILIATION-POLICY.md`를 따른다.
 
-## 3. GitHub Source의 구분
+## 3. GitHub Source와 Workbench 구분
 
-- `implementation/roblox/manifests/module-contracts.json`: **현재 Greenfield 목표 Architecture 계약**
-- `implementation/roblox/manifests/legacy-module-contracts.json`: 이전 Production Source의 역사적 구조 참고
-- `implementation/roblox/greenfield/src`: 새 Build의 Canonical Source Root
-- 기존 `implementation/roblox/src`: Legacy Source / 재사용 후보
+현재 Greenfield 작업장은 다음으로 고정한다.
 
-Legacy Source는 자동 재사용하지 않는다. 현재 Product·ADR와 Greenfield Contract에 맞고 새 구조를 단순하게 할 때만 opt-in한다.
+- `implementation/roblox/manifests/module-contracts.json`: 현재 Greenfield 목표 Architecture 계약
+- `implementation/roblox/greenfield.project.json`: Greenfield 전용 Rojo Project
+- `implementation/roblox/greenfield/src`: 새 Build Canonical Source Root
+- `implementation/roblox/greenfield/tests`: 새 Build Focused Test Root
+- `implementation/roblox/greenfield-boundary.json`: Greenfield/Legacy 경계와 Legacy Lock
+- `implementation/roblox/src`: Legacy Source / 읽기 전용 참고
+- `implementation/roblox/default.project.json`: Legacy Production Rojo Project / 읽기 전용 참고
 
-## 4. System-first 규칙
+Greenfield 구현 중 Legacy `src`와 `default.project.json`을 직접 수정하지 않는다. 기존 구현에서 재사용 가치가 있으면 읽고 현재 Module Contract에 맞는 Greenfield 경로로 선택적으로 옮긴다.
+
+Legacy Lock을 갱신하거나 Legacy 쓰기 정책을 풀어야 한다면 단순 구현 편의로 처리하지 말고 사용자에게 먼저 제안한다.
+
+## 4. G0 시작 전 Gate
+
+첫 G0 구현 전에 `implementation/roblox/GREENFIELD-PREFLIGHT.md`를 실행한다.
+
+필수:
+
+- `validate_greenfield_boundary.py` PASS
+- `validate_module_contracts.py` PASS
+- `rojo build greenfield.project.json` PASS
+- Studio Place/Session이 Greenfield Workbench인지 확인
+- 실제 MCP Capability Handshake
+
+이 Gate는 Foundation Stage가 아니며 `G0 → G1 → ...` 순서를 바꾸지 않는다.
+
+## 5. System-first 규칙
 
 Bootstrap Script는 Client/Server 하나씩 둘 수 있다. 단, 역할은 Composition Root와 `start()` 호출로 제한한다.
 
@@ -64,13 +84,11 @@ Projection
 Presentation
 ```
 
-기능은 책임 Module을 통해 설명 가능해야 한다. 예를 들어 Move는 Client controller → Command boundary → Server authority → Projection → Client presentation 흐름을 가져야 한다.
+기능은 책임 Module을 통해 설명 가능해야 한다. Architecture를 과도하게 미리 만드는 것도 금지한다. 다음 Playable Checkpoint에 필요한 책임만 먼저 세운다.
 
-Architecture를 과도하게 미리 만드는 것도 금지한다. **다음 Playable Checkpoint에 필요한 책임만 먼저 세운다.**
+## 6. 사용자 피드백이 최우선
 
-## 5. 사용자 피드백이 최우선
-
-사용자가 실제 기능을 테스트한 뒤 `마음에 안 든다`, `바꿔라`, `이상하다`고 하면 현재 Checkpoint 수정이 다음 작업보다 우선한다.
+사용자가 실제 기능을 테스트한 뒤 수정 요청을 하면 현재 Checkpoint 수정이 다음 작업보다 우선한다.
 
 ```text
 CHANGE_REQUESTED
@@ -80,15 +98,11 @@ CHANGE_REQUESTED
 → 사용자 재검토
 ```
 
-피드백을 나중 UX 정리용 backlog로 미루지 않는다. 사용자가 수용하거나 다음으로 가라고 할 때만 현재 기능을 확정 단계로 보낸다.
+피드백을 반영하려면 Product·Accepted ADR·Authority·핵심 Architecture를 바꿔야 하는 경우 자동 적용하지 않고 먼저 사용자에게 대안과 영향을 설명한다.
 
-단, 피드백을 반영하려면 Product·Accepted ADR·Authority·핵심 Architecture를 바꿔야 하는 경우 자동 적용하지 않고 먼저 사용자에게 대안과 영향을 설명한다.
+## 7. 사용자 확정 후 Authority Reconciliation
 
-## 6. 사용자 확정 후 Authority Reconciliation
-
-사용자가 `좋다`, `이걸로`, `확정`, `다음`처럼 현재 변경을 최종 수용해도 즉시 Checkpoint를 `ACCEPTED`로 만들지 않는다.
-
-먼저 `implementation/roblox/AUTHORITY-RECONCILIATION-POLICY.md`에 따라 Repository 전체의 현재 Authority를 조사한다.
+사용자가 현재 변경을 최종 수용해도 즉시 Checkpoint를 `ACCEPTED`로 만들지 않는다.
 
 ```text
 사용자 최종 수용
@@ -103,15 +117,9 @@ CHANGE_REQUESTED
 → 다음 Checkpoint
 ```
 
-- 반복 수정 중에는 Product·ADR 문서를 매번 흔들지 않는다.
-- 확정된 뒤에는 충돌하는 현재 상위 문서를 방치하지 않는다.
-- 과거 Audit·Acceptance·Review·Codex Command는 역사 기록이므로 새 결정에 맞춰 다시 쓰지 않는다.
-- 사용자가 화면 동작을 수용했다는 이유로 보이지 않는 Architecture·Authority 변경까지 승인받은 것으로 해석하지 않는다.
-- 정합화 중 미승인 Architecture 변경이 필요해지면 사용자에게 먼저 보고한다.
-- Promotion Commit이 생성되기 전에는 다음 Checkpoint를 시작하지 않는다.
-- Promotion Commit은 `checkpoint(<CHECKPOINT_ID>): accept <summary>` 형식의 복원 기준점으로 사용한다.
+Promotion Commit은 `checkpoint(<CHECKPOINT_ID>): accept <summary>` 형식의 복원 기준점이다. Promotion Commit이 생성되기 전에는 다음 Checkpoint를 시작하지 않는다.
 
-## 7. Module Contract
+## 8. Module Contract
 
 현재 Greenfield Contract는 구현보다 먼저 존재한다.
 
@@ -140,11 +148,11 @@ PLANNED
 → DEPRECATED
 ```
 
-`PLANNED`는 Source가 아직 없어도 된다. `IMPLEMENTED`부터 실제 Source와 Entry Point가 존재해야 한다. `ACCEPTED`는 사용자 수용뿐 아니라 Authority Reconciliation, Canonical Source, Focused Test, Checkpoint Promotion Commit까지 완료된 상태다.
+`PLANNED`는 Source가 아직 없어도 된다. `IMPLEMENTED`부터 실제 Source와 Entry Point가 존재해야 한다. `ACCEPTED`는 사용자 수용, Authority Reconciliation, Canonical Source, Focused Test, Checkpoint Promotion Commit까지 완료된 상태다.
 
 private/helper 함수 분해와 모든 `require()` Call Graph는 수동 문서로 복제하지 않는다. 현재 Source에서 읽는다.
 
-## 8. 설계 권위
+## 9. 설계 권위
 
 제품·Architecture 의미가 충돌하면:
 
@@ -158,19 +166,21 @@ private/helper 함수 분해와 모든 `require()` Call Graph는 수동 문서�
 
 Greenfield Contract와 구현이 충돌하면 `CONTRACT_DRIFT`로 보고 임의로 덮지 않는다.
 
-## 9. 사용자 승인 없이 바꾸지 않는 것
+## 10. 사용자 승인 없이 바꾸지 않는 것
 
 - 제품 목표·비목표
 - Accepted ADR
 - 핵심 입력 문법
 - Server/Client Authority·Data ownership
 - Module 책임의 실질적인 분리·통합
+- Foundation/Checkpoint 시스템 순서
 - 개발 방식
 - Release 범위·우선순위
+- Legacy Write Lock 정책
 
 기존 결정 안에서의 버그 수정, UX 미세 조정, helper 분해는 즉시 수행할 수 있다.
 
-## 10. 고정 제품 경계
+## 11. 고정 제품 경계
 
 별도 사용자 결정 없이 다음을 바꾸지 않는다.
 
@@ -186,7 +196,7 @@ Greenfield Contract와 구현이 충돌하면 `CONTRACT_DRIFT`로 보고 임의�
 - Private Rule Content와 Public Release Content를 분리한다.
 - 공식 Stat Block·CR을 시스템이 임의로 자동 재조정하지 않는다.
 
-## 11. Evidence
+## 12. Evidence
 
 ```text
 Development Observation

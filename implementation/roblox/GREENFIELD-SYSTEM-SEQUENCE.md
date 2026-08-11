@@ -3,6 +3,7 @@
 - 상태: `ACTIVE · BUILD_ORDER_AUTHORITY`
 - 최종 갱신일: 2026-08-12
 - 적용 범위: 새 `greenfield/` RVTT 구현의 시스템 구축 순서와 기술 안전 경계
+- Pre-G0 Gate: [`GREENFIELD-PREFLIGHT.md`](GREENFIELD-PREFLIGHT.md)
 - 기계 가독 계약: [`manifests/module-contracts.json`](manifests/module-contracts.json)
 - 확정 동기화 Gate: [`AUTHORITY-RECONCILIATION-POLICY.md`](AUTHORITY-RECONCILIATION-POLICY.md)
 
@@ -13,7 +14,23 @@
 1. 임시 Script가 권위를 가져 나중에 재설계하는 일을 막는다.
 2. Architecture만 오래 만들지 않고 가능한 빨리 실제 사용자 기능을 보여준다.
 
-따라서 **의존성이 낮고 보안상 먼저 필요한 경계부터 만들고, Foundation이 Boot되는 즉시 작은 사용자 Checkpoint로 넘어간다.**
+따라서 의존성이 낮고 보안상 먼저 필요한 경계부터 만들고, Foundation이 Boot되는 즉시 작은 사용자 Checkpoint로 넘어간다.
+
+## 0. PRE-G0 Workbench Gate — Stage 아님
+
+`G0_SHARED_CONTRACTS`를 구현하기 전에 `GREENFIELD-PREFLIGHT.md`를 실행한다.
+
+Gate:
+
+- `greenfield.project.json`이 `greenfield/src`만 Rojo Mapping한다.
+- `greenfield/src`와 `greenfield/tests`가 존재한다.
+- Legacy `src`와 `default.project.json`이 Greenfield Lock 이후 변경되지 않았다.
+- `validate_greenfield_boundary.py`와 `validate_module_contracts.py`가 PASS한다.
+- `rojo build greenfield.project.json`이 독립적으로 성공한다.
+- Studio Place/Session이 Greenfield Workbench인지 확인한다.
+- 실제 MCP Capability Handshake를 수행하고 결과를 `MCP_AVAILABLE / HUMAN_REQUIRED / UNAVAILABLE`로 분류한다.
+
+이 Gate는 `G0` 앞에 새 Architecture Stage를 추가하지 않는다. Repository/Studio 작업장을 잘못 잡는 사고를 막기 위한 실행 전 확인이다.
 
 ## 1. 고정 Foundation 순서
 
@@ -27,7 +44,7 @@ G0_SHARED_CONTRACTS
 → S1_SELECTION
 ```
 
-이 순서는 현재 RVTT Greenfield의 고정 기본값이다. 변경하려면 단순 구현 최적화가 아니라 개발 Architecture 변경으로 보고 사용자에게 먼저 제안한다.
+이 순서는 현재 RVTT Greenfield의 고정 기본값이다. 변경하려면 개발 Architecture 변경으로 보고 사용자에게 먼저 제안한다.
 
 ### G0 — Shared Contracts
 
@@ -50,7 +67,7 @@ Gate:
 
 ### G1 — Server Authority Core
 
-네트워크 입력을 받기 **전에** 권위 코어를 만든다.
+네트워크 입력을 받기 전에 권위 코어를 만든다.
 
 ```text
 SessionAuthority
@@ -169,7 +186,7 @@ BLOCKED
 - 사용자가 마음에 들지 않는다고 하면 같은 Checkpoint를 `IMPLEMENTING`으로 되돌려 즉시 수정한다.
 - 사용자 피드백을 나중 UX backlog로 미루지 않는다.
 - 사용자가 기능을 수용해도 즉시 `ACCEPTED`로 바꾸지 않는다. 먼저 Authority Reconciliation을 수행한다.
-- `ACCEPTED`는 사용자 수용 + 현재 상위 문서 정합화 + Canonical Source + Focused Test가 모두 끝난 상태다.
+- `ACCEPTED`는 사용자 수용 + 현재 상위 문서 정합화 + Canonical Source + Focused Test + Promotion Commit이 모두 끝난 상태다.
 
 ### Checkpoint 확정 Gate
 
@@ -181,6 +198,7 @@ READY_FOR_USER
 → 현재 상위 Authority부터 Top-down Reconciliation
 → Module Contract / Source / Test 정규화
 → 남은 현재 문서 충돌 없음 확인
+→ Promotion Commit
 → ACCEPTED
 ```
 
@@ -285,6 +303,7 @@ P0 Foundation
 14. **No Studio-only production truth** — 수용된 동작은 GitHub Source와 Rojo Mapping에서 재현 가능해야 한다.
 15. **Persistence behind a boundary** — Domain/Controller가 DataStore를 직접 호출하지 않는다.
 16. **No premature release gates** — 빠른 Human feedback은 유지하되 Security/Authority 규칙은 Prototype에서도 우회하지 않는다.
+17. **Greenfield/Legacy isolation** — Greenfield 구현은 `greenfield.project.json` + `greenfield/src`를 사용하고 Legacy `src`/`default.project.json`을 직접 수정하지 않는다.
 
 ## 5. 변경 Gate
 
@@ -295,6 +314,7 @@ P0 Foundation
 - Command/Projection 방향
 - Checkpoint 순서
 - Product System P0→P10 순서
-- 위 비협상 안전 규칙
+- 비협상 안전 규칙
+- Greenfield/Legacy 작업장 경계
 
 더 좋은 방향이 발견되면 현재 문제, 제안, 장점, 비용·위험, 영향 범위를 사용자에게 먼저 보고한다.

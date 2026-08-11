@@ -1,21 +1,32 @@
 # RVTT Roblox Implementation 현재 작업 순서
 
-- 상태: `GREENFIELD_ARCHITECTURE_FIRST_CONTEXT`
+- 상태: `PRE_G0_PREPARATION_COMPLETE`
 - 최종 갱신일: 2026-08-12
 - 현재 실행 포인터: [`../../.github/CODEX-ACTIVE-TASK.md`](../../.github/CODEX-ACTIVE-TASK.md)
+- Pre-G0 Gate: [`GREENFIELD-PREFLIGHT.md`](GREENFIELD-PREFLIGHT.md)
 - 시스템 순서 권위: [`GREENFIELD-SYSTEM-SEQUENCE.md`](GREENFIELD-SYSTEM-SEQUENCE.md)
 - Greenfield 정책: [`GREENFIELD-BUILD-POLICY.md`](GREENFIELD-BUILD-POLICY.md)
 - 확정 동기화 Gate: [`AUTHORITY-RECONCILIATION-POLICY.md`](AUTHORITY-RECONCILIATION-POLICY.md)
-- Module Contract: [`MODULE-CONTRACTS.md`](MODULE-CONTRACTS.md)
 
-## 현재 작업
+## 현재 상태
 
-Active Task는 `RVTT-GREENFIELD-FOUNDATION-EXPLORATION-001`이다.
-
-현재 실행 순서는 고정되어 있다.
+Repository 측 G0 사전 준비의 목표 상태는 다음이다.
 
 ```text
-G0 Shared Contracts
+Greenfield Project = implementation/roblox/greenfield.project.json
+Canonical Source   = implementation/roblox/greenfield/src
+Focused Tests      = implementation/roblox/greenfield/tests
+Legacy src         = READ_ONLY_REFERENCE
+G0 Source          = NOT_STARTED
+```
+
+다음 실행의 첫 행동은 `GREENFIELD-PREFLIGHT.md`의 Repository 검증과 Studio/MCP Capability Handshake다. 허용 상태가 확인되면 즉시 `G0_SHARED_CONTRACTS` 구현을 시작한다.
+
+## 고정 구현 순서
+
+```text
+PRE-G0 Workbench Gate
+→ G0 Shared Contracts
 → G1 Server Authority Core
 → G2 Command Transport
 → G3 Projection Pipeline
@@ -25,7 +36,7 @@ G0 Shared Contracts
 → 사용자 확인
 ```
 
-현재 Foundation을 만들 때 이전 monolithic Studio prototype을 Canonical 기준으로 사용하지 않는다.
+`PRE-G0 Workbench Gate`는 Foundation Stage가 아니며 `G0→G5` 순서를 바꾸지 않는다.
 
 ## Exploration Checkpoint
 
@@ -37,52 +48,15 @@ S1 Selection
 → I1 Interaction
 ```
 
-각 Checkpoint는 사용자 수용 전 다음 단계로 넘어가지 않는다. 수정 요청은 현재 Checkpoint에서 즉시 반영한다.
+각 Checkpoint는 사용자 최종 수용 뒤 Authority Reconciliation, Canonical Source, Focused Test, Promotion Commit까지 완료되어야 다음 Checkpoint로 간다.
 
-사용자가 현재 동작을 최종 수용한 뒤에도 바로 다음 Checkpoint로 가지 않는다.
+## 금지
 
-```text
-사용자 최종 수용
-→ Authority Reconciliation
-→ 상위 Product·ADR·Architecture·Spec 정합화
-→ Module Contract / Canonical Source / Focused Test
-→ 현재 문서 충돌 없음 확인
-→ ACCEPTED
-→ 다음 Checkpoint
-```
+- `default.project.json`을 Greenfield 실행 Project로 사용
+- Legacy `src/` 직접 수정
+- 기존 Production Place를 새 Build Baseline으로 사용
+- G0 전에 G1+ 책임 구현
+- G0~G5 순서 건너뛰기
+- 사용자 Checkpoint 건너뛰기
 
-반복 수정 중에는 상위 Authority를 매번 수정하지 않는다. 확정된 뒤에는 충돌하는 현재 Authority를 방치하지 않는다.
-
-## 이후 큰 순서
-
-```text
-Foundation
-→ Exploration
-→ Session·Role·Reconnect·Recovery
-→ Encounter + Character Console
-→ Character Data Surfaces
-→ DM Live Workspace
-→ Rules·Content Runtime
-→ Persistence·Migration·Rollback
-→ ADR-0092
-→ Hardening
-→ Release Acceptance
-```
-
-세부 이유와 기술 안전 경계는 `GREENFIELD-SYSTEM-SEQUENCE.md`가 소유한다.
-
-## 완료 방식
-
-1. Stage dependency가 맞다.
-2. 기능이 명확한 Module 책임을 통해 동작한다.
-3. Studio에서 실제 Play된다.
-4. 사용자 피드백은 다음 작업보다 먼저 반영된다.
-5. 사용자 최종 수용 뒤 Authority Impact Scan과 Top-down Reconciliation이 완료된다.
-6. 수용된 결과는 `greenfield/src`와 Rojo Mapping에서 재현된다.
-7. Module/Checkpoint status가 실제 상태와 일치한다.
-8. 필요한 Focused Test가 있다.
-9. 현재 효력이 있는 문서에 확정 동작과 충돌하는 규칙이 남아 있지 않다.
-
-화면/조작 수용을 미승인 내부 Architecture·Authority 변경의 승인으로 확대하지 않는다. 그런 변경이 필요하면 사용자에게 먼저 제안한다.
-
-Legacy `src/`, Acceptance Harness, Grand Runner와 과거 Evidence는 Reference이며 현재 구현 순서나 PASS를 결정하지 않는다.
+더 좋은 Architecture·순서·Authority 방향이 보이면 적용하지 말고 사용자에게 먼저 제안한다.

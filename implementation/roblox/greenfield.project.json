@@ -1,0 +1,28 @@
+{
+  "name": "RVTT Greenfield",
+  "tree": {
+    "$className": "DataModel",
+    "Players": {
+      "$properties": {
+        "CharacterAutoLoads": false
+      }
+    },
+    "ReplicatedStorage": {
+      "RVTT": {
+        "$path": "greenfield/src/ReplicatedStorage/RVTT"
+      }
+    },
+    "ServerScriptService": {
+      "RVTT": {
+        "$path": "greenfield/src/ServerScriptService/RVTT"
+      }
+    },
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "RVTT": {
+          "$path": "greenfield/src/StarterPlayer/StarterPlayerScripts/RVTT"
+        }
+      }
+    }
+  }
+}

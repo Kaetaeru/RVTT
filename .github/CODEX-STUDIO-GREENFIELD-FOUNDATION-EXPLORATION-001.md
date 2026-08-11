@@ -1,41 +1,66 @@
 # RVTT Studio Greenfield — Ordered Foundation + Exploration 001
 
-- 상태: `ACTIVE · CURRENT_COMMAND`
+- 상태: `ACTIVE · CURRENT_COMMAND · READY_FOR_G0`
 - Build mode: `GREENFIELD_ARCHITECTURE_FIRST`
+- Pre-G0 authority: [`../implementation/roblox/GREENFIELD-PREFLIGHT.md`](../implementation/roblox/GREENFIELD-PREFLIGHT.md)
+- Greenfield project: `implementation/roblox/greenfield.project.json`
 - Sequence authority: [`../implementation/roblox/GREENFIELD-SYSTEM-SEQUENCE.md`](../implementation/roblox/GREENFIELD-SYSTEM-SEQUENCE.md)
 - Acceptance promotion gate: [`../implementation/roblox/AUTHORITY-RECONCILIATION-POLICY.md`](../implementation/roblox/AUTHORITY-RECONCILIATION-POLICY.md)
 - Feedback mode: `TIGHT_USER_FEEDBACK_LOOP`
 
 ## 목표
 
-새 RVTT를 **안전한 dependency 순서로 시스템부터 구축한 뒤** 가장 빠른 사용자 기능인 Selection을 보여준다.
+새 RVTT를 안전한 dependency 순서로 시스템부터 구축한 뒤 가장 빠른 사용자 기능인 Selection을 보여준다.
 
-성공 조건:
-
-1. Foundation Stage가 순서대로 구현된다.
-2. Bootstrap/Manager에 기능을 몰아넣지 않는다.
-3. 네트워크 입력 전에 Server Authority가 존재한다.
-4. Client는 viewer-safe Projection만 읽는다.
-5. S1 Selection을 사용자가 직접 테스트하고 즉시 수정할 수 있다.
-6. 사용자가 최종 수용한 뒤에는 현재 상위 문서·Contract·Source·Test를 정합화하고 Promotion Commit을 만든 후에만 S1을 `ACCEPTED`로 만든다.
+이 Command가 시작될 때 Repository는 G0 구현 직전 상태다. **첫 행동은 G0 코딩이 아니라 Pre-G0 Workbench 확인**이다.
 
 ## 구현 전 읽기
 
 1. `AGENTS.md`
 2. `.github/CODEX-ACTIVE-TASK.md`
-3. `implementation/roblox/GREENFIELD-SYSTEM-SEQUENCE.md`
-4. `implementation/roblox/AUTHORITY-RECONCILIATION-POLICY.md`
-5. `implementation/roblox/GREENFIELD-BUILD-POLICY.md`
-6. `implementation/roblox/MODULE-CONTRACTS.md`
-7. `implementation/roblox/manifests/module-contracts.json`
-8. 관련 Product·ADR·Spec
-9. 필요한 Legacy Source
+3. `implementation/roblox/GREENFIELD-PREFLIGHT.md`
+4. `implementation/roblox/GREENFIELD-SYSTEM-SEQUENCE.md`
+5. `implementation/roblox/AUTHORITY-RECONCILIATION-POLICY.md`
+6. `implementation/roblox/GREENFIELD-BUILD-POLICY.md`
+7. `implementation/roblox/ROBLOX-STUDIO-MCP-TEST-POLICY.md`
+8. `implementation/roblox/MODULE-CONTRACTS.md`
+9. `implementation/roblox/manifests/module-contracts.json`
+10. 관련 Product·ADR·Spec
+11. 필요한 Legacy Source — 읽기 참고만
+
+## 0. PRE-G0 WORKBENCH GATE
+
+G0 Source를 만들기 전에 다음을 실행한다.
+
+```text
+python implementation/roblox/tooling/validate_greenfield_boundary.py
+python implementation/roblox/tooling/validate_module_contracts.py
+rojo build implementation/roblox/greenfield.project.json --output <temp-place>
+```
+
+그 다음 Studio에서:
+
+1. 현재 Place/Session identity를 확인한다.
+2. Legacy Production Place를 Baseline으로 수정하려는 상태가 아닌지 확인한다.
+3. MCP Capability Handshake를 수행한다.
+4. 결과를 `GREENFIELD-PREFLIGHT.md` 형식으로 보고한다.
+
+`READY_FOR_G0` 또는 fallback이 명확한 `DEGRADED_READY`일 때만 G0를 시작한다.
+
+### 절대 사용하지 않는 구현 경로
+
+```text
+implementation/roblox/default.project.json
+implementation/roblox/src/**
+```
+
+이 둘은 Legacy Reference다. 읽을 수는 있지만 Greenfield 구현을 위해 수정하지 않는다.
 
 ## 실행 순서
 
 ### G0_SHARED_CONTRACTS
 
-`CommandEnvelope`, `ProjectionEnvelope`, `WorldContract`를 먼저 구현한다. pure data contract로 유지하고 bounded validation을 넣는다.
+Pre-G0 Gate 통과 후에만 `CommandEnvelope`, `ProjectionEnvelope`, `WorldContract`를 구현한다. pure data contract로 유지하고 bounded validation을 넣는다.
 
 ### G1_SERVER_AUTHORITY_CORE
 
@@ -69,7 +94,7 @@
 
 ### G5_COMPOSITION_BOOT
 
-`ServerApp/Bootstrap`, `ClientApp/Bootstrap`을 조립하고 새 Studio Build를 Boot한다.
+`ServerApp/Bootstrap`, `ClientApp/Bootstrap`을 조립하고 Greenfield Studio Build를 Boot한다.
 
 Foundation Boot Gate:
 
@@ -80,6 +105,7 @@ Foundation Boot Gate:
 - cleanup 가능한 lifecycle
 - DataStore off
 - Studio-only Production logic 없음
+- `greenfield.project.json`에서 clean rebuild 가능
 
 ## S1_SELECTION
 
@@ -118,30 +144,26 @@ S1 status → IMPLEMENTING
 
 ## 사용자가 S1을 최종 수용했을 때
 
-사용자가 `좋다`, `이걸로`, `확정`, `다음`처럼 최종 수용하면 Camera로 가지 않는다. 먼저 Authority Reconciliation과 Promotion을 수행한다.
+Camera로 가지 않는다. 먼저 Authority Reconciliation과 Promotion을 수행한다.
 
 ```text
 사용자 최종 수용
-→ 확정된 Selection 동작을 한 문장으로 기록
-→ 현재 Product·ADR·Architecture·Spec·Policy 전체에서 충돌 검색
+→ 확정된 Selection 동작 기록
+→ 현재 Product·ADR·Architecture·Spec·Policy 충돌 검색
 → 상위 Authority부터 수정 또는 Supersede
 → Module Contract 정합화
 → Studio 결과를 greenfield/src로 정규화
-→ Rojo 재현 확인
+→ greenfield.project.json 재현 확인
 → Focused Test 추가·실행
 → 현재 문서 충돌 재검색
-→ UNRESOLVED CONFLICTS = none 확인
+→ UNRESOLVED CONFLICTS = none
 → S1 / 관련 Module을 ACCEPTED 상태로 준비
-→ checkpoint(S1_SELECTION): accept <summary> Promotion Commit 생성
+→ checkpoint(S1_SELECTION): accept <summary> Promotion Commit
 → Promotion Commit SHA 기록
 → C1_CAMERA 시작
 ```
 
-Promotion Commit은 확정 Authority + Module Contract + Canonical Source + Rojo Mapping + Focused Test를 한 기준점에 묶는다. 다음 기능이나 임시 디버그 변경을 섞지 않는다.
-
-화면/조작 수용을 내부 Architecture·Authority 변경의 승인으로 확대 해석하지 않는다. Reconciliation 중 미승인 Architecture 변경이 필요하면 중단하고 사용자에게 먼저 제안한다.
-
-Historical Audit·Acceptance·Review·과거 Codex Command는 새 결정에 맞춰 다시 쓰지 않는다.
+Promotion Commit에는 다음 기능이나 임시 디버그 변경을 섞지 않는다.
 
 ## 이후 Exploration
 
@@ -173,6 +195,8 @@ MovementController
 
 ## 금지
 
+- Legacy `src` 또는 `default.project.json` 수정
+- 기존 Production Place를 Greenfield Baseline으로 사용
 - LocalScript 하나에 Input/Selection/Camera/Move/UI 결합
 - ServerScript 하나에 Remote/Auth/Mutation/Projection 결합
 - Bootstrap/App gameplay logic
@@ -188,6 +212,6 @@ MovementController
 
 ## Canonicalization
 
-Stage가 실제 구현되면 `greenfield/src`에 정리하고 `module-contracts.json` 상태를 맞춘다.
+Stage가 실제 구현되면 `greenfield/src`에 정리하고 `module-contracts.json` 상태를 맞춘다. Rojo 재현은 `greenfield.project.json`을 기준으로 한다.
 
-사용자 Checkpoint는 사용자 수용만으로 `ACCEPTED` 처리하지 않는다. `AUTHORITY-RECONCILIATION-POLICY.md`의 Top-down 문서 정합화, Canonical Source, Rojo 재현, Focused Test가 끝난 최종 상태를 Promotion Commit으로 고정하고 그 SHA를 복원 기준점으로 기록한 뒤 다음 Checkpoint로 간다.
+사용자 Checkpoint는 사용자 수용만으로 `ACCEPTED` 처리하지 않는다. Top-down 문서 정합화, Canonical Source, Rojo 재현, Focused Test가 끝난 최종 상태를 Promotion Commit으로 고정하고 그 SHA를 복원 기준점으로 기록한 뒤 다음 Checkpoint로 간다.
