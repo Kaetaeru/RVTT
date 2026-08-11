@@ -32,7 +32,7 @@ local summary = BatchSummary.new(BATCH_NAME, {
 	{ id = "camera-wasd-pan", label = "3D Camera WASD Pan" },
 	{ id = "avatar-suppression", label = "Roblox Avatar Suppression" },
 	{ id = "camera-frame", label = "3D Camera Frame" },
-	{ id = "camera-pan", label = "3D Camera Middle-button Pan" },
+	{ id = "camera-orbit", label = "3D Camera Middle-button Orbit" },
 	{ id = "camera-zoom", label = "3D Camera Zoom" },
 	{ id = "token-pick", label = "Ray or Screen-space Token Pick" },
 	{ id = "selection-highlight", label = "Selected Token Highlight" },
@@ -541,7 +541,7 @@ end
 local function initializeCameraChecks()
 	local requirements: { [string]: string } = {
 		["camera-frame"] = "press F or Token Frame",
-		["camera-pan"] = "middle-click drag",
+		["camera-orbit"] = "middle-click drag to orbit",
 		["camera-wasd-pan"] = "press W/A/S/D outside WASD movement mode",
 		["camera-zoom"] = "mouse wheel",
 	}
@@ -594,8 +594,8 @@ end)
 worldTokens.Camera.InputResolved:Connect(function(action, source, applied, changed, processed)
 	local id = if action == "frame"
 		then "camera-frame"
+		elseif action == "orbit" and source == "mouse-middle-screen-delta" then "camera-orbit"
 		elseif action == "pan" and source == "keyboard-wasd" then "camera-wasd-pan"
-		elseif action == "pan" then "camera-pan"
 		elseif action == "zoom" then "camera-zoom"
 		else nil
 	if id == nil then

@@ -2,6 +2,7 @@
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
 
 local player = Players.LocalPlayer
@@ -28,6 +29,8 @@ local summary = BatchSummary.new(BATCH_NAME, {
 	{ id = "setup-object", label = "Exploration Object Setup" },
 	{ id = "setup-dummy", label = "Combat Target Setup" },
 	{ id = "camera-orbit", label = "Middle-button Camera Orbit" },
+	{ id = "esc-gameplay-noop", label = "ESC Gameplay No-op" },
+	{ id = "q-one-context-back", label = "Q One-context Back" },
 	{ id = "move-menu", label = "Right-click Move Action Table" },
 	{ id = "move-default", label = "Left-click Default Move" },
 	{ id = "interact-menu", label = "Right-click Exploration Action Table" },
@@ -42,6 +45,9 @@ local objectId: string? = nil
 local dummyActorId: string? = nil
 local busy = false
 local passSummaryLogged = false
+local actionMenuOpen = false
+local contextActionResolutionCount = 0
+local lastContextCancel: { reason: any, observedAt: number, actionCount: number }? = nil
 
 client.Command.remotes.receipt.OnClientEvent:Connect(function(message)
 	if
@@ -120,9 +126,9 @@ instructions.BackgroundTransparency = 1
 instructions.Font = Enum.Font.Gotham
 instructions.Text = table.concat({
 	"1. Hero 선택 · 중클릭 드래그로 Camera Orbit",
-	"2. 바닥 우클릭→이동 표 확인→Esc→바닥 좌클릭",
-	"3. 파란 Console 우클릭→2열 행동표→Esc→좌클릭",
-	"4. 전투 시작→Hero 재선택→Dummy 우클릭→Esc→좌클릭",
+	"2. 바닥 우클릭→이동 표 확인→ESC(no-op)→Q(close)→바닥 좌클릭",
+	"3. 파란 Console 우클릭→2열 행동표→ESC(no-op)→Q(close)→좌클릭",
+	"4. 전투 시작→Hero 재선택→Dummy 우클릭→ESC(no-op)→Q(close)→좌클릭",
 	"우클릭은 카메라를 움직이지 않아야 합니다.",
 }, "\n")
 instructions.TextColor3 = Color3.fromRGB(190, 197, 208)
@@ -378,7 +384,20 @@ worldTokens.Camera.InputResolved:Connect(function(action, source, applied, chang
 end)
 
 worldTokens.ActionMenuChanged:Connect(function(open, actions, target)
-	if open ~= true or type(actions) ~= "table" or type(target) ~= "table" then
+	if open ~= true then
+		if actionMenuOpen then
+			lastContextCancel = {
+				reason = target,
+				observedAt = os.clock(),
+				actionCount = contextActionResolutionCount,
+			}
+		end
+		actionMenuOpen = false
+		return
+	end
+	actionMenuOpen = true
+	lastContextCancel = nil
+	if type(actions) ~= "table" or type(target) ~= "table" then
 		return
 	end
 	local ids = actionIds(actions)
@@ -397,6 +416,7 @@ worldTokens.ActionMenuChanged:Connect(function(open, actions, target)
 end)
 
 worldTokens.ContextActionResolved:Connect(function(action, _, ok, code)
+	contextActionResolutionCount += 1
 	if action.kind == "move" then
 		if ok then
 			pass("move-default", action.id)
@@ -415,6 +435,60 @@ worldTokens.ContextActionResolved:Connect(function(action, _, ok, code)
 		else
 			fail("attack-default", tostring(code))
 		end
+	end
+end)
+
+UserInputService.InputBegan:Connect(function(input, processed)
+	if input.KeyCode == Enum.KeyCode.Escape and actionMenuOpen then
+		local actionCountBefore = contextActionResolutionCount
+		task.defer(function()
+			local menuStayedOpen = worldTokens.ActionMenu:isOpen()
+			local noWorldAction = contextActionResolutionCount == actionCountBefore
+			if menuStayedOpen and noWorldAction then
+				pass("esc-gameplay-noop", "menu remained open; processed=" .. tostring(processed))
+			else
+				fail(
+					"esc-gameplay-noop",
+					"menuOpen="
+						.. tostring(menuStayedOpen)
+						.. " noWorldAction="
+						.. tostring(noWorldAction)
+				)
+			end
+		end)
+	elseif input.KeyCode == Enum.KeyCode.Q then
+		local inputObservedAt = os.clock()
+		local menuWasOpen = actionMenuOpen
+		local actionCountBefore = contextActionResolutionCount
+		task.defer(function()
+			local close = lastContextCancel
+			local productionCloseObserved = close ~= nil
+				and close.reason == "context-cancel"
+				and close.observedAt >= inputObservedAt - 0.25
+				and close.actionCount == actionCountBefore
+			local menuClosed = not worldTokens.ActionMenu:isOpen()
+			local noWorldAction = contextActionResolutionCount == actionCountBefore
+			if
+				(menuWasOpen or productionCloseObserved)
+				and productionCloseObserved
+				and menuClosed
+				and noWorldAction
+			then
+				pass("q-one-context-back", "production context-cancel closed only the action table")
+			else
+				fail(
+					"q-one-context-back",
+					string.format(
+						"wasOpen=%s closeSignal=%s menuClosed=%s noWorldAction=%s processed=%s",
+						tostring(menuWasOpen),
+						tostring(productionCloseObserved),
+						tostring(menuClosed),
+						tostring(noWorldAction),
+						tostring(processed)
+					)
+				)
+			end
+		end)
 	end
 end)
 
@@ -448,7 +522,8 @@ combatButton.Activated:Connect(function()
 		busy = false
 		if type(result) == "table" and result.ok == true then
 			worldTokens.Renderer:setSelected(heroActorId)
-			operation.Text = "전투 모드 PASS · Dummy 우클릭→Esc→좌클릭"
+			operation.Text =
+				"전투 모드 PASS · Dummy 우클릭→ESC(no-op)→Q(close)→좌클릭"
 		else
 			operation.Text = "전투 시작 실패 또는 이미 활성 · Output 확인"
 		end

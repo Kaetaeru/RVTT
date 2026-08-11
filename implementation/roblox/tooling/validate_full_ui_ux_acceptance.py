@@ -21,6 +21,10 @@ ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = ROOT.parents[1]
 MATRIX_PATH = ROOT / "full-ui-ux-acceptance-matrix.json"
 MANIFEST_PATH = ROOT / "grand-acceptance-manifest.json"
+WORLD_ACCEPTANCE_PATH = ROOT / "tests/WorldTokenAcceptance/WorldTokenAcceptance.client.lua"
+CONTEXT_ACCEPTANCE_PATH = ROOT / "tests/ContextInputAcceptance/ContextInputAcceptance.client.lua"
+WORLD_RUNTIME_PATH = ROOT / "src/StarterPlayer/StarterPlayerScripts/RVTT/Client/World/WorldTokenRuntime.lua"
+EXECUTION_RULES_PATH = ROOT / "EXECUTION-TEST-RULES.md"
 
 EVIDENCE_CLASSES = {
     "STATIC",
@@ -366,6 +370,79 @@ def validate_forbidden_player_sources() -> list[str]:
     return errors
 
 
+def validate_studio_retest_harness_texts(
+    world_acceptance: str,
+    context_acceptance: str,
+    world_runtime: str,
+    execution_rules: str,
+) -> list[str]:
+    errors: list[str] = []
+
+    world_markers = {
+        'id = "camera-orbit", label = "3D Camera Middle-button Orbit"': "middle-button Orbit summary",
+        '["camera-orbit"] = "middle-click drag to orbit"': "middle-button Orbit requirement",
+        'action == "orbit" and source == "mouse-middle-screen-delta"': "exact middle-button Orbit signal",
+        'action == "pan" and source == "keyboard-wasd"': "separate WASD Pan signal",
+        "applied == true": "applied camera evidence",
+        "changed == true": "changed camera evidence",
+    }
+    for marker, description in world_markers.items():
+        if marker not in world_acceptance:
+            errors.append(f"studio retest harness: missing {description}")
+    if 'id = "camera-pan"' in world_acceptance or 'action == "pan" then "camera-pan"' in world_acceptance:
+        errors.append("studio retest harness: middle-button Camera Pan regression is forbidden")
+
+    context_markers = {
+        'id = "esc-gameplay-noop"': "ESC gameplay no-op summary",
+        'id = "q-one-context-back"': "Q one-context Back summary",
+        "UserInputService.InputBegan": "user-input observer",
+        "input.KeyCode == Enum.KeyCode.Escape": "explicit ESC input evidence",
+        "input.KeyCode == Enum.KeyCode.Q": "explicit Q input evidence",
+        "worldTokens.ActionMenu:isOpen()": "production action-menu observable",
+        'close.reason == "context-cancel"': "production context-cancel signal",
+        'pass("esc-gameplay-noop"': "ESC no-op PASS evidence",
+        'pass("q-one-context-back"': "Q close PASS evidence",
+    }
+    for marker, description in context_markers.items():
+        if marker not in context_acceptance:
+            errors.append(f"studio retest harness: missing {description}")
+    if "→Esc→" in context_acceptance or "→Escape→" in context_acceptance:
+        errors.append("studio retest harness: stale Esc-close instruction is forbidden")
+
+    if "mouse-middle-orbit" in world_runtime:
+        errors.append("studio retest harness: fake middle-button Pan compatibility signal is forbidden")
+
+    rules_markers = {
+        "`planning/rvtt-remake`": "general planning branch default",
+        "PR-bound Batch Acceptance 예외": "narrow PR-bound exception",
+        '$repository = "Kaetaeru/RVTT"': "exact repository",
+        "$pullRequest = 2": "exact Pull Request",
+        '$branch = "agent/survival-logistics-token-authoring"': "exact branch",
+        "git fetch origin $branch": "exact branch fetch",
+        "git switch $branch": "exact branch switch",
+        "git pull --ff-only origin $branch": "exact branch pull",
+        "git rev-parse --short=7 HEAD": "exact 7-character HEAD check",
+        "REQUESTED-NON-PERSISTENCE-ACCEPTANCE-PROJECT": "requested non-persistence project",
+        "branch나 project를 추론하지 않는다": "no-inference boundary",
+        "current-head Static Gate": "static-gate boundary",
+        "중클릭 Camera Orbit": "current batch middle-button Orbit instruction",
+    }
+    for marker, description in rules_markers.items():
+        if marker not in execution_rules:
+            errors.append(f"studio retest harness: missing execution-rule {description}")
+
+    return errors
+
+
+def validate_studio_retest_harness() -> list[str]:
+    return validate_studio_retest_harness_texts(
+        WORLD_ACCEPTANCE_PATH.read_text(encoding="utf-8"),
+        CONTEXT_ACCEPTANCE_PATH.read_text(encoding="utf-8"),
+        WORLD_RUNTIME_PATH.read_text(encoding="utf-8"),
+        EXECUTION_RULES_PATH.read_text(encoding="utf-8"),
+    )
+
+
 def validate(root: Path = ROOT) -> list[str]:
     if root != ROOT:
         raise ValueError("validate_full_ui_ux_acceptance only supports its repository checkout")
@@ -380,6 +457,7 @@ def validate(root: Path = ROOT) -> list[str]:
     errors.extend(validate_official_character_sheet(ROOT))
     errors.extend(validate_dice_slot_reveal_notice(ROOT))
     errors.extend(validate_forbidden_player_sources())
+    errors.extend(validate_studio_retest_harness())
     return errors
 
 
@@ -473,6 +551,64 @@ def run_self_tests(matrix: dict, manifest: dict) -> list[str]:
         fixture_errors = validate_matrix_data(fixture, manifest)
         if not any(expected in error for error in fixture_errors):
             failures.append(f"validator self-test did not reject fixture: {expected}")
+
+    world = WORLD_ACCEPTANCE_PATH.read_text(encoding="utf-8")
+    context = CONTEXT_ACCEPTANCE_PATH.read_text(encoding="utf-8")
+    runtime = WORLD_RUNTIME_PATH.read_text(encoding="utf-8")
+    rules = EXECUTION_RULES_PATH.read_text(encoding="utf-8")
+    harness_fixtures = [
+        (
+            world.replace('action == "orbit" and source == "mouse-middle-screen-delta"', 'action == "pan"'),
+            context,
+            runtime,
+            rules,
+            "exact middle-button Orbit signal",
+        ),
+        (
+            world,
+            context.replace("input.KeyCode == Enum.KeyCode.Q", "input.KeyCode == Enum.KeyCode.Unknown"),
+            runtime,
+            rules,
+            "explicit Q input evidence",
+        ),
+        (
+            world,
+            context.replace("input.KeyCode == Enum.KeyCode.Escape", "input.KeyCode == Enum.KeyCode.Unknown"),
+            runtime,
+            rules,
+            "explicit ESC input evidence",
+        ),
+        (
+            world,
+            context.replace("ESC(no-op)→Q(close)", "→Esc→"),
+            runtime,
+            rules,
+            "stale Esc-close instruction",
+        ),
+        (
+            world.replace('action == "pan" and source == "keyboard-wasd"', 'action == "orbit"'),
+            context,
+            runtime,
+            rules,
+            "separate WASD Pan signal",
+        ),
+        (
+            world,
+            context,
+            runtime + '\nlocal source = "mouse-middle-orbit"\n',
+            rules,
+            "fake middle-button Pan compatibility signal",
+        ),
+    ]
+    for world_fixture, context_fixture, runtime_fixture, rules_fixture, expected in harness_fixtures:
+        fixture_errors = validate_studio_retest_harness_texts(
+            world_fixture,
+            context_fixture,
+            runtime_fixture,
+            rules_fixture,
+        )
+        if not any(expected in error for error in fixture_errors):
+            failures.append(f"validator self-test did not reject harness fixture: {expected}")
     return failures
 
 

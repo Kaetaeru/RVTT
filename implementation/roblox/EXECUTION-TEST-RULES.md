@@ -179,6 +179,37 @@ Project → persistence-acceptance.project.json
 Output  → RVTT-persistence-batch-<EXPECTED-HEAD>.rbxlx
 ```
 
+### PR-bound Batch Acceptance 예외
+
+`planning/rvtt-remake`는 계속 일반 Build의 기본 예시다. 단, active coordinator task가 정확한 repository, Pull Request, branch, 검증된 target/result HEAD와 non-persistence acceptance project를 모두 지정한 경우에만 PR-bound Batch 예외를 사용할 수 있다.
+
+```powershell
+$repository = "Kaetaeru/RVTT"
+$pullRequest = 2
+$branch = "agent/survival-logistics-token-authoring"
+$expectedHead = "<EXPECTED-7-CHAR-HEAD>"
+$project = "<REQUESTED-NON-PERSISTENCE-ACCEPTANCE-PROJECT>"
+
+git fetch origin $branch
+git switch $branch
+git pull --ff-only origin $branch
+
+$head = (git rev-parse --short=7 HEAD).Trim()
+if ($head -ne $expectedHead) {
+    throw "PR #$pullRequest $repository expected Head $expectedHead but found $head"
+}
+
+rojo build $project --output (Join-Path $env:TEMP "RVTT-PR$pullRequest-$head.rbxlx")
+```
+
+필수 경계:
+
+- coordinator가 지정하지 않은 branch나 project를 추론하지 않는다.
+- 정확한 7자리 result HEAD가 아니면 Build하지 않는다.
+- PR-bound 예외는 Persistence project에 사용하지 않는다.
+- current-head Static Gate와 필수 Actions가 완료되지 않았으면 이 예외를 열지 않는다.
+- 이 예외도 처음부터 끝까지 실행 가능한 전체 Windows PowerShell 블록으로 사용자에게 제공한다.
+
 ## 7. 진단 로그 규칙
 
 각 Batch는 실패 원인을 한 번의 실행으로 분리할 수 있는 로그를 포함한다.
@@ -226,7 +257,7 @@ Acceptance Harness는 다음 기능을 제공한다.
 → Board Destination 표시
 → 서버 권위 movement.commit
 → Command Receipt·Revision 진단
-→ 중클릭 Camera Pan
+→ 중클릭 Camera Orbit
 → WASD Camera Pan · Character 이동 모드 비활성 시
 → Mouse Wheel Zoom
 → F·Token Frame
