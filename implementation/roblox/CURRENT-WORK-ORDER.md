@@ -1,94 +1,88 @@
-# RVTT Roblox Implementation 현재 작업 순서
+# RVTT Roblox Implementation Context
 
-- 상태: `STUDIO_FIRST_CONTEXT_ONLY`
+- 상태: `GREENFIELD_STUDIO_BUILD · CONTEXT_ONLY`
 - 최종 갱신일: 2026-08-12
 - 현재 실행 포인터: [`../../.github/CODEX-ACTIVE-TASK.md`](../../.github/CODEX-ACTIVE-TASK.md)
-- 상위 작업: [`docs/remake/CURRENT-WORK-ORDER.md`](../../docs/remake/CURRENT-WORK-ORDER.md)
-- 개발·검증 규칙: [`EXECUTION-TEST-RULES.md`](EXECUTION-TEST-RULES.md)
-- Studio MCP: [`ROBLOX-STUDIO-MCP-TEST-POLICY.md`](ROBLOX-STUDIO-MCP-TEST-POLICY.md)
 
-## 1. 이 문서의 역할
+## 1. 현재 구현 상태의 의미
 
-이 문서는 Production 단계와 기능군 우선순위를 설명한다. **현재 실행할 명령은 `.github/CODEX-ACTIVE-TASK.md`만 소유한다.**
+Repository에는 기존 16 Slice Source, UI Source, Acceptance·Persistence·Grand Tooling이 존재한다. **이 존재 자체는 현재 Build의 Baseline을 뜻하지 않는다.**
 
-Repository 스캔에서 아래 내용을 backlog로 이해할 수는 있지만 동시에 실행할 TODO로 만들지 않는다.
+현재 Roblox 제품 구현은 새/깨끗한 Studio 작업물에서 처음부터 다시 구축한다.
 
-## 2. 현재 상태
-
-16개 Slice Production Source와 Full UI·UX 관련 Source는 넓게 존재하고 Static 검증도 상당 부분 완료됐다. 문제는 실제 Studio 결과와 사용자 경험을 너무 늦게 확인했다는 것이다.
-
-따라서 현재 개발은 Acceptance 확장이 아니라 기존 Production Source를 Studio에서 직접 열고 실제 제품으로 다듬는 것이다.
-
-## 3. 기본 구현 루프
+## 2. 기본 루프
 
 ```text
-GitHub Product·ADR
-→ Module Contract
-→ 현재 Source·함수·require 관계
-→ Studio 현재 DataModel
-→ 직접 구현
+Product·ADR 확인
+→ Module Contract로 필요한 책임 파악
+→ Legacy Source의 역할·함수 조사
+→ 새 Studio DataModel에 필요한 최소 구조부터 직접 생성
 → Play
 → 즉시 수정
 → 사용자 판단
-→ Source·필요한 Contract 정규화
+→ 새 결과를 GitHub Canonical Source로 정규화
 → Focused Test
 ```
 
-## 4. 현재 기능군 우선순위 — Context only
+## 3. Legacy Source 정책
 
-1. Exploration·World Interaction
-2. Encounter·Character Console
-3. Inventory·Journal·Character Sheet·Settings
-4. Entry·Role·Recovery
-5. DM Workspace
-6. ADR-0091 Runtime Surface
-7. ADR-0092 Slice 06→07→11→12→15→16
+기존 Module은 자동 재사용하지 않는다.
 
-현재 Active Task가 1번 Exploration을 가리키고 있다. 그 Task가 끝나기 전에는 이 목록의 후속 항목을 자동 착수하지 않는다.
+선택적 재사용 조건:
 
-## 5. 현재 Exploration 범위
+- 현재 Product·ADR과 일치
+- 현재 Authority 경계와 일치
+- 낡은 UI/Harness 의존성을 끌고 오지 않음
+- Greenfield 구조를 단순하게 함
 
-현재 Command가 다루는 사용자 흐름:
+조건을 만족하지 않으면 새로 작성한다.
+
+## 4. 현재 실행 범위
+
+현재 Active Task는 Exploration의 첫 Vertical Flow다.
 
 ```text
-Token 선택
+World
+→ Hero Token
+→ Selection
 → Camera
 → Move
 → Context Action
-→ 상호작용
-→ Character Console 연결 확인
+→ Interaction
 ```
 
-Acceptance 재실행을 기본 시작 작업으로 삼지 않는다. Production Place를 먼저 직접 확인한다.
+기존 Production Place를 열어 문제를 찾고 수정하는 방식으로 시작하지 않는다.
 
-## 6. 기존 Acceptance·Historical Evidence
+## 5. 다음 기능군 — Context only
 
-다음은 보존하지만 현재 실행 명령이 아니다.
+1. Encounter·Character Console
+2. Inventory·Journal·Character Sheet·Settings
+3. Entry·Role·Recovery
+4. DM Workspace
+5. ADR-0091 Runtime Surface
+6. ADR-0092 Production
 
-- `FULL-UI-UX-ACCEPTANCE.md` — Release/Regression reference
-- `slice01-acceptance.project.json` — Focused regression harness
-- `acceptance-batch.json`
-- `GRAND-ACCEPTANCE-CAMPAIGN.md` — Release regression tooling
+현재 Task가 완료되고 사용자가 결과를 받아들인 뒤 다음 Active Task를 선택한다.
+
+## 6. 기존 Acceptance·Evidence
+
+다음은 새 Build의 시작점이 아니다.
+
+- `FULL-UI-UX-ACCEPTANCE.md`
+- `slice01-acceptance.project.json`
+- `GRAND-ACCEPTANCE-CAMPAIGN.md`
 - Persistence acceptance projects
-- `contextual-pointer-actions` 9/9 — harness runtime evidence
-- 과거 Slice 01 16/16 — old input contract historical evidence
+- `contextual-pointer-actions` 9/9
+- historical `slice01-world-interaction` 16/16
 
-Historical Evidence를 현재 변경된 UX 전체 PASS 또는 현재 TODO로 사용하지 않는다.
+새 Greenfield Build가 안정된 뒤 필요한 회귀 검증에 사용한다.
 
-## 7. 사용자 결정 보호
+## 7. 완료 기준
 
-Studio 구현 중 현재 방향보다 더 나은 제품 방향, 입력 체계, Architecture, 개발 방식, 범위 변경이 떠오르면 자동 적용하지 않는다. 사용자에게 현재 문제와 대안을 먼저 설명한다.
+현재 Vertical Flow가 완료되려면:
 
-## 8. 다음 작업으로 넘어가는 조건
-
-현재 Active Task가 완료되고 사용자가 결과를 받아들인 뒤에만 다음 기능군을 선택한다.
-
-```text
-현재 Studio 흐름 확인
-→ 문제 수정
-→ 사용자 확인
-→ Source 정규화
-→ Focused Test
-→ Active Task 완료
-→ 다음 Active Task 선택
-```
+1. 새 Studio Build에서 실제 동작한다.
+2. 사용자가 UX를 받아들인다.
+3. 받아들인 결과가 GitHub Source로 정규화된다.
+4. 필요한 Module Contract가 새 구현과 일치한다.
+5. 관련 Focused Test가 통과하거나 미실행 이유가 기록된다.

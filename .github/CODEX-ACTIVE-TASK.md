@@ -1,65 +1,81 @@
 # RVTT Current Executable Task
 
 - executionAuthority: `ONLY_CURRENT_EXECUTABLE_TASK`
-- status: `READY_FOR_STUDIO_IMPLEMENTATION`
-- commandId: `RVTT-STUDIO-EXPLORATION-ITERATION-001`
+- status: `READY_FOR_GREENFIELD_STUDIO_BUILD`
+- commandId: `RVTT-GREENFIELD-EXPLORATION-001`
 - repository: `Kaetaeru/RVTT`
 - pullRequest: `2`
 - branch: `agent/survival-logistics-token-authoring`
 - taskMode: `STUDIO_IMPLEMENTATION`
-- commandPath: `.github/CODEX-STUDIO-IMPLEMENTATION-EXPLORATION-001.md`
+- buildMode: `GREENFIELD`
+- legacySourcePolicy: `REFERENCE_OR_SELECTIVE_REUSE_ONLY`
+- legacyPlacePolicy: `DO_NOT_USE_AS_BASELINE`
+- commandPath: `.github/CODEX-STUDIO-GREENFIELD-EXPLORATION-001.md`
 - targetMode: `CURRENT_PR_HEAD_AT_START`
 - updatedAt: `2026-08-12`
 
 ## 지금 바로 해야 할 일
 
-Repository 스캔 결과로 과거 TODO를 복구하지 않는다. 현재 실행할 일은 아래 하나다.
+**기존 RVTT Production Place를 수정하는 작업이 아니다. 새 Studio 작업물을 처음부터 구축한다.**
 
 ```text
-현재 Exploration 관련 Product·Module Contract·Production Source 조사
-→ Roblox Studio MCP로 Production Place 직접 열기
-→ 현재 실제 동작 확인
-→ Token 선택·Camera·Move·Context Action·상호작용 흐름을 실제 제품 기준으로 구현·수정
-→ Play하며 즉시 재확인
-→ 사용자 판단이 필요한 UX/Architecture 변화만 보고
-→ 받아들인 결과를 GitHub Source·필요한 Module Contract·Rojo Mapping으로 정규화
+관련 Product·ADR 읽기
+→ Module Contract에서 필요한 책임·Authority 경계 파악
+→ 기존 Source는 역할 참고·선택적 재사용 후보로만 조사
+→ 새/깨끗한 Studio 작업물 준비
+→ Exploration을 성립시키는 최소 구조부터 직접 구축
+→ Token 선택·Camera·Move·Context Action·상호작용을 Play
+→ 문제 즉시 수정·재실행
+→ 사용자 판단이 필요한 제품/Architecture 변화만 보고
+→ 받아들인 결과를 GitHub Canonical Source·필요한 Module Contract·Rojo Mapping으로 정규화
 → Focused Test
 ```
 
-**Acceptance 재실행, 과거 Static Gate, 과거 Phase Fix, Grand Campaign은 지금 시작할 작업이 아니다.**
+## 반드시 이해할 것
 
-## 스캔할 때 읽는 것
+- 기존 UI를 다듬는 작업이 아니다.
+- 기존 Production Instance Tree를 유지하는 작업이 아니다.
+- 기존 Source를 모두 재사용하는 작업이 아니다.
+- 과거 Slice/Phase를 이어서 완료하는 작업이 아니다.
+- Acceptance에서 실패한 항목을 순서대로 고치는 작업이 아니다.
+
+기존 Source가 현재 계약에 정확히 맞고 새 구조를 오염시키지 않을 때만 해당 Module을 선택적으로 재사용할 수 있다. 재사용하지 않아도 된다.
+
+## 현재 첫 사용자 흐름
+
+```text
+새 Studio Build 진입
+→ Exploration World 표시
+→ Hero Token 표시
+→ Token 선택
+→ Camera 조작
+→ 이동
+→ Right-click Context Action
+→ 상호작용
+```
+
+Character Console은 위 핵심 흐름이 안정된 뒤 필요한 최소 연결만 확인한다.
+
+## 스캔 순서
 
 1. `AGENTS.md`
 2. `.github/README.md`
 3. 이 파일
-4. `commandPath`가 가리키는 현재 Command
-5. 관련 Product·ADR
+4. 현재 `commandPath`
+5. 관련 Product·ADR·Spec
 6. 관련 Module Contract
-7. 현재 Production Source·Test
+7. Legacy Source — 참고용
+8. 현재 새 Studio DataModel
 
-`.github/archive/**`는 현재 작업 파악을 위해 읽지 않는다.
+`.github/archive/**`에서 TODO를 복구하지 않는다.
 
-## 보존 Evidence — 작업 지시 아님
+## 지금 하지 않는 것
 
-```text
-contextual-pointer-actions = PASS · 9/9 · revision 35
-historical slice01-world-interaction = PASS · 16/16 · OLD INPUT CONTRACT
-ADR-0091 Source/Static = STATIC_VERIFIED
-```
-
-위 값은 역사/회귀 참고이며 현재 Production UX 전체 PASS도, 다음 실행 작업도 아니다.
-
-## 사용자 결정 규칙
-
-더 좋아 보이는 제품 방향, Architecture, 핵심 입력 체계, 개발 방식 또는 범위 변경이 발견되면 적용하지 않는다. 문제와 대안을 사용자에게 먼저 보고한다.
-
-## 금지
-
-- Archive에서 TODO 복구
-- Acceptance Harness를 Product UI 기준으로 사용
-- 기존 책임 조사 없이 새 병렬 Manager·Remote·Registry 생성
-- Studio-only Production 변경 방치
-- 실행하지 않은 Runtime PASS 주장
-- 사용자 승인 없는 새 제품 결정
+- 기존 Production Place를 Baseline으로 열고 수정
+- 과거 `CODEX-IMPLEMENTATION-*` / `CODEX-FIX-*` 재개
+- 과거 Static Gate 재개
+- `slice01-world-interaction` 재실행을 개발 시작 조건으로 사용
+- Grand Acceptance 시작
+- ADR-0092 Phase 선행 착수
+- 사용자 승인 없는 새 Architecture 결정
 - ready-for-review / merge / force push
