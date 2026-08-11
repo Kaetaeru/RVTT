@@ -5,6 +5,7 @@
 - 현재 Registry: [`manifests/module-contracts.json`](manifests/module-contracts.json)
 - Legacy Reference: [`manifests/legacy-module-contracts.json`](manifests/legacy-module-contracts.json)
 - 시스템 순서: [`GREENFIELD-SYSTEM-SEQUENCE.md`](GREENFIELD-SYSTEM-SEQUENCE.md)
+- 확정 동기화 Gate: [`AUTHORITY-RECONCILIATION-POLICY.md`](AUTHORITY-RECONCILIATION-POLICY.md)
 - Validator: [`tooling/validate_module_contracts.py`](tooling/validate_module_contracts.py)
 
 ## 1. 역할
@@ -24,8 +25,10 @@ PLANNED
 
 - `PLANNED`: 책임·Authority·예정 경로가 먼저 존재한다. Source는 없어도 된다.
 - `IMPLEMENTED`: 실제 `greenfield/src` Source와 Stable Entry Point가 존재하고 Studio에 연결됐다.
-- `ACCEPTED`: 사용자 Checkpoint 수용과 Focused Test까지 정규화됐다.
+- `ACCEPTED`: 사용자가 관련 Checkpoint 동작을 수용했고, Authority Reconciliation, Canonical Source, Focused Test까지 완료됐다.
 - `DEPRECATED`: 새 구조에서 사용하지 않는다.
+
+사용자가 `좋다`고 말한 순간 바로 Module을 `ACCEPTED`로 올리지 않는다.
 
 ## 3. System Stage
 
@@ -61,9 +64,11 @@ BLOCKED
 
 - 이전 Checkpoint가 `ACCEPTED`가 아니면 다음 Checkpoint를 시작할 수 없다.
 - `READY_FOR_USER`/`ACCEPTED`는 필요한 Module이 최소 `IMPLEMENTED`여야 한다.
+- 사용자가 기능을 수용하면 `AUTHORITY-RECONCILIATION-POLICY.md`를 먼저 수행한다.
 - `ACCEPTED` Checkpoint의 직접 Module은 Focused Test와 함께 `ACCEPTED` 상태여야 한다.
+- 현재 상위 문서 충돌이나 미승인 Architecture 변경이 남아 있으면 Checkpoint를 `ACCEPTED`로 올리지 않는다.
 
-이 상태는 Codex가 임의로 사용자 수용을 추측하기 위한 것이 아니다. 사용자의 실제 피드백에 맞춰 갱신한다.
+이 상태는 Codex가 임의로 사용자 수용을 추측하기 위한 것이 아니다. 사용자의 실제 피드백과 Reconciliation 완료 상태에 맞춰 갱신한다.
 
 ## 5. Module 필드
 
@@ -116,6 +121,8 @@ Registry의 `technicalSafety`는 개발 중에도 유지할 비협상 기술 규
 
 `ACCEPTED` Module은 최소 하나의 `greenfield/tests/` Focused Test를 가진다.
 
+사용자 확정으로 Module 책임이나 사용자 동작 의미가 바뀌었다면 Source만 바꾸지 않는다. Authority Impact Scan을 수행하고 영향을 받는 Product·ADR·Architecture·Spec·Module Contract를 위에서 아래로 정합화한다.
+
 ## 8. Call Graph
 
 private/helper 호출 순서와 모든 `require()`는 현재 Source에서 읽는다. 수동 Call Graph를 별도 Authority로 유지하지 않는다.
@@ -123,3 +130,5 @@ private/helper 호출 순서와 모든 `require()`는 현재 Source에서 읽는
 ## 9. Architecture 변경
 
 Module 책임 분리·통합, Stage 순서, Authority, Command/Projection 방향을 바꾸려면 사용자에게 먼저 제안한다. helper 내부 구현은 Contract 경계가 유지되는 한 Codex가 판단할 수 있다.
+
+사용자가 화면/조작 결과를 수용한 것을 미승인 내부 Architecture 변경의 승인으로 확대 해석하지 않는다.
