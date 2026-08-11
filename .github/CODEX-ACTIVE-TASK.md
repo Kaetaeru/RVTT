@@ -1,81 +1,74 @@
 # RVTT Current Executable Task
 
 - executionAuthority: `ONLY_CURRENT_EXECUTABLE_TASK`
-- status: `READY_FOR_GREENFIELD_STUDIO_BUILD`
-- commandId: `RVTT-GREENFIELD-EXPLORATION-001`
+- status: `READY_FOR_ARCHITECTURE_FIRST_GREENFIELD_BUILD`
+- commandId: `RVTT-GREENFIELD-FOUNDATION-EXPLORATION-001`
 - repository: `Kaetaeru/RVTT`
 - pullRequest: `2`
 - branch: `agent/survival-logistics-token-authoring`
 - taskMode: `STUDIO_IMPLEMENTATION`
-- buildMode: `GREENFIELD`
-- legacySourcePolicy: `REFERENCE_OR_SELECTIVE_REUSE_ONLY`
+- buildMode: `GREENFIELD_ARCHITECTURE_FIRST`
+- feedbackMode: `TIGHT_USER_FEEDBACK_LOOP`
+- legacySourcePolicy: `REFERENCE_OR_EXPLICIT_REUSE_ONLY`
 - legacyPlacePolicy: `DO_NOT_USE_AS_BASELINE`
-- commandPath: `.github/CODEX-STUDIO-GREENFIELD-EXPLORATION-001.md`
+- commandPath: `.github/CODEX-STUDIO-GREENFIELD-FOUNDATION-EXPLORATION-001.md`
 - targetMode: `CURRENT_PR_HEAD_AT_START`
 - updatedAt: `2026-08-12`
 
 ## 지금 바로 해야 할 일
 
-**기존 RVTT Production Place를 수정하는 작업이 아니다. 새 Studio 작업물을 처음부터 구축한다.**
+**기능을 한두 Script에 몰아 빠르게 흉내 내는 작업이 아니다. 새 RVTT의 시스템 골격을 먼저 세우고, 그 골격을 통해 첫 플레이 기능을 만든다.**
 
 ```text
-관련 Product·ADR 읽기
-→ Module Contract에서 필요한 책임·Authority 경계 파악
-→ 기존 Source는 역할 참고·선택적 재사용 후보로만 조사
-→ 새/깨끗한 Studio 작업물 준비
-→ Exploration을 성립시키는 최소 구조부터 직접 구축
-→ Token 선택·Camera·Move·Context Action·상호작용을 Play
-→ 문제 즉시 수정·재실행
-→ 사용자 판단이 필요한 제품/Architecture 변화만 보고
-→ 받아들인 결과를 GitHub Canonical Source·필요한 Module Contract·Rojo Mapping으로 정규화
-→ Focused Test
+Product·ADR 확인
+→ Greenfield Module Contract 확인
+→ 필요한 시스템 책임·Authority 확정
+→ 새 Studio Build에 Client/Server Composition Root 구축
+→ Command·Authorization·Projection·Input·World System 경계 구축
+→ Foundation Boot 확인
+→ 첫 사용자 기능: Hero Token Selection 구현
+→ 사용자가 직접 테스트
+→ 마음에 안 들면 Selection을 즉시 수정·재테스트
+→ 사용자 수용 후 Camera → Move → Context → Interaction 순으로 확장
 ```
+
+## 첫 사용자 체크포인트
+
+첫 Human Checkpoint는 `Hero Token Selection`이다.
+
+- Selection이 마음에 들지 않으면 다음 기능으로 넘어가지 않는다.
+- 피드백을 "나중에 정리할 UX"로 적재하지 않는다.
+- 같은 Checkpoint에서 즉시 수정하고 다시 Play 가능한 상태로 만든다.
+- 사용자가 명시적으로 수용하거나 다음으로 가라고 할 때만 Camera 작업으로 넘어간다.
 
 ## 반드시 이해할 것
 
-- 기존 UI를 다듬는 작업이 아니다.
-- 기존 Production Instance Tree를 유지하는 작업이 아니다.
-- 기존 Source를 모두 재사용하는 작업이 아니다.
-- 과거 Slice/Phase를 이어서 완료하는 작업이 아니다.
-- Acceptance에서 실패한 항목을 순서대로 고치는 작업이 아니다.
+- Bootstrap Script는 Client/Server 각각 하나여도 되지만 **조립과 start 호출만** 한다.
+- Bootstrap, LocalScript, ServerScript에 Selection·Camera·Move·Context·Rules 로직을 몰아넣지 않는다.
+- 시스템 책임은 `module-contracts.json`의 Greenfield 계약을 따른다.
+- 기존 `src/` Module Contract와 Source는 Legacy Reference다. 재사용은 opt-in이다.
+- 기존 Production Place/UI/Instance Tree는 새 Build의 Baseline이 아니다.
+- 과거 Acceptance PASS/FAIL은 현재 Greenfield 구현의 TODO나 PASS가 아니다.
 
-기존 Source가 현재 계약에 정확히 맞고 새 구조를 오염시키지 않을 때만 해당 Module을 선택적으로 재사용할 수 있다. 재사용하지 않아도 된다.
+## 사용자에게 먼저 보고해야 하는 것
 
-## 현재 첫 사용자 흐름
+현재보다 더 좋아 보이는 방향이 있더라도 다음을 바꾸려면 먼저 사용자에게 제안한다.
 
-```text
-새 Studio Build 진입
-→ Exploration World 표시
-→ Hero Token 표시
-→ Token 선택
-→ Camera 조작
-→ 이동
-→ Right-click Context Action
-→ 상호작용
-```
+- Product·Accepted ADR
+- 핵심 입력 의미
+- Server/Client Authority 또는 Data ownership
+- Greenfield Module 책임의 실질적인 분리·통합
+- 개발 방식
+- Release 범위·우선순위
 
-Character Console은 위 핵심 흐름이 안정된 뒤 필요한 최소 연결만 확인한다.
-
-## 스캔 순서
-
-1. `AGENTS.md`
-2. `.github/README.md`
-3. 이 파일
-4. 현재 `commandPath`
-5. 관련 Product·ADR·Spec
-6. 관련 Module Contract
-7. Legacy Source — 참고용
-8. 현재 새 Studio DataModel
-
-`.github/archive/**`에서 TODO를 복구하지 않는다.
+기존 결정 안에서의 버그 수정, UX 미세 조정, helper 분해는 즉시 수행할 수 있다.
 
 ## 지금 하지 않는 것
 
-- 기존 Production Place를 Baseline으로 열고 수정
-- 과거 `CODEX-IMPLEMENTATION-*` / `CODEX-FIX-*` 재개
-- 과거 Static Gate 재개
-- `slice01-world-interaction` 재실행을 개발 시작 조건으로 사용
-- Grand Acceptance 시작
+- 기존 Production Place를 열고 이어서 수정
+- 기능 데모용 monolithic LocalScript/ServerScript 작성
+- Foundation 없이 Selection·Move부터 직접 구현
+- 과거 Codex Command 재개
+- Acceptance/Grand Campaign을 개발 시작 Gate로 사용
 - ADR-0092 Phase 선행 착수
-- 사용자 승인 없는 새 Architecture 결정
 - ready-for-review / merge / force push
