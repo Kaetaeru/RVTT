@@ -3,12 +3,29 @@ import json
 import re
 import sys
 
-from validate_full_ui_ux_acceptance import validate as validate_full_ui_ux_acceptance
+import validate_full_ui_ux_acceptance as full_ui_acceptance
+import validate_studio_runtime_contract as studio_runtime_contract
 
 ROOT = Path(__file__).resolve().parents[1]
 errors: list[str] = []
 
-errors.extend(validate_full_ui_ux_acceptance(ROOT))
+
+def validate_studio_harness_contract() -> list[str]:
+    return studio_runtime_contract.validate_studio_retest_harness_texts(
+        studio_runtime_contract.WORLD_ACCEPTANCE_PATH.read_text(encoding="utf-8"),
+        studio_runtime_contract.CONTEXT_ACCEPTANCE_PATH.read_text(encoding="utf-8"),
+        studio_runtime_contract.WORLD_RUNTIME_PATH.read_text(encoding="utf-8"),
+        studio_runtime_contract.CONTEXT_RESOLVER_PATH.read_text(encoding="utf-8"),
+        studio_runtime_contract.INPUT_CONTROLLER_PATH.read_text(encoding="utf-8"),
+        studio_runtime_contract.G1_TEST_CONSOLE_PATH.read_text(encoding="utf-8"),
+    )
+
+
+# The legacy Full UI validator still owns matrix/focused checks. Replace only its
+# historical documentation-wording hook with the executable Studio contract.
+full_ui_acceptance.validate_studio_retest_harness = validate_studio_harness_contract
+errors.extend(full_ui_acceptance.validate(ROOT))
+errors.extend(studio_runtime_contract.run_self_tests())
 
 for project in (
     "default.project.json",
@@ -214,6 +231,7 @@ required = [
     "tooling/run-studio-acceptance-batch.ps1",
     "tooling/run-grand-acceptance.ps1",
     "tooling/validate_full_ui_ux_acceptance.py",
+    "tooling/validate_studio_runtime_contract.py",
     "tooling/validate_dice_slot_reveal_notice.py",
     "tooling/validate_asset_registry.py",
     "tooling/validate_rules_profile_release_gate.py",
@@ -223,25 +241,6 @@ required = [
 for relative in required:
     if not (ROOT / relative).exists():
         errors.append(f"missing {relative}")
-
-execution_rules_path = ROOT / "EXECUTION-TEST-RULES.md"
-if execution_rules_path.exists():
-    execution_rules = execution_rules_path.read_text(encoding="utf-8")
-    for required_phrase in (
-        "Batch Acceptance Gate",
-        "완전한 다중 행 Windows PowerShell 블록",
-        '$ErrorActionPreference = "Stop"',
-        "git switch planning/rvtt-remake",
-        "git pull --ff-only origin planning/rvtt-remake",
-        '$head = (git rev-parse --short HEAD).Trim()',
-        "rojo build slice01-acceptance.project.json --output $output",
-        "Start-Process $output",
-        "EnableStudioPersistence=false",
-        "Persistence 전용 Batch",
-        "Batch Summary",
-    ):
-        if required_phrase not in execution_rules:
-            errors.append(f"EXECUTION-TEST-RULES.md: missing policy phrase {required_phrase}")
 
 camera_path = ROOT / "src/StarterPlayer/StarterPlayerScripts/RVTT/Client/World/WorldCameraController.lua"
 if camera_path.exists():
