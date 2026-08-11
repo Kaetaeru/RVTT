@@ -22,6 +22,14 @@ function Coordinator.new(replica: any, requestFullSync: () -> ()): any
 
 	table.insert(
 		self.connections,
+		replica.Changed:Connect(function()
+			if self.state.state == ViewState.LOADING and replica.revision >= 0 then
+				self:_set(ViewState.READY, nil, false)
+			end
+		end)
+	)
+	table.insert(
+		self.connections,
 		replica.RebuildStarted:Connect(function()
 			self:_set(
 				ViewState.REBUILDING,

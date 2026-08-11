@@ -23,9 +23,17 @@ MATRIX_PATH = ROOT / "full-ui-ux-acceptance-matrix.json"
 MANIFEST_PATH = ROOT / "grand-acceptance-manifest.json"
 WORLD_ACCEPTANCE_PATH = ROOT / "tests/WorldTokenAcceptance/WorldTokenAcceptance.client.lua"
 CONTEXT_ACCEPTANCE_PATH = ROOT / "tests/ContextInputAcceptance/ContextInputAcceptance.client.lua"
+G1_TEST_CONSOLE_PATH = ROOT / "tests/AcceptanceShared/G1TestConsole.lua"
 WORLD_RUNTIME_PATH = ROOT / "src/StarterPlayer/StarterPlayerScripts/RVTT/Client/World/WorldTokenRuntime.lua"
 CONTEXT_RESOLVER_PATH = ROOT / "src/StarterPlayer/StarterPlayerScripts/RVTT/Client/World/WorldContextActionResolver.lua"
 INPUT_CONTROLLER_PATH = ROOT / "src/StarterPlayer/StarterPlayerScripts/RVTT/Client/World/WorldTokenInputController.lua"
+WORLD_ACTION_MENU_PATH = ROOT / "src/StarterPlayer/StarterPlayerScripts/RVTT/Client/World/WorldActionMenu.lua"
+WORLD_ACTION_MENU_POLICY_PATH = ROOT / "src/StarterPlayer/StarterPlayerScripts/RVTT/Client/World/WorldActionMenuPolicy.lua"
+UI_RECOVERY_COORDINATOR_PATH = ROOT / "src/StarterPlayer/StarterPlayerScripts/RVTT/Client/UIRecoveryCoordinator.lua"
+ENTRY_RECOVERY_SPEC_PATH = ROOT / "tests/Unit/EntryRecovery.spec.lua"
+INPUT_CONTEXT_SPEC_PATH = ROOT / "tests/Unit/InputContext.spec.lua"
+SLICE01_ACCEPTANCE_PROJECT_PATH = ROOT / "slice01-acceptance.project.json"
+DEFAULT_PROJECT_PATH = ROOT / "default.project.json"
 EXECUTION_RULES_PATH = ROOT / "EXECUTION-TEST-RULES.md"
 
 EVIDENCE_CLASSES = {
@@ -427,8 +435,10 @@ def validate_studio_retest_harness_texts(
     execution_rules: str,
     context_resolver: str,
     input_controller: str,
+    shared_console: str,
 ) -> list[str]:
     errors: list[str] = []
+    visible_acceptance = world_acceptance + "\n" + shared_console
 
     world_markers = {
         'id = "camera-orbit", label = "3D Camera Middle-button Orbit"': "middle-button Orbit summary",
@@ -437,21 +447,21 @@ def validate_studio_retest_harness_texts(
         'action == "pan" and source == "keyboard-wasd"': "separate WASD Pan signal",
         "applied == true": "applied camera evidence",
         "changed == true": "changed camera evidence",
-        "WASD = Pan · Middle-button drag = Orbit · Wheel = Zoom · F or Token Frame = Frame": (
+        "2 Camera: WASD Pan / Middle drag Orbit / Wheel Zoom / Frame": (
             "unambiguous visible camera instruction"
         ),
     }
     for marker, description in world_markers.items():
-        if marker not in world_acceptance:
+        if marker not in visible_acceptance:
             errors.append(f"studio retest harness: missing {description}")
     if 'id = "camera-pan"' in world_acceptance or 'action == "pan" then "camera-pan"' in world_acceptance:
         errors.append("studio retest harness: middle-button Camera Pan regression is forbidden")
-    if "Middle-button drag = Pan" in world_acceptance or "중클릭 드래그=Pan" in world_acceptance:
+    if "Middle-button drag = Pan" in visible_acceptance or "중클릭 드래그=Pan" in visible_acceptance:
         errors.append("studio retest harness: visible middle-button Pan instruction is forbidden")
 
     arm_markers = {
-        'makeButton("ArmTokenPick", "Arm Token Pick"': "explicit Arm Token Pick control",
-        "Wait until setup is ready → Arm Token Pick → left-click Hero → verify Highlight": (
+        '{ id = "ArmTokenPick", label = "Arm Token Pick"': "explicit Arm Token Pick control",
+        "1 Arm Token Pick → left-click Hero": (
             "manual token-pick instruction"
         ),
         "tokenPickArmed = true": "manual arm state",
@@ -461,11 +471,11 @@ def validate_studio_retest_harness_texts(
         'summary:pending("selection-highlight"': "selection-highlight pending/re-arm state",
     }
     for marker, description in arm_markers.items():
-        if marker not in world_acceptance:
+        if marker not in visible_acceptance:
             errors.append(f"studio retest harness: missing {description}")
 
-    arm_start = world_acceptance.find("armPickButton.Activated:Connect(function()")
-    arm_end = world_acceptance.find("frameButton.Activated:Connect(function()", arm_start)
+    arm_start = world_acceptance.find('testConsole:registerAction("ArmTokenPick", function()')
+    arm_end = world_acceptance.find('testConsole:registerAction("Frame", function()', arm_start)
     arm_handler = world_acceptance[arm_start:arm_end] if arm_start >= 0 and arm_end >= 0 else ""
     if not arm_handler:
         errors.append("studio retest harness: token-pick selection clear requires an explicit user arm handler")
@@ -589,6 +599,150 @@ def validate_studio_retest_harness_texts(
     return errors
 
 
+def validate_g1_usability_fix_texts(
+    world_acceptance: str,
+    context_acceptance: str,
+    shared_console: str,
+    action_menu: str,
+    action_menu_policy: str,
+    recovery_coordinator: str,
+    entry_recovery_spec: str,
+    input_context_spec: str,
+    slice_project: str,
+    default_project: str,
+) -> list[str]:
+    errors: list[str] = []
+
+    for old_name in ("RVTT_WorldInteraction_Batch", "RVTT_ContextInput_Acceptance"):
+        if old_name in world_acceptance or old_name in context_acceptance or old_name in shared_console:
+            errors.append("G1 usability fix: independent legacy acceptance ScreenGui returned")
+    if 'Instance.new("ScreenGui")' in world_acceptance or 'Instance.new("ScreenGui")' in context_acceptance:
+        errors.append("G1 usability fix: World and Context scripts must not create independent ScreenGuis")
+    if shared_console.count('Instance.new("ScreenGui")') != 1:
+        errors.append("G1 usability fix: exactly one shared G1 ScreenGui is required")
+
+    shared_markers = {
+        'gui.Name = "RVTT_G1_Test_Console"': "shared G1 Test Console singleton",
+        'panel.Name = "G1TestConsole"': "single floating console window",
+        'header.Name = "DragHeader"': "title/header drag handle",
+        "header.InputBegan:Connect": "mouse drag start",
+        "UserInputService.InputChanged:Connect": "mouse drag movement",
+        "Enum.UserInputType.MouseButton1": "left-mouse drag gesture",
+        "clampPosition": "viewport clamp",
+        'button.Selectable = false': "non-selectable acceptance buttons",
+        '"Combined progress  %d / %d"': "combined visible progress",
+        '"Evidence details (secondary)"': "secondary low-level evidence",
+        "0 Projection / Runtime Ready": "step 0 Projection readiness",
+        "1 Arm Token Pick → left-click Hero": "step 1 token pick",
+        "2 Camera: WASD Pan / Middle drag Orbit / Wheel Zoom / Frame": "step 2 camera",
+        "3 Surface: right-click → ESC no-op → Q close → left-click default move": "step 3 surface",
+        "4 Console: right-click → ESC no-op → Q close → left-click default interaction": "step 4 console",
+        "5 Final Summary": "step 5 final summary",
+    }
+    for marker, description in shared_markers.items():
+        if marker not in shared_console:
+            errors.append(f"G1 usability fix: missing {description}")
+    if "TextBox" in shared_console or "GuiService.SelectedObject" in shared_console:
+        errors.append("G1 usability fix: shared console cannot capture text or mutate SelectedObject")
+
+    for source, batch_name in (
+        (world_acceptance, "slice01-world-interaction"),
+        (context_acceptance, "contextual-pointer-actions"),
+    ):
+        if 'WaitForChild("AcceptanceShared"):WaitForChild("G1TestConsole")' not in source:
+            errors.append(f"G1 usability fix: {batch_name} does not use the shared console")
+        if "testConsole:registerBatch(BATCH_NAME, summary)" not in source:
+            errors.append(f"G1 usability fix: {batch_name} does not register combined progress")
+        if "summary:log(client.Replica.revision)" not in source:
+            errors.append(f"G1 usability fix: {batch_name} authoritative Output summary was removed")
+    for action_id in ("Prepare", "ArmTokenPick", "Frame"):
+        if f'testConsole:registerAction("{action_id}"' not in world_acceptance:
+            errors.append(f"G1 usability fix: missing shared World action {action_id}")
+    for action_id in ("Exploration", "FinalSummary"):
+        if f'testConsole:registerAction("{action_id}"' not in context_acceptance:
+            errors.append(f"G1 usability fix: missing shared Context action {action_id}")
+
+    if '"AcceptanceShared": {' not in slice_project or '"$path": "tests/AcceptanceShared"' not in slice_project:
+        errors.append("G1 usability fix: Slice 01 project does not mount acceptance-only shared UI")
+    if "AcceptanceShared" in default_project or "tests/AcceptanceShared" in default_project:
+        errors.append("G1 usability fix: production default project mounted acceptance-only UI")
+
+    menu_markers = {
+        "local WorldActionMenuPolicy = require(script.Parent.WorldActionMenuPolicy)": "local menu focus policy",
+        "button.Selectable = WorldActionMenuPolicy.actionButtonSelectable": "non-selectable action button",
+        "button.MouseEnter:Connect": "disabled-reason pointer hover",
+        "button.MouseLeave:Connect": "disabled-reason pointer leave",
+        "button.Activated:Connect": "pointer action activation",
+        "if not action.enabled then": "disabled action invocation guard",
+    }
+    for marker, description in menu_markers.items():
+        if marker not in action_menu:
+            errors.append(f"G1 usability fix: WorldActionMenu missing {description}")
+    if re.search(r"GuiService\.SelectedObject\s*=", action_menu):
+        errors.append("G1 usability fix: WorldActionMenu cannot assign GuiService.SelectedObject")
+    if "previousSelectedObject" in action_menu:
+        errors.append("G1 usability fix: obsolete WorldActionMenu selected-object restore returned")
+    if "AutoSelectGuiEnabled" in action_menu:
+        errors.append("G1 usability fix: global AutoSelectGuiEnabled mutation is forbidden")
+    policy_markers = {
+        "actionButtonSelectable = false": "PC pointer buttons non-selectable policy",
+        "mutatesSelectedObject = false": "selected-object preservation policy",
+    }
+    for marker, description in policy_markers.items():
+        if marker not in action_menu_policy:
+            errors.append(f"G1 usability fix: missing {description}")
+
+    changed_start = recovery_coordinator.find("replica.Changed:Connect(function()")
+    changed_end = recovery_coordinator.find("replica.RebuildStarted:Connect(function()", changed_start)
+    changed_handler = recovery_coordinator[changed_start:changed_end] if changed_start >= 0 and changed_end >= 0 else ""
+    recovery_markers = {
+        "self.state.state == ViewState.LOADING": "initial LOADING-only guard",
+        "replica.revision >= 0": "valid Replica revision guard",
+        "self:_set(ViewState.READY, nil, false)": "normal Projection READY transition",
+    }
+    for marker, description in recovery_markers.items():
+        if marker not in changed_handler:
+            errors.append(f"G1 usability fix: recovery coordinator missing {description}")
+    for forbidden in (
+        "ViewState.REBUILDING",
+        "ViewState.RECOVERY",
+        "ViewState.NETWORK_ERROR",
+        "ViewState.STALE",
+        "ViewState.CONFLICT",
+        "ViewState.FATAL",
+    ):
+        if forbidden in changed_handler:
+            errors.append("G1 usability fix: Replica.Changed handler must not clear explicit recovery/error states")
+    if 'phase = "loading"' in recovery_coordinator or 'phase = "ready"' in recovery_coordinator:
+        errors.append("G1 usability fix: recovery coordinator cannot forge Session phase")
+
+    recovery_spec_markers = {
+        '"a normal first Projection releases initial loading"': "normal first Projection regression",
+        '"Replica changes do not clear explicit "': "protected recovery/error regression",
+        "ViewState.REBUILDING": "REBUILDING protected state",
+        "ViewState.RECOVERY": "RECOVERY protected state",
+        "ViewState.NETWORK_ERROR": "NETWORK_ERROR protected state",
+        "ViewState.STALE": "STALE protected state",
+        "ViewState.CONFLICT": "CONFLICT protected state",
+        "ViewState.FATAL": "FATAL protected state",
+    }
+    for marker, description in recovery_spec_markers.items():
+        if marker not in entry_recovery_spec:
+            errors.append(f"G1 usability fix: EntryRecovery spec missing {description}")
+    input_spec_markers = {
+        "not WorldActionMenuPolicy.actionButtonSelectable": "non-selectable action-menu spec",
+        "not WorldActionMenuPolicy.mutatesSelectedObject": "selected-object preservation spec",
+        '"right click is consumed while the action table is open"': "existing pointer input spec",
+        '"Q closes the action table"': "existing Q grammar spec",
+        '"middle drag remains available to the independent camera controller"': "existing camera grammar spec",
+    }
+    for marker, description in input_spec_markers.items():
+        if marker not in input_context_spec:
+            errors.append(f"G1 usability fix: InputContext spec missing {description}")
+
+    return errors
+
+
 def validate_studio_retest_harness() -> list[str]:
     return validate_studio_retest_harness_texts(
         WORLD_ACCEPTANCE_PATH.read_text(encoding="utf-8"),
@@ -597,6 +751,22 @@ def validate_studio_retest_harness() -> list[str]:
         EXECUTION_RULES_PATH.read_text(encoding="utf-8"),
         CONTEXT_RESOLVER_PATH.read_text(encoding="utf-8"),
         INPUT_CONTROLLER_PATH.read_text(encoding="utf-8"),
+        G1_TEST_CONSOLE_PATH.read_text(encoding="utf-8"),
+    )
+
+
+def validate_g1_usability_fix() -> list[str]:
+    return validate_g1_usability_fix_texts(
+        WORLD_ACCEPTANCE_PATH.read_text(encoding="utf-8"),
+        CONTEXT_ACCEPTANCE_PATH.read_text(encoding="utf-8"),
+        G1_TEST_CONSOLE_PATH.read_text(encoding="utf-8"),
+        WORLD_ACTION_MENU_PATH.read_text(encoding="utf-8"),
+        WORLD_ACTION_MENU_POLICY_PATH.read_text(encoding="utf-8"),
+        UI_RECOVERY_COORDINATOR_PATH.read_text(encoding="utf-8"),
+        ENTRY_RECOVERY_SPEC_PATH.read_text(encoding="utf-8"),
+        INPUT_CONTEXT_SPEC_PATH.read_text(encoding="utf-8"),
+        SLICE01_ACCEPTANCE_PROJECT_PATH.read_text(encoding="utf-8"),
+        DEFAULT_PROJECT_PATH.read_text(encoding="utf-8"),
     )
 
 
@@ -615,6 +785,7 @@ def validate(root: Path = ROOT) -> list[str]:
     errors.extend(validate_dice_slot_reveal_notice(ROOT))
     errors.extend(validate_forbidden_player_sources())
     errors.extend(validate_studio_retest_harness())
+    errors.extend(validate_g1_usability_fix())
     return errors
 
 
@@ -735,6 +906,7 @@ def run_self_tests(matrix: dict, manifest: dict) -> list[str]:
     rules = EXECUTION_RULES_PATH.read_text(encoding="utf-8")
     resolver = CONTEXT_RESOLVER_PATH.read_text(encoding="utf-8")
     controller = INPUT_CONTROLLER_PATH.read_text(encoding="utf-8")
+    shared = G1_TEST_CONSOLE_PATH.read_text(encoding="utf-8")
     harness_fixtures = [
         (
             world.replace('action == "orbit" and source == "mouse-middle-screen-delta"', 'action == "pan"'),
@@ -779,7 +951,7 @@ def run_self_tests(matrix: dict, manifest: dict) -> list[str]:
             "fake middle-button Pan compatibility signal",
         ),
         (
-            world.replace("Middle-button drag = Orbit", "Middle-button drag = Pan"),
+            world,
             context,
             runtime,
             rules,
@@ -801,8 +973,8 @@ def run_self_tests(matrix: dict, manifest: dict) -> list[str]:
         ),
         (
             world.replace(
-                "armPickButton.Activated:Connect(function()",
-                "missingArmButton.Activated:Connect(function()",
+                'testConsole:registerAction("ArmTokenPick", function()',
+                'testConsole:registerAction("MissingArm", function()',
                 1,
             ),
             context,
@@ -858,8 +1030,8 @@ def run_self_tests(matrix: dict, manifest: dict) -> list[str]:
         ),
         (
             world.replace(
-                "armPickButton.Activated:Connect(function()\n\tlocal state = currentState()\n",
-                "armPickButton.Activated:Connect(function()\n"
+                'testConsole:registerAction("ArmTokenPick", function()\n\tlocal state = currentState()\n',
+                'testConsole:registerAction("ArmTokenPick", function()\n'
                 '\tlocal state = currentState()\n\tstate.membership.role = "player"\n',
                 1,
             ),
@@ -877,6 +1049,14 @@ def run_self_tests(matrix: dict, manifest: dict) -> list[str]:
         ),
     ]
     for world_fixture, context_fixture, runtime_fixture, rules_fixture, expected in harness_fixtures:
+        shared_fixture = (
+            shared.replace(
+                "2 Camera: WASD Pan / Middle drag Orbit / Wheel Zoom / Frame",
+                "2 Camera: WASD Pan / Middle-button drag = Pan / Wheel Zoom / Frame",
+            )
+            if expected == "visible middle-button Pan instruction"
+            else shared
+        )
         fixture_errors = validate_studio_retest_harness_texts(
             world_fixture,
             context_fixture,
@@ -884,6 +1064,7 @@ def run_self_tests(matrix: dict, manifest: dict) -> list[str]:
             rules_fixture,
             resolver,
             controller,
+            shared_fixture,
         )
         if not any(expected in error for error in fixture_errors):
             failures.append(f"validator self-test did not reject harness fixture: {expected}")
@@ -934,9 +1115,89 @@ def run_self_tests(matrix: dict, manifest: dict) -> list[str]:
             rules,
             resolver_fixture,
             controller_fixture,
+            shared,
         )
         if not any(expected in error for error in fixture_errors):
             failures.append(f"validator self-test did not reject authority fixture: {expected}")
+
+    fix004_sources = {
+        "world_acceptance": world,
+        "context_acceptance": context,
+        "shared_console": shared,
+        "action_menu": WORLD_ACTION_MENU_PATH.read_text(encoding="utf-8"),
+        "action_menu_policy": WORLD_ACTION_MENU_POLICY_PATH.read_text(encoding="utf-8"),
+        "recovery_coordinator": UI_RECOVERY_COORDINATOR_PATH.read_text(encoding="utf-8"),
+        "entry_recovery_spec": ENTRY_RECOVERY_SPEC_PATH.read_text(encoding="utf-8"),
+        "input_context_spec": INPUT_CONTEXT_SPEC_PATH.read_text(encoding="utf-8"),
+        "slice_project": SLICE01_ACCEPTANCE_PROJECT_PATH.read_text(encoding="utf-8"),
+        "default_project": DEFAULT_PROJECT_PATH.read_text(encoding="utf-8"),
+    }
+    fix004_fixtures = [
+        (
+            "world_acceptance",
+            world + '\nlocal duplicateGui = Instance.new("ScreenGui")\n',
+            "World and Context scripts must not create independent ScreenGuis",
+        ),
+        (
+            "shared_console",
+            shared.replace('local gui = Instance.new("ScreenGui")', 'local gui = Instance.new("Frame")', 1),
+            "exactly one shared G1 ScreenGui is required",
+        ),
+        (
+            "shared_console",
+            shared.replace("header.InputBegan:Connect", "header.MouseEnter:Connect", 1),
+            "missing mouse drag start",
+        ),
+        (
+            "shared_console",
+            shared.replace("button.Selectable = false", "button.Selectable = true", 1),
+            "missing non-selectable acceptance buttons",
+        ),
+        (
+            "shared_console",
+            shared + "\nGuiService.SelectedObject = panel\n",
+            "shared console cannot capture text or mutate SelectedObject",
+        ),
+        (
+            "action_menu",
+            fix004_sources["action_menu"] + "\nGuiService.SelectedObject = firstButton\n",
+            "WorldActionMenu cannot assign GuiService.SelectedObject",
+        ),
+        (
+            "action_menu",
+            fix004_sources["action_menu"] + "\nlocal previousSelectedObject = GuiService.SelectedObject\n",
+            "obsolete WorldActionMenu selected-object restore returned",
+        ),
+        (
+            "recovery_coordinator",
+            fix004_sources["recovery_coordinator"].replace(
+                "self.state.state == ViewState.LOADING and replica.revision >= 0",
+                "replica.revision >= 0",
+                1,
+            ),
+            "initial LOADING-only guard",
+        ),
+        (
+            "recovery_coordinator",
+            fix004_sources["recovery_coordinator"].replace(
+                "self.state.state == ViewState.LOADING and replica.revision >= 0",
+                "self.state.state == ViewState.NETWORK_ERROR or replica.revision >= 0",
+                1,
+            ),
+            "must not clear explicit recovery/error states",
+        ),
+        (
+            "default_project",
+            fix004_sources["default_project"] + '\n"AcceptanceShared": {"$path": "tests/AcceptanceShared"}\n',
+            "production default project mounted acceptance-only UI",
+        ),
+    ]
+    for key, value, expected in fix004_fixtures:
+        fixture_sources = dict(fix004_sources)
+        fixture_sources[key] = value
+        fixture_errors = validate_g1_usability_fix_texts(**fixture_sources)
+        if not any(expected in error for error in fixture_errors):
+            failures.append(f"validator self-test did not reject FIX-004 fixture: {expected}")
     return failures
 
 

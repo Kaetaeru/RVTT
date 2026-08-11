@@ -4,6 +4,7 @@ local GuiService = game:GetService("GuiService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Signal = require(ReplicatedStorage.RVTT.Shared.Core.Signal)
+local WorldActionMenuPolicy = require(script.Parent.WorldActionMenuPolicy)
 
 type Action = {
 	id: string,
@@ -112,7 +113,6 @@ function Menu.new(): any
 		buttons = buttons,
 		reason = reason,
 		actions = {},
-		previousSelectedObject = nil,
 		ActionInvoked = Signal.new(),
 		Opened = Signal.new(),
 		Closed = Signal.new(),
@@ -143,7 +143,7 @@ function Menu:_createButton(action: Action, index: number): TextButton
 		else Color3.fromRGB(46, 52, 63)
 	button.BorderSizePixel = 0
 	button.AutoButtonColor = action.enabled
-	-- Disabled actions remain focusable so their viewer-safe reason can be inspected.
+	-- Pointer hover keeps disabled reasons inspectable without keyboard/gamepad focus.
 	button.Active = true
 	button.Font = Enum.Font.GothamMedium
 	button.Text = action.label
@@ -151,7 +151,7 @@ function Menu:_createButton(action: Action, index: number): TextButton
 		then Color3.fromRGB(240, 242, 246)
 		else Color3.fromRGB(151, 155, 164)
 	button.TextSize = 13
-	button.Selectable = true
+	button.Selectable = WorldActionMenuPolicy.actionButtonSelectable
 	button:SetAttribute("RVTTAvailability", if action.enabled then "enabled" else "disabled")
 	button:SetAttribute("RVTTDisabledReason", action.disabledReason)
 	button:SetAttribute("RVTTProjectionRevision", action.projectionRevision)
@@ -173,12 +173,6 @@ function Menu:_createButton(action: Action, index: number): TextButton
 		self:_showReason(action, true)
 	end)
 	button.MouseLeave:Connect(function()
-		self:_showReason(action, false)
-	end)
-	button.SelectionGained:Connect(function()
-		self:_showReason(action, true)
-	end)
-	button.SelectionLost:Connect(function()
 		self:_showReason(action, false)
 	end)
 	return button
@@ -213,21 +207,11 @@ function Menu:open(actions: { Action }, screenPosition: Vector2, targetLabel: st
 	local y = math.clamp(screenPosition.Y - inset.Y, 8, math.max(8, viewport.Y - height - 8))
 	self.panel.Position = UDim2.fromOffset(x, y)
 
-	local firstButton: GuiObject? = nil
 	for index, action in actions do
-		local button = self:_createButton(action, index)
-		if firstButton == nil then
-			firstButton = button
-		end
+		self:_createButton(action, index)
 	end
 
-	if not self.gui.Enabled then
-		self.previousSelectedObject = GuiService.SelectedObject
-	end
 	self.gui.Enabled = true
-	if firstButton ~= nil then
-		GuiService.SelectedObject = firstButton
-	end
 	self.Opened:Fire(actions)
 end
 
@@ -238,14 +222,6 @@ function Menu:close(reason: string?)
 	self.gui.Enabled = false
 	self.actions = {}
 	self.reason.Visible = false
-	if GuiService.SelectedObject ~= nil and GuiService.SelectedObject:IsDescendantOf(self.gui) then
-		GuiService.SelectedObject = nil
-	end
-	local previous = self.previousSelectedObject
-	self.previousSelectedObject = nil
-	if previous ~= nil and previous.Parent ~= nil and previous.Visible then
-		GuiService.SelectedObject = previous
-	end
 	self.Closed:Fire(reason or "closed")
 end
 

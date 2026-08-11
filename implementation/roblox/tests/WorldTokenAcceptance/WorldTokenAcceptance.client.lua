@@ -11,6 +11,9 @@ if acceptanceMode == nil or not acceptanceMode:IsA("BoolValue") or not acceptanc
 end
 
 local BatchSummary = require(ReplicatedStorage.RVTT.Shared.Diagnostics.BatchSummary)
+local G1TestConsole = (require :: any)(
+	rvtt:WaitForChild("AcceptanceShared"):WaitForChild("G1TestConsole")
+)
 local player = Players.LocalPlayer
 local playerScripts = player:WaitForChild("PlayerScripts")
 local clientFolder = playerScripts:WaitForChild("RVTT"):WaitForChild("Client")
@@ -41,6 +44,12 @@ local summary = BatchSummary.new(BATCH_NAME, {
 	{ id = "command-accepted", label = "Server Command Acceptance" },
 	{ id = "projection-move", label = "Server Projection Position Update" },
 })
+local testConsole = G1TestConsole.get()
+testConsole:registerBatch(BATCH_NAME, summary)
+testConsole:setOperation(
+	BATCH_NAME,
+	"Batch 초기화 중 · 이 Build는 DataStore를 사용하지 않습니다"
+)
 
 local function createBoard()
 	local existing = Workspace:FindFirstChild("RVTT_AcceptanceBoard")
@@ -93,118 +102,6 @@ end
 
 createBoard()
 
-local gui = Instance.new("ScreenGui")
-gui.Name = "RVTT_WorldInteraction_Batch"
-gui.ResetOnSpawn = false
-gui.DisplayOrder = 220
-gui.Parent = player:WaitForChild("PlayerGui")
-
-local panel = Instance.new("Frame")
-panel.Name = "Panel"
-panel.Position = UDim2.fromOffset(18, 18)
-panel.Size = UDim2.fromOffset(520, 560)
-panel.BackgroundColor3 = Color3.fromRGB(25, 28, 34)
-panel.BackgroundTransparency = 0.06
-panel.BorderSizePixel = 0
-panel.Parent = gui
-
-local panelCorner = Instance.new("UICorner")
-panelCorner.CornerRadius = UDim.new(0, 9)
-panelCorner.Parent = panel
-
-local title = Instance.new("TextLabel")
-title.Position = UDim2.fromOffset(16, 12)
-title.Size = UDim2.new(1, -32, 0, 30)
-title.BackgroundTransparency = 1
-title.Font = Enum.Font.GothamBold
-title.Text = "Slice 01 · World Interaction Batch"
-title.TextColor3 = Color3.fromRGB(238, 240, 244)
-title.TextSize = 17
-title.TextXAlignment = Enum.TextXAlignment.Left
-title.Parent = panel
-
-local instructions = Instance.new("TextLabel")
-instructions.Position = UDim2.fromOffset(16, 44)
-instructions.Size = UDim2.new(1, -32, 0, 72)
-instructions.BackgroundTransparency = 1
-instructions.Font = Enum.Font.Gotham
-instructions.Text =
-	"WASD = Pan · Middle-button drag = Orbit · Wheel = Zoom · F or Token Frame = Frame. Wait until setup is ready → Arm Token Pick → left-click Hero → verify Highlight. 이 Build는 DataStore를 사용하지 않습니다."
-instructions.TextColor3 = Color3.fromRGB(184, 191, 202)
-instructions.TextSize = 12
-instructions.TextWrapped = true
-instructions.TextXAlignment = Enum.TextXAlignment.Left
-instructions.TextYAlignment = Enum.TextYAlignment.Top
-instructions.Parent = panel
-
-local stateLabel = Instance.new("TextLabel")
-stateLabel.Position = UDim2.fromOffset(16, 118)
-stateLabel.Size = UDim2.new(1, -32, 0, 74)
-stateLabel.BackgroundColor3 = Color3.fromRGB(19, 22, 27)
-stateLabel.BorderSizePixel = 0
-stateLabel.Font = Enum.Font.Code
-stateLabel.TextColor3 = Color3.fromRGB(219, 224, 231)
-stateLabel.TextSize = 12
-stateLabel.TextWrapped = true
-stateLabel.TextXAlignment = Enum.TextXAlignment.Left
-stateLabel.TextYAlignment = Enum.TextYAlignment.Top
-stateLabel.Parent = panel
-
-local stateCorner = Instance.new("UICorner")
-stateCorner.CornerRadius = UDim.new(0, 5)
-stateCorner.Parent = stateLabel
-
-local checklist = Instance.new("TextLabel")
-checklist.Position = UDim2.fromOffset(16, 202)
-checklist.Size = UDim2.new(1, -32, 0, 254)
-checklist.BackgroundColor3 = Color3.fromRGB(19, 22, 27)
-checklist.BorderSizePixel = 0
-checklist.Font = Enum.Font.Code
-checklist.TextColor3 = Color3.fromRGB(219, 224, 231)
-checklist.TextSize = 11
-checklist.TextWrapped = false
-checklist.TextXAlignment = Enum.TextXAlignment.Left
-checklist.TextYAlignment = Enum.TextYAlignment.Top
-checklist.Parent = panel
-
-local checklistCorner = Instance.new("UICorner")
-checklistCorner.CornerRadius = UDim.new(0, 5)
-checklistCorner.Parent = checklist
-
-local operation = Instance.new("TextLabel")
-operation.Position = UDim2.fromOffset(16, 514)
-operation.Size = UDim2.new(1, -32, 0, 28)
-operation.BackgroundTransparency = 1
-operation.Font = Enum.Font.Gotham
-operation.Text = "Batch 초기화 중"
-operation.TextColor3 = Color3.fromRGB(166, 173, 184)
-operation.TextSize = 12
-operation.TextXAlignment = Enum.TextXAlignment.Left
-operation.Parent = panel
-
-local function makeButton(name: string, text: string, x: number, width: number): TextButton
-	local button = Instance.new("TextButton")
-	button.Name = name
-	button.Position = UDim2.fromOffset(x, 466)
-	button.Size = UDim2.fromOffset(width, 36)
-	button.BackgroundColor3 = Color3.fromRGB(72, 91, 122)
-	button.BorderSizePixel = 0
-	button.Font = Enum.Font.GothamMedium
-	button.Text = text
-	button.TextColor3 = Color3.fromRGB(238, 240, 244)
-	button.TextSize = 12
-	button.Parent = panel
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 5)
-	corner.Parent = button
-	return button
-end
-
-local prepareButton = makeButton("Prepare", "자동 준비", 16, 118)
-local armPickButton = makeButton("ArmTokenPick", "Arm Token Pick", 142, 134)
-local frameButton = makeButton("Frame", "Token Frame", 284, 94)
-local summaryButton = makeButton("Summary", "Final Summary", 386, 118)
-
 local terminalResults: { [string]: any } = {}
 local busy = false
 local passSummaryLogged = false
@@ -216,32 +113,7 @@ local tokenPickArmed = false
 local armedHeroActorId: string? = nil
 
 local function setOperation(message: string, failed: boolean?)
-	operation.Text = message
-	operation.TextColor3 = if failed == true
-		then Color3.fromRGB(232, 126, 126)
-		else Color3.fromRGB(166, 173, 184)
-end
-
-local function statusToken(status: string): string
-	if status == "pass" then
-		return "PASS"
-	end
-	if status == "fail" then
-		return "FAIL"
-	end
-	return "...."
-end
-
-local function renderChecklist()
-	local lines = {}
-	for _, id in summary.order do
-		local record = summary.checks[id]
-		table.insert(
-			lines,
-			string.format("[%s] %-20s %s", statusToken(record.status), id, record.detail)
-		)
-	end
-	checklist.Text = table.concat(lines, "\n")
+	testConsole:setOperation(BATCH_NAME, message, failed)
 end
 
 local function maybeLogPass()
@@ -255,8 +127,8 @@ local function maybeLogPass()
 end
 
 local function refresh()
-	renderChecklist()
 	maybeLogPass()
+	testConsole:refresh()
 end
 
 local function pass(id: string, detail: string?)
@@ -433,24 +305,27 @@ local function renderState()
 	lastProjectedPosition = if position ~= nil
 		then string.format("(%.2f, %.2f, %.2f)", position.X, position.Y, position.Z)
 		else "none"
-	stateLabel.Text = string.format(
-		"revision=%d role=%s character=%s scene=%s\ntoken3D=%s selected=%s pick=%s arm=%s destination=%s\nposition=%s command=%s",
-		client.Replica.revision,
-		if type(state.membership) == "table" then tostring(state.membership.role) else "none",
-		tostring(state.characterId),
-		tostring(state.scene.activeSceneId),
-		if tokenModel ~= nil then "PASS" else "WAIT",
-		tostring(selected),
-		lastPickMethod,
-		if tokenPickArmed then "ARMED" else "WAIT",
-		tostring(worldTokens.Renderer:getDestinationStatus()),
-		lastProjectedPosition,
-		lastCommandId
+	testConsole:setBatchStatus(
+		BATCH_NAME,
+		string.format(
+			"revision=%d role=%s character=%s scene=%s\ntoken3D=%s selected=%s pick=%s arm=%s destination=%s\nposition=%s command=%s",
+			client.Replica.revision,
+			if type(state.membership) == "table" then tostring(state.membership.role) else "none",
+			tostring(state.characterId),
+			tostring(state.scene.activeSceneId),
+			if tokenModel ~= nil then "PASS" else "WAIT",
+			tostring(selected),
+			lastPickMethod,
+			if tokenPickArmed then "ARMED" else "WAIT",
+			tostring(worldTokens.Renderer:getDestinationStatus()),
+			lastProjectedPosition,
+			lastCommandId
+		)
 	)
-	prepareButton.Active = not busy
-	armPickButton.Active = not busy and tokenModel ~= nil
-	frameButton.Active = not busy and tokenModel ~= nil
-	summaryButton.Active = true
+	testConsole:setActionState("Prepare", not busy)
+	testConsole:setActionState("ArmTokenPick", not busy and tokenModel ~= nil)
+	testConsole:setActionState("Frame", not busy and tokenModel ~= nil)
+	testConsole:setActionState("FinalSummary", true)
 end
 
 local function ensureSuccess(result: any, commandType: string): any
@@ -555,7 +430,7 @@ local function invalidateTokenPickArm(reason: string)
 	end
 	tokenPickArmed = false
 	armedHeroActorId = nil
-	armPickButton.Text = "Re-arm Token Pick"
+	testConsole:setActionState("ArmTokenPick", true, "Re-arm Token Pick")
 	setTokenPickPending("re-arm required: " .. reason)
 	setOperation(
 		"Token Pick 준비가 Replica 선택 복원으로 취소됐습니다 · 다시 Arm 하세요",
@@ -598,16 +473,14 @@ local function run(action: () -> ())
 	refresh()
 end
 
-prepareButton.Activated:Connect(function()
-	task.spawn(function()
-		run(function()
-			prepareScene()
-			initializeCameraChecks()
-		end)
+testConsole:registerAction("Prepare", function()
+	run(function()
+		prepareScene()
+		initializeCameraChecks()
 	end)
 end)
 
-armPickButton.Activated:Connect(function()
+testConsole:registerAction("ArmTokenPick", function()
 	local state = currentState()
 	local heroActorId = state.characterId
 	local tokenReady = type(heroActorId) == "string"
@@ -632,17 +505,17 @@ armPickButton.Activated:Connect(function()
 		invalidateTokenPickArm("local renderer selection did not clear")
 		return
 	end
-	armPickButton.Text = "Token Pick Armed"
+	testConsole:setActionState("ArmTokenPick", true, "Token Pick Armed")
 	setOperation("Token Pick ARMED · 보이는 Hero Token을 실제 좌클릭하세요")
 	renderState()
 end)
 
-frameButton.Activated:Connect(function()
+testConsole:registerAction("Frame", function()
 	worldTokens.Camera:requestFrame("button", false)
 	renderState()
 end)
 
-summaryButton.Activated:Connect(function()
+testConsole:registerAction("FinalSummary", function()
 	summary:log(client.Replica.revision)
 	setOperation("현재 Final Summary를 Output에 기록했습니다")
 end)
@@ -699,7 +572,7 @@ worldTokens.PickResolved:Connect(function(actorId, method, selected, hitName)
 		and method == "ray"
 	tokenPickArmed = false
 	armedHeroActorId = nil
-	armPickButton.Text = "Arm Token Pick"
+	testConsole:setActionState("ArmTokenPick", true, "Arm Token Pick")
 	if not realArmedPick then
 		setTokenPickPending("press Arm Token Pick before the real Hero click")
 		setOperation(

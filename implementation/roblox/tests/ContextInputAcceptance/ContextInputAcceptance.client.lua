@@ -13,6 +13,9 @@ if acceptanceMode == nil or not acceptanceMode:IsA("BoolValue") or not acceptanc
 end
 
 local BatchSummary = require(ReplicatedStorage.RVTT.Shared.Diagnostics.BatchSummary)
+local G1TestConsole = (require :: any)(
+	rvtt:WaitForChild("AcceptanceShared"):WaitForChild("G1TestConsole")
+)
 local playerScripts = player:WaitForChild("PlayerScripts")
 local clientFolder = playerScripts:WaitForChild("RVTT"):WaitForChild("Client")
 local ClientRuntime = (require :: any)(clientFolder:WaitForChild("ClientRuntime"))
@@ -34,6 +37,8 @@ local summary = BatchSummary.new(BATCH_NAME, {
 	{ id = "interact-menu", label = "Right-click Exploration Action Table" },
 	{ id = "interact-default", label = "Left-click Default Interaction" },
 })
+local testConsole = G1TestConsole.get()
+testConsole:registerBatch(BATCH_NAME, summary)
 
 local terminalResults: { [string]: any } = {}
 local busy = false
@@ -82,133 +87,16 @@ local function outcome(result: any): any
 	return type(result) == "table" and type(result.value) == "table" and result.value.outcome or nil
 end
 
-local gui = Instance.new("ScreenGui")
-gui.Name = "RVTT_ContextInput_Acceptance"
-gui.ResetOnSpawn = false
-gui.DisplayOrder = 225
-gui.Parent = player:WaitForChild("PlayerGui")
-
-local panel = Instance.new("Frame")
-panel.Name = "Panel"
-panel.AnchorPoint = Vector2.new(1, 0)
-panel.Position = UDim2.new(1, -18, 0, 18)
-panel.Size = UDim2.fromOffset(470, 520)
-panel.BackgroundColor3 = Color3.fromRGB(25, 28, 34)
-panel.BackgroundTransparency = 0.04
-panel.BorderSizePixel = 0
-panel.Parent = gui
-
-local panelCorner = Instance.new("UICorner")
-panelCorner.CornerRadius = UDim.new(0, 9)
-panelCorner.Parent = panel
-
-local title = Instance.new("TextLabel")
-title.Position = UDim2.fromOffset(16, 12)
-title.Size = UDim2.new(1, -32, 0, 28)
-title.BackgroundTransparency = 1
-title.Font = Enum.Font.GothamBold
-title.Text = "Context Input · Acceptance"
-title.TextColor3 = Color3.fromRGB(238, 240, 244)
-title.TextSize = 17
-title.TextXAlignment = Enum.TextXAlignment.Left
-title.Parent = panel
-
-local instructions = Instance.new("TextLabel")
-instructions.Position = UDim2.fromOffset(16, 46)
-instructions.Size = UDim2.new(1, -32, 0, 130)
-instructions.BackgroundTransparency = 1
-instructions.Font = Enum.Font.Gotham
-instructions.Text = table.concat({
-	"1. Select Hero · Middle-button drag = Camera Orbit",
-	"2. Surface right-click → Move table → ESC(no-op) → Q(close) → surface left-click",
-	"3. Blue Console right-click → action table → ESC(no-op) → Q(close) → left-click",
-	"Right-click must not move the camera. G1 does not gate Player-vs-hostile attack.",
-}, "\n")
-instructions.TextColor3 = Color3.fromRGB(190, 197, 208)
-instructions.TextSize = 12
-instructions.TextWrapped = true
-instructions.TextXAlignment = Enum.TextXAlignment.Left
-instructions.TextYAlignment = Enum.TextYAlignment.Top
-instructions.Parent = panel
-
-local checklist = Instance.new("TextLabel")
-checklist.Position = UDim2.fromOffset(16, 184)
-checklist.Size = UDim2.new(1, -32, 0, 218)
-checklist.BackgroundColor3 = Color3.fromRGB(19, 22, 27)
-checklist.BorderSizePixel = 0
-checklist.Font = Enum.Font.Code
-checklist.TextColor3 = Color3.fromRGB(219, 224, 231)
-checklist.TextSize = 11
-checklist.TextXAlignment = Enum.TextXAlignment.Left
-checklist.TextYAlignment = Enum.TextYAlignment.Top
-checklist.Parent = panel
-
-local checklistCorner = Instance.new("UICorner")
-checklistCorner.CornerRadius = UDim.new(0, 5)
-checklistCorner.Parent = checklist
-
-local operation = Instance.new("TextLabel")
-operation.Position = UDim2.fromOffset(16, 466)
-operation.Size = UDim2.new(1, -32, 0, 38)
-operation.BackgroundTransparency = 1
-operation.Font = Enum.Font.Gotham
-operation.Text = "Acceptance 대상 준비 중"
-operation.TextColor3 = Color3.fromRGB(166, 173, 184)
-operation.TextSize = 12
-operation.TextWrapped = true
-operation.TextXAlignment = Enum.TextXAlignment.Left
-operation.Parent = panel
-
-local function makeButton(name: string, text: string, x: number, width: number): TextButton
-	local button = Instance.new("TextButton")
-	button.Name = name
-	button.Position = UDim2.fromOffset(x, 414)
-	button.Size = UDim2.fromOffset(width, 38)
-	button.BackgroundColor3 = Color3.fromRGB(72, 91, 122)
-	button.BorderSizePixel = 0
-	button.Font = Enum.Font.GothamMedium
-	button.Text = text
-	button.TextColor3 = Color3.fromRGB(238, 240, 244)
-	button.TextSize = 12
-	button.Parent = panel
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 5)
-	corner.Parent = button
-	return button
-end
-
-local explorationButton = makeButton("Exploration", "Exploration", 16, 210)
-local summaryButton = makeButton("Summary", "Final Summary", 236, 218)
-
-local function statusToken(status: string): string
-	if status == "pass" then
-		return "PASS"
-	end
-	if status == "fail" then
-		return "FAIL"
-	end
-	return "...."
-end
-
-local function renderChecklist()
-	local lines = {}
-	for _, id in summary.order do
-		local record = summary.checks[id]
-		table.insert(
-			lines,
-			string.format("[%s] %-18s %s", statusToken(record.status), id, record.detail)
-		)
-	end
-	checklist.Text = table.concat(lines, "\n")
-end
-
 local function refresh()
-	renderChecklist()
 	if summary:result() == "PASS" and not passSummaryLogged then
 		passSummaryLogged = true
-		operation.Text = "Context Input PASS · Final Summary가 Output에 기록됐습니다"
+		testConsole:setOperation(
+			BATCH_NAME,
+			"Context Input PASS · Final Summary가 Output에 기록됐습니다"
+		)
 		summary:log(client.Replica.revision)
 	end
+	testConsole:refresh()
 end
 
 local function pass(id: string, detail: string?)
@@ -312,13 +200,20 @@ local function prepareTargets()
 		end
 		createObjectVisual(objectId)
 		pass("setup-object", objectId)
-		operation.Text = "G1 targets ready · Follow the visible input sequence."
+		testConsole:setOperation(
+			BATCH_NAME,
+			"G1 targets ready · Follow the visible input sequence."
+		)
 	end, function(errorValue)
 		return debug.traceback(tostring(errorValue))
 	end)
 	busy = false
 	if not ok then
-		operation.Text = "Acceptance 대상 준비 실패 · Output 확인"
+		testConsole:setOperation(
+			BATCH_NAME,
+			"Acceptance 대상 준비 실패 · Output 확인",
+			true
+		)
 		warn("[RVTT Context Input] event=setup-failed error=" .. tostring(errorMessage))
 	end
 end
@@ -443,28 +338,37 @@ UserInputService.InputBegan:Connect(function(input, processed)
 	end
 end)
 
-explorationButton.Activated:Connect(function()
-	task.spawn(function()
-		if busy then
-			return
-		end
-		busy = true
-		local result = submit("encounter.end", { reason = "acceptance-exploration" })
-		busy = false
-		if type(result) == "table" and result.ok == true then
-			operation.Text = "탐험 모드 · Console 행동을 테스트하세요"
-		else
-			operation.Text = "이미 탐험 모드이거나 Encounter 종료가 불필요합니다"
-		end
-	end)
+testConsole:registerAction("Exploration", function()
+	if busy then
+		return
+	end
+	busy = true
+	local result = submit("encounter.end", { reason = "acceptance-exploration" })
+	busy = false
+	if type(result) == "table" and result.ok == true then
+		testConsole:setOperation(
+			BATCH_NAME,
+			"탐험 모드 · Console 행동을 테스트하세요"
+		)
+	else
+		testConsole:setOperation(
+			BATCH_NAME,
+			"이미 탐험 모드이거나 Encounter 종료가 불필요합니다"
+		)
+	end
 end)
 
-summaryButton.Activated:Connect(function()
+testConsole:registerAction("FinalSummary", function()
 	summary:log(client.Replica.revision)
-	operation.Text = "현재 Context Input Summary를 Output에 기록했습니다"
+	testConsole:setOperation(
+		BATCH_NAME,
+		"현재 Context Input Summary를 Output에 기록했습니다"
+	)
 end)
 
-renderChecklist()
+testConsole:setActionState("Exploration", true)
+testConsole:setActionState("FinalSummary", true)
+testConsole:refresh()
 task.spawn(prepareTargets)
 
 print(string.format("[RVTT Context Input] event=ready batch=%s persistence=disabled", BATCH_NAME))

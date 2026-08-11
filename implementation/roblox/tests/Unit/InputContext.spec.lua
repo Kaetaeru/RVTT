@@ -7,6 +7,7 @@ return function(harness: any)
 	local GameplayInputGuard = require(Client.GameplayInputGuard)
 	local SemanticInputRouter = require(Client.SemanticInputRouter)
 	local World = Client.World
+	local WorldActionMenuPolicy = require(World.WorldActionMenuPolicy)
 	local WorldContextActionResolver = require(World.WorldContextActionResolver)
 	local WorldTokenInputController = require(World.WorldTokenInputController)
 
@@ -41,6 +42,14 @@ return function(harness: any)
 		"Escape has no RVTT gameplay mapping"
 	)
 	harness:expect(GameplayInputGuard.allows(false, nil), "unprocessed gameplay input is allowed")
+	harness:expect(
+		not WorldActionMenuPolicy.actionButtonSelectable,
+		"pointer action-menu buttons do not become keyboard navigation targets"
+	)
+	harness:expect(
+		not WorldActionMenuPolicy.mutatesSelectedObject,
+		"pointer action-menu open and close preserve unrelated GUI selection"
+	)
 	harness:expect(
 		not GameplayInputGuard.allows(true, nil),
 		"Roblox-processed gameplay input is paused"

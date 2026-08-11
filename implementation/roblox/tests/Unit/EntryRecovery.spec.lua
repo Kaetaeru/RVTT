@@ -4,9 +4,63 @@ return function(harness: any)
 	local ReplicatedStorage = game:GetService("ReplicatedStorage")
 	local StarterPlayer = game:GetService("StarterPlayer")
 	local UI = ReplicatedStorage.RVTT.Shared.UI
+	local Signal = require(ReplicatedStorage.RVTT.Shared.Core.Signal)
 	local ViewModel = require(UI.EntryRecoveryViewModel)
 	local ShellContract = require(UI.ShellContract)
+	local ViewState = require(UI.ViewState)
+	local UIRecoveryCoordinator =
+		require(StarterPlayer.StarterPlayerScripts.RVTT.Client.UIRecoveryCoordinator)
 	local Store = require(StarterPlayer.StarterPlayerScripts.RVTT.Client.UiPreferenceStore)
+
+	local initialReplica: any = {
+		revision = -1,
+		Changed = Signal.new(),
+		RebuildStarted = Signal.new(),
+		RebuildFinished = Signal.new(),
+		RebuildFailed = Signal.new(),
+	}
+	local fullSyncRequests = 0
+	local recovery = UIRecoveryCoordinator.new(initialReplica, function()
+		fullSyncRequests += 1
+	end)
+	harness:equal(
+		recovery:snapshot().state,
+		ViewState.LOADING,
+		"an invalid initial Replica starts in loading"
+	)
+	initialReplica.revision = 0
+	initialReplica.Changed:Fire()
+	task.wait()
+	harness:equal(
+		recovery:snapshot().state,
+		ViewState.READY,
+		"a normal first Projection releases initial loading"
+	)
+
+	local protectedStates = {
+		ViewState.REBUILDING,
+		ViewState.RECOVERY,
+		ViewState.NETWORK_ERROR,
+		ViewState.STALE,
+		ViewState.CONFLICT,
+		ViewState.FATAL,
+	}
+	for _, protectedState in protectedStates do
+		recovery:_set(protectedState, "protected", protectedState == ViewState.NETWORK_ERROR)
+		initialReplica.Changed:Fire()
+		task.wait()
+		harness:equal(
+			recovery:snapshot().state,
+			protectedState,
+			"Replica changes do not clear explicit " .. protectedState .. " state"
+		)
+	end
+	harness:equal(
+		fullSyncRequests,
+		0,
+		"normal initial Projection does not request a forged full sync"
+	)
+	recovery:destroy()
 
 	local observer = ViewModel.build({ domains = {} }, 22, nil, false)
 	harness:equal(observer.role, "observer", "missing membership enters observer-first")
