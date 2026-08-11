@@ -1,0 +1,44 @@
+name: Validate RVTT module contracts
+
+concurrency:
+  group: rvtt-module-contracts-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+    paths:
+      - "AGENTS.md"
+      - "implementation/roblox/MODULE-CONTRACTS.md"
+      - "implementation/roblox/manifests/module-contracts.json"
+      - "implementation/roblox/tooling/validate_module_contracts.py"
+      - "implementation/roblox/src/**"
+      - "implementation/roblox/tests/**"
+  push:
+    branches:
+      - planning/rvtt-remake
+    paths:
+      - "AGENTS.md"
+      - "implementation/roblox/MODULE-CONTRACTS.md"
+      - "implementation/roblox/manifests/module-contracts.json"
+      - "implementation/roblox/tooling/validate_module_contracts.py"
+      - "implementation/roblox/src/**"
+      - "implementation/roblox/tests/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate module contracts
+        run: python implementation/roblox/tooling/validate_module_contracts.py
