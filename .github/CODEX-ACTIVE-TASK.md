@@ -1,19 +1,20 @@
 # RVTT Execution State
 
 - status: `READY_FOR_CODEX_EXECUTION`
-- commandId: `RVTT-PR2-STUDIO-RETEST-HARNESS-FIX-001`
+- commandId: `RVTT-PR2-STUDIO-RETEST-HARNESS-FIX-002`
 - repository: `Kaetaeru/RVTT`
 - pullRequest: `2`
 - branch: `agent/survival-logistics-token-authoring`
 - taskType: `FOCUSED_ACCEPTANCE_HARNESS_REPAIR`
 - executionMode: `CODEX_IMPLEMENTATION_CHATGPT_VERIFICATION`
 - phase: `RUNTIME_ENTRY_PREFLIGHT_EXPLORATION_CONTEXT_INPUT`
-- commandPath: `.github/CODEX-FIX-STUDIO-RETEST-HARNESS-001.md`
+- commandPath: `.github/CODEX-FIX-STUDIO-RETEST-HARNESS-002.md`
 - targetMode: `CURRENT_PR_HEAD_AT_START`
-- resultMarker: `<!-- RVTT_CODEX_STUDIO_RETEST_HARNESS_FIX_001_RESULT -->`
+- resultMarker: `<!-- RVTT_CODEX_STUDIO_RETEST_HARNESS_FIX_002_RESULT -->`
 - resultStatus: `PENDING`
 - broadStaticVerifiedHead: `15711da15225a19e43f54827fabcd8fa0ca0995a`
-- commandFileCommit: `700c660df5f274f510f41a9fdb8ed99f3d83bfae`
+- harnessFix001ResultHead: `8c8355367729d45555c4143450b91155a943db21`
+- commandFileCommit: `45f58f6d1d878d81d806554f4619a27936583615`
 - phase9Status: `FINAL_PASS`
 - phase10Status: `BROAD_CURRENT_HEAD_STATIC_PASS`
 - sourceStaticFinalContractGaps: `0`
@@ -22,8 +23,9 @@
 - coreRulesReaderAcceptanceState: `FINAL_STATIC_PASS`
 - officialCharacterSheetAcceptanceState: `FINAL_STATIC_PASS`
 - diceSlotRevealNoticeState: `FINAL_STATIC_PASS`
-- runtimeEntryPreflightState: `HARNESS_REPAIR_REQUIRED`
+- runtimeEntryPreflightState: `HARNESS_FIX_002_REQUIRED`
 - explorationContextStudioRetestState: `NOT_EXECUTED`
+- multiClientAttackEvidenceState: `NOT_EXECUTED`
 - studioRuntimeState: `NOT_EXECUTED`
 - humanUiUxState: `NOT_EXECUTED`
 - persistenceRuntimeState: `NOT_EXECUTED_DEFERRED`
@@ -42,73 +44,94 @@ Final Contract Gaps = 0
 Studio/Human = NOT_EXECUTED
 ```
 
-따라서 기능 구현 Gate는 종료됐고 Runtime lane으로 진입한다.
+이 Source/Static 판정은 유지한다. 현재 blocker는 사용자 Runtime 진입용 Acceptance Harness의 정확성이다.
 
-## Studio 진입 직전 발견된 Harness drift
+## FIX-001 독립 검증 결과
 
-실제 사용자 Batch를 열기 전에 Acceptance Harness를 production input contract와 대조한 결과 다음 stale test semantics를 확인했다.
+FIX-001 result HEAD `8c8355367729d45555c4143450b91155a943db21`에서 다음은 정상적으로 수정됐다.
 
 ```text
-Production: middle-button drag = Orbit
-WorldTokenAcceptance: middle-button = camera-pan 기대
-
-Production: Q = one-context Cancel/Back
-Production: ESC = gameplay no-op
-ContextInputAcceptance 안내: Esc로 action table 닫기
+middle-button actual evidence = orbit / mouse-middle-screen-delta
+WASD evidence = pan / keyboard-wasd
+fake acceptance pan shim = removed
+ESC gameplay no-op evidence = added
+Q context-cancel one-context evidence = added
+PR-bound exact branch/head build rule = added
+current-head Actions = success
 ```
 
-이 상태에서 사용자에게 Studio를 실행시키면 정상 Production도 Harness가 false-fail할 수 있으므로, 먼저 Acceptance Harness만 수리한다.
+하지만 ChatGPT는 사용자 Studio 실행 전에 두 Harness blocker를 추가 발견했다.
 
-Production input behavior 자체를 stale harness에 맞춰 바꾸지 않는다.
+### Blocker A — visible instruction drift
+
+World batch 실제 check는 Orbit으로 고쳐졌지만 화면 안내 문구는 아직 middle-drag를 `Pan`이라고 표시한다.
+
+### Blocker B — invalid single-client DM attack gate
+
+Single-client Context batch는 DM으로 실행한다. Production authority상 DM은 scene actors를 control하므로 Dummy도 controllable target이다.
+
+Production resolver/input semantics상:
+
+```text
+DM-controllable target
+→ hostile attack action table 대상이 아님
+→ left click은 default attack보다 controllable actor selection을 우선
+```
+
+따라서 현재 G1의 `attack-menu` / `attack-default` 필수 체크는 정상 Production에서 구조적으로 false-fail할 수 있다.
+
+Production 권한 모델을 테스트에 맞춰 약화하면 안 된다.
 
 ## 활성 작업
 
 Codex는 가장 먼저 아래 명령을 읽고 그대로 실행한다.
 
 ```text
-.github/CODEX-FIX-STUDIO-RETEST-HARNESS-001.md
+.github/CODEX-FIX-STUDIO-RETEST-HARNESS-002.md
 ```
 
 핵심 범위:
 
 ```text
-World batch middle-drag Orbit 정합화
-+ WASD Pan과 Orbit 분리 유지
-+ Context batch Q close 실제 evidence
-+ ESC gameplay no-op 실제 evidence
-+ stale Esc 안내 제거
-+ PR-bound exact-branch Studio Batch 실행 규칙
-+ validator negative regression
+World visible instruction: WASD=Pan / middle-drag=Orbit로 정정
++ G1 single-client DM에서 attack-menu / attack-default gate 제거
++ combat-only Dummy/manual instruction 제거 또는 비게이팅화
++ Player-vs-hostile attack runtime evidence를 G2 STUDIO_MULTI_CLIENT로 정직하게 이관
++ Production controlsActor / selection precedence 변경 금지
++ validator negative regression 강화
 + current-head Actions
 ```
 
 ## 성공 조건
 
 ```text
-Harness current input grammar 정합
+G1 = 실제 single-client DM에서 도달 가능한 Exploration/Context/Camera/Q/ESC만 gate
+G2 = Player role + uncontrolled/hostile target attack evidence가 NOT_EXECUTED 상태로 명시 보존
+Production authority semantics unchanged
 Broad/focused validators PASS
 Implementation validation PASS
 Current result HEAD Actions all completed/success
-Studio/Human still NOT_EXECUTED
+Studio/Human/Multi-client still NOT_EXECUTED
 ```
 
 Codex 완료 후 ChatGPT가 결과 diff를 독립 검증한다.
 
-그 검증이 PASS하면 **추가 Source 기능 작업 없이 바로 사용자 Studio Batch를 시작**한다.
+그 검증이 PASS하면 추가 Source 기능 작업 없이 바로 사용자 Studio Batch를 시작한다.
 
 ```text
 Exploration · Context Input Studio Retest
 ```
 
-그때 ChatGPT가 current verified result HEAD에 고정된 전체 Windows PowerShell build block과 수동 입력 순서를 사용자에게 제공한다.
+그때 ChatGPT가 verified result HEAD에 고정된 전체 Windows PowerShell build block, 실제 입력 순서, PASS Output token을 제공한다.
 
 ## 범위 밖
 
 - Production input grammar 변경
-- ADR-0091 기능 재설계
+- DM authority 축소
+- Player role fake injection
 - Studio/MCP/Human 실행
+- G2 Multi-client 실제 실행
 - Persistence Runtime
-- Multi-client Runtime
 - ADR-0092 Production
 - force push
 - merge / ready-for-review
@@ -118,7 +141,7 @@ Exploration · Context Input Studio Retest
 PR #2 top-level Conversation에:
 
 ```text
-<!-- RVTT_CODEX_STUDIO_RETEST_HARNESS_FIX_001_RESULT -->
+<!-- RVTT_CODEX_STUDIO_RETEST_HARNESS_FIX_002_RESULT -->
 ```
 
-Codex는 `STUDIO_PASS`, `HUMAN_PASS`, `RUNTIME_PASS`, `MERGE_READY`를 쓰지 않는다.
+Codex는 `STUDIO_PASS`, `MULTI_CLIENT_PASS`, `HUMAN_PASS`, `RUNTIME_PASS`, `MERGE_READY`, `FINAL_RELEASE_PASS`를 쓰지 않는다.
