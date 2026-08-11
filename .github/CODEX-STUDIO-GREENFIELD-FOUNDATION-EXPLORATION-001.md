@@ -3,6 +3,7 @@
 - 상태: `ACTIVE · CURRENT_COMMAND`
 - Build mode: `GREENFIELD_ARCHITECTURE_FIRST`
 - Sequence authority: [`../implementation/roblox/GREENFIELD-SYSTEM-SEQUENCE.md`](../implementation/roblox/GREENFIELD-SYSTEM-SEQUENCE.md)
+- Acceptance promotion gate: [`../implementation/roblox/AUTHORITY-RECONCILIATION-POLICY.md`](../implementation/roblox/AUTHORITY-RECONCILIATION-POLICY.md)
 - Feedback mode: `TIGHT_USER_FEEDBACK_LOOP`
 
 ## 목표
@@ -16,17 +17,19 @@
 3. 네트워크 입력 전에 Server Authority가 존재한다.
 4. Client는 viewer-safe Projection만 읽는다.
 5. S1 Selection을 사용자가 직접 테스트하고 즉시 수정할 수 있다.
+6. 사용자가 최종 수용한 뒤에는 현재 상위 문서·Contract·Source·Test를 정합화한 후에만 S1을 `ACCEPTED`로 만든다.
 
 ## 구현 전 읽기
 
 1. `AGENTS.md`
 2. `.github/CODEX-ACTIVE-TASK.md`
 3. `implementation/roblox/GREENFIELD-SYSTEM-SEQUENCE.md`
-4. `implementation/roblox/GREENFIELD-BUILD-POLICY.md`
-5. `implementation/roblox/MODULE-CONTRACTS.md`
-6. `implementation/roblox/manifests/module-contracts.json`
-7. 관련 Product·ADR·Spec
-8. 필요한 Legacy Source
+4. `implementation/roblox/AUTHORITY-RECONCILIATION-POLICY.md`
+5. `implementation/roblox/GREENFIELD-BUILD-POLICY.md`
+6. `implementation/roblox/MODULE-CONTRACTS.md`
+7. `implementation/roblox/manifests/module-contracts.json`
+8. 관련 Product·ADR·Spec
+9. 필요한 Legacy Source
 
 ## 실행 순서
 
@@ -111,7 +114,30 @@ S1 status → IMPLEMENTING
 → 사용자 재확인
 ```
 
-S1이 `ACCEPTED`가 되기 전 `C1_CAMERA`를 시작하지 않는다.
+반복 수정 중에는 Product·ADR·Architecture 문서를 매번 수정하지 않는다. 현재 사용자 요청을 Working Truth로 두고 같은 Checkpoint에서 빠르게 반복한다.
+
+## 사용자가 S1을 최종 수용했을 때
+
+사용자가 `좋다`, `이걸로`, `확정`, `다음`처럼 최종 수용하면 Camera로 가지 않는다. 먼저 Authority Reconciliation을 수행한다.
+
+```text
+사용자 최종 수용
+→ 확정된 Selection 동작을 한 문장으로 기록
+→ 현재 Product·ADR·Architecture·Spec·Policy 전체에서 충돌 검색
+→ 상위 Authority부터 수정 또는 Supersede
+→ Module Contract 정합화
+→ Studio 결과를 greenfield/src로 정규화
+→ Rojo 재현 확인
+→ Focused Test 추가·실행
+→ 현재 문서 충돌 재검색
+→ UNRESOLVED CONFLICTS = none 확인
+→ S1 / 관련 Module ACCEPTED
+→ C1_CAMERA 시작
+```
+
+화면/조작 수용을 내부 Architecture·Authority 변경의 승인으로 확대 해석하지 않는다. Reconciliation 중 미승인 Architecture 변경이 필요하면 중단하고 사용자에게 먼저 제안한다.
+
+Historical Audit·Acceptance·Review·과거 Codex Command는 새 결정에 맞춰 다시 쓰지 않는다.
 
 ## 이후 Exploration
 
@@ -122,6 +148,8 @@ S1 Selection
 → X1 Context
 → I1 Interaction
 ```
+
+각 Checkpoint에서 동일하게 **수정 반복 → 사용자 최종 수용 → Authority Reconciliation → ACCEPTED → 다음** 순서를 사용한다.
 
 Move의 필수 경로:
 
@@ -150,8 +178,11 @@ MovementController
 - client-provided role/owner/controller 신뢰
 - Stage skip
 - Checkpoint skip
+- 사용자 수용 직후 Authority Reconciliation 생략
 - Legacy Acceptance를 Greenfield PASS로 사용
 
 ## Canonicalization
 
-Stage/Checkpoint가 실제 구현되면 `greenfield/src`에 정리하고 `module-contracts.json` 상태를 맞춘다. 사용자 수용 후 Focused Test를 추가하고 관련 Module/Checkpoint를 `ACCEPTED`로 갱신한다.
+Stage가 실제 구현되면 `greenfield/src`에 정리하고 `module-contracts.json` 상태를 맞춘다.
+
+사용자 Checkpoint는 사용자 수용만으로 `ACCEPTED` 처리하지 않는다. `AUTHORITY-RECONCILIATION-POLICY.md`의 Top-down 문서 정합화, Canonical Source, Rojo 재현, Focused Test가 모두 끝난 뒤 관련 Module/Checkpoint를 `ACCEPTED`로 갱신한다.
