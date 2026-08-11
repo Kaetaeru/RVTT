@@ -1,28 +1,46 @@
 # RVTT Remake 현재 작업 순서
 
-- 상태: `ACTIVE · STUDIO_FIRST_DEVELOPMENT`
+- 상태: `ACTIVE · CONTEXT_ONLY`
 - 최종 갱신일: 2026-08-12
+- 현재 실행 포인터: [`.github/CODEX-ACTIVE-TASK.md`](../../.github/CODEX-ACTIVE-TASK.md)
 - 구현 작업 기준: [`implementation/roblox/CURRENT-WORK-ORDER.md`](../../implementation/roblox/CURRENT-WORK-ORDER.md)
+
+## 이 문서의 역할
+
+이 문서는 **현재 제품 단계와 큰 우선순위만 설명한다. 실행할 Task를 직접 발행하지 않는다.**
+
+지금 무엇을 실행할지는 다음 순서만 따른다.
+
+```text
+사용자의 최신 지시
+→ .github/CODEX-ACTIVE-TASK.md
+→ commandPath
+```
+
+과거 Spec, Audit, Acceptance Snapshot, Archived Codex Command에서 현재 TODO를 복구하지 않는다.
 
 ## 현재 결정
 
-기존 제품·Architecture·Accepted ADR은 유지한다. 바뀐 것은 **개발 방식**이다.
+기존 제품·Architecture·Accepted ADR은 유지한다. 바뀐 것은 개발 방식이다.
 
 ```text
-이전
+이전 · 폐기된 기본 개발 루프
 대량 Source 구현
 → Static Gate
 → Acceptance Build
 → 뒤늦은 Studio 검증
 
 현재
-GitHub Authority·Source 조사
+GitHub Authority·Module Contract·Source 조사
 → Studio MCP 직접 구현
 → Play·관찰·즉시 수정
 → 사용자 판단
 → GitHub Source 정규화
+→ Focused Test
 → Stabilization·Release 검증
 ```
+
+이전 루프는 역사적 설명일 뿐 현재 작업 지시가 아니다.
 
 새 제품 방향이나 Architecture 변경 아이디어가 생기면 자동 적용하지 않고 사용자에게 먼저 제안한다.
 
@@ -38,25 +56,11 @@ Accepted 상태를 유지한다.
 
 이 문서는 위 제품 결정을 다시 정의하지 않는다.
 
-## 현재 Production 우선순위
+## 현재 Production 단계
 
 현재는 기존 Full UI·UX Source를 **실제 Studio 제품으로 다시 확인하고 다듬는 단계**다.
 
-```text
-1. Studio에서 현재 Production UI·입력·World 흐름 열기
-2. GitHub의 기존 함수·Module 책임과 실제 Studio 결과 대조
-3. 사용자에게 보이는 핵심 흐름을 작은 단위로 직접 수정
-4. Play하며 UX·Runtime 결함 즉시 수정
-5. 받아들인 결과를 GitHub Source로 정규화
-6. 관련 Focused Test·Static 검증
-7. 기능군이 안정되면 Multi-client·Persistence·Accessibility·Performance 검증
-```
-
-기존 `slice01-world-interaction`, `contextual-pointer-actions`, Full UI Acceptance, Grand Campaign은 삭제하지 않는다. 이들은 개발 시작 Gate가 아니라 회귀·Stabilization·Release Tooling이다.
-
-## 현재 기능 작업 순서
-
-세부 순서는 Studio에서 실제 결과를 보면서 작은 사용자 흐름 기준으로 조정한다. 기본 우선순위는 다음과 같다.
+큰 우선순위:
 
 1. Exploration 직접 조작·Camera·Context Action
 2. Character Console·Encounter HUD
@@ -66,22 +70,9 @@ Accepted 상태를 유지한다.
 6. ADR-0091 실제 Runtime Surface
 7. ADR-0092 Production — Slice 06 → 07 → 11 → 12 → 15 → 16
 
-각 항목은 “문서상 구현됨”이 아니라 **실제 Studio에서 쓸 만한 상태**를 목표로 한다.
+이 목록은 backlog context다. **지금 당장 여러 항목을 실행하라는 명령이 아니다.** 현재 하나의 실행 작업은 Active Task가 소유한다.
 
-## ADR-0092
-
-ADR-0092 Product·Architecture·Slice 06·07 Delta는 유효하다. Production 구현은 기존 Source Mapping을 읽고 Studio-first 방식으로 진행한다.
-
-```text
-Slice 06 Supply Foundation
-→ Slice 07 Policy·Settlement
-→ Slice 11 DM Tool
-→ Slice 12 Content Registry
-→ Slice 15 Actor·Token Pipeline
-→ Slice 16 Integration·Release Evidence
-```
-
-다음 Phase의 제품 의미를 선행 구현 중 임의로 확정하지 않는다.
+기존 `slice01-world-interaction`, `contextual-pointer-actions`, Full UI Acceptance, Grand Campaign은 회귀·Stabilization·Release Tooling/Evidence로 보존한다. 개발 시작 Gate가 아니다.
 
 ## 완료 판정
 
@@ -90,6 +81,7 @@ Slice 06 Supply Foundation
 ```text
 Studio Development Observation
 + GitHub Source 정규화
++ 필요한 Module Contract 정합화
 + Focused Test
 ```
 
