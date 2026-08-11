@@ -21,31 +21,25 @@ local worldTokens = client.WorldTokens
 
 local BATCH_NAME = "contextual-pointer-actions"
 local COMMAND_TIMEOUT_SECONDS = 10
-local DEFINITION_ID = "rvtt.acceptance.training-dummy.v1"
 local OBJECT_POSITION = Vector3.new(18, 2, -8)
-local DUMMY_POSITION = Vector3.new(-18, 0, -8)
 
 local summary = BatchSummary.new(BATCH_NAME, {
 	{ id = "setup-object", label = "Exploration Object Setup" },
-	{ id = "setup-dummy", label = "Combat Target Setup" },
 	{ id = "camera-orbit", label = "Middle-button Camera Orbit" },
+	{ id = "right-click-camera-noop", label = "Right-click Camera No-op" },
 	{ id = "esc-gameplay-noop", label = "ESC Gameplay No-op" },
 	{ id = "q-one-context-back", label = "Q One-context Back" },
 	{ id = "move-menu", label = "Right-click Move Action Table" },
 	{ id = "move-default", label = "Left-click Default Move" },
 	{ id = "interact-menu", label = "Right-click Exploration Action Table" },
 	{ id = "interact-default", label = "Left-click Default Interaction" },
-	{ id = "attack-menu", label = "Right-click Combat Action Table" },
-	{ id = "attack-default", label = "Left-click Default Attack" },
 })
 
 local terminalResults: { [string]: any } = {}
-local heroActorId: string? = nil
-local objectId: string? = nil
-local dummyActorId: string? = nil
 local busy = false
 local passSummaryLogged = false
 local actionMenuOpen = false
+local cameraInputResolutionCount = 0
 local contextActionResolutionCount = 0
 local lastContextCancel: { reason: any, observedAt: number, actionCount: number }? = nil
 
@@ -125,11 +119,10 @@ instructions.Size = UDim2.new(1, -32, 0, 130)
 instructions.BackgroundTransparency = 1
 instructions.Font = Enum.Font.Gotham
 instructions.Text = table.concat({
-	"1. Hero 선택 · 중클릭 드래그로 Camera Orbit",
-	"2. 바닥 우클릭→이동 표 확인→ESC(no-op)→Q(close)→바닥 좌클릭",
-	"3. 파란 Console 우클릭→2열 행동표→ESC(no-op)→Q(close)→좌클릭",
-	"4. 전투 시작→Hero 재선택→Dummy 우클릭→ESC(no-op)→Q(close)→좌클릭",
-	"우클릭은 카메라를 움직이지 않아야 합니다.",
+	"1. Select Hero · Middle-button drag = Camera Orbit",
+	"2. Surface right-click → Move table → ESC(no-op) → Q(close) → surface left-click",
+	"3. Blue Console right-click → action table → ESC(no-op) → Q(close) → left-click",
+	"Right-click must not move the camera. G1 does not gate Player-vs-hostile attack.",
 }, "\n")
 instructions.TextColor3 = Color3.fromRGB(190, 197, 208)
 instructions.TextSize = 12
@@ -184,9 +177,8 @@ local function makeButton(name: string, text: string, x: number, width: number):
 	return button
 end
 
-local explorationButton = makeButton("Exploration", "탐험 모드", 16, 132)
-local combatButton = makeButton("Combat", "전투 시작", 156, 132)
-local summaryButton = makeButton("Summary", "Final Summary", 296, 142)
+local explorationButton = makeButton("Exploration", "Exploration", 16, 210)
+local summaryButton = makeButton("Summary", "Final Summary", 236, 218)
 
 local function statusToken(status: string): string
 	if status == "pass" then
@@ -300,7 +292,7 @@ local function prepareTargets()
 	end
 	busy = true
 	local ok, errorMessage = xpcall(function()
-		heroActorId = waitForHero()
+		waitForHero()
 
 		local objectResult = ensureSuccess(
 			submit("scene.spawn_object", {
@@ -314,55 +306,13 @@ local function prepareTargets()
 			"scene.spawn_object"
 		)
 		local objectOutcome = outcome(objectResult)
-		objectId = type(objectOutcome) == "table" and objectOutcome.id or nil
+		local objectId = type(objectOutcome) == "table" and objectOutcome.id or nil
 		if objectId == nil then
 			error("scene.spawn_object returned no object id")
 		end
 		createObjectVisual(objectId)
 		pass("setup-object", objectId)
-
-		ensureSuccess(
-			submit("npc.register_definition", {
-				definitionId = DEFINITION_ID,
-				rightsStatus = "original",
-				definition = {
-					runtime = {
-						armorClass = 8,
-						maximumHitPoints = 40,
-						speedStuds = 0,
-						attacks = {},
-					},
-				},
-			}),
-			"npc.register_definition"
-		)
-		local npcResult = ensureSuccess(
-			submit("npc.spawn", {
-				definitionId = DEFINITION_ID,
-				sceneId = "scene:slice-01-acceptance",
-				position = { x = DUMMY_POSITION.X, y = DUMMY_POSITION.Y, z = DUMMY_POSITION.Z },
-				hidden = false,
-			}),
-			"npc.spawn"
-		)
-		local npcOutcome = outcome(npcResult)
-		dummyActorId = type(npcOutcome) == "table" and npcOutcome.id or nil
-		if dummyActorId == nil then
-			error("npc.spawn returned no actor id")
-		end
-		local deadline = os.clock() + COMMAND_TIMEOUT_SECONDS
-		repeat
-			if worldTokens.Renderer:getTokenModel(dummyActorId) ~= nil then
-				break
-			end
-			task.wait(0.05)
-		until os.clock() >= deadline
-		if worldTokens.Renderer:getTokenModel(dummyActorId) == nil then
-			error("training dummy token was not projected")
-		end
-		pass("setup-dummy", dummyActorId)
-		operation.Text =
-			"대상 준비 PASS · 안내 순서대로 실제 입력을 수행하세요"
+		operation.Text = "G1 targets ready · Follow the visible input sequence."
 	end, function(errorValue)
 		return debug.traceback(tostring(errorValue))
 	end)
@@ -374,6 +324,7 @@ local function prepareTargets()
 end
 
 worldTokens.Camera.InputResolved:Connect(function(action, source, applied, changed)
+	cameraInputResolutionCount += 1
 	if action == "orbit" and source == "mouse-middle-screen-delta" then
 		if applied == true and changed == true then
 			pass("camera-orbit", "middle-button yaw/pitch changed")
@@ -405,13 +356,6 @@ worldTokens.ActionMenuChanged:Connect(function(open, actions, target)
 		pass("move-menu", "move")
 	elseif target.kind == "object" and ids["interact:inspect"] and ids.search then
 		pass("interact-menu", "interaction table count=" .. tostring(#actions))
-	elseif target.kind == "actor" then
-		for id in ids do
-			if string.sub(id, 1, 7) == "attack:" then
-				pass("attack-menu", id)
-				break
-			end
-		end
 	end
 end)
 
@@ -429,17 +373,24 @@ worldTokens.ContextActionResolved:Connect(function(action, _, ok, code)
 		else
 			fail("interact-default", tostring(code))
 		end
-	elseif action.kind == "attack" then
-		if ok then
-			pass("attack-default", action.id)
-		else
-			fail("attack-default", tostring(code))
-		end
 	end
 end)
 
 UserInputService.InputBegan:Connect(function(input, processed)
-	if input.KeyCode == Enum.KeyCode.Escape and actionMenuOpen then
+	if input.UserInputType == Enum.UserInputType.MouseButton2 then
+		local cameraCountBefore = cameraInputResolutionCount
+		task.defer(function()
+			local cameraStayedStill = cameraInputResolutionCount == cameraCountBefore
+			if cameraStayedStill then
+				pass(
+					"right-click-camera-noop",
+					"no camera input resolved; processed=" .. tostring(processed)
+				)
+			else
+				fail("right-click-camera-noop", "right-click resolved a camera input")
+			end
+		end)
+	elseif input.KeyCode == Enum.KeyCode.Escape and actionMenuOpen then
 		local actionCountBefore = contextActionResolutionCount
 		task.defer(function()
 			local menuStayedOpen = worldTokens.ActionMenu:isOpen()
@@ -504,28 +455,6 @@ explorationButton.Activated:Connect(function()
 			operation.Text = "탐험 모드 · Console 행동을 테스트하세요"
 		else
 			operation.Text = "이미 탐험 모드이거나 Encounter 종료가 불필요합니다"
-		end
-	end)
-end)
-
-combatButton.Activated:Connect(function()
-	task.spawn(function()
-		if busy or heroActorId == nil then
-			return
-		end
-		busy = true
-		local result = submit("encounter.start", {
-			participants = { heroActorId },
-			encounterId = "encounter:context-input-acceptance",
-			objective = "Context attack input acceptance",
-		})
-		busy = false
-		if type(result) == "table" and result.ok == true then
-			worldTokens.Renderer:setSelected(heroActorId)
-			operation.Text =
-				"전투 모드 PASS · Dummy 우클릭→ESC(no-op)→Q(close)→좌클릭"
-		else
-			operation.Text = "전투 시작 실패 또는 이미 활성 · Output 확인"
 		end
 	end)
 end)

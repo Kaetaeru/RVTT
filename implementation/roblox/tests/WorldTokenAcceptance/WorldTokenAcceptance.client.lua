@@ -129,7 +129,7 @@ instructions.Size = UDim2.new(1, -32, 0, 58)
 instructions.BackgroundTransparency = 1
 instructions.Font = Enum.Font.Gotham
 instructions.Text =
-	"실제 입력 필수: WASD 또는 중클릭 드래그=Pan · Wheel=Zoom · F 또는 Token Frame=Frame. 이후 Token 선택·바닥 이동을 확인하세요. 이 Build는 DataStore를 사용하지 않습니다."
+	"Required input: WASD = Pan · Middle-button drag = Orbit · Wheel = Zoom · F or Token Frame = Frame. Then verify token selection and surface movement. 이 Build는 DataStore를 사용하지 않습니다."
 instructions.TextColor3 = Color3.fromRGB(184, 191, 202)
 instructions.TextSize = 12
 instructions.TextWrapped = true

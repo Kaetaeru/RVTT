@@ -24,6 +24,8 @@ MANIFEST_PATH = ROOT / "grand-acceptance-manifest.json"
 WORLD_ACCEPTANCE_PATH = ROOT / "tests/WorldTokenAcceptance/WorldTokenAcceptance.client.lua"
 CONTEXT_ACCEPTANCE_PATH = ROOT / "tests/ContextInputAcceptance/ContextInputAcceptance.client.lua"
 WORLD_RUNTIME_PATH = ROOT / "src/StarterPlayer/StarterPlayerScripts/RVTT/Client/World/WorldTokenRuntime.lua"
+CONTEXT_RESOLVER_PATH = ROOT / "src/StarterPlayer/StarterPlayerScripts/RVTT/Client/World/WorldContextActionResolver.lua"
+INPUT_CONTROLLER_PATH = ROOT / "src/StarterPlayer/StarterPlayerScripts/RVTT/Client/World/WorldTokenInputController.lua"
 EXECUTION_RULES_PATH = ROOT / "EXECUTION-TEST-RULES.md"
 
 EVIDENCE_CLASSES = {
@@ -47,6 +49,7 @@ REQUIRED_IDS = {
     "input.e-semantic-confirm",
     "input.pointer-grammar",
     "input.preview-before-action",
+    "input.player-hostile-attack-pointer",
     "input.action-availability-disclosure",
     "input.selection-camera-continuity",
     "input.projection-reconciliation",
@@ -124,6 +127,52 @@ def _repo_path(reference: str) -> Path:
     return REPO_ROOT / reference.split("#", 1)[0]
 
 
+def validate_g2_attack_bookkeeping(matrix: dict) -> list[str]:
+    errors: list[str] = []
+    items = {
+        item.get("id"): item
+        for item in matrix.get("acceptanceItems", [])
+        if isinstance(item, dict) and isinstance(item.get("id"), str)
+    }
+    attack = items.get("input.player-hostile-attack-pointer")
+    if attack is None:
+        return ["matrix: G2 Player-vs-hostile attack runtime coverage is missing"]
+
+    if attack.get("roles") != ["PLAYER"]:
+        errors.append("matrix: G2 attack evidence requires a real Player role")
+    if attack.get("runtimeBatchIds") != ["G2"]:
+        errors.append("matrix: Player-vs-hostile attack runtime evidence must belong only to G2")
+    if set(attack.get("evidenceClasses", [])) != {"STATIC", "STUDIO_MULTI_CLIENT"}:
+        errors.append("matrix: Player-vs-hostile attack evidence must retain STUDIO_MULTI_CLIENT")
+    if attack.get("evidenceStatus", {}).get("STUDIO_MULTI_CLIENT") != "NOT_EXECUTED":
+        errors.append("matrix: G2 attack runtime evidence must remain NOT_EXECUTED")
+    requirement = str(attack.get("requirement", ""))
+    for marker in ("uncontrolled hostile actor", "right-click attack action table", "left-click default attack"):
+        if marker not in requirement:
+            errors.append(f"matrix: G2 attack requirement is missing {marker}")
+    required_static_refs = {
+        "implementation/roblox/src/StarterPlayer/StarterPlayerScripts/RVTT/Client/World/WorldContextActionResolver.lua",
+        "implementation/roblox/src/StarterPlayer/StarterPlayerScripts/RVTT/Client/World/WorldTokenInputController.lua",
+        "implementation/roblox/tests/Unit/InputContext.spec.lua",
+    }
+    if not required_static_refs.issubset(set(attack.get("automatedRefs", []))):
+        errors.append("matrix: G2 attack bookkeeping is missing Production and static authority evidence")
+
+    for item_id in ("input.pointer-grammar", "input.preview-before-action"):
+        item = items.get(item_id)
+        if item is None:
+            continue
+        if not {"G1", "G2"}.issubset(set(item.get("runtimeBatchIds", []))):
+            errors.append(f"matrix: {item_id} must separate G1 input evidence from G2 attack evidence")
+        if "STUDIO_MULTI_CLIENT" not in item.get("evidenceClasses", []):
+            errors.append(f"matrix: {item_id} must retain STUDIO_MULTI_CLIENT attack coverage")
+        if item.get("evidenceStatus", {}).get("STUDIO_MULTI_CLIENT") != "NOT_EXECUTED":
+            errors.append(f"matrix: {item_id} G2 evidence must remain NOT_EXECUTED")
+        if "G2" not in str(item.get("requirement", "")) or "attack" not in str(item.get("requirement", "")).lower():
+            errors.append(f"matrix: {item_id} must name its G2 attack boundary")
+    return errors
+
+
 def validate_matrix_data(matrix: dict, manifest: dict) -> list[str]:
     errors: list[str] = []
     if matrix.get("schemaVersion") != 1:
@@ -190,6 +239,7 @@ def validate_matrix_data(matrix: dict, manifest: dict) -> list[str]:
     missing_required = REQUIRED_IDS - set(item_ids)
     if missing_required:
         errors.append(f"matrix: missing required acceptance ids {sorted(missing_required)}")
+    errors.extend(validate_g2_attack_bookkeeping(matrix))
 
     for item in items:
         if not isinstance(item, dict):
@@ -375,6 +425,8 @@ def validate_studio_retest_harness_texts(
     context_acceptance: str,
     world_runtime: str,
     execution_rules: str,
+    context_resolver: str,
+    input_controller: str,
 ) -> list[str]:
     errors: list[str] = []
 
@@ -385,16 +437,22 @@ def validate_studio_retest_harness_texts(
         'action == "pan" and source == "keyboard-wasd"': "separate WASD Pan signal",
         "applied == true": "applied camera evidence",
         "changed == true": "changed camera evidence",
+        "WASD = Pan · Middle-button drag = Orbit · Wheel = Zoom · F or Token Frame = Frame": (
+            "unambiguous visible camera instruction"
+        ),
     }
     for marker, description in world_markers.items():
         if marker not in world_acceptance:
             errors.append(f"studio retest harness: missing {description}")
     if 'id = "camera-pan"' in world_acceptance or 'action == "pan" then "camera-pan"' in world_acceptance:
         errors.append("studio retest harness: middle-button Camera Pan regression is forbidden")
+    if "Middle-button drag = Pan" in world_acceptance or "중클릭 드래그=Pan" in world_acceptance:
+        errors.append("studio retest harness: visible middle-button Pan instruction is forbidden")
 
     context_markers = {
         'id = "esc-gameplay-noop"': "ESC gameplay no-op summary",
         'id = "q-one-context-back"': "Q one-context Back summary",
+        'id = "right-click-camera-noop"': "right-click camera no-op summary",
         "UserInputService.InputBegan": "user-input observer",
         "input.KeyCode == Enum.KeyCode.Escape": "explicit ESC input evidence",
         "input.KeyCode == Enum.KeyCode.Q": "explicit Q input evidence",
@@ -402,15 +460,48 @@ def validate_studio_retest_harness_texts(
         'close.reason == "context-cancel"': "production context-cancel signal",
         'pass("esc-gameplay-noop"': "ESC no-op PASS evidence",
         'pass("q-one-context-back"': "Q close PASS evidence",
+        "cameraInputResolutionCount == cameraCountBefore": "right-click camera no-op evidence",
     }
     for marker, description in context_markers.items():
         if marker not in context_acceptance:
             errors.append(f"studio retest harness: missing {description}")
     if "→Esc→" in context_acceptance or "→Escape→" in context_acceptance:
         errors.append("studio retest harness: stale Esc-close instruction is forbidden")
+    for forbidden in ('id = "setup-dummy"', 'id = "attack-menu"', 'id = "attack-default"'):
+        if forbidden in context_acceptance:
+            errors.append("studio retest harness: G1 single-client DM cannot require attack checks")
+    for forbidden in ("training-dummy", "npc.spawn", "combatButton", "Dummy"):
+        if forbidden in context_acceptance:
+            errors.append("studio retest harness: G1 cannot retain Dummy combat setup or instructions")
 
     if "mouse-middle-orbit" in world_runtime:
         errors.append("studio retest harness: fake middle-button Pan compatibility signal is forbidden")
+
+    resolver_markers = {
+        'if membershipRole(allDomains, playerId) == "dm" then\n\t\treturn true': "DM controls scene actors",
+        "type(targetActor) ~= \"table\" or controlsActor(allDomains, playerId, target.actorId)": (
+            "controlled target attack exclusion"
+        ),
+    }
+    for marker, description in resolver_markers.items():
+        if marker not in context_resolver:
+            errors.append(f"studio retest harness: Production authority drifted: {description}")
+
+    selection_marker = """if
+\t\ttarget.actorId ~= nil
+\t\tand target.actorId ~= selectedActorId
+\t\tand self.resolver:isControllable(target.actorId)
+\tthen
+\t\tself:_pick(target.actorId, \"ray\", target.instance)
+\t\treturn
+\tend"""
+    left_click_start = input_controller.find("function Controller:_leftClick()")
+    left_click_end = input_controller.find("function Controller:refreshPreview()", left_click_start)
+    left_click = input_controller[left_click_start:left_click_end]
+    if left_click_start < 0 or left_click_end < 0 or selection_marker not in left_click:
+        errors.append("studio retest harness: Production controllable-target selection precedence drifted")
+    elif left_click.index(selection_marker) > left_click.index("local actions = self:resolveActionsForTarget(target)"):
+        errors.append("studio retest harness: controllable-target selection must precede default action resolution")
 
     rules_markers = {
         "`planning/rvtt-remake`": "general planning branch default",
@@ -440,6 +531,8 @@ def validate_studio_retest_harness() -> list[str]:
         CONTEXT_ACCEPTANCE_PATH.read_text(encoding="utf-8"),
         WORLD_RUNTIME_PATH.read_text(encoding="utf-8"),
         EXECUTION_RULES_PATH.read_text(encoding="utf-8"),
+        CONTEXT_RESOLVER_PATH.read_text(encoding="utf-8"),
+        INPUT_CONTROLLER_PATH.read_text(encoding="utf-8"),
     )
 
 
@@ -547,6 +640,26 @@ def run_self_tests(matrix: dict, manifest: dict) -> list[str]:
     asset_item["blockerReason"] = "negative fixture"
     fixtures.append((hidden_blocked_final, "finalContractGaps must equal the actual BLOCKED final-contract subset"))
 
+    missing_g2_attack = deepcopy(matrix)
+    missing_g2_attack["acceptanceItems"] = [
+        item for item in missing_g2_attack["acceptanceItems"] if item["id"] != "input.player-hostile-attack-pointer"
+    ]
+    fixtures.append((missing_g2_attack, "G2 Player-vs-hostile attack runtime coverage is missing"))
+
+    g2_attack_in_g1 = deepcopy(matrix)
+    attack_item = next(
+        item for item in g2_attack_in_g1["acceptanceItems"] if item["id"] == "input.player-hostile-attack-pointer"
+    )
+    attack_item["runtimeBatchIds"] = ["G1"]
+    fixtures.append((g2_attack_in_g1, "Player-vs-hostile attack runtime evidence must belong only to G2"))
+
+    pointer_loses_g2 = deepcopy(matrix)
+    pointer_item = next(item for item in pointer_loses_g2["acceptanceItems"] if item["id"] == "input.pointer-grammar")
+    pointer_item["runtimeBatchIds"] = ["G1"]
+    pointer_item["evidenceClasses"] = ["STATIC", "STUDIO_SINGLE_CLIENT"]
+    pointer_item["evidenceStatus"].pop("STUDIO_MULTI_CLIENT")
+    fixtures.append((pointer_loses_g2, "input.pointer-grammar must separate G1 input evidence from G2 attack evidence"))
+
     for fixture, expected in fixtures:
         fixture_errors = validate_matrix_data(fixture, manifest)
         if not any(expected in error for error in fixture_errors):
@@ -556,6 +669,8 @@ def run_self_tests(matrix: dict, manifest: dict) -> list[str]:
     context = CONTEXT_ACCEPTANCE_PATH.read_text(encoding="utf-8")
     runtime = WORLD_RUNTIME_PATH.read_text(encoding="utf-8")
     rules = EXECUTION_RULES_PATH.read_text(encoding="utf-8")
+    resolver = CONTEXT_RESOLVER_PATH.read_text(encoding="utf-8")
+    controller = INPUT_CONTROLLER_PATH.read_text(encoding="utf-8")
     harness_fixtures = [
         (
             world.replace('action == "orbit" and source == "mouse-middle-screen-delta"', 'action == "pan"'),
@@ -580,7 +695,7 @@ def run_self_tests(matrix: dict, manifest: dict) -> list[str]:
         ),
         (
             world,
-            context.replace("ESC(no-op)→Q(close)", "→Esc→"),
+            context + '\nlocal staleInstruction = "→Esc→"\n',
             runtime,
             rules,
             "stale Esc-close instruction",
@@ -599,6 +714,27 @@ def run_self_tests(matrix: dict, manifest: dict) -> list[str]:
             rules,
             "fake middle-button Pan compatibility signal",
         ),
+        (
+            world.replace("Middle-button drag = Orbit", "Middle-button drag = Pan"),
+            context,
+            runtime,
+            rules,
+            "visible middle-button Pan instruction",
+        ),
+        (
+            world,
+            context + '\nlocal required = { id = "attack-menu" }\n',
+            runtime,
+            rules,
+            "G1 single-client DM cannot require attack checks",
+        ),
+        (
+            world,
+            context + '\nlocal instruction = "Attack the Dummy"\n',
+            runtime,
+            rules,
+            "G1 cannot retain Dummy combat setup or instructions",
+        ),
     ]
     for world_fixture, context_fixture, runtime_fixture, rules_fixture, expected in harness_fixtures:
         fixture_errors = validate_studio_retest_harness_texts(
@@ -606,9 +742,50 @@ def run_self_tests(matrix: dict, manifest: dict) -> list[str]:
             context_fixture,
             runtime_fixture,
             rules_fixture,
+            resolver,
+            controller,
         )
         if not any(expected in error for error in fixture_errors):
             failures.append(f"validator self-test did not reject harness fixture: {expected}")
+
+    authority_fixtures = [
+        (
+            resolver.replace(
+                'if membershipRole(allDomains, playerId) == "dm" then\n\t\treturn true',
+                'if membershipRole(allDomains, playerId) == "dm" then\n\t\treturn false',
+            ),
+            controller,
+            "DM controls scene actors",
+        ),
+        (
+            resolver.replace(
+                'type(targetActor) ~= "table" or controlsActor(allDomains, playerId, target.actorId)',
+                'type(targetActor) ~= "table"',
+            ),
+            controller,
+            "controlled target attack exclusion",
+        ),
+        (
+            resolver,
+            controller.replace(
+                "and target.actorId ~= selectedActorId\n\t\tand self.resolver:isControllable(target.actorId)",
+                "and target.actorId ~= selectedActorId\n\t\tand false",
+                1,
+            ),
+            "controllable-target selection precedence",
+        ),
+    ]
+    for resolver_fixture, controller_fixture, expected in authority_fixtures:
+        fixture_errors = validate_studio_retest_harness_texts(
+            world,
+            context,
+            runtime,
+            rules,
+            resolver_fixture,
+            controller_fixture,
+        )
+        if not any(expected in error for error in fixture_errors):
+            failures.append(f"validator self-test did not reject authority fixture: {expected}")
     return failures
 
 
