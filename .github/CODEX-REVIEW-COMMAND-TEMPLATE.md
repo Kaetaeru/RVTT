@@ -22,9 +22,11 @@ GOAL
 BEFORE EDITING STUDIO
 1. Read AGENTS.md.
 2. Read current Work Orders and relevant Product/ADR/UI/Spec.
-3. Inspect existing modules, public functions, remotes, schema, registry and tests connected to the goal.
-4. Resolve the current PR head.
-5. Inspect the current Studio place and available MCP capabilities.
+3. Read implementation/roblox/MODULE-CONTRACTS.md.
+4. Find the goal's entries in implementation/roblox/manifests/module-contracts.json and read their responsibility, stable entry points, contract-level dependencies, authority, state ownership and focused tests.
+5. Read the current Production source for those modules and inspect the real functions, require graph, remotes, schema and registry. Do not treat dependsOn as an exhaustive require graph.
+6. Resolve the current PR head.
+7. Inspect the current Studio place and available MCP capabilities.
 
 ITERATION
 1. Reuse existing responsibilities instead of creating parallel systems.
@@ -32,18 +34,22 @@ ITERATION
 3. Play the smallest useful flow.
 4. Inspect output, runtime state and visible behavior.
 5. Fix and replay as needed.
-6. Ask the user before applying a new product, architecture, workflow or scope direction.
+6. Private/helper function structure may change as needed inside the stable module boundary.
+7. Ask the user before applying a new product, architecture, workflow, scope, or substantive module-boundary direction.
 
 CANONICALIZE
 1. Move accepted Production changes back into repository source.
 2. Make required Instance structure reproducible through the source/Rojo mapping.
-3. Remove temporary Studio-only production dependencies.
-4. Run relevant focused tests.
+3. If stable module responsibility, entry points, contract-level dependency, authority or state ownership changed, update module-contracts.json.
+4. Do not create a manual private/helper call graph. Derive internal calls from current source when needed.
+5. Remove temporary Studio-only production dependencies.
+6. Run relevant focused tests and python implementation/roblox/tooling/validate_module_contracts.py.
 
 REPORT
 - what was implemented
 - Studio observations
 - repository files changed
+- module contracts changed or unchanged
 - tests run
 - user decision needed
 - remaining risk
@@ -62,11 +68,13 @@ ALLOWED SCOPE
 [FILES_OR_SYSTEM]
 
 RULES
+- Read the affected module contracts before editing.
 - Fix the demonstrated root cause.
 - Do not broaden product behavior.
 - Re-run the affected Studio flow.
+- Update module-contracts.json only if the stable module boundary actually changed.
 - Add or update focused regression coverage when appropriate.
-- If the fix requires a new product/architecture decision, stop and ask the user.
+- If the fix requires a new product/architecture/module-boundary decision, stop and ask the user.
 ```
 
 ## 3. Independent Review Template
@@ -86,12 +94,15 @@ AUTHORITY
 - Accepted ADR
 - Product/Architecture/System/UI authority
 - ready implementation contract
+- implementation/roblox/MODULE-CONTRACTS.md
+- implementation/roblox/manifests/module-contracts.json for stable code boundaries
 
 SCOPE
 [REVIEW_SCOPE]
 
 CHECK
 - authority mismatch
+- module contract/source drift
 - server authority and input validation
 - security and negative disclosure
 - persistence/migration/recovery where applicable
@@ -123,6 +134,7 @@ requiredTest
 - 검수 종료 시 HEAD가 바뀌었으면 현재 SHA PASS로 사용하지 않는다.
 - 실행하지 않은 Runtime을 PASS라고 하지 않는다.
 - Style 취향만으로 Finding을 만들지 않는다.
+- private/helper 함수 호출 순서를 수동 문서와 맞추기 위한 Finding을 만들지 않는다.
 - 과도한 대규모 Refactor를 근거 없이 요구하지 않는다.
-- 사용자가 승인하지 않은 제품 결정을 Fix에 숨겨 넣지 않는다.
+- 사용자가 승인하지 않은 제품 결정이나 실질적인 Architecture 경계 변경을 Fix에 숨겨 넣지 않는다.
 - Codex는 사용자 요청 없이 PR을 Ready, Merge 또는 Force Push하지 않는다.
