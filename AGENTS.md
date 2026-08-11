@@ -10,6 +10,7 @@
 
 ```text
 GitHub에서 이해
+→ Module Contract와 현재 Source 확인
 → Studio MCP에서 직접 구현·Play
 → 즉시 관찰·수정
 → 만족한 결과를 GitHub Source로 정규화
@@ -20,6 +21,8 @@ GitHub에서 이해
 - GitHub는 영구 Source of Truth다.
 - Roblox Studio는 실제 구현·조립·실행·관찰 환경이다.
 - Rojo는 Source와 Studio를 연결하고 재현 가능한 Build를 보장하는 도구다. 매 작은 변경마다 Acceptance Build를 만드는 개발 Gate가 아니다.
+- `implementation/roblox/MODULE-CONTRACTS.md`와 `manifests/module-contracts.json`은 Contract-bearing Production Module의 안정적인 책임·의존 경계·Authority·State ownership을 기록한다.
+- Module Contract는 모든 private/helper 함수 호출을 복제하지 않는다. 내부 호출 관계는 현재 Source에서 읽거나 필요할 때 Source에서 생성한다.
 - Codex는 단순 코드 생성기가 아니다. 구현 작업에서는 관련 GitHub 문서와 Source를 먼저 읽고 Studio MCP로 실제 결과물을 만들고 수정한다.
 - Studio에만 남아 GitHub에서 재현할 수 없는 Production 변경은 완료가 아니다.
 
@@ -37,12 +40,15 @@ GitHub에서 이해
 2. `AGENTS.md`를 읽는다.
 3. `docs/remake/CURRENT-WORK-ORDER.md`를 읽는다.
 4. 관련 Product·Architecture·System·UI·Accepted ADR을 읽는다.
-5. Roblox 구현이면 `implementation/roblox/CURRENT-WORK-ORDER.md`와 `implementation/roblox/EXECUTION-TEST-RULES.md`를 읽는다.
-6. 변경 대상과 직접 연결된 기존 Module, 함수, Remote, Schema, Registry, Test를 조사한다.
-7. Studio MCP를 사용할 수 있으면 현재 Place·Instance Tree·Runtime 상태를 확인한다.
-8. 가장 작은 사용자 흐름 하나를 실제로 동작하게 만들고 Play한다.
+5. Roblox 구현이면 `implementation/roblox/CURRENT-WORK-ORDER.md`, `implementation/roblox/EXECUTION-TEST-RULES.md`, `implementation/roblox/MODULE-CONTRACTS.md`를 읽는다.
+6. `implementation/roblox/manifests/module-contracts.json`에서 변경 대상과 직접 연결된 Contract-bearing Module의 책임, Stable Entry Point, Contract-level dependency, Authority, State ownership, Focused Test를 확인한다.
+7. 대상 Production Source를 직접 읽어 현재 함수, 실제 `require()` 관계, Remote, Schema, Registry, Test를 조사한다.
+8. Studio MCP를 사용할 수 있으면 현재 Place·Instance Tree·Runtime 상태를 확인한다.
+9. 가장 작은 사용자 흐름 하나를 실제로 동작하게 만들고 Play한다.
 
 파일명, 함수 책임, API, Instance 위치를 추측해 중복 구조를 만들지 않는다.
+
+Module Contract와 현재 Source가 어긋나면 어느 한쪽을 임의로 정답 처리하지 않는다. `CONTRACT_DRIFT`로 보고 Product·Architecture 의도와 실제 Source를 확인한 뒤 함께 정리한다.
 
 ## 3. 권위 순서
 
@@ -52,10 +58,12 @@ GitHub에서 이해
 2. 상태가 `Accepted` 또는 `확정`인 ADR
 3. 확정 Product·Architecture·System·Global UI Policy
 4. 준비 완료 Implementation Spec·승인된 Additive Delta
-5. 현재 Work Order — 실행 순서와 상태만 소유
-6. Production Source·Test
-7. User Guide·HTML·Audit·과거 Review Artifact
+5. Module Contract — 코드 구조의 안정적인 책임·경계만 소유
+6. 현재 Work Order — 실행 순서와 상태만 소유
+7. Production Source·Test
+8. User Guide·HTML·Audit·과거 Review Artifact
 
+- Module Contract는 Product 의미를 새로 만들거나 상위 Authority를 덮어쓰지 않는다.
 - Work Order는 제품 결정을 새로 만들지 않는다.
 - Audit, 과거 Codex Command와 PR 댓글은 역사적 Evidence이며 현재 Authority를 대체하지 않는다.
 - `SUPERSEDED`, `DISCONTINUED`, `ARCHIVED` 문서는 현재 판단 근거로 사용하지 않는다.
@@ -100,7 +108,9 @@ GitHub에서 이해
 Roblox 기능 개발의 기본 모드다.
 
 ```text
-관련 GitHub Source·함수 책임 조사
+관련 Product·ADR 조사
+→ Module Contract 확인
+→ 현재 GitHub Source·함수 책임 조사
 → Studio 현재 구조 조사
 → MCP로 실제 Script·Instance·UI 연결
 → Play
@@ -110,6 +120,7 @@ Roblox 기능 개발의 기본 모드다.
 ```
 
 - 기존 Module과 함수를 가능한 한 재사용한다.
+- Module Contract의 `dependsOn`은 모든 `require()` 목록이 아니라 안정적인 Architecture 의존 경계다. 정확한 내부 호출 관계는 현재 Source를 읽는다.
 - UI 배치, 카메라 감각, 입력, 흐름처럼 실제 사용에서 판단해야 하는 요소는 Studio에서 빠르게 반복한다.
 - 임시 진단은 허용하지만 Production 우회 경로로 굳히지 않는다.
 - 실제 Mouse·Keyboard 감각, 가독성, DM 부담, 재미는 필요할 때 Human Judgment를 받는다.
@@ -121,12 +132,15 @@ Roblox 기능 개발의 기본 모드다.
 ```text
 Studio 결과
 → GitHub Production Source·Project 정의로 정규화
+→ 안정적인 Module 책임·Entry Point·의존·Authority 변경 시 Module Contract 갱신
 → Rojo로 재현 가능성 확인
 → Unit·Integration·Static 검증
 → 필요한 Focused Runtime 재검증
 ```
 
 Studio에서 생성한 Production Script·Instance가 Source Tree와 Project 정의로 복원되지 않으면 완료하지 않는다.
+
+private/helper 함수만 바뀌고 Module의 안정 경계가 그대로면 Module Contract를 억지로 수정하지 않는다.
 
 ### Release Verification
 
@@ -136,7 +150,7 @@ Multi-client, Persistence, Migration, Disclosure, Accessibility, Performance·So
 
 Codex 작업은 역할을 명시한다.
 
-- `STUDIO_IMPLEMENTER`: GitHub를 읽고 Studio MCP에서 기능을 직접 구현·수정·Play한다.
+- `STUDIO_IMPLEMENTER`: GitHub Authority, Module Contract와 현재 Source를 읽고 Studio MCP에서 기능을 직접 구현·수정·Play한다.
 - `FIXER`: 확인된 결함을 제한된 범위에서 수정한다.
 - `REVIEWER`: Stabilization, 고위험 변경, Merge·Release 전에 독립 검수한다.
 
@@ -153,6 +167,8 @@ Codex는 사용자 승인 없이 PR Ready, Merge, Force Push 또는 새로운 �
 - 물리 입력은 Semantic Action과 Input Context를 거쳐 Intent로 변환한다.
 - Stable ID를 표시 문자열, File Path, Roblox Instance 이름과 분리한다.
 - 하나의 거대한 Manager에 서로 다른 책임을 모으지 않는다.
+- Contract-bearing Module의 안정적인 책임·의존·Authority·State ownership은 `module-contracts.json`과 일치시킨다.
+- private/helper 함수 호출 관계를 수동 설계 문서로 중복 유지하지 않는다.
 - Rule 계산은 가능한 한 순수 함수·Module로 분리한다.
 - Production Luau는 가능한 파일에서 `--!strict`를 유지한다.
 - Remote Input은 Type·Size·Schema·Role·Ownership·Revision·Context를 검증한다.
@@ -178,6 +194,7 @@ Development Observation
 
 - 개발 중에는 변경한 흐름을 바로 Play하고 Focused Test를 반복할 수 있다.
 - 매 Play마다 Commit SHA 고정, Full CI, Acceptance Harness, Grand Campaign을 요구하지 않는다.
+- Module Contract CI는 경로·의존·Stable Entry Point·Test Reference의 구조적 드리프트만 검사한다. Runtime 품질을 대신하지 않는다.
 - Stabilization·PR Evidence를 기록할 때는 정확한 Branch·SHA와 실행 범위를 고정한다.
 - Release 전에 필요한 자동 CI와 Runtime Gate를 수행한다.
 - 한 Gate의 성공을 실행하지 않은 다른 Gate의 성공으로 확대하지 않는다.
@@ -192,9 +209,10 @@ Development Observation
 1. 현재 사용자 결정과 Authority를 따른다.
 2. Studio에서 실제 사용자 흐름이 확인된다.
 3. 확정된 Production 변경이 GitHub Source에서 재현 가능하다.
-4. Server Authority·Permission·Disclosure 경계를 지킨다.
-5. 관련 Unit·Integration·Static Test가 통과하거나 미실행 이유가 기록된다.
-6. Persistence·Migration·Performance 등 영향이 있으면 필요한 후속 Gate를 명시한다.
-7. 남은 제한, Risk, 제품 결정 필요 항목을 숨기지 않는다.
+4. Contract-bearing Module의 안정 경계가 바뀌었다면 Module Contract도 일치한다.
+5. Server Authority·Permission·Disclosure 경계를 지킨다.
+6. 관련 Unit·Integration·Static Test가 통과하거나 미실행 이유가 기록된다.
+7. Persistence·Migration·Performance 등 영향이 있으면 필요한 후속 Gate를 명시한다.
+8. 남은 제한, Risk, 제품 결정 필요 항목을 숨기지 않는다.
 
 테스트하지 않은 것을 PASS라고 보고하지 않는다.

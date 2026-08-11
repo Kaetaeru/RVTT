@@ -8,7 +8,9 @@ on:
   pull_request:
     paths:
       - "AGENTS.md"
+      - ".github/workflows/validate-module-contracts.yml"
       - "implementation/roblox/MODULE-CONTRACTS.md"
+      - "implementation/roblox/ROBLOX-STUDIO-MCP-TEST-POLICY.md"
       - "implementation/roblox/manifests/module-contracts.json"
       - "implementation/roblox/tooling/validate_module_contracts.py"
       - "implementation/roblox/src/**"
@@ -18,7 +20,9 @@ on:
       - planning/rvtt-remake
     paths:
       - "AGENTS.md"
+      - ".github/workflows/validate-module-contracts.yml"
       - "implementation/roblox/MODULE-CONTRACTS.md"
+      - "implementation/roblox/ROBLOX-STUDIO-MCP-TEST-POLICY.md"
       - "implementation/roblox/manifests/module-contracts.json"
       - "implementation/roblox/tooling/validate_module_contracts.py"
       - "implementation/roblox/src/**"
