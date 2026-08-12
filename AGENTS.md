@@ -1,11 +1,9 @@
 # RVTT Agent Rules
 
 - 상태: `CURRENT`
-- 최종 갱신일: 2026-08-12
+- 최종 갱신일: 2026-08-13
 
-## 1. 현재 실행할 일
-
-실행 권위는 다음 순서만 가진다.
+## 1. 현재 실행 권위
 
 ```text
 사용자의 최신 명시적 지시
@@ -13,244 +11,213 @@
 → commandPath
 ```
 
-Archive, 과거 Codex Command, PR 댓글, Audit, Acceptance Snapshot에서 현재 TODO를 복구하지 않는다.
+Archive, 과거 Codex Command, PR 댓글, 과거 Acceptance에서 현재 TODO를 복구하지 않는다.
 
 ## 2. 현재 Build 방식
 
-현재 Roblox 구현은 `GREENFIELD_ARCHITECTURE_FIRST`다.
+현재 Roblox 구현은 다음 방식이다.
 
 ```text
-Product·ADR
+Product / ADR
 → System Contract
 → Module Contract
 → Stable Function Contract
-→ Pre-G0 Workbench Gate
-→ System Foundation / current Checkpoint 구현
-→ Studio Play
-→ 사용자 피드백
-→ 즉시 수정 또는 수용
+→ Execution Class
+→ E0 Repository Core Engine
+→ E1 Roblox Runtime Integration
+→ E2 Presentation / Feel
+→ Human feedback
 → Authority Reconciliation
-→ Canonical Source 정규화
-→ Checkpoint Promotion Commit
-→ 다음 Capability
+→ Promotion Commit
 ```
 
-상세 규칙은 다음을 따른다.
+Execution environment authority는 `implementation/roblox/GREENFIELD-EXECUTION-LAYERS.md`와 `implementation/roblox/manifests/execution-layers.json`이다.
 
-- `implementation/roblox/GREENFIELD-BUILD-POLICY.md`
-- `implementation/roblox/GREENFIELD-PREFLIGHT.md`
-- `implementation/roblox/MODULE-CONTRACTS.md`
-- `implementation/roblox/SYSTEM-FUNCTION-CONTRACTS.md`
-- `implementation/roblox/AUTHORITY-RECONCILIATION-POLICY.md`
+## 3. Execution Class
 
-## 3. GitHub Source와 Workbench 구분
+### CORE_ENGINE
 
-현재 Greenfield 작업장은 다음으로 고정한다.
+Roblox Runtime 없이 correctness를 검증할 수 있는 보이지 않는 Engine.
 
-- `implementation/roblox/manifests/module-contracts.json`: Module/Stage/Checkpoint Architecture 계약
-- `implementation/roblox/manifests/system-function-contracts.json`: System flow와 Stable Function 의미 계약
-- `implementation/roblox/greenfield.project.json`: Greenfield 전용 Rojo Project
-- `implementation/roblox/greenfield/src`: 새 Build Canonical Source Root
-- `implementation/roblox/greenfield/tests`: 새 Build Focused Test Root
-- `implementation/roblox/greenfield-boundary.json`: Greenfield/Legacy 경계와 Legacy Lock
-- `implementation/roblox/src`: Legacy Source / 읽기 전용 참고
-- `implementation/roblox/default.project.json`: Legacy Production Rojo Project / 읽기 전용 참고
+- GitHub `greenfield/src`에서 먼저 구현.
+- repository automated/negative tests를 먼저 통과.
+- 사람에게 Studio Console로 함수 하나씩 검증시키지 않는다.
 
-Greenfield 구현 중 Legacy `src`와 `default.project.json`을 직접 수정하지 않는다. 기존 구현에서 재사용 가치가 있으면 읽고 현재 Contract에 맞는 Greenfield 경로로 선택적으로 옮긴다.
+### ROBLOX_RUNTIME_ENGINE
 
-Legacy Lock을 갱신하거나 Legacy 쓰기 정책을 풀어야 한다면 사용자에게 먼저 제안한다.
+Roblox Runtime 결과가 Engine correctness의 일부.
 
-## 4. G0 시작 전 Gate
+- Studio/MCP에서 구현·튜닝 loop 허용.
+- 최종 Source는 반드시 `greenfield/src`에 canonicalize.
+- Studio automated runtime test 필요.
 
-첫 G0 구현 전에 `implementation/roblox/GREENFIELD-PREFLIGHT.md`를 실행한다.
+대표: PathfindingService, raycast, physics/collision, streaming-sensitive behavior, DataStore adapter.
 
-필수:
+### ROBLOX_INTEGRATION
 
-- `validate_greenfield_boundary.py` PASS
-- `validate_module_contracts.py` PASS
-- `rojo build greenfield.project.json` PASS
-- Studio Place/Session이 Greenfield Workbench인지 확인
-- 실제 MCP Capability Handshake
+Core Engine을 Remote/Player/Input/Instance/lifecycle에 연결.
 
-이 Gate는 Foundation Stage가 아니며 `G0 → G1 → ...` 순서를 바꾸지 않는다.
+- Studio/MCP automated integration test가 1차 검증.
+- 사용자 UX 판단을 요구하지 않는다.
 
-## 5. System / Module / Function 선계약
+### PRESENTATION_FEEL
 
-현재 또는 다음 구현 범위의 코드 경계는 Source보다 먼저 선언한다.
+사람이 보고 만져야 평가 가능한 UI/visual/control feel.
+
+- Studio self-check 후 `READY_FOR_USER`.
+- 사용자가 싫으면 같은 Checkpoint에서 즉시 수정.
+
+## 4. Source 권위
+
+- `implementation/roblox/greenfield/src`: Canonical Source.
+- `implementation/roblox/greenfield/tests`: Greenfield tests.
+- `implementation/roblox/greenfield.project.json`: Greenfield Rojo Project.
+- `implementation/roblox/src`: Legacy read-only reference.
+- `implementation/roblox/default.project.json`: Legacy read-only project.
+
+Studio-only production truth는 금지한다.
+
+## 5. Code Contract
+
+Source보다 먼저:
 
 ```text
 System
 → Module
 → Stable Function
-→ Source
+→ Execution Class
 ```
 
-### System Contract
+다른 Contract-bearing Module이 호출하는 함수는 Stable Function Contract가 먼저 있어야 한다.
 
-시스템 책임, Authority, state owner, input/output, invariant, Module flow를 선언한다.
+private/local helper와 정확한 내부 call graph는 Source-derived다.
 
-### Module Contract
+## 6. 현재 Engine-first 범위
 
-파일 경계, responsibility, dependency, Authority, state ownership, stable entry point index를 선언한다.
-
-### Stable Function Contract
-
-다른 Contract-bearing Module이 호출하는 함수는 반드시 `system-function-contracts.json`에 먼저 존재해야 한다.
-
-각 함수는 최소 다음을 선언한다.
+현재 Foundation + Exploration에서 보이지 않는 Engine은 사용자 UI보다 먼저 완성한다.
 
 ```text
-name / kind / purpose / inputs / output
-authority / reads / writes / sideEffects
-failureModes / idempotency / validation
-permission / revisionBehavior
+CommandEnvelope
+ProjectionEnvelope
+WorldContract
+SessionAuthority
+WorldState
+AuthorizationService
+CommandRuntime
+ProjectionService
+MovementDomain
+ExplorationDomain
 ```
 
-`module-contracts.json.entryPoints`는 이름 요약이고 함수 의미 Authority는 `system-function-contracts.json`이다. Validator가 두 목록을 1:1로 맞춘다.
+이들은 Repository에서 자동 테스트한다.
 
-**Undeclared cross-module call은 금지한다.** 구현 중 다른 Module이 호출해야 하는 함수가 새로 필요하면 먼저 Stable Function Contract를 만든다.
-
-단, 아직 가까운 구현 범위가 아닌 미래 P2~P10의 구체 Module/함수를 상상으로 미리 만들지 않는다. 큰 시스템 순서만 미리 고정하고 구체 Code Contract는 해당 범위 직전에 만든다.
-
-## 6. Private/Internal 구현 자유도
-
-다음은 Stable Contract로 미리 선언하지 않는다.
-
-- 한 Module 안에서만 쓰는 local/private helper
-- helper 개수와 이름
-- 정확한 내부 call graph
-- 모든 `require()`를 복제한 수동 graph
-
-Stable System/Module/Function 계약이 유지되는 한 private helper 분해와 내부 구현은 Codex가 현재 Source와 Studio 결과를 보고 결정한다.
-
-다른 Module이 private helper를 호출하게 되는 순간 더 이상 private가 아니므로 Stable Function Contract를 먼저 추가한다.
-
-## 7. System-first 규칙
-
-Bootstrap Script는 Client/Server 하나씩 둘 수 있다. 역할은 Composition Root와 App start/fatal report로 제한한다.
-
-다음을 한 Script에 몰아넣지 않는다.
+그 뒤 Studio Integration:
 
 ```text
-Input
-Selection
-Camera
-Movement
-Context Action
-Authorization
-Authoritative Mutation
-Projection
-Presentation
+CommandGateway / CommandClient
+ProjectionGateway / ProjectionReplica
+SemanticInputRouter / WorldSystem
+ServerApp / Bootstrap
+ClientApp / Bootstrap
 ```
 
-기능은 `System Contract → Module flow → Stable Function`으로 설명 가능해야 한다.
+그 다음 사용자 Checkpoint:
 
-Architecture를 과도하게 미리 만드는 것도 금지한다. 다음 Playable Checkpoint에 필요한 책임만 먼저 세운다.
+```text
+S1 Selection
+→ C1 Camera
+→ M1 Move
+→ X1 Context
+→ I1 Interaction
+```
 
-## 8. 사용자 피드백이 최우선
+## 7. Pathfinding 규칙
 
-사용자가 실제 기능을 테스트한 뒤 수정 요청을 하면 현재 Checkpoint 수정이 다음 작업보다 우선한다.
+Pathfinding은 통째로 Studio-only Engine으로 만들지 않는다.
+
+```text
+Repository
+= data contract / permission / budget / failure / recompute / pure policy
+
+Studio Runtime
+= PathfindingService / NavMesh / Agent / Collision / Raycast / dynamic obstruction
+
+Human
+= preview readability / click response / movement smoothness
+```
+
+구체 Pathfinding Module split/API는 Movement Checkpoint 직전에 사용자에게 제안·확정한다.
+
+## 8. 사용자 Feedback
+
+`READY_FOR_USER`가 되면 다음 Presentation 기능 진행을 멈춘다.
 
 ```text
 CHANGE_REQUESTED
-→ 다음 기능 착수 중단
-→ 현재 기능 즉시 수정
-→ Play 재확인
-→ 사용자 재검토
+→ 현재 Checkpoint 수정
+→ Studio self-check
+→ READY_FOR_USER
+→ 사용자 재확인
 ```
 
-같은 Checkpoint 반복 중에는 private 구현을 빠르게 바꿀 수 있다.
+Engine unit/negative test와 Studio automated integration은 사람이 직접 판정하지 않는다.
 
-Stable Function Contract 보완이 필요하더라도 기존 Architecture 의미 안의 명백한 API 보완이면 Contract를 먼저 갱신하고 구현한다. Product·Accepted ADR·Authority·state owner·Module 책임·System flow가 바뀌어야 하면 자동 적용하지 않고 먼저 사용자에게 대안과 영향을 설명한다.
-
-## 9. 사용자 확정 후 Authority Reconciliation
-
-사용자가 현재 변경을 최종 수용해도 즉시 Checkpoint를 `ACCEPTED`로 만들지 않는다.
+## 9. 사용자 확정 후
 
 ```text
 사용자 최종 수용
-→ 현재 Product·ADR·Architecture·Spec 충돌 검색
-→ System/Module/Stable Function Contract 정합화
-→ greenfield/src 정규화
-→ Focused Test
-→ 남은 현재 문서/Contract 충돌 재검색
-→ Checkpoint Promotion Commit
+→ Authority Impact Scan
+→ Product / ADR / Architecture / Spec
+→ Execution / System / Module / Stable Function Contract
+→ Canonical Source / Tests
+→ conflict re-scan
+→ Promotion Commit
 → ACCEPTED
-→ 다음 Checkpoint
 ```
 
-Promotion Commit은 `checkpoint(<CHECKPOINT_ID>): accept <summary>` 형식의 복원 기준점이다. Promotion Commit이 생성되기 전에는 다음 Checkpoint를 시작하지 않는다.
+Promotion Commit 형식:
 
-## 10. Contract Drift
+```text
+checkpoint(<CHECKPOINT_ID>): accept <summary>
+```
 
-다음은 모두 `CONTRACT_DRIFT`다.
+## 10. 사용자 승인 없이 바꾸지 않는 것
 
-- System flow와 구현 구조 불일치
-- Module responsibility/dependency/authority/state owner 불일치
-- `entryPoints`와 Stable Function Contract 이름 불일치
-- Stable Function의 입력/출력/side effect/failure/revision 의미 불일치
-- 다른 Module이 undeclared 함수를 호출
-
-Source가 있다는 이유로 Source를 자동 정답으로 삼지 않는다. 현재 Authority를 확인하고 정합화한다.
-
-## 11. 사용자 승인 없이 바꾸지 않는 것
-
-- 제품 목표·비목표
+- Product 목표/비목표
 - Accepted ADR
 - 핵심 입력 문법
-- Server/Client Authority·Data ownership
-- Module 책임의 실질적인 분리·통합
+- Server/Client Authority / Data ownership
+- Module responsibility 실질 분리/통합
 - System flow
-- Foundation/Checkpoint 시스템 순서
-- 개발 방식
-- Release 범위·우선순위
-- Legacy Write Lock 정책
+- Execution Class 정책/개발 방식
+- Foundation/Checkpoint 순서
+- Release scope/priority
+- Legacy write lock
 
-기존 결정 안에서의 버그 수정, UX 미세 조정, private helper 분해는 즉시 수행할 수 있다.
+명백한 bug, 기존 intent 안의 UX 미세 조정, private helper 분해는 즉시 수행 가능하다.
 
-## 12. 설계 권위
-
-제품·Architecture 의미가 충돌하면:
-
-1. 사용자의 최신 명시적 결정
-2. Accepted/확정 ADR
-3. Product·Architecture·System·Global UI Policy
-4. 준비 완료 Implementation Spec
-5. Greenfield System Contract
-6. Greenfield Module Contract
-7. Greenfield Stable Function Contract
-8. Greenfield Source·Test
-9. Legacy Source·Historical Evidence
-
-Function Contract는 상위 Product/Architecture 의미를 바꾸는 권위가 없다.
-
-## 13. 고정 제품 경계
-
-별도 사용자 결정 없이 다음을 바꾸지 않는다.
+## 11. 고정 제품 경계
 
 - RVTT는 Roblox에서 DM이 실시간 진행하는 게임형 D&D VTT다.
 - 기본 Ruleset은 `dnd5e-2024`, 기본 표시 언어는 `ko-KR`다.
-- 초기 지원 입력은 PC 키보드·마우스다.
-- Token은 Roblox Avatar가 아닌 리그 없는 OBJ·MeshPart 기반 3D Token을 기본으로 한다.
+- 초기 입력은 PC keyboard/mouse다.
+- Token은 rigless OBJ/MeshPart 기반 3D Token이다.
 - 권위 이동은 연속 무격자 좌표이며 `5 ft = 4 studs`다.
-- Exploration은 목적지 Click과 Token WASD 이동을 지원하고 Encounter는 Token WASD 직접 이동을 지원하지 않는다.
-- Left Click=Primary, Right Click=Context, Middle Drag=Camera Orbit, Q=한 단계 취소, E=확정, ESC=Gameplay 의미 없음이다.
-- 중요한 규칙, 권한, Roll, 확정 이동과 영구 상태는 Server authoritative다.
-- Character Owner, Runtime Controller, Session Role을 분리한다.
-- Private Rule Content와 Public Release Content를 분리한다.
-- 공식 Stat Block·CR을 시스템이 임의로 자동 재조정하지 않는다.
+- Exploration은 목적지 Click + Token WASD, Encounter는 Token WASD 직접 이동 없음.
+- Left Click=Primary, Right Click=Context, Middle Drag=Camera Orbit, Q=한 단계 취소, E=확정, ESC=Gameplay 의미 없음.
+- 중요한 rule/permission/roll/confirmed movement/persistent state는 Server authoritative다.
+- Character Owner / Runtime Controller / Session Role은 분리한다.
+- Private Rule Content와 Public Release Content는 분리한다.
+- 공식 Stat Block/CR은 시스템이 자동 재조정하지 않는다.
 
-## 14. Evidence
+## 12. Evidence
 
 ```text
-Development Observation
-≠ Contract Validation
-≠ Static·Unit·Integration
-≠ Human UI·UX Acceptance
+Repository Engine Test
+≠ Studio Runtime Integration Test
+≠ Human Presentation/Feel Acceptance
 ≠ Multi-client
 ≠ Persistence
 ≠ Performance
 ≠ Release Acceptance
 ```
-
-개발 중에는 현재 Checkpoint의 빠른 Play와 수정이 우선이다. 종합 Acceptance는 Stabilization·Release에서 수행한다.
