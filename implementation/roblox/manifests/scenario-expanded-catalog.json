@@ -6,7 +6,7 @@
   "policy": {
     "legacyGreenfieldReferencesExcluded": true,
     "requirementMappingOwnedBy": "implementation/roblox/manifests/implementation-system-model.json",
-    "semanticAuditOwnedBy": "implementation/roblox/manifests/scenario-semantic-audit.json",
+    "semanticAuditOwnedBy": "implementation/roblox/manifests/scenario-semantic-audit-v3.json",
     "negativeCaseRequired": true
   },
   "scenarios": [
