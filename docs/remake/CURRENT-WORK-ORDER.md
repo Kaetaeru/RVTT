@@ -1,44 +1,48 @@
 # RVTT Remake 현재 작업 순서
 
-- 상태: `ACTIVE · CONTEXT_ONLY`
-- 최종 갱신일: 2026-08-12
+- 상태: `ACTIVE · CONTEXT_ONLY · R3_VALIDATED_AWAITING_FREEZE_DECISION`
+- 최종 갱신일: 2026-08-13
 - 현재 실행 포인터: [`.github/CODEX-ACTIVE-TASK.md`](../../.github/CODEX-ACTIVE-TASK.md)
 
 ## 현재 결정
 
-기존 Product·Architecture·Accepted ADR은 제품 요구사항으로 보존한다. **현재 Roblox 구현은 Architecture-first Greenfield로 처음부터 다시 구축한다.**
+기존 Product·Accepted ADR·Current Architecture·Global UI 요구는 제품 권위로 보존한다. Roblox 구현은 Greenfield로 처음부터 재구축하며 기존 Production Source는 `READ_ONLY_REFERENCE`다.
 
-기존 Production Source는 Legacy Reference이며 현재 Build Baseline이 아니다.
+현재 실행 순서는 이 문서의 과거 Slice/Module 순서가 아니라 Active Task와 `implementation/roblox/IMPLEMENTATION-MODEL.md`가 소유한다.
+
+## 현재 상태
+
+```text
+34 Systems / 30 Requirement Capabilities / 61 Scenarios
+R3 semantic + authority hygiene validation = COMPLETE
+R3 = VALIDATED · NOT FROZEN
+SOURCE = BLOCKED
+STUDIO/MCP = BLOCKED
+NEXT = USER R3 FREEZE DECISION
+```
 
 ## 현재 구현 순서
 
 ```text
-Greenfield Module Contract
-→ Foundation Composition/Authority/Input/Projection/World 경계
-→ Foundation Boot
-→ S1 Selection
-→ 사용자 확인·즉시 수정
-→ C1 Camera
-→ M1 Move
-→ X1 Context
-→ I1 Interaction
+사용자 R3 Freeze 결정
+→ R4 E0 Checkpoint Freeze
+→ Dedicated Implementation Branch
+→ E0 Repository Core Engine 구현/자동 검증
+→ CORE_ENGINE_COMPLETE
+→ E1 Runtime Checkpoint Freeze
+→ Studio/MCP Runtime Provider + Integration
+→ INTEGRATION_READY
+→ U0 Product UI Shell
+→ UI_SHELL_READY
+→ E2 Presentation / Feel
 ```
 
-사용자가 현재 Checkpoint를 마음에 들어 하지 않으면 다음 항목으로 넘어가지 않는다.
+과거 `Greenfield Module Contract → Foundation → S1/C1/M1/X1/I1` 순서는 폐기된 Greenfield implementation model의 historical context다. 현재 TODO나 구현 순서로 사용하지 않는다.
 
-## 이후 큰 기능군
+## 이후 기능군
 
-현재 Exploration 흐름이 수용된 뒤 별도 Active Task로 선택한다.
-
-1. Encounter·Character Console
-2. Inventory·Journal·Character Sheet·Settings
-3. Entry·Role·Recovery
-4. DM Workspace
-5. ADR-0091 Runtime Surface
-6. ADR-0092 Production
-
-이 목록은 Context이며 자동 TODO가 아니다.
+Character, Encounter, Inventory, Downtime, Journal, DM, Content, Logistics, Actor Authoring 등은 현재 System Model의 future compatibility pressure다. 실제 구현 scope와 checkpoint 순서는 R4에서 JIT로 확정한다.
 
 ## Historical Tooling
 
-기존 Acceptance, Grand, Persistence, 과거 Runtime Evidence는 Stabilization·Release 및 회귀 참고용이다. Greenfield 기능의 현재 PASS를 대신하지 않는다.
+기존 Acceptance, Grand, Persistence, Production Source와 과거 Runtime Evidence는 regression/reference evidence다. 새 Greenfield 구현의 현재 PASS를 대신하지 않는다.
