@@ -11,6 +11,7 @@ REPO_ROOT = ROOT.parents[1]
 COVERAGE = ROOT / "manifests/architecture-coverage.json"
 SCENARIOS = ROOT / "manifests/architecture-scenarios.json"
 MODEL = ROOT / "IMPLEMENTATION-MODEL.md"
+SYSTEMS = ROOT / "SYSTEMS.md"
 ACTIVE_TASK = REPO_ROOT / ".github/CODEX-ACTIVE-TASK.md"
 
 
@@ -35,7 +36,7 @@ def git_object(expr: str) -> str | None:
 
 
 def fail(errors: list[str]) -> int:
-    print("RVTT implementation-model-neutral coverage validation failed:")
+    print("RVTT architecture coverage validation failed:")
     for error in errors:
         print("-", error)
     return 1
@@ -86,7 +87,7 @@ def main() -> int:
 
     capabilities = coverage.get("capabilities")
     if not isinstance(capabilities, list) or not capabilities:
-        errors.append("coverage capabilities must be a non-empty array")
+        errors.append("legacy coverage capabilities must be a non-empty array")
         capabilities = []
 
     capability_ids: list[str] = []
@@ -119,7 +120,7 @@ def main() -> int:
                 errors.append(f"{cid}: missing cross-cutting dimensions {missing}")
 
     if len(capability_ids) != len(set(capability_ids)):
-        errors.append("capability ids must be unique")
+        errors.append("legacy capability ids must be unique")
     capability_set = set(capability_ids)
 
     base_scenarios = coverage.get("scenarios", [])
@@ -146,11 +147,11 @@ def main() -> int:
         scenario_ids.append(sid)
         refs = scenario.get("capabilityRefs")
         if not isinstance(refs, list) or not refs:
-            errors.append(f"{sid}: capabilityRefs must be non-empty")
+            errors.append(f"{sid}: legacy capabilityRefs must be non-empty")
         else:
             unknown = [ref for ref in refs if ref not in capability_set]
             if unknown:
-                errors.append(f"{sid}: unknown capability refs {unknown}")
+                errors.append(f"{sid}: unknown legacy capability refs {unknown}")
         steps = scenario.get("steps")
         if not isinstance(steps, list) or not steps:
             errors.append(f"{sid}: steps must be non-empty")
@@ -165,21 +166,34 @@ def main() -> int:
 
     gate = coverage.get("implementationGate")
     if isinstance(gate, str) and gate.startswith("READY"):
-        errors.append("legacy coverage registry must not advertise READY while implementation model reset is active")
+        errors.append("legacy coverage registry must not advertise READY before R4 checkpoint freeze")
 
-    if not MODEL.exists() or "IMPLEMENTATION_MODEL_RESET" not in MODEL.read_text(encoding="utf-8"):
-        errors.append("IMPLEMENTATION-MODEL.md must declare IMPLEMENTATION_MODEL_RESET")
-    if not ACTIVE_TASK.exists() or "IMPLEMENTATION_MODEL_RESET" not in ACTIVE_TASK.read_text(encoding="utf-8"):
-        errors.append("CODEX-ACTIVE-TASK.md must declare IMPLEMENTATION_MODEL_RESET")
+    model_text = MODEL.read_text(encoding="utf-8") if MODEL.exists() else ""
+    systems_text = SYSTEMS.read_text(encoding="utf-8") if SYSTEMS.exists() else ""
+    task_text = ACTIVE_TASK.read_text(encoding="utf-8") if ACTIVE_TASK.exists() else ""
+
+    if "SYSTEM_MODEL_V1_APPROVED" not in model_text:
+        errors.append("IMPLEMENTATION-MODEL.md must declare SYSTEM_MODEL_V1_APPROVED")
+    if "APPROVED_SYSTEM_AUTHORITY" not in systems_text:
+        errors.append("SYSTEMS.md must declare APPROVED_SYSTEM_AUTHORITY")
+    if "Capability Catalog v2" not in systems_text or "34" not in systems_text:
+        errors.append("SYSTEMS.md must expose Capability Catalog v2 with 34 capabilities")
+    if "R3_BOUNDARY_FREEZE" not in task_text:
+        errors.append("CODEX-ACTIVE-TASK.md must point to R3_BOUNDARY_FREEZE")
+    if "sourceImplementationAllowed: `false`" not in task_text:
+        errors.append("source implementation must remain blocked during R3")
+    if "studioImplementationAllowed: `false`" not in task_text:
+        errors.append("studio implementation must remain blocked during R3")
 
     if errors:
         return fail(errors)
 
     print(
-        "RVTT implementation-model-neutral coverage validation passed: "
-        f"capabilities={len(capability_ids)}; "
+        "RVTT architecture coverage validation passed: "
+        f"legacy_capabilities={len(capability_ids)}; "
         f"scenarios={len(scenario_ids)} (base={len(base_scenarios)}, expanded={len(expanded_scenarios)}); "
-        "authority_snapshot=PASS; legacy systemRefs/moduleRefs ignored during model reset; source=BLOCKED; studio=BLOCKED"
+        "system_model=33-v1; capability_catalog=34-v2; R3=ACTIVE; "
+        "authority_snapshot=PASS; source=BLOCKED; studio=BLOCKED"
     )
     return 0
 
