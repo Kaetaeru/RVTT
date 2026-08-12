@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import hashlib
 import json
 import subprocess
 import sys
@@ -16,6 +17,8 @@ MODEL_DOC = ROOT / "IMPLEMENTATION-MODEL.md"
 SYSTEMS_DOC = ROOT / "SYSTEMS.md"
 COVERAGE_POLICY = ROOT / "ARCHITECTURE-COVERAGE-POLICY.md"
 ACTIVE_TASK = REPO_ROOT / ".github/CODEX-ACTIVE-TASK.md"
+EXPECTED_SEMANTIC_AUDIT_DIGEST = "sha256:57e485a0cec6d753542e4bc202a881e10e2bd5ae63e314cc609c7e2d99f38140"
+ALLOWED_SEMANTIC_STAGES = {"READ", "MUTATION", "EVENT", "PROJECTION", "RECOVERY", "HUMAN"}
 
 
 def load_json(path: Path) -> dict:
@@ -54,7 +57,6 @@ def main() -> int:
     except Exception as exc:
         return fail([str(exc)])
 
-    # Preserve semantic-review tripwire for upstream authority documents.
     authority = legacy.get("authorityCorpus")
     if not isinstance(authority, dict):
         errors.append("legacy authorityCorpus must be an object")
@@ -90,7 +92,6 @@ def main() -> int:
                     "perform semantic coverage review before updating the snapshot"
                 )
 
-    # Legacy scenario definitions remain the canonical scenario bodies.
     base_scenarios = legacy.get("scenarios", [])
     expanded_scenarios = expanded.get("scenarios", [])
     if not isinstance(base_scenarios, list):
@@ -116,13 +117,11 @@ def main() -> int:
             errors.append(f"{sid}: negativeCases must be non-empty")
         if not isinstance(scenario.get("expectedOutcome"), str) or not scenario.get("expectedOutcome", "").strip():
             errors.append(f"{sid}: expectedOutcome is required")
-
     if len(legacy_scenario_ids) != len(set(legacy_scenario_ids)):
         errors.append("base + expanded scenario ids must be unique")
     if len(legacy_scenario_ids) != 61:
         errors.append(f"representative scenario catalog must contain 61 scenarios, found {len(legacy_scenario_ids)}")
 
-    # Current machine-readable implementation model.
     if current.get("status") != "ACTIVE_R3_REPAIRED_PENDING_FREEZE":
         errors.append("implementation-system-model status must be ACTIVE_R3_REPAIRED_PENDING_FREEZE")
     if current.get("systemModelVersion") != 2:
@@ -135,6 +134,10 @@ def main() -> int:
         errors.append("requirementCapabilityCount must be 30")
     if current.get("scenarioTraceCount") != 61:
         errors.append("scenarioTraceCount must be 61")
+    if current.get("scenarioSemanticAuditVersion") != 1:
+        errors.append("scenarioSemanticAuditVersion must be 1")
+    if current.get("scenarioSemanticAuditDigest") != EXPECTED_SEMANTIC_AUDIT_DIGEST:
+        errors.append("scenarioSemanticAuditDigest drifted; perform semantic audit before changing the trace")
     if current.get("sourceImplementationAllowed") is not False:
         errors.append("sourceImplementationAllowed must remain false during R3")
     if current.get("studioImplementationAllowed") is not False:
@@ -165,7 +168,6 @@ def main() -> int:
         system_names.append(name if isinstance(name, str) else "")
         if isinstance(group, str):
             group_counts[group] += 1
-
     if len(system_ids) != 34:
         errors.append(f"systems must contain 34 entries, found {len(system_ids)}")
     if len(system_ids) != len(set(system_ids)):
@@ -211,7 +213,6 @@ def main() -> int:
             for ref in source_refs:
                 if not isinstance(ref, str) or not (REPO_ROOT / ref).exists():
                     errors.append(f"{rid}: missing authority sourceRef {ref}")
-
     if len(req_ids) != 30:
         errors.append(f"requirementCapabilities must contain 30 entries, found {len(req_ids)}")
     if len(req_ids) != len(set(req_ids)):
@@ -221,6 +222,12 @@ def main() -> int:
     if unpressured_systems:
         errors.append(f"systems without Requirement Capability pressure: {unpressured_systems}")
 
+    stage_defs = current.get("scenarioSemanticStageDefinitions")
+    if not isinstance(stage_defs, dict) or set(stage_defs) != ALLOWED_SEMANTIC_STAGES:
+        errors.append(f"scenarioSemanticStageDefinitions must define exactly {sorted(ALLOWED_SEMANTIC_STAGES)}")
+    elif any(not isinstance(v, str) or not v.strip() for v in stage_defs.values()):
+        errors.append("scenarioSemanticStageDefinitions values must be non-empty strings")
+
     traces = current.get("scenarioTrace")
     if not isinstance(traces, list):
         errors.append("scenarioTrace must be an array")
@@ -228,6 +235,7 @@ def main() -> int:
     trace_ids: list[str] = []
     used_requirements: set[str] = set()
     trace_by_id: dict[str, dict] = {}
+    semantic_digest_input: list[dict] = []
     for trace in traces:
         if not isinstance(trace, dict):
             errors.append("scenarioTrace entry must be object")
@@ -235,6 +243,7 @@ def main() -> int:
         sid = trace.get("id")
         srefs = trace.get("systemRefs")
         rrefs = trace.get("requirementCapabilityRefs")
+        stages = trace.get("semanticStages")
         if not isinstance(sid, str) or not sid:
             errors.append("scenarioTrace.id is required")
             continue
@@ -246,6 +255,14 @@ def main() -> int:
         if not isinstance(rrefs, list) or not rrefs:
             errors.append(f"{sid}: requirementCapabilityRefs must be non-empty")
             rrefs = []
+        if not isinstance(stages, list) or not stages:
+            errors.append(f"{sid}: semanticStages must be non-empty")
+            stages = []
+        if len(stages) != len(set(stages)):
+            errors.append(f"{sid}: semanticStages must be unique")
+        unknown_stages = [stage for stage in stages if stage not in ALLOWED_SEMANTIC_STAGES]
+        if unknown_stages:
+            errors.append(f"{sid}: unknown semantic stages {unknown_stages}")
         unknown_systems = [ref for ref in srefs if ref not in system_set]
         unknown_reqs = [ref for ref in rrefs if ref not in req_set]
         if unknown_systems:
@@ -253,6 +270,33 @@ def main() -> int:
         if unknown_reqs:
             errors.append(f"{sid}: unknown requirement refs {unknown_reqs}")
         used_requirements.update(ref for ref in rrefs if ref in req_set)
+
+        ss = set(srefs)
+        rr = set(rrefs)
+        st = set(stages)
+        if "MUTATION" in st:
+            if "A3" not in ss or "REQ_ATOMIC_CONCURRENCY" not in rr:
+                errors.append(f"{sid}: MUTATION requires A3 and REQ_ATOMIC_CONCURRENCY")
+        if "EVENT" in st:
+            if not {"A3", "A8"}.issubset(ss) or "REQ_COMMITTED_EVENT_PROPAGATION" not in rr:
+                errors.append(f"{sid}: EVENT requires A3+A8 and REQ_COMMITTED_EVENT_PROPAGATION")
+        if "PROJECTION" in st:
+            if not {"A5", "A6"}.issubset(ss) or "REQ_VIEWER_SAFE_PROJECTION" not in rr:
+                errors.append(f"{sid}: PROJECTION requires A5+A6 and REQ_VIEWER_SAFE_PROJECTION")
+        if "RECOVERY" in st:
+            if not ({"A6", "A7"} & ss):
+                errors.append(f"{sid}: RECOVERY requires A6 or A7")
+            if not ({"REQ_RECOVERY_ROLLBACK", "REQ_SESSION_PLAYABILITY"} & rr):
+                errors.append(f"{sid}: RECOVERY requires recovery/session requirement pressure")
+        if "HUMAN" in st and not ({"C1", "C2", "C3", "U1", "U2"} & ss):
+            errors.append(f"{sid}: HUMAN requires a client/presentation/authoring System")
+
+        semantic_digest_input.append({
+            "id": sid,
+            "requirementCapabilityRefs": rrefs,
+            "systemRefs": srefs,
+            "semanticStages": stages,
+        })
 
     if len(trace_ids) != 61:
         errors.append(f"scenarioTrace must contain 61 entries, found {len(trace_ids)}")
@@ -267,15 +311,11 @@ def main() -> int:
     if unused_requirements:
         errors.append(f"Requirement Capabilities unused by all scenarios: {unused_requirements}")
 
-    # Sentinel traces protect the repaired Event Delivery boundary.
-    for sid in ["SCN_CONCURRENT_DOOR_INTERACTION", "SCN_ATTACK_REACTION_RESOLUTION", "SCN_ITEM_PICKUP", "SCN_FULL_SESSION_CROSS_SYSTEM_RECOVERY"]:
-        trace = trace_by_id.get(sid, {})
-        if "A8" not in trace.get("systemRefs", []):
-            errors.append(f"{sid}: must include A8 committed-event delivery pressure")
-        if "REQ_COMMITTED_EVENT_PROPAGATION" not in trace.get("requirementCapabilityRefs", []):
-            errors.append(f"{sid}: must include REQ_COMMITTED_EVENT_PROPAGATION")
+    digest_payload = json.dumps(semantic_digest_input, ensure_ascii=False, separators=(",", ":"))
+    actual_digest = "sha256:" + hashlib.sha256(digest_payload.encode("utf-8")).hexdigest()
+    if actual_digest != EXPECTED_SEMANTIC_AUDIT_DIGEST:
+        errors.append(f"semantic trace digest mismatch: expected={EXPECTED_SEMANTIC_AUDIT_DIGEST} actual={actual_digest}")
 
-    # R3 execution semantics and repaired invariants.
     semantics = current.get("executionLayerSemantics")
     if not isinstance(semantics, dict):
         errors.append("executionLayerSemantics must be object")
@@ -337,9 +377,26 @@ def main() -> int:
     if actual_reservations != expected_reservations:
         errors.append(f"reservation taxonomy drifted: expected={expected_reservations} actual={actual_reservations}")
 
+    durability = current.get("eventDeliveryDurability")
+    expected_durability = {
+        "outboxSemanticOwner": "A3",
+        "deliverySemanticOwner": "A8",
+        "durabilityMechanismOwner": "A7",
+    }
+    if not isinstance(durability, dict):
+        errors.append("eventDeliveryDurability must be an object")
+    else:
+        for key, expected in expected_durability.items():
+            if durability.get(key) != expected:
+                errors.append(f"eventDeliveryDurability.{key} must be {expected}")
+        rule = durability.get("rule", "")
+        if not isinstance(rule, str) or "A8 never uses StorageAdapter directly" not in rule:
+            errors.append("eventDeliveryDurability must forbid A8 direct StorageAdapter use")
+
     providers = current.get("platformProviderContracts")
     expected_provider_ids = {"AUTHORITY_MONOTONIC_CLOCK", "DETERMINISTIC_ID_FACTORY", "RNG_PROVIDER", "TRANSPORT_ADAPTER", "STORAGE_ADAPTER"}
     provider_ids: set[str] = set()
+    storage_consumers = None
     if not isinstance(providers, list):
         errors.append("platformProviderContracts must be array")
     else:
@@ -350,30 +407,34 @@ def main() -> int:
             provider_ids.add(item["id"])
             if item.get("testOwner") != "S2":
                 errors.append(f"{item['id']}: testOwner must be S2")
+            if item["id"] == "STORAGE_ADAPTER":
+                storage_consumers = item.get("productionConsumers")
     if provider_ids != expected_provider_ids:
         errors.append(f"platform provider set drifted: expected={sorted(expected_provider_ids)} actual={sorted(provider_ids)}")
+    if storage_consumers != ["A7"]:
+        errors.append("STORAGE_ADAPTER productionConsumers must remain exactly [A7]; A8 durability goes through A7")
 
-    # Human-readable authority must agree with the machine model.
     model_text = MODEL_DOC.read_text(encoding="utf-8")
     systems_text = SYSTEMS_DOC.read_text(encoding="utf-8")
     policy_text = COVERAGE_POLICY.read_text(encoding="utf-8")
     task_text = ACTIVE_TASK.read_text(encoding="utf-8")
     required_markers = [
         ("IMPLEMENTATION-MODEL.md", model_text, "SYSTEM MODEL = V2 · 34 SYSTEMS · REPAIRED"),
-        ("IMPLEMENTATION-MODEL.md", model_text, "REPOSITORY_LOGIC"),
-        ("IMPLEMENTATION-MODEL.md", model_text, "E0_CORE_ENGINE"),
+        ("IMPLEMENTATION-MODEL.md", model_text, "Scenario Semantic Audit = V1 · 61/61"),
+        ("IMPLEMENTATION-MODEL.md", model_text, "A8 delivery semantics → A7 durability seam"),
         ("SYSTEMS.md", systems_text, "34 System Responsibility Model"),
         ("SYSTEMS.md", systems_text, "A8 | Domain Event Delivery Runtime"),
-        ("SYSTEMS.md", systems_text, "Requirement Capability Catalog v3"),
+        ("SYSTEMS.md", systems_text, "Scenario Semantic Audit v1"),
+        ("SYSTEMS.md", systems_text, "A8 delivery semantics → A7 durability seam"),
         ("Coverage Policy", policy_text, "30 Requirement Capability Catalog v3"),
         ("Active Task", task_text, "R3_REPAIRED_AWAITING_FREEZE_DECISION"),
+        ("Active Task", task_text, "scenarioSemanticAudit: `V1_61_OF_61`"),
         ("Active Task", task_text, "sourceImplementationAllowed: `false`"),
         ("Active Task", task_text, "studioImplementationAllowed: `false`"),
     ]
     for label, text, marker in required_markers:
         if marker not in text:
             errors.append(f"{label}: missing marker {marker}")
-
     for sid, name in zip(system_ids, system_names):
         if f"| {sid} | {name} |" not in systems_text:
             errors.append(f"SYSTEMS.md missing system table row for {sid} {name}")
@@ -381,11 +442,13 @@ def main() -> int:
     if errors:
         return fail(errors)
 
+    stage_counts = Counter(stage for trace in traces for stage in trace.get("semanticStages", []))
     print(
         "RVTT architecture coverage validation passed: "
         f"systems={len(system_ids)}; requirement_capabilities={len(req_ids)}; "
         f"scenarios={len(trace_ids)} (base={len(base_scenarios)}, expanded={len(expanded_scenarios)}); "
-        "event_delivery=A8; ready_gate=A1; reservation_taxonomy=PASS; provider_contracts=PASS; "
+        f"semantic_stages={dict(sorted(stage_counts.items()))}; semantic_digest=PASS; "
+        "event_delivery=A8; event_durability=A7; ready_gate=A1; reservation_taxonomy=PASS; provider_contracts=PASS; "
         f"e0_required_seams={len(e0)}; deferred_repository_features={len(deferred)}; "
         "source=BLOCKED; studio=BLOCKED; R3=REPAIRED_NOT_FROZEN"
     )
