@@ -255,8 +255,9 @@ Scenario Semantic Audit v2 final validation
 → E1 Runtime Checkpoint Freeze
 → Studio/MCP Runtime Provider + Integration
 → INTEGRATION_READY
-→ U0 HTML/UI Reference Distillation
-→ U0 Product UI Shell 전체 구축
+→ U0-A HTML/UI Reference Distillation
+→ U0-B Product UI Shell Scaffold
+→ U0-C Human Shell Review
 → UI_SHELL_READY
 → E2 User-facing Checkpoint JIT
 → Human Acceptance
@@ -264,7 +265,7 @@ Scenario Semantic Audit v2 final validation
 
 **CORE_ENGINE_COMPLETE 전 Studio/MCP 작업을 시작하지 않는다.**
 
-U0에서는 기존 HTML UI 예시와 최신 UI Authority를 먼저 글로 Distill하고, 실제 Product Surface 전체의 Shell을 만든다. 이후 throwaway Test ScreenGui 대신 Product Shell의 dev-mode Debug/Fixture Control을 사용한다.
+U0-A에서 기존 HTML UI 예시와 최신 UI Authority를 먼저 글로 Distill한다. U0-B에서 실제 Product Surface 전체의 Shell을 만들고, U0-C에서 사람 검토로 정보구조·가독성·디자인 철학을 확인한다. 이후 throwaway Test ScreenGui 대신 Product Shell의 dev-mode Debug/Fixture Control을 사용한다.
 
 ## 9. 금지
 
