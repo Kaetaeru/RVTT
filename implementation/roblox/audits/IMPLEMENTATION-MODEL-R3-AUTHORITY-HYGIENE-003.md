@@ -112,23 +112,13 @@ docs/remake/ui
 
 `docs/remake/specs/**`는 requirement/reference corpus이며 current implementation model authority가 아니다. Current Work Order와 routing/status surface는 planning-boundary validator가 별도로 검증한다.
 
-현재 tree binding:
-
-```text
-product      32338e3ddccbf6497d806ceb1e649f2a2c809329
-decisions    54125338b3af1650b4bce9d7e3ff31496ae7e03c
-architecture 249d9a7293380c33f6d7195ddfa38da58fe86979
-systems      742efb372264b85fa26a3f57b2541fd0405d26e2
-ui           2effbddd018b02074daa2becc3d7d0b72e6e438b
-```
-
-`validate_architecture_coverage.py`는 이제 이 current manifest만 HEAD와 비교한다. legacy `architecture-coverage.json.authorityCorpus`는 historical identity/evidence로만 보존하고 current SHA lock으로 사용하지 않는다.
+`validate_architecture_coverage.py`는 current authority manifest만 HEAD와 비교한다. legacy `architecture-coverage.json.authorityCorpus`는 historical identity/evidence로만 보존하고 current SHA lock으로 사용하지 않는다.
 
 ## 5. Workflow Hardening
 
 `validate-architecture-coverage.yml`과 `validate-module-contracts.yml`은 `r3-authority-corpus.json`과 current authority tree 변경을 감시한다.
 
-System-model Workflow의 기존 blind spot도 함께 수정했다.
+System-model Workflow는 다음 입력 변경에도 재실행된다.
 
 ```text
 clean Base/Expanded Scenario
@@ -137,9 +127,7 @@ current authority corpus
 Product/ADR/Architecture/System/UI
 ```
 
-변경 시 재실행되며, push branch에 `main`도 포함한다.
-
-Planning-boundary Workflow도 root/implementation README와 current status/process surface를 감시한다.
+Planning-boundary Workflow는 root/implementation README와 current status/process surface를 감시한다.
 
 ## 6. 실행 권위 Read Path
 
@@ -179,7 +167,7 @@ R3 = NOT FROZEN
 
 ## 8. Validation Evidence Rule
 
-Repository 내부 Audit 문서에는 current/final branch HEAD SHA를 current-state marker로 기록하지 않는다.
+Repository 내부 Audit 문서에는 current/final branch HEAD SHA를 기록하지 않는다.
 
 이유:
 
@@ -190,7 +178,7 @@ Audit 파일에 current HEAD를 기록
 → 기록된 HEAD가 즉시 stale
 ```
 
-따라서 Repository Audit은 검증 방법과 검증된 사실의 종류만 기록한다. 실제 current/final branch HEAD와 그 HEAD의 Workflow 결과는 GitHub PR/Actions metadata를 source of truth로 확인한다.
+따라서 Repository Audit은 검증 방법과 필수 검증 집합만 기록한다. 실제 branch HEAD와 그 HEAD의 Workflow 결과는 GitHub PR/Actions metadata가 source of truth다.
 
 필수 검증 집합:
 
@@ -206,6 +194,6 @@ Validate RVTT content templates
 Validate remake documentation
 ```
 
-최종 branch HEAD/CI는 GitHub metadata를 source of truth로 사용하며 Audit 파일을 다시 수정해 SHA를 따라가지 않는다.
+최종 branch HEAD/CI를 Audit 파일에 다시 복사하지 않는다.
 
 검증 성공은 R3 자동 Freeze가 아니다. 사용자 Freeze 결정 후에만 R4로 이동한다.
