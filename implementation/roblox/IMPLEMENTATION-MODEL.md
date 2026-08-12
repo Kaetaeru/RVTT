@@ -43,7 +43,7 @@ Product / Accepted ADR / Current Architecture / UI
 
 Base 14 Scenario body는 `scenario-base-catalog.json`이 소유한다. 이 파일은 legacy Greenfield capability/system/module 참조를 포함하지 않는다. 기존 `architecture-coverage.json` 안의 Base Scenario 사본은 역사적 evidence일 뿐 새 구현의 canonical Scenario source가 아니다.
 
-Expanded 47 Scenario body는 현재 `architecture-scenarios.json`의 `scenarios[]`가 소유한다. 그 파일의 legacy top-level metadata/capabilityRefs는 구현 모델 권위가 아니며 Requirement/System 매핑은 `implementation-system-model.json`만 소유한다.
+Expanded 47 Scenario body는 현재 `architecture-scenarios.json`의 `scenarios[]`가 소유한다. `baseRegistry`는 canonical Base catalog를 가리키며, legacy `capabilityRefs`는 구현 모델 권위가 아니고 Requirement/System 매핑은 `implementation-system-model.json`만 소유한다.
 
 ## 3. Scenario Semantic Audit v2
 
@@ -57,7 +57,7 @@ v2 semanticSchemaDigest
 sha256:dcc766c1161332789e91aadc362c4765687af3efc2f7193cf23f748df0eb6489
 
 v2 combinedAuditDigest
-sha256:48477cd70757d4450980162d49c62e12115229762bee4127542d6a167099a723
+sha256:2fa071defaa6ee6363378f9a31780f4d54328199fb4e21bc6eeae3c1b9e07bec
 ```
 
 Combined audit는 다음을 묶는다.
