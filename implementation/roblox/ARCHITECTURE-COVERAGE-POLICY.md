@@ -3,6 +3,7 @@
 - 상태: `ACTIVE · PRE_IMPLEMENTATION_COVERAGE_AUTHORITY`
 - 최종 갱신일: 2026-08-13
 - Machine-readable Registry: [`manifests/architecture-coverage.json`](manifests/architecture-coverage.json)
+- Expanded Scenario Registry: [`manifests/architecture-scenarios.json`](manifests/architecture-scenarios.json)
 - Validator: [`tooling/validate_architecture_coverage.py`](tooling/validate_architecture_coverage.py)
 - Initial Audit: [`audits/ARCHITECTURE-COVERAGE-AUDIT-001.md`](audits/ARCHITECTURE-COVERAGE-AUDIT-001.md)
 - Code Contract: [`MODULE-CONTRACTS.md`](MODULE-CONTRACTS.md) + [`SYSTEM-FUNCTION-CONTRACTS.md`](SYSTEM-FUNCTION-CONTRACTS.md)
@@ -189,6 +190,34 @@ negativeCases
 
 `BLOCKED` Scenario는 구현하지 않는다. 먼저 끊어진 Capability 경계를 해결한다.
 
+### 4.1 Scenario Catalog 확장 규칙
+
+초기 Coverage Audit에서 만든 대표 Scenario는 `architecture-coverage.json`에 유지한다.
+
+이미 Product/ADR/Architecture/Slice Spec에 설계되어 있지만 초기 14개에 포함되지 않은 사용자·DM·운영 흐름은 `architecture-scenarios.json`에 추가한다.
+
+두 Registry의 Scenario는 Validator에서 하나의 Catalog로 취급한다.
+
+```text
+architecture-coverage.json.scenarios
++
+architecture-scenarios.json.scenarios
+=
+Current Representative Scenario Catalog
+```
+
+확장 Scenario 원칙:
+
+- 기존 설계를 사용자 또는 운영 흐름으로 추적하는 것이 목적이다.
+- Scenario 추가 자체는 새 System/Module/Function Architecture 승인으로 해석하지 않는다.
+- 미래 시스템은 `DEFERRED` 또는 `DEFERRED_BLOCKED_BY_GAP`로 기록할 수 있다.
+- 각 Scenario는 현재 Capability Catalog에 연결한다.
+- 정상 흐름만 쓰지 않고 최소 하나 이상의 실패·동시성·Disclosure·Recovery 사례를 둔다.
+- 버튼 하나, 함수 하나보다 End-to-End 사용자 결과를 우선한다.
+- Scenario를 작성하면서 새로운 공통 경계 누락이 발견되면 기존 절차대로 Gap을 등록하고 사용자 결정을 받는다.
+
+현재 확장 대상에는 Character Creation·Sheet·Level Up·Inventory·Rest·Spell Preparation·Core Rules·Encounter·Journal·Scene Authoring·Live DM·Content Pack·Official Content·NPC/Monster·Release Recovery 흐름이 포함된다.
+
 ## 5. Cross-cutting Coverage Matrix
 
 모든 Capability는 다음 질문을 명시적으로 답한다.
@@ -305,16 +334,17 @@ M1
 
 기계적으로 다음을 강제한다.
 
-1. Coverage Registry Schema와 필수 필드.
+1. Coverage Registry와 Expanded Scenario Registry Schema·필수 필드.
 2. Authority Corpus Tree/Blob Snapshot이 현재 Checkout과 일치.
 3. Capability의 Authority Reference가 실제 파일을 가리킴.
 4. System/Module Reference가 현재 Registry에 존재.
 5. 현재 Greenfield Module이 Product Capability 또는 명시적 Infrastructure 이유에 연결됨.
-6. Scenario가 존재하는 Capability만 참조.
-7. 모든 Capability가 Cross-cutting Dimension을 빠짐없이 가짐.
-8. Gap과 Phase Gate Reference가 유효함.
-9. OPEN Blocker가 있는데 `implementationGate=READY`로 위장하는 상태 금지.
-10. BLOCKED Gate가 실제 OPEN Blocker를 가지고 있는지 확인.
+6. Base+Expanded Scenario ID가 중복되지 않고 존재하는 Capability만 참조.
+7. Scenario가 Steps·Expected Outcome·Negative Case를 가짐.
+8. 모든 Capability가 Cross-cutting Dimension을 빠짐없이 가짐.
+9. Gap과 Phase Gate Reference가 유효함.
+10. OPEN Blocker가 있는데 `implementationGate=READY`로 위장하는 상태 금지.
+11. BLOCKED Gate가 실제 OPEN Blocker를 가지고 있는지 확인.
 
 CI가 할 수 없는 것:
 
@@ -353,6 +383,9 @@ COVERAGE PHASE
 
 REQUIRED CAPABILITIES
 - ...
+
+REPRESENTATIVE SCENARIOS
+- Base + Expanded Catalog에서 현재 Phase 관련 Scenario
 
 BLOCKING GAPS
 - none 또는 Gap IDs
@@ -395,3 +428,5 @@ IMPLEMENTATION RESULT
 이는 현재 구현이 실패했다는 뜻이 아니다. 아직 Source를 시작하기 전에 상위 Architecture와 Greenfield 계획 사이에서 발견한 구조적 누락을 먼저 결정해야 한다는 뜻이다.
 
 정확한 Gap과 순서는 `architecture-coverage.json`과 Initial Audit가 소유한다.
+
+설계된 미래 사용자·DM·운영 흐름의 대표 Scenario는 `architecture-scenarios.json`이 초기 Catalog를 확장한다.
