@@ -185,7 +185,15 @@ Reconciliation 변경을 포함한 HEAD:
 dab8ace91b31ed72355a6de3107cf8e0a8907961
 ```
 
-이 HEAD에서 다음 9개 Pull Request Workflow가 모두 `completed / success`를 기록했다.
+이 HEAD에서 9개 Pull Request Workflow가 모두 `completed / success`를 기록했다.
+
+Audit 상태를 `VALIDATED`로 올린 status-only HEAD:
+
+```text
+398a9114213a752fe5798ce9b6055d63b4ebcb10
+```
+
+이 HEAD에서도 동일 9개 Pull Request Workflow가 모두 `completed / success`를 기록했다.
 
 ```text
 Validate RVTT architecture coverage
@@ -201,4 +209,4 @@ Validate remake documentation
 
 Architecture coverage와 system-model은 current `r3-authority-corpus.json` 기준으로 성공했고, planning-boundary는 root/implementation entrypoint와 staged Source/Studio policy까지 포함해 성공했다.
 
-이 Audit 상태 갱신 commit 자체도 동일 Workflow 집합에서 회귀 검증해야 한다. 검증 성공은 R3 자동 Freeze가 아니다. 사용자 Freeze 결정 후에만 R4로 이동한다.
+검증 성공은 R3 자동 Freeze가 아니다. 사용자 Freeze 결정 후에만 R4로 이동한다.
