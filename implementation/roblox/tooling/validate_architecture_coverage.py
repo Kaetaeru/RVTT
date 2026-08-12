@@ -22,7 +22,13 @@ AGENTS = REPO_ROOT / "AGENTS.md"
 
 EXPECTED_SEMANTIC_AUDIT_DIGEST = "sha256:57e485a0cec6d753542e4bc202a881e10e2bd5ae63e314cc609c7e2d99f38140"
 ALLOWED_SEMANTIC_STAGES = {"READ", "MUTATION", "EVENT", "PROJECTION", "RECOVERY", "HUMAN"}
-FORBIDDEN_SCENARIO_KEYS = {"capabilityRefs", "systemRefs", "moduleRefs", "knownGapRefs"}
+FORBIDDEN_SCENARIO_KEYS = {"status", "capabilityRefs", "systemRefs", "moduleRefs", "knownGapRefs"}
+EXPECTED_CATALOG_POLICY = {
+    "legacyGreenfieldReferencesExcluded": True,
+    "requirementMappingOwnedBy": "implementation/roblox/manifests/implementation-system-model.json",
+    "semanticAuditOwnedBy": "implementation/roblox/manifests/scenario-semantic-audit-v3.json",
+    "negativeCaseRequired": True,
+}
 EXPECTED_GROUP_COUNTS = {"AUTHORITY": 8, "WORLD": 7, "RULES": 5, "DOMAIN": 7, "AUTHORING": 2, "CLIENT": 3, "SUPPORT": 2}
 EXPECTED_READY = {
     "authorityRecoveryReady": "A7",
@@ -112,6 +118,9 @@ def main() -> int:
         errors.append("canonical Base source must be rvtt-scenario-base-catalog-v1")
     if expanded.get("registryId") != "rvtt-scenario-expanded-catalog-v1":
         errors.append("canonical Expanded source must be rvtt-scenario-expanded-catalog-v1")
+    for label, catalog in (("Base", base), ("Expanded", expanded)):
+        if catalog.get("policy") != EXPECTED_CATALOG_POLICY:
+            errors.append(f"{label} catalog policy drifted from clean current authority")
 
     base_scenarios = base.get("scenarios", [])
     expanded_scenarios = expanded.get("scenarios", [])
@@ -134,7 +143,9 @@ def main() -> int:
         scenario_ids.append(sid)
         forbidden = sorted(FORBIDDEN_SCENARIO_KEYS & set(scenario))
         if forbidden:
-            errors.append(f"{sid}: clean Scenario catalog leaked legacy mapping keys {forbidden}")
+            errors.append(f"{sid}: clean Scenario catalog leaked legacy coverage/mapping keys {forbidden}")
+        if not isinstance(scenario.get("phase"), str) or not scenario.get("phase", "").strip():
+            errors.append(f"{sid}: phase is required")
         if not isinstance(scenario.get("steps"), list) or not scenario.get("steps"):
             errors.append(f"{sid}: steps must be non-empty")
         if not isinstance(scenario.get("negativeCases"), list) or not scenario.get("negativeCases"):
