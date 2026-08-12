@@ -1,0 +1,363 @@
+{
+  "schemaVersion": 1,
+  "registryId": "rvtt-greenfield-system-function-contracts-v1",
+  "moduleRegistry": "implementation/roblox/manifests/module-contracts.json",
+  "authorityDocument": "implementation/roblox/SYSTEM-FUNCTION-CONTRACTS.md",
+  "scope": "CURRENT_GREENFIELD_FOUNDATION_PLUS_EXPLORATION",
+  "policy": {
+    "declareSystemBeforeImplementation": true,
+    "declareModuleBeforeImplementation": true,
+    "declareStableCrossModuleFunctionsBeforeImplementation": true,
+    "allowUndeclaredCrossModuleCalls": false,
+    "privateHelpersAreSourceDerived": true,
+    "manualPrivateCallGraph": false,
+    "futureSystemsDetailedOnlyWhenApproachingImplementation": true
+  },
+  "systemContracts": [
+    {
+      "id": "system.shared-data-contracts",
+      "status": "PLANNED",
+      "stageOrCheckpoint": "G0_SHARED_CONTRACTS",
+      "responsibility": "Own serializable command, projection, and world data boundaries before runtime implementation exists.",
+      "modules": ["shared.protocol.command-envelope", "shared.protocol.projection-envelope", "shared.world.contract"],
+      "authority": "pure_contract",
+      "stateOwners": ["none"],
+      "inputs": ["Product and architecture data requirements"],
+      "outputs": ["Bounded command envelopes", "Bounded viewer projection envelopes", "Stable world data shapes"],
+      "invariants": ["No Roblox Instance references", "No trusted client role or ownership claims", "Stable ids are separate from display names", "Network data can be bounded and validated"],
+      "flow": ["shared.protocol.command-envelope", "shared.protocol.projection-envelope", "shared.world.contract"]
+    },
+    {
+      "id": "system.server-authority-core",
+      "status": "PLANNED",
+      "stageOrCheckpoint": "G1_SERVER_AUTHORITY_CORE",
+      "responsibility": "Own server-derived role, control, authorization, authoritative world state, revision, and command execution before network ingress is opened.",
+      "modules": ["server.session.authority", "server.world.state", "server.authorization", "server.command.runtime"],
+      "authority": "server_authoritative",
+      "stateOwners": ["server.session.authority", "server.world.state", "server.command.runtime"],
+      "inputs": ["Server-derived Player identity", "Validated CommandEnvelope", "Registered domain handlers"],
+      "outputs": ["Authorization decisions", "Structured command receipts", "Authoritative world revisions"],
+      "invariants": ["Authorization precedes mutation", "Duplicate command ids are safe", "Stale expected revisions fail closed", "Client role/controller claims are never authoritative"],
+      "flow": ["server.command.runtime", "server.authorization", "server.session.authority", "server.world.state"]
+    },
+    {
+      "id": "system.command-transport",
+      "status": "PLANNED",
+      "stageOrCheckpoint": "G2_COMMAND_TRANSPORT",
+      "responsibility": "Carry bounded client intent to the already-existing server command boundary without owning gameplay authority.",
+      "modules": ["shared.protocol.command-envelope", "client.command", "server.transport.command-gateway", "server.command.runtime"],
+      "authority": "client_intent_only",
+      "stateOwners": ["client.command", "server.transport.command-gateway"],
+      "inputs": ["Client intent", "Server-derived Player from Roblox transport"],
+      "outputs": ["Validated command submission", "Structured receipt"],
+      "invariants": ["Gateway contains no gameplay rules", "Payload size/type/depth/rate are bounded", "UI and presenters never call Remote directly"],
+      "flow": ["client.command", "shared.protocol.command-envelope", "server.transport.command-gateway", "server.command.runtime"]
+    },
+    {
+      "id": "system.projection-pipeline",
+      "status": "PLANNED",
+      "stageOrCheckpoint": "G3_PROJECTION_PIPELINE",
+      "responsibility": "Convert authoritative state into viewer-safe projections and replicate only those projections to clients.",
+      "modules": ["server.world.state", "server.session.authority", "server.projection", "shared.protocol.projection-envelope", "server.transport.projection-gateway", "client.projection"],
+      "authority": "server_projection",
+      "stateOwners": ["server.world.state", "client.projection"],
+      "inputs": ["Authoritative world snapshot", "Server-owned viewer identity and role"],
+      "outputs": ["Viewer-safe ProjectionEnvelope", "Client projection replica"],
+      "invariants": ["Disclosure selection happens before transport", "Hidden existence information is not leaked", "Projection revision never moves backward", "Client replica is non-authoritative"],
+      "flow": ["server.world.state", "server.projection", "server.transport.projection-gateway", "client.projection"]
+    },
+    {
+      "id": "system.client-world-shell",
+      "status": "PLANNED",
+      "stageOrCheckpoint": "G4_CLIENT_WORLD_SHELL",
+      "responsibility": "Provide semantic input and world-controller lifecycle composition without placing gameplay authority in the client shell.",
+      "modules": ["client.input.semantic-router", "client.world.system", "client.command", "client.projection"],
+      "authority": "client_local_state",
+      "stateOwners": ["client.input.semantic-router", "client.world.system"],
+      "inputs": ["Physical keyboard and mouse input", "Viewer projection", "Command client"],
+      "outputs": ["Semantic actions", "Started world controller lifecycle"],
+      "invariants": ["Controllers consume semantic actions rather than competing physical subscriptions", "WorldSystem owns lifecycle not feature rules", "All connections/tasks/temporary Instances can be cleaned up"],
+      "flow": ["client.input.semantic-router", "client.world.system"]
+    },
+    {
+      "id": "system.composition-boot",
+      "status": "PLANNED",
+      "stageOrCheckpoint": "G5_COMPOSITION_BOOT",
+      "responsibility": "Compose dependencies and start/stop client and server applications without embedding feature, authority, or presentation rules.",
+      "modules": ["server.app", "server.bootstrap", "client.app", "client.bootstrap"],
+      "authority": "no_authority",
+      "stateOwners": ["server.app", "client.app"],
+      "inputs": ["Foundation modules and Roblox service adapters"],
+      "outputs": ["Clean server boot", "Clean client boot", "Deterministic cleanup"],
+      "invariants": ["Bootstrap performs composition/start/fatal-report only", "App owns dependency wiring and lifecycle only", "Duplicate lifecycle calls do not corrupt state", "Foundation boot does not depend on DataStore"],
+      "flow": ["server.bootstrap", "server.app", "client.bootstrap", "client.app"]
+    },
+    {
+      "id": "system.selection",
+      "status": "PLANNED",
+      "stageOrCheckpoint": "S1_SELECTION",
+      "responsibility": "Turn semantic Primary input over viewer-projected world targets into client-local selected actor state and presentation.",
+      "modules": ["client.input.semantic-router", "client.projection", "shared.world.contract", "client.world.selection", "client.world.presenter", "client.world.system"],
+      "authority": "client_local_state",
+      "stateOwners": ["client.world.selection", "client.world.presenter"],
+      "inputs": ["Semantic Primary action", "Viewer projection", "Pointer world target"],
+      "outputs": ["Selected actor id or nil", "Selection presentation"],
+      "invariants": ["Selection does not mutate server gameplay state", "Only projected/selectable actors can become selected", "Selection state has one owner"],
+      "flow": ["client.input.semantic-router", "client.world.selection", "client.world.presenter"]
+    },
+    {
+      "id": "system.camera",
+      "status": "PLANNED",
+      "stageOrCheckpoint": "C1_CAMERA",
+      "responsibility": "Own exploration camera pan, orbit, zoom, and framing as client-local behavior driven by semantic input.",
+      "modules": ["client.input.semantic-router", "client.projection", "client.world.camera", "client.world.system"],
+      "authority": "client_local_state",
+      "stateOwners": ["client.world.camera"],
+      "inputs": ["Semantic camera actions", "Viewer projection for framing context"],
+      "outputs": ["Local camera state"],
+      "invariants": ["Camera uses no gameplay Remote", "Camera never writes authoritative world state", "Camera lifecycle is cleanly destroyable"],
+      "flow": ["client.input.semantic-router", "client.world.camera"]
+    },
+    {
+      "id": "system.movement",
+      "status": "PLANNED",
+      "stageOrCheckpoint": "M1_MOVE",
+      "responsibility": "Preview movement locally, submit intent, authorize and commit movement on the server, then show the resulting viewer projection.",
+      "modules": ["client.world.selection", "client.world.movement", "client.command", "shared.protocol.command-envelope", "server.transport.command-gateway", "server.command.runtime", "server.authorization", "server.domain.movement", "server.world.state", "server.projection", "server.transport.projection-gateway", "client.projection", "client.world.presenter"],
+      "authority": "server_authoritative",
+      "stateOwners": ["client.world.movement", "server.world.state", "client.projection"],
+      "inputs": ["Selected controllable actor", "Destination intent", "Current world revision"],
+      "outputs": ["Local preview", "Authoritative movement receipt", "Updated viewer projection"],
+      "invariants": ["Client preview is never authoritative", "Movement commit crosses the single command boundary", "Server validates controller/mode/destination/revision", "Result is presented from projection rather than local commit"],
+      "flow": ["client.world.movement", "client.command", "server.transport.command-gateway", "server.command.runtime", "server.authorization", "server.domain.movement", "server.world.state", "server.projection", "server.transport.projection-gateway", "client.projection", "client.world.presenter"]
+    },
+    {
+      "id": "system.context-interaction",
+      "status": "PLANNED",
+      "stageOrCheckpoint": "X1_CONTEXT+I1_INTERACTION",
+      "responsibility": "Resolve viewer-visible context actions locally, submit explicit gameplay intent, authorize/apply it on the server, and present the projected result.",
+      "modules": ["client.input.semantic-router", "client.world.selection", "client.world.context", "client.command", "server.transport.command-gateway", "server.command.runtime", "server.authorization", "server.domain.exploration", "server.world.state", "server.projection", "server.transport.projection-gateway", "client.projection", "client.world.presenter"],
+      "authority": "server_authoritative",
+      "stateOwners": ["client.world.context", "server.world.state", "client.projection"],
+      "inputs": ["Semantic Context action", "Viewer projection", "Explicit chosen action"],
+      "outputs": ["Local context menu/preview", "Authoritative interaction receipt", "Updated viewer projection"],
+      "invariants": ["Client candidates are presentation hints not authority", "Interaction success is server-decided", "No feature-specific Remote bypass", "Context and interaction reuse the standard command/projection path"],
+      "flow": ["client.world.context", "client.command", "server.transport.command-gateway", "server.command.runtime", "server.authorization", "server.domain.exploration", "server.world.state", "server.projection", "server.transport.projection-gateway", "client.projection", "client.world.presenter"]
+    }
+  ],
+  "moduleFunctionContracts": [
+    {
+      "moduleId": "shared.protocol.command-envelope",
+      "surface": "CALLABLE_MODULE",
+      "functions": [
+        {"name":"validate","kind":"VALIDATOR","purpose":"Validate and normalize an untrusted command envelope without assigning authority.","inputs":["value: any"],"output":"ok:boolean, normalized:CommandEnvelope?|nil, errorCode:string?|nil","authority":"pure_contract","reads":["input value only"],"writes":["none"],"sideEffects":["none"],"failureModes":["malformed type","oversized/deep payload","invalid commandId/sessionEpoch/revision/type","Roblox Instance or unsupported value"],"idempotency":"PURE","validation":["bounded type/size/depth","finite numeric fields","stable command type","no trusted role/owner/controller fields"],"permission":"none","revisionBehavior":"Validates expectedWorldRevision shape only; never compares authoritative state."}
+      ]
+    },
+    {
+      "moduleId": "shared.protocol.projection-envelope",
+      "surface": "CALLABLE_MODULE",
+      "functions": [
+        {"name":"validate","kind":"VALIDATOR","purpose":"Validate a bounded server-authored projection envelope before client acceptance.","inputs":["value: any"],"output":"ok:boolean, normalized:ProjectionEnvelope?|nil, errorCode:string?|nil","authority":"pure_contract","reads":["input value only"],"writes":["none"],"sideEffects":["none"],"failureModes":["malformed type","oversized/deep payload","invalid epoch/revision","Roblox Instance or unsupported value"],"idempotency":"PURE","validation":["bounded type/size/depth","finite monotonic-capable revision fields","viewer payload is serializable"],"permission":"none","revisionBehavior":"Validates epoch/revision shape only; ordering is enforced by ProjectionReplica."}
+      ]
+    },
+    {
+      "moduleId": "shared.world.contract",
+      "surface": "DATA_ONLY_MODULE",
+      "functions": []
+    },
+    {
+      "moduleId": "server.session.authority",
+      "surface": "CALLABLE_MODULE",
+      "functions": [
+        {"name":"new","kind":"CONSTRUCTOR","purpose":"Create server-owned session authority state from trusted server configuration/providers.","inputs":["config: SessionAuthorityConfig"],"output":"SessionAuthority","authority":"server_authoritative","reads":["trusted server configuration"],"writes":["private session authority mappings"],"sideEffects":["none outside returned object"],"failureModes":["missing/invalid trusted provider"],"idempotency":"CONSTRUCTOR","validation":["reject client-authored authority sources"],"permission":"server_internal","revisionBehavior":"none"},
+        {"name":"getRole","kind":"QUERY","purpose":"Return the server-owned session role for the actual Roblox Player.","inputs":["player: Player (server-derived)"],"output":"SessionRole","authority":"server_authoritative","reads":["session role mapping"],"writes":["none"],"sideEffects":["none"],"failureModes":["unknown player -> least-privileged role or structured failure"],"idempotency":"READ_ONLY","validation":["player identity comes from server context"],"permission":"server_internal","revisionBehavior":"none"},
+        {"name":"canControl","kind":"QUERY","purpose":"Resolve whether the actual Roblox Player may currently control the actor id.","inputs":["player: Player (server-derived)","actorId: ActorId"],"output":"allowed:boolean, reason:string?|nil","authority":"server_authoritative","reads":["session role mapping","character owner mapping","runtime controller mapping"],"writes":["none"],"sideEffects":["none"],"failureModes":["unknown actor","unknown player","no controller/owner permission"],"idempotency":"READ_ONLY","validation":["stable actor id","server-derived player"],"permission":"server_internal","revisionBehavior":"none"},
+        {"name":"destroy","kind":"LIFECYCLE","purpose":"Release session-authority resources and reject later use.","inputs":[],"output":"nil","authority":"server_authoritative","reads":["lifecycle state"],"writes":["lifecycle state","owned temporary resources"],"sideEffects":["disconnect/cleanup"],"failureModes":[],"idempotency":"LIFECYCLE","validation":[],"permission":"server_internal","revisionBehavior":"none"}
+      ]
+    },
+    {
+      "moduleId": "server.world.state",
+      "surface": "CALLABLE_MODULE",
+      "functions": [
+        {"name":"new","kind":"CONSTRUCTOR","purpose":"Create authoritative in-memory world state with an initial monotonic revision.","inputs":["initialState: WorldSnapshot?"],"output":"WorldState","authority":"server_authoritative","reads":["validated initial world data"],"writes":["authoritative world actors","world revision"],"sideEffects":["none outside returned object"],"failureModes":["invalid initial world data"],"idempotency":"CONSTRUCTOR","validation":["WorldContract-compatible serializable state","finite positions","unique stable actor ids"],"permission":"server_internal","revisionBehavior":"Initializes revision deterministically."},
+        {"name":"getSnapshot","kind":"QUERY","purpose":"Return a read-only/copy snapshot of current authoritative world state.","inputs":[],"output":"WorldSnapshot","authority":"server_authoritative","reads":["authoritative world actors","world revision"],"writes":["none"],"sideEffects":["none"],"failureModes":["object destroyed"],"idempotency":"READ_ONLY","validation":[],"permission":"server_internal","revisionBehavior":"Returned snapshot includes current revision and cannot mutate owner state."},
+        {"name":"getRevision","kind":"QUERY","purpose":"Return the current authoritative world revision.","inputs":[],"output":"integer","authority":"server_authoritative","reads":["world revision"],"writes":["none"],"sideEffects":["none"],"failureModes":["object destroyed"],"idempotency":"READ_ONLY","validation":[],"permission":"server_internal","revisionBehavior":"Read only."},
+        {"name":"transact","kind":"MUTATION","purpose":"Apply one server-internal validated mutation atomically against an expected world revision and increment revision exactly once on success.","inputs":["expectedRevision: integer","mutation: server-internal mutation callback/capability"],"output":"ok:boolean, newRevision:integer?|nil, result:any?|nil, errorCode:string?|nil","authority":"server_authoritative","reads":["authoritative world actors","world revision"],"writes":["authoritative world actors","world revision"],"sideEffects":["authoritative in-memory mutation"],"failureModes":["stale revision","mutation validation failure","mutation exception","object destroyed"],"idempotency":"NOT_IDEMPOTENT","validation":["expected revision must equal current","mutation capability never comes from network payload","commit all-or-nothing"],"permission":"server_internal_after_command_authorization","revisionBehavior":"Reject stale revision; increment exactly once only after successful mutation."}
+      ]
+    },
+    {
+      "moduleId": "server.authorization",
+      "surface": "CALLABLE_MODULE",
+      "functions": [
+        {"name":"new","kind":"CONSTRUCTOR","purpose":"Create authorization service from server-owned session and world dependencies.","inputs":["sessionAuthority: SessionAuthority","worldState: WorldState"],"output":"AuthorizationService","authority":"server_authoritative","reads":["trusted dependency references"],"writes":["private dependency references"],"sideEffects":["none"],"failureModes":["missing dependency"],"idempotency":"CONSTRUCTOR","validation":["dependencies are server-owned"],"permission":"server_internal","revisionBehavior":"none"},
+        {"name":"authorize","kind":"AUTHORIZATION","purpose":"Decide command permission without applying gameplay mutation.","inputs":["player: Player (server-derived)","command: CommandEnvelope","context: AuthorizationContext"],"output":"allowed:boolean, reason:string?|nil","authority":"server_authoritative","reads":["SessionAuthority","WorldState snapshot/context"],"writes":["none"],"sideEffects":["none"],"failureModes":["unknown command","unknown actor","insufficient role/control","invalid context"],"idempotency":"READ_ONLY","validation":["never trust client role/owner/controller claims","command target ids are stable ids"],"permission":"server_internal","revisionBehavior":"May read current revision/context but never increments revision."}
+      ]
+    },
+    {
+      "moduleId": "server.command.runtime",
+      "surface": "CALLABLE_MODULE",
+      "functions": [
+        {"name":"new","kind":"CONSTRUCTOR","purpose":"Create command runtime with validation, authorization, state, and processed-command identity dependencies.","inputs":["config: CommandRuntimeConfig"],"output":"CommandRuntime","authority":"server_authoritative","reads":["trusted runtime dependencies"],"writes":["handler registry","processed command identity state"],"sideEffects":["none outside returned object"],"failureModes":["missing dependency"],"idempotency":"CONSTRUCTOR","validation":["requires CommandEnvelope validator, AuthorizationService, WorldState"],"permission":"server_internal","revisionBehavior":"none"},
+        {"name":"register","kind":"REGISTRATION","purpose":"Register exactly one server command handler for a stable command type.","inputs":["commandType: string","handler: server-internal handler"],"output":"nil","authority":"server_authoritative","reads":["handler registry"],"writes":["handler registry"],"sideEffects":["changes command routing table"],"failureModes":["duplicate command type","invalid handler/type"],"idempotency":"REGISTRATION","validation":["stable non-empty command type","handler is server-internal callable"],"permission":"server_boot_composition_only","revisionBehavior":"none"},
+        {"name":"execute","kind":"COMMAND","purpose":"Execute an untrusted command through validation, duplicate/revision checks, authorization, registered handler, and structured receipt.","inputs":["player: Player (server-derived)","rawEnvelope: any"],"output":"CommandReceipt","authority":"server_authoritative","reads":["handler registry","processed command ids","WorldState revision","AuthorizationService"],"writes":["processed command identity state","authoritative state only through registered handler/WorldState transaction"],"sideEffects":["may commit one authorized gameplay mutation"],"failureModes":["invalid envelope","duplicate/stale command","unauthorized","unknown command","handler failure"],"idempotency":"IDEMPOTENT","validation":["validate envelope before dispatch","authorization before mutation","fail closed on uncertainty"],"permission":"server_transport_entry","revisionBehavior":"Mutation commands require expected revision; duplicate commandId returns/reuses safe receipt rather than reapplying mutation."}
+      ]
+    },
+    {
+      "moduleId": "server.transport.command-gateway",
+      "surface": "CALLABLE_MODULE",
+      "functions": [
+        {"name":"new","kind":"CONSTRUCTOR","purpose":"Create Roblox Remote adapter for command ingress with explicit runtime and limit configuration.","inputs":["remote: RemoteEvent/RemoteFunction adapter","commandRuntime: CommandRuntime","limits: TransportLimits"],"output":"CommandGateway","authority":"no_authority","reads":["trusted transport configuration"],"writes":["private rate-limit state"],"sideEffects":["none until start"],"failureModes":["missing remote/runtime","invalid limits"],"idempotency":"CONSTRUCTOR","validation":["remote is server-owned adapter","limits are finite and bounded"],"permission":"server_internal","revisionBehavior":"none"},
+        {"name":"start","kind":"LIFECYCLE","purpose":"Bind command Remote ingress, derive actual Player from Roblox, apply coarse limits, and forward accepted input to CommandRuntime.","inputs":[],"output":"nil","authority":"no_authority","reads":["transport limits","rate-limit windows"],"writes":["remote connection","rate-limit windows"],"sideEffects":["binds Roblox Remote listener"],"failureModes":["already destroyed","remote bind failure"],"idempotency":"LIFECYCLE","validation":["payload bounds before runtime","server-derived Player only","no gameplay decisions"],"permission":"server_boot_composition_only","revisionBehavior":"Does not compare or mutate world revision; forwards envelope intact."},
+        {"name":"destroy","kind":"LIFECYCLE","purpose":"Disconnect Remote bindings and clear transport-only state.","inputs":[],"output":"nil","authority":"no_authority","reads":["lifecycle state"],"writes":["remote connection","rate-limit state"],"sideEffects":["disconnect/cleanup"],"failureModes":[],"idempotency":"LIFECYCLE","validation":[],"permission":"server_internal","revisionBehavior":"none"}
+      ]
+    },
+    {
+      "moduleId": "client.command",
+      "surface": "CALLABLE_MODULE",
+      "functions": [
+        {"name":"new","kind":"CONSTRUCTOR","purpose":"Create client command transport with a bounded envelope builder and Roblox transport adapter.","inputs":["transport adapter","session epoch/revision provider","clock/id provider"],"output":"CommandClient","authority":"client_intent_only","reads":["trusted client transport dependencies"],"writes":["pending receipt state"],"sideEffects":["none until submit"],"failureModes":["missing dependency"],"idempotency":"CONSTRUCTOR","validation":["does not receive permission/authority provider"],"permission":"client_internal","revisionBehavior":"Reads current expected revision provider when constructing mutation intent."},
+        {"name":"submit","kind":"TRANSPORT","purpose":"Build and submit one bounded client intent and correlate its structured server receipt.","inputs":["commandType: string","payload: bounded serializable table","options: submit options?"],"output":"receipt/future result","authority":"client_intent_only","reads":["session epoch","current expected revision","pending receipt state"],"writes":["pending receipt state"],"sideEffects":["sends command over configured transport"],"failureModes":["local envelope invalid","transport unavailable/timeout","server rejection"],"idempotency":"NOT_IDEMPOTENT","validation":["new commandId per logical command unless explicit retry preserves id","no Instance payload","bounded payload"],"permission":"client_feature_controller_only","revisionBehavior":"Mutation intent carries current expected revision; client never advances authoritative revision on its own."},
+        {"name":"destroy","kind":"LIFECYCLE","purpose":"Cancel/resolve pending client transport work and release transport listeners.","inputs":[],"output":"nil","authority":"client_intent_only","reads":["pending receipt state"],"writes":["pending receipt state","lifecycle state"],"sideEffects":["disconnect/cancel"],"failureModes":[],"idempotency":"LIFECYCLE","validation":[],"permission":"client_internal","revisionBehavior":"none"}
+      ]
+    },
+    {
+      "moduleId": "server.projection",
+      "surface": "CALLABLE_MODULE",
+      "functions": [
+        {"name":"new","kind":"CONSTRUCTOR","purpose":"Create projection policy service from authoritative world and session authority dependencies.","inputs":["worldState: WorldState","sessionAuthority: SessionAuthority"],"output":"ProjectionService","authority":"server_projection","reads":["trusted server dependencies"],"writes":["private projection policy state"],"sideEffects":["none"],"failureModes":["missing dependency"],"idempotency":"CONSTRUCTOR","validation":["dependencies are server-owned"],"permission":"server_internal","revisionBehavior":"none"},
+        {"name":"buildForViewer","kind":"PROJECTION","purpose":"Build a viewer-safe projection from authoritative state for the actual server-known viewer.","inputs":["player: Player (server-derived)"],"output":"ViewerProjection","authority":"server_projection","reads":["WorldState snapshot/revision","SessionAuthority role/control/disclosure context"],"writes":["none or projection-local bookkeeping only"],"sideEffects":["none"],"failureModes":["unknown viewer","invalid authoritative state"],"idempotency":"READ_ONLY","validation":["exclude private/hidden/DM-only data and existence information","serializable bounded output"],"permission":"server_internal","revisionBehavior":"Projection carries source world/session revision metadata without mutating it."}
+      ]
+    },
+    {
+      "moduleId": "server.transport.projection-gateway",
+      "surface": "CALLABLE_MODULE",
+      "functions": [
+        {"name":"new","kind":"CONSTRUCTOR","purpose":"Create projection transport adapter around already viewer-safe projection data.","inputs":["remote adapter","projectionService: ProjectionService"],"output":"ProjectionGateway","authority":"no_authority","reads":["trusted transport dependencies"],"writes":["publication bookkeeping"],"sideEffects":["none until start/publish"],"failureModes":["missing dependency"],"idempotency":"CONSTRUCTOR","validation":["gateway does not own disclosure rules"],"permission":"server_internal","revisionBehavior":"Tracks publication metadata only."},
+        {"name":"start","kind":"LIFECYCLE","purpose":"Bind projection transport lifecycle and any explicit resync request path without disclosure decisions.","inputs":[],"output":"nil","authority":"no_authority","reads":["transport state"],"writes":["remote connections"],"sideEffects":["binds Roblox Remote listeners if required"],"failureModes":["bind failure","already destroyed"],"idempotency":"LIFECYCLE","validation":["resync viewer identity is server-derived"],"permission":"server_boot_composition_only","revisionBehavior":"Never manufactures revision; publishes service-built envelope metadata."},
+        {"name":"publish","kind":"TRANSPORT","purpose":"Publish an already viewer-safe projection to the intended actual Player in a bounded ProjectionEnvelope.","inputs":["player: Player (server-derived)","projection: ViewerProjection"],"output":"nil","authority":"no_authority","reads":["publication bookkeeping"],"writes":["publication bookkeeping"],"sideEffects":["sends projection over configured Remote"],"failureModes":["projection envelope invalid","transport unavailable","viewer left"],"idempotency":"REPEAT_SAFE","validation":["ProjectionEnvelope validates","target Player is server-derived","no disclosure selection here"],"permission":"server_projection_pipeline_only","revisionBehavior":"Must not publish a projection revision older than its own last publication bookkeeping for that epoch/viewer."},
+        {"name":"destroy","kind":"LIFECYCLE","purpose":"Disconnect projection transport and clear publication-only resources.","inputs":[],"output":"nil","authority":"no_authority","reads":["lifecycle state"],"writes":["remote connections","publication bookkeeping"],"sideEffects":["disconnect/cleanup"],"failureModes":[],"idempotency":"LIFECYCLE","validation":[],"permission":"server_internal","revisionBehavior":"none"}
+      ]
+    },
+    {
+      "moduleId": "client.projection",
+      "surface": "CALLABLE_MODULE",
+      "functions": [
+        {"name":"new","kind":"CONSTRUCTOR","purpose":"Create a non-authoritative viewer projection replica with explicit transport source.","inputs":["projection transport adapter"],"output":"ProjectionReplica","authority":"client_projection_only","reads":["trusted client adapter"],"writes":["replica lifecycle state"],"sideEffects":["none until start"],"failureModes":["missing adapter"],"idempotency":"CONSTRUCTOR","validation":["no authoritative mutation dependency"],"permission":"client_internal","revisionBehavior":"Initial revision is empty/uninitialized."},
+        {"name":"start","kind":"LIFECYCLE","purpose":"Subscribe to projection transport and accept only valid non-regressing envelopes.","inputs":[],"output":"nil","authority":"client_projection_only","reads":["last accepted epoch/revision"],"writes":["viewer projection replica","last accepted epoch/revision"],"sideEffects":["binds projection listener","notifies subscribers"],"failureModes":["transport bind failure","invalid projection envelope"],"idempotency":"LIFECYCLE","validation":["ProjectionEnvelope validates","reject revision regression","full resync may replace only according to epoch/revision rules"],"permission":"client_boot_composition_only","revisionBehavior":"Accept monotonic revisions; reject older revisions; epoch change follows explicit resync contract."},
+        {"name":"getSnapshot","kind":"QUERY","purpose":"Return the latest accepted viewer projection as read-only/copy data.","inputs":[],"output":"ViewerProjection?|nil","authority":"client_projection_only","reads":["viewer projection replica"],"writes":["none"],"sideEffects":["none"],"failureModes":["not ready -> nil/explicit not-ready result"],"idempotency":"READ_ONLY","validation":[],"permission":"client_systems","revisionBehavior":"Read only."},
+        {"name":"subscribe","kind":"SUBSCRIPTION","purpose":"Subscribe a client system to immutable projection changes without granting mutation authority.","inputs":["listener: function(ViewerProjection)"],"output":"disconnect handle","authority":"client_projection_only","reads":["viewer projection replica"],"writes":["subscriber registry"],"sideEffects":["registers callback"],"failureModes":["destroyed replica","invalid listener"],"idempotency":"NOT_IDEMPOTENT","validation":["listener cannot mutate replica through returned data"],"permission":"client_systems","revisionBehavior":"Callbacks observe only accepted monotonic revisions."},
+        {"name":"destroy","kind":"LIFECYCLE","purpose":"Disconnect projection transport and all subscribers.","inputs":[],"output":"nil","authority":"client_projection_only","reads":["lifecycle state"],"writes":["connections","subscriber registry","replica lifecycle state"],"sideEffects":["disconnect/cleanup"],"failureModes":[],"idempotency":"LIFECYCLE","validation":[],"permission":"client_internal","revisionBehavior":"none"}
+      ]
+    },
+    {
+      "moduleId": "client.input.semantic-router",
+      "surface": "CALLABLE_MODULE",
+      "functions": [
+        {"name":"new","kind":"CONSTRUCTOR","purpose":"Create semantic input router with explicit physical input adapter and context provider.","inputs":["input adapter","context provider"],"output":"SemanticInputRouter","authority":"client_intent_only","reads":["trusted client adapters"],"writes":["binding/subscriber lifecycle state"],"sideEffects":["none until start"],"failureModes":["missing adapter/context provider"],"idempotency":"CONSTRUCTOR","validation":["router receives no gameplay mutation dependency"],"permission":"client_internal","revisionBehavior":"none"},
+        {"name":"subscribe","kind":"SUBSCRIPTION","purpose":"Subscribe to a named semantic action rather than raw physical input.","inputs":["semanticAction: string","listener: function(actionContext)"],"output":"disconnect handle","authority":"client_intent_only","reads":["semantic binding definitions"],"writes":["subscriber registry"],"sideEffects":["registers callback"],"failureModes":["unknown action","invalid listener","router destroyed"],"idempotency":"NOT_IDEMPOTENT","validation":["stable semantic action name"],"permission":"client_controllers","revisionBehavior":"none"},
+        {"name":"start","kind":"LIFECYCLE","purpose":"Bind physical keyboard/mouse input once and translate it into context-aware semantic actions.","inputs":[],"output":"nil","authority":"client_intent_only","reads":["input context"],"writes":["physical input connections"],"sideEffects":["binds UserInputService/adapter","dispatches semantic actions"],"failureModes":["input bind failure","already destroyed"],"idempotency":"LIFECYCLE","validation":["physical input is interpreted but never directly mutates gameplay state"],"permission":"client_boot_composition_only","revisionBehavior":"none"},
+        {"name":"destroy","kind":"LIFECYCLE","purpose":"Disconnect physical input and semantic subscribers.","inputs":[],"output":"nil","authority":"client_intent_only","reads":["lifecycle state"],"writes":["input connections","subscriber registry"],"sideEffects":["disconnect/cleanup"],"failureModes":[],"idempotency":"LIFECYCLE","validation":[],"permission":"client_internal","revisionBehavior":"none"}
+      ]
+    },
+    {
+      "moduleId": "client.world.system",
+      "surface": "CALLABLE_MODULE",
+      "functions": [
+        {"name":"new","kind":"CONSTRUCTOR","purpose":"Compose world-facing feature controllers/presenter from semantic input, command, and projection dependencies.","inputs":["config: WorldSystemConfig"],"output":"WorldSystem","authority":"client_local_state","reads":["client dependency references"],"writes":["controller lifecycle registry"],"sideEffects":["none until start"],"failureModes":["missing required dependency"],"idempotency":"CONSTRUCTOR","validation":["does not accept authoritative state mutator","feature controllers remain separate modules"],"permission":"client_app_composition_only","revisionBehavior":"none"},
+        {"name":"start","kind":"LIFECYCLE","purpose":"Start registered world controllers/presenter in deterministic dependency order.","inputs":[],"output":"nil","authority":"client_local_state","reads":["controller registry"],"writes":["world lifecycle state"],"sideEffects":["starts child systems"],"failureModes":["child start failure"],"idempotency":"LIFECYCLE","validation":["partial failure is cleaned up or surfaced fatally"],"permission":"client_app_composition_only","revisionBehavior":"none"},
+        {"name":"destroy","kind":"LIFECYCLE","purpose":"Destroy world controllers/presenter in safe reverse lifecycle order.","inputs":[],"output":"nil","authority":"client_local_state","reads":["controller registry"],"writes":["world lifecycle state"],"sideEffects":["destroys child systems"],"failureModes":[],"idempotency":"LIFECYCLE","validation":[],"permission":"client_app_composition_only","revisionBehavior":"none"}
+      ]
+    },
+    {
+      "moduleId": "server.app",
+      "surface": "CALLABLE_MODULE",
+      "functions": [
+        {"name":"new","kind":"CONSTRUCTOR","purpose":"Compose server foundation modules and domain registration without embedding their rules.","inputs":["config: ServerAppConfig"],"output":"ServerApp","authority":"server_authoritative","reads":["server composition config"],"writes":["server subsystem lifecycle registry"],"sideEffects":["constructs/wires dependencies only"],"failureModes":["missing adapter/config","dependency construction failure"],"idempotency":"CONSTRUCTOR","validation":["single authority/command/projection path","no DataStore during foundation"],"permission":"server_bootstrap_only","revisionBehavior":"none"},
+        {"name":"start","kind":"LIFECYCLE","purpose":"Start server subsystems only after dependencies and command registrations are complete.","inputs":[],"output":"nil","authority":"server_authoritative","reads":["subsystem registry"],"writes":["server lifecycle state"],"sideEffects":["starts gateways/runtime services"],"failureModes":["subsystem start failure"],"idempotency":"LIFECYCLE","validation":["partial boot failure surfaces and cleans up"],"permission":"server_bootstrap_only","revisionBehavior":"none"},
+        {"name":"destroy","kind":"LIFECYCLE","purpose":"Destroy server subsystems in safe reverse dependency order.","inputs":[],"output":"nil","authority":"server_authoritative","reads":["subsystem registry"],"writes":["server lifecycle state"],"sideEffects":["destroys/disconnects subsystems"],"failureModes":[],"idempotency":"LIFECYCLE","validation":[],"permission":"server_internal","revisionBehavior":"none"}
+      ]
+    },
+    {
+      "moduleId": "server.bootstrap",
+      "surface": "AUTO_EXEC_SCRIPT",
+      "scriptEntrypoint": "Resolve ServerApp composition root, construct it, call start(), and report fatal boot failure; no gameplay/transport policy.",
+      "functions": []
+    },
+    {
+      "moduleId": "client.app",
+      "surface": "CALLABLE_MODULE",
+      "functions": [
+        {"name":"new","kind":"CONSTRUCTOR","purpose":"Compose client input, transport, projection, and world systems without embedding feature behavior.","inputs":["config: ClientAppConfig"],"output":"ClientApp","authority":"client_local_state","reads":["client composition config"],"writes":["client subsystem lifecycle registry"],"sideEffects":["constructs/wires dependencies only"],"failureModes":["missing adapter/config","dependency construction failure"],"idempotency":"CONSTRUCTOR","validation":["no authoritative mutator","UI/presenter does not receive direct Remote"],"permission":"client_bootstrap_only","revisionBehavior":"none"},
+        {"name":"start","kind":"LIFECYCLE","purpose":"Start projection/input/world systems in deterministic readiness order with bounded waits.","inputs":[],"output":"nil","authority":"client_local_state","reads":["subsystem registry"],"writes":["client lifecycle state"],"sideEffects":["starts client subsystems"],"failureModes":["server readiness timeout","subsystem start failure"],"idempotency":"LIFECYCLE","validation":["no infinite readiness wait","partial boot failure surfaces and cleans up"],"permission":"client_bootstrap_only","revisionBehavior":"Initial projection readiness respects projection epoch/revision contract."},
+        {"name":"destroy","kind":"LIFECYCLE","purpose":"Destroy client subsystems in safe reverse dependency order.","inputs":[],"output":"nil","authority":"client_local_state","reads":["subsystem registry"],"writes":["client lifecycle state"],"sideEffects":["destroys/disconnects subsystems"],"failureModes":[],"idempotency":"LIFECYCLE","validation":[],"permission":"client_internal","revisionBehavior":"none"}
+      ]
+    },
+    {
+      "moduleId": "client.bootstrap",
+      "surface": "AUTO_EXEC_SCRIPT",
+      "scriptEntrypoint": "Resolve ClientApp composition root, construct it, call start(), and report fatal boot failure; no gameplay logic.",
+      "functions": []
+    },
+    {
+      "moduleId": "client.world.selection",
+      "surface": "CALLABLE_MODULE",
+      "functions": [
+        {"name":"new","kind":"CONSTRUCTOR","purpose":"Create selection controller from semantic input, projection, target resolver, and optional change listener dependencies.","inputs":["config: SelectionControllerConfig"],"output":"SelectionController","authority":"client_local_state","reads":["client dependencies"],"writes":["selected actor id","subscriber registry"],"sideEffects":["none until start"],"failureModes":["missing dependency"],"idempotency":"CONSTRUCTOR","validation":["no server mutation dependency"],"permission":"client_world_system_only","revisionBehavior":"Selection references actor ids from current accepted projection."},
+        {"name":"start","kind":"LIFECYCLE","purpose":"Consume semantic Primary actions and update local selection only for currently projected/selectable targets.","inputs":[],"output":"nil","authority":"client_local_state","reads":["viewer projection","semantic action context"],"writes":["local selected actor id"],"sideEffects":["subscribes to semantic input","notifies selection subscribers"],"failureModes":["input subscription failure","projection not ready"],"idempotency":"LIFECYCLE","validation":["target belongs to current projection","stable ActorId","clear invalid/stale selection"],"permission":"client_world_system_only","revisionBehavior":"Selection is revalidated when accepted projection revision changes."},
+        {"name":"getSelection","kind":"QUERY","purpose":"Return the current client-local selected actor id.","inputs":[],"output":"ActorId?|nil","authority":"client_local_state","reads":["local selected actor id"],"writes":["none"],"sideEffects":["none"],"failureModes":[],"idempotency":"READ_ONLY","validation":[],"permission":"client_world_systems","revisionBehavior":"Read only."},
+        {"name":"subscribe","kind":"SUBSCRIPTION","purpose":"Subscribe presentation/controllers to local selection changes without transferring ownership.","inputs":["listener: function(ActorId?|nil)"],"output":"disconnect handle","authority":"client_local_state","reads":["local selected actor id"],"writes":["subscriber registry"],"sideEffects":["registers callback"],"failureModes":["invalid listener","controller destroyed"],"idempotency":"NOT_IDEMPOTENT","validation":[],"permission":"client_world_systems","revisionBehavior":"Listener observes selection after projection validity checks."},
+        {"name":"destroy","kind":"LIFECYCLE","purpose":"Disconnect selection input/projection subscriptions and clear subscribers/local state.","inputs":[],"output":"nil","authority":"client_local_state","reads":["lifecycle state"],"writes":["selected actor id","connections","subscriber registry"],"sideEffects":["disconnect/cleanup"],"failureModes":[],"idempotency":"LIFECYCLE","validation":[],"permission":"client_world_system_only","revisionBehavior":"none"}
+      ]
+    },
+    {
+      "moduleId": "client.world.presenter",
+      "surface": "CALLABLE_MODULE",
+      "functions": [
+        {"name":"new","kind":"CONSTRUCTOR","purpose":"Create world presenter from projection and client-local presentation state sources only.","inputs":["projectionReplica: ProjectionReplica","selectionController: SelectionController","worldRoot adapter"],"output":"WorldPresenter","authority":"no_authority","reads":["client presentation dependencies"],"writes":["rendered world instances","presentation-only highlight state"],"sideEffects":["none until start"],"failureModes":["missing dependency"],"idempotency":"CONSTRUCTOR","validation":["no CommandClient/Remote dependency"],"permission":"client_world_system_only","revisionBehavior":"Rendering follows accepted projection revisions."},
+        {"name":"start","kind":"LIFECYCLE","purpose":"Render viewer projection and local selection changes into world Instances without gameplay decisions.","inputs":[],"output":"nil","authority":"no_authority","reads":["viewer projection","local selection state"],"writes":["rendered world instances","selection visuals"],"sideEffects":["creates/updates/destroys presentation Instances","subscribes to projection/selection"],"failureModes":["render adapter failure","invalid presentation asset"],"idempotency":"LIFECYCLE","validation":["only current projection actors are rendered","presentation data cannot become authority"],"permission":"client_world_system_only","revisionBehavior":"Applies only data from ProjectionReplica accepted revision."},
+        {"name":"destroy","kind":"LIFECYCLE","purpose":"Disconnect presenter subscriptions and destroy presentation-owned temporary Instances.","inputs":[],"output":"nil","authority":"no_authority","reads":["rendered instance registry"],"writes":["rendered instance registry","connections"],"sideEffects":["destroys presentation Instances","disconnect/cleanup"],"failureModes":[],"idempotency":"LIFECYCLE","validation":[],"permission":"client_world_system_only","revisionBehavior":"none"}
+      ]
+    },
+    {
+      "moduleId": "client.world.camera",
+      "surface": "CALLABLE_MODULE",
+      "functions": [
+        {"name":"new","kind":"CONSTRUCTOR","purpose":"Create exploration camera controller from semantic input, camera adapter, and projection framing context.","inputs":["config: CameraControllerConfig"],"output":"CameraController","authority":"client_local_state","reads":["client camera dependencies"],"writes":["local camera state"],"sideEffects":["none until start"],"failureModes":["missing camera/input dependency"],"idempotency":"CONSTRUCTOR","validation":["no gameplay Remote dependency"],"permission":"client_world_system_only","revisionBehavior":"none"},
+        {"name":"start","kind":"LIFECYCLE","purpose":"Consume semantic camera actions and update local pan/orbit/zoom/framing state.","inputs":[],"output":"nil","authority":"client_local_state","reads":["semantic camera actions","viewer projection for optional framing"],"writes":["local camera state","Roblox camera presentation"],"sideEffects":["subscribes to semantic input","updates CurrentCamera"],"failureModes":["camera adapter unavailable","invalid framing target"],"idempotency":"LIFECYCLE","validation":["finite bounded camera values","no authoritative state writes"],"permission":"client_world_system_only","revisionBehavior":"Framing target must exist in current accepted projection when actor-based."},
+        {"name":"destroy","kind":"LIFECYCLE","purpose":"Disconnect camera input and release camera-owned temporary state.","inputs":[],"output":"nil","authority":"client_local_state","reads":["lifecycle state"],"writes":["connections","local camera lifecycle state"],"sideEffects":["disconnect/cleanup"],"failureModes":[],"idempotency":"LIFECYCLE","validation":[],"permission":"client_world_system_only","revisionBehavior":"none"}
+      ]
+    },
+    {
+      "moduleId": "client.world.movement",
+      "surface": "CALLABLE_MODULE",
+      "functions": [
+        {"name":"new","kind":"CONSTRUCTOR","purpose":"Create movement controller from selection, semantic input, projection, world raycast/path adapters, and CommandClient.","inputs":["config: MovementControllerConfig"],"output":"MovementController","authority":"client_intent_only","reads":["client movement dependencies"],"writes":["local movement preview state"],"sideEffects":["none until start"],"failureModes":["missing dependency"],"idempotency":"CONSTRUCTOR","validation":["no authoritative position mutator"],"permission":"client_world_system_only","revisionBehavior":"Preview is associated with current accepted projection revision."},
+        {"name":"start","kind":"LIFECYCLE","purpose":"Consume movement semantic actions, maintain local preview, and submit explicit movement intents through CommandClient.","inputs":[],"output":"nil","authority":"client_intent_only","reads":["selected actor","viewer projection/revision","semantic movement input"],"writes":["local movement preview state"],"sideEffects":["subscribes to input/projection","may call CommandClient.submit"],"failureModes":["no controllable selection","invalid destination","command rejected/timeout"],"idempotency":"LIFECYCLE","validation":["finite/bounded destination","selected actor exists in projection","never commit token CFrame as authoritative result"],"permission":"client_world_system_only","revisionBehavior":"Submitted movement carries the projection/world expected revision; preview invalidates on conflicting newer projection."},
+        {"name":"destroy","kind":"LIFECYCLE","purpose":"Disconnect movement subscriptions and clear preview state.","inputs":[],"output":"nil","authority":"client_intent_only","reads":["lifecycle state"],"writes":["preview state","connections"],"sideEffects":["disconnect/cleanup"],"failureModes":[],"idempotency":"LIFECYCLE","validation":[],"permission":"client_world_system_only","revisionBehavior":"none"}
+      ]
+    },
+    {
+      "moduleId": "client.world.context",
+      "surface": "CALLABLE_MODULE",
+      "functions": [
+        {"name":"new","kind":"CONSTRUCTOR","purpose":"Create context-action controller from semantic input, selection, projection, presentation adapter, and CommandClient.","inputs":["config: ContextActionControllerConfig"],"output":"ContextActionController","authority":"client_intent_only","reads":["client context dependencies"],"writes":["local context menu/preview state"],"sideEffects":["none until start"],"failureModes":["missing dependency"],"idempotency":"CONSTRUCTOR","validation":["no gameplay success authority"],"permission":"client_world_system_only","revisionBehavior":"Context candidates derive from current accepted projection."},
+        {"name":"start","kind":"LIFECYCLE","purpose":"Consume Context/confirm/back semantic actions, resolve viewer-visible action candidates, and submit only explicit chosen intents.","inputs":[],"output":"nil","authority":"client_intent_only","reads":["viewer projection","selection","semantic context input"],"writes":["local context menu/preview state"],"sideEffects":["subscribes to input/projection","may call CommandClient.submit","updates local menu presentation state"],"failureModes":["stale target","no valid candidate","command rejected/timeout"],"idempotency":"LIFECYCLE","validation":["candidates limited to current projection","client candidate is not server permission","Q closes one context level according to product input contract"],"permission":"client_world_system_only","revisionBehavior":"Open context invalidates/rebuilds when its source projection revision becomes stale."},
+        {"name":"destroy","kind":"LIFECYCLE","purpose":"Disconnect context subscriptions and close/clear presentation-only context state.","inputs":[],"output":"nil","authority":"client_intent_only","reads":["lifecycle state"],"writes":["context state","connections"],"sideEffects":["disconnect/cleanup"],"failureModes":[],"idempotency":"LIFECYCLE","validation":[],"permission":"client_world_system_only","revisionBehavior":"none"}
+      ]
+    },
+    {
+      "moduleId": "server.domain.movement",
+      "surface": "CALLABLE_MODULE",
+      "functions": [
+        {"name":"register","kind":"REGISTRATION","purpose":"Register movement command semantics with CommandRuntime using server authority and WorldState transaction boundaries.","inputs":["commandRuntime: CommandRuntime","dependencies: MovementDomainDependencies"],"output":"nil","authority":"server_authoritative","reads":["AuthorizationService/session context","WorldState"],"writes":["CommandRuntime handler registry","WorldState only through transaction when handler executes"],"sideEffects":["registers movement handler"],"failureModes":["duplicate registration","missing dependency"],"idempotency":"REGISTRATION","validation":["destination finite/bounded","exploration mode permits requested movement source","actual server controller permission","expected revision enforced"],"permission":"server_app_composition_only","revisionBehavior":"Handler commits through WorldState.transact using command expected revision."}
+      ]
+    },
+    {
+      "moduleId": "server.domain.exploration",
+      "surface": "CALLABLE_MODULE",
+      "functions": [
+        {"name":"register","kind":"REGISTRATION","purpose":"Register exploration interaction command semantics with the standard command/authorization/world-state path.","inputs":["commandRuntime: CommandRuntime","dependencies: ExplorationDomainDependencies"],"output":"nil","authority":"server_authoritative","reads":["AuthorizationService/session context","WorldState"],"writes":["CommandRuntime handler registry","WorldState only through transaction when interaction mutates"],"sideEffects":["registers exploration interaction handlers"],"failureModes":["duplicate registration","missing dependency"],"idempotency":"REGISTRATION","validation":["target exists/current","action type valid for current world state","server permission/control","expected revision for mutations"],"permission":"server_app_composition_only","revisionBehavior":"Mutating handlers commit through WorldState.transact; read-only interactions do not advance revision."}
+      ]
+    }
+  ]
+}
