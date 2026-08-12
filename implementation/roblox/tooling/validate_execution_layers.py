@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = ROOT.parents[1]
 MODULES_PATH = ROOT / "manifests/module-contracts.json"
 EXECUTION_PATH = ROOT / "manifests/execution-layers.json"
+COVERAGE_PATH = ROOT / "manifests/architecture-coverage.json"
 
 VALID_CLASSES = {
     "CORE_ENGINE",
@@ -32,8 +33,10 @@ def load_json(path: Path) -> tuple[dict, list[str]]:
 def validate() -> list[str]:
     module_registry, errors = load_json(MODULES_PATH)
     execution, exec_errors = load_json(EXECUTION_PATH)
+    coverage, coverage_errors = load_json(COVERAGE_PATH)
     errors.extend(exec_errors)
-    if not module_registry or not execution:
+    errors.extend(coverage_errors)
+    if not module_registry or not execution or not coverage:
         return errors
 
     if execution.get("schemaVersion") != 1:
@@ -42,6 +45,10 @@ def validate() -> list[str]:
         errors.append("execution layers: unexpected registryId")
     if execution.get("authorityDocument") != "implementation/roblox/GREENFIELD-EXECUTION-LAYERS.md":
         errors.append("execution layers: authorityDocument drifted")
+    if execution.get("architectureCoverageAuthority") != "implementation/roblox/ARCHITECTURE-COVERAGE-POLICY.md":
+        errors.append("execution layers: architectureCoverageAuthority drifted")
+    if execution.get("architectureCoverageRegistry") != "implementation/roblox/manifests/architecture-coverage.json":
+        errors.append("execution layers: architectureCoverageRegistry drifted")
     if execution.get("moduleRegistry") != "implementation/roblox/manifests/module-contracts.json":
         errors.append("execution layers: moduleRegistry drifted")
     if execution.get("canonicalSourceRoot") != "greenfield/src":
@@ -51,6 +58,7 @@ def validate() -> list[str]:
 
     policy = execution.get("policy")
     required_policy = {
+        "requireCoverageGateBeforePhase": True,
         "canonicalSourceAlwaysGitHub": True,
         "coreEngineRepositoryFirst": True,
         "studioIsRuntimeIntegrationWorkbench": True,
@@ -96,6 +104,8 @@ def validate() -> list[str]:
             errors.append("execution layers: runtimeCoupledRule.class must be ROBLOX_RUNTIME_ENGINE")
         if runtime_rule.get("canonicalSource") != "GITHUB":
             errors.append("execution layers: runtime-coupled canonical source must remain GITHUB")
+        if runtime_rule.get("coverageRequiredFirst") is not True:
+            errors.append("execution layers: runtimeCoupledRule.coverageRequiredFirst must remain true")
         for key in (
             "studioAuthoringAllowed",
             "studioAutomatedVerificationRequired",
@@ -153,6 +163,17 @@ def validate() -> list[str]:
             f"execution layers: module coverage must be exact; missing={missing} extra={extra}"
         )
 
+    coverage_phase_gates = {}
+    for gate in coverage.get("phaseGates", []):
+        if isinstance(gate, dict) and isinstance(gate.get("phase"), str):
+            coverage_phase_gates[gate["phase"]] = gate
+
+    open_gaps = {
+        gap.get("id")
+        for gap in coverage.get("knownGaps", [])
+        if isinstance(gap, dict) and gap.get("status") == "OPEN"
+    }
+
     phases = execution.get("phases")
     phase_modules: set[str] = set()
     if not isinstance(phases, list) or not phases:
@@ -168,6 +189,7 @@ def validate() -> list[str]:
         order = phase.get("order")
         modules_required = phase.get("modules")
         gate = phase.get("gate")
+        coverage_phase = phase.get("coveragePhaseGate")
         if not isinstance(phase_id, str) or not phase_id:
             errors.append("execution layers: phase id is required")
             continue
@@ -185,6 +207,11 @@ def validate() -> list[str]:
             continue
         if not isinstance(gate, list) or not gate or not all(isinstance(item, str) and item.strip() for item in gate):
             errors.append(f"execution layers: {phase_id}.gate must be a non-empty string array")
+        if phase_id in {"E0_REPOSITORY_CORE_ENGINE", "E1_ROBLOX_RUNTIME_INTEGRATION"}:
+            if coverage_phase != phase_id:
+                errors.append(f"execution layers: {phase_id}.coveragePhaseGate must equal {phase_id}")
+        elif phase_id == "E2_PRESENTATION_AND_FEEL" and coverage_phase != "CHECKPOINT_SPECIFIC":
+            errors.append("execution layers: E2 coveragePhaseGate must be CHECKPOINT_SPECIFIC")
         for module_id in modules_required:
             if module_id not in by_id:
                 errors.append(f"execution layers: {phase_id} references unknown module {module_id}")
@@ -219,6 +246,22 @@ def validate() -> list[str]:
                     f"execution layers: {module_id} class {class_id} cannot be in {phase_id}"
                 )
 
+    for phase_id in ("E0_REPOSITORY_CORE_ENGINE", "E1_ROBLOX_RUNTIME_INTEGRATION"):
+        phase = phase_by_id.get(phase_id, {})
+        coverage_gate = coverage_phase_gates.get(phase_id)
+        if not coverage_gate:
+            errors.append(f"execution layers: coverage registry missing phaseGate {phase_id}")
+            continue
+        blockers = set(coverage_gate.get("blockedBy", [])) & open_gaps
+        status = phase.get("status")
+        if blockers and not isinstance(status, str):
+            errors.append(f"execution layers: {phase_id} must expose blocked/waiting status")
+        if phase_id == "E0_REPOSITORY_CORE_ENGINE" and blockers:
+            if not str(status).startswith("BLOCKED"):
+                errors.append(f"execution layers: E0 must be BLOCKED while coverage blockers are open: {sorted(blockers)}")
+        if phase_id == "E0_REPOSITORY_CORE_ENGINE" and not blockers and str(status).startswith("BLOCKED"):
+            errors.append("execution layers: E0 remains BLOCKED after coverage blockers were resolved")
+
     checkpoints = module_registry.get("deliveryCheckpoints")
     expected_checkpoints = execution.get("checkpointOrder")
     if not isinstance(checkpoints, list) or not isinstance(expected_checkpoints, list):
@@ -242,6 +285,19 @@ def validate() -> list[str]:
 
     def started(module_id: str) -> bool:
         return by_id.get(module_id, {}).get("status") in STARTED
+
+    e0_blocked = bool(
+        set(coverage_phase_gates.get("E0_REPOSITORY_CORE_ENGINE", {}).get("blockedBy", []))
+        & open_gaps
+    )
+    e1_blocked = bool(
+        set(coverage_phase_gates.get("E1_ROBLOX_RUNTIME_INTEGRATION", {}).get("blockedBy", []))
+        & open_gaps
+    )
+    if e0_blocked and any(started(mid) for mid in core_modules):
+        errors.append("execution layers: core engine modules started while E0 architecture coverage is blocked")
+    if e1_blocked and any(started(mid) for mid in integration_modules):
+        errors.append("execution layers: integration modules started while E1 architecture coverage is blocked")
 
     if any(started(mid) for mid in integration_modules):
         incomplete = [mid for mid in core_modules if not started(mid)]
@@ -290,11 +346,20 @@ def main() -> int:
         return 1
 
     execution, _ = load_json(EXECUTION_PATH)
+    coverage, _ = load_json(COVERAGE_PATH)
     counts = Counter(item["class"] for item in execution["moduleExecution"])
+    open_blockers = [
+        gap.get("id")
+        for gap in coverage.get("knownGaps", [])
+        if isinstance(gap, dict)
+        and gap.get("status") == "OPEN"
+        and gap.get("severity") in {"FOUNDATION_BLOCKER", "INTEGRATION_BLOCKER", "EXPLORATION_BLOCKER"}
+    ]
     print(
         "RVTT Greenfield execution layer validation passed: "
         + ", ".join(f"{class_id}={counts.get(class_id, 0)}" for class_id in sorted(VALID_CLASSES))
         + f"; phases={len(execution['phases'])}; checkpoints={len(execution['checkpointOrder'])}"
+        + f"; open_architecture_blockers={len(open_blockers)}"
     )
     return 0
 
