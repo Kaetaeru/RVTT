@@ -1,69 +1,84 @@
-# RVTT Greenfield Pre-G0 Workbench Gate
+# RVTT Greenfield Preflight Gates
 
-- 상태: `ACTIVE · PRE_G0_EXECUTION_GATE`
-- 최종 갱신일: 2026-08-12
-- 적용 범위: G0 구현을 시작하기 직전 Repository·Rojo·Studio MCP 작업장 확인
-- 시스템 순서 권위: [`GREENFIELD-SYSTEM-SEQUENCE.md`](GREENFIELD-SYSTEM-SEQUENCE.md)
-- Build 정책: [`GREENFIELD-BUILD-POLICY.md`](GREENFIELD-BUILD-POLICY.md)
-- 기계 검증: [`tooling/validate_greenfield_boundary.py`](tooling/validate_greenfield_boundary.py)
-- Boundary 설정: [`greenfield-boundary.json`](greenfield-boundary.json)
+- 상태: `ACTIVE · EXECUTION_PREFLIGHT_AUTHORITY`
+- 최종 갱신일: 2026-08-13
+- Execution Layers: [`GREENFIELD-EXECUTION-LAYERS.md`](GREENFIELD-EXECUTION-LAYERS.md)
+- System Sequence: [`GREENFIELD-SYSTEM-SEQUENCE.md`](GREENFIELD-SYSTEM-SEQUENCE.md)
+- Boundary Validator: [`tooling/validate_greenfield_boundary.py`](tooling/validate_greenfield_boundary.py)
+- Execution Validator: [`tooling/validate_execution_layers.py`](tooling/validate_execution_layers.py)
 
-이 Gate는 새로운 Foundation Stage가 아니다. `G0_SHARED_CONTRACTS`보다 먼저 **작업장과 실행 Capability가 올바른지 확인**하기 위한 준비 단계다.
+Preflight를 두 개로 분리한다.
+
+```text
+E0 Repository Engine Gate
+→ Core Engine 구현·Repository Test
+→ E1 Studio Integration Gate
+→ Runtime Integration
+```
+
+Core Engine을 시작하기 위해 Studio/MCP가 먼저 준비되어 있을 필요는 없다.
 
 ## 1. 고정 작업장
-
-Greenfield Build의 현재 작업장은 다음으로 고정한다.
 
 ```text
 Rojo Project  = implementation/roblox/greenfield.project.json
 Source Root   = implementation/roblox/greenfield/src
 Test Root     = implementation/roblox/greenfield/tests
-Module Map    = implementation/roblox/manifests/module-contracts.json
+Legacy Source = implementation/roblox/src · READ_ONLY_REFERENCE
+Legacy Project= implementation/roblox/default.project.json · READ_ONLY_REFERENCE
 ```
 
-기존 Production 자산은 다음처럼 취급한다.
+모든 최종 Source는 `greenfield/src`가 권위다.
+
+## 2. E0 Repository Engine Gate
+
+Core Engine 구현을 시작하기 전 다음만 필수다.
+
+1. `greenfield.project.json` 존재.
+2. Rojo `$path`가 `greenfield/src` 아래만 가리킴.
+3. `greenfield/src`와 `greenfield/tests` 존재.
+4. Legacy Source/Project lock 유지.
+5. `validate_greenfield_boundary.py` PASS.
+6. `validate_module_contracts.py` PASS.
+7. `validate_execution_layers.py` PASS.
+
+Rojo build는 가능하면 여기서도 확인하지만, Studio/MCP identity나 Play capability는 E0 시작 blocker가 아니다.
+
+E0 결과:
 
 ```text
-implementation/roblox/src
-implementation/roblox/default.project.json
-= LEGACY · READ_ONLY_REFERENCE
+REPOSITORY ENGINE GATE
+- greenfield boundary: PASS|FAIL
+- module/system/function contracts: PASS|FAIL
+- execution layers: PASS|FAIL
+- legacy lock: PASS|FAIL
+
+RESULT
+- READY_FOR_E0|BLOCKED
 ```
 
-Legacy Source를 읽는 것은 허용한다. Greenfield 구현을 위해 Legacy Source를 직접 수정하거나 `default.project.json`에 새 Build를 얹는 것은 금지한다.
+`READY_FOR_E0`이면 Core Engine Source와 repository automated tests를 시작한다.
 
-재사용할 코드가 있으면 내용을 읽고 **Greenfield 책임에 맞는 새 경로로 선택적으로 옮긴다.** Legacy 파일 자체를 현재 구현으로 승격하지 않는다.
+## 3. E0에서 하지 않는 것
 
-## 2. Repository Gate
+- Studio Place identity 확인을 이유로 Core Engine 구현을 미룸.
+- MCP capability가 없다는 이유로 pure Authority/State/Command/Projection/Domain test를 미룸.
+- 사용자가 Engine 함수를 수동 Console로 검증하도록 요구.
 
-G0 시작 전 다음이 모두 만족되어야 한다.
+## 4. E1 Studio Integration Gate
 
-1. `greenfield.project.json`이 존재한다.
-2. 모든 Rojo `$path`가 `greenfield/src/` 아래만 가리킨다.
-3. `greenfield/src`와 `greenfield/tests`가 존재한다.
-4. `module-contracts.json.sourceRoot == greenfield/src`다.
-5. Legacy `src` Git tree가 Greenfield Lock 시점과 동일하다.
-6. Legacy `default.project.json` Git blob이 Greenfield Lock 시점과 동일하다.
-7. `validate_greenfield_boundary.py`가 PASS한다.
-8. `validate_module_contracts.py`가 PASS한다.
-9. `rojo build greenfield.project.json`이 독립적으로 성공한다.
+Core Engine repository gate를 통과하고 Runtime Integration을 시작하기 직전에 Studio를 확인한다.
 
-현재 Legacy Lock 기준은 `greenfield-boundary.json`이 소유한다. Lock 값을 바꾸는 행위는 단순 구현 편의가 아니라 Legacy 쓰기 정책 변경이므로 사용자 승인 없이 수행하지 않는다.
+필수:
 
-## 3. Studio Workbench Gate
+1. `rojo build greenfield.project.json` 성공.
+2. 현재 Place/Session이 Greenfield Workbench인지 확인.
+3. Legacy Production Place를 Baseline으로 수정하지 않음.
+4. 필요한 MCP/Studio capability 확인.
+5. Play Start/Stop 및 Server/Client Output을 확인할 경로가 있음.
+6. Runtime/Integration automated harness를 실행할 경로가 있음.
 
-G0를 구현할 Studio는 기존 Production Place를 이어 고치는 작업장으로 취급하지 않는다.
-
-첫 Studio 접근에서 Codex는 먼저 현재 Place/Session을 식별한다.
-
-- 기존 Legacy RVTT가 들어 있는 Production Place를 Baseline으로 보고 수정 시작 → 금지
-- Greenfield 전용 빈 Workbench/Session에서 시작 → 허용
-- 현재 Place가 어느 쪽인지 판별 불가 → `BLOCKED` 또는 `HUMAN_REQUIRED`
-
-기존 Place를 참고해야 하면 읽기 Evidence로만 사용하고, Greenfield 결과는 `greenfield.project.json`과 `greenfield/src`에서 재현 가능해야 한다.
-
-## 4. MCP Capability Handshake
-
-실제 제공 Tool 이름을 추측하지 않는다. G0 시작 직전 아래 Capability를 확인하고 각각 분류한다.
+Capability는 다음처럼 분류한다.
 
 ```text
 MCP_AVAILABLE
@@ -71,65 +86,55 @@ HUMAN_REQUIRED
 UNAVAILABLE
 ```
 
-| Capability | G0 시작 판단 |
-|---|---|
-| Place / Session identity 확인 | 필수 |
-| Instance Tree 읽기 | 필수 |
-| Instance 생성·수정·삭제 | Studio-first 구현에 필수 |
-| Script Source 읽기 | 필수 |
-| Script Source 수정 | Studio-first 구현에 필수 |
-| Play Start / Stop | 필수 |
-| Server / Client Output 읽기 | 필수 |
-| Property / Attribute 읽기 | 필수 |
-| Screenshot / 화면 확인 | G0 비필수, 이후 UI Checkpoint에서 필요 |
-| Multi-client 실행 | G0 비필수 |
-| Local Save / Export | G0 비필수, Canonical Source 대체 불가 |
+E1에 필요한 대표 capability:
 
-MCP Capability가 일부 없더라도 GitHub Source + Rojo + 일반 Studio 경로로 동일한 검증이 가능하면 `DEGRADED`로 진행할 수 있다. 다만 사용하지 못한 Capability를 사용한 것처럼 보고하지 않는다.
+- Place/Session identity
+- Instance Tree 읽기
+- 필요한 Instance 생성/수정
+- Script Source 읽기/수정 또는 GitHub/Rojo sync 경로
+- Play Start/Stop
+- Server/Client Output
+- Property/Attribute 확인
 
-다음이면 G0를 시작하지 않는다.
+Screenshot은 Presentation/Feel 전에는 필수가 아니다.
 
-- 현재 Place가 Legacy Baseline인지 Greenfield Workbench인지 판별할 수 없음
-- Script Source를 어떤 경로로도 수정·정규화할 수 없음
-- 실행 결과를 어떤 경로로도 Play/Output으로 확인할 수 없음
-- Repository Boundary 검증이 실패함
-
-## 5. Pre-G0 결과 형식
-
-G0 구현을 시작하기 직전 Codex는 짧게 다음 상태를 남긴다.
+## 5. E1 결과
 
 ```text
-PRE-G0 REPOSITORY
-- greenfield boundary: PASS|FAIL
-- module contracts: PASS|FAIL
+STUDIO INTEGRATION GATE
 - greenfield rojo build: PASS|FAIL
-- legacy source lock: PASS|FAIL
-
-STUDIO WORKBENCH
 - place/session: GREENFIELD|LEGACY|UNKNOWN
+- required runtime capabilities: PASS|DEGRADED|FAIL
+- play/output path: PASS|FAIL
 
-MCP CAPABILITIES
-- required available: [...]
-- human required: [...]
-- unavailable: [...]
-
-PRE-G0 RESULT
-- READY_FOR_G0|DEGRADED_READY|BLOCKED
-
-NEXT ACTION
-- G0_SHARED_CONTRACTS 또는 blocker
+RESULT
+- READY_FOR_E1|DEGRADED_READY|BLOCKED
 ```
 
-## 6. G0 Handoff
+`READY_FOR_E1` 또는 fallback이 명확한 `DEGRADED_READY`일 때 Runtime Integration을 시작한다.
 
-Repository Gate와 Studio/MCP Handshake가 허용 상태이면 그 다음 행동은 정확히 하나다.
+## 6. Runtime-coupled Engine
 
-```text
-G0_SHARED_CONTRACTS
-```
+PathfindingService, raycast, physics/collision처럼 실제 Roblox Runtime에 의존하는 Engine은 E1 Studio Gate 이후 구현·튜닝할 수 있다.
 
-이 문서 준비 과정에서는 `CommandEnvelope`, `ProjectionEnvelope`, `WorldContract` Source를 만들지 않는다. G0 구현은 다음 실행에서 시작한다.
+단:
 
-## 7. 변경 보호
+- Contract는 GitHub에 먼저 존재.
+- 최종 Source는 `greenfield/src`에 canonicalize.
+- Studio automated runtime test가 필요.
+- visible feel만 Human Checkpoint로 넘긴다.
 
-Preflight 중 더 나은 Architecture, Authority, 시스템 순서, 개발 방식이 보이면 직접 바꾸지 않는다. 현재 문제·대안·효과·비용·영향받는 Authority를 사용자에게 먼저 보고한다.
+## 7. E2 Presentation Gate
+
+사용자에게 기능을 보여주기 전:
+
+- 해당 Core Engine ready.
+- 필요한 Runtime Engine/Integration ready.
+- Studio self-check PASS.
+- 실제 visible behavior 존재.
+
+그 뒤에만 `READY_FOR_USER`다.
+
+## 8. 변경 보호
+
+Preflight 중 Execution Class, Architecture, Authority, Module responsibility 또는 개발 방식 변경이 필요하면 사용자에게 먼저 제안한다.
