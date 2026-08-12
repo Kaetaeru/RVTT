@@ -10,6 +10,7 @@ FUNCTION_REGISTRY = ROOT / "manifests/system-function-contracts.json"
 MODULE_DOC = ROOT / "MODULE-CONTRACTS.md"
 FUNCTION_DOC = ROOT / "SYSTEM-FUNCTION-CONTRACTS.md"
 MODEL = ROOT / "IMPLEMENTATION-MODEL.md"
+SYSTEMS = ROOT / "SYSTEMS.md"
 
 
 def load(path: Path) -> dict:
@@ -48,8 +49,15 @@ def main() -> int:
         errors.append("MODULE-CONTRACTS.md must remain retired")
     if "RETIRED_IMPLEMENTATION_MODEL" not in FUNCTION_DOC.read_text(encoding="utf-8"):
         errors.append("SYSTEM-FUNCTION-CONTRACTS.md must remain retired")
-    if "IMPLEMENTATION_MODEL_RESET" not in MODEL.read_text(encoding="utf-8"):
-        errors.append("IMPLEMENTATION-MODEL.md reset marker missing")
+
+    model_text = MODEL.read_text(encoding="utf-8")
+    systems_text = SYSTEMS.read_text(encoding="utf-8") if SYSTEMS.exists() else ""
+    if "SYSTEM_MODEL_V1_APPROVED" not in model_text:
+        errors.append("IMPLEMENTATION-MODEL.md must declare approved system model v1")
+    if "R4 E0 Checkpoint Freeze" not in model_text:
+        errors.append("implementation model must preserve R4 checkpoint freeze before new Module/Stable Function contracts")
+    if "APPROVED_SYSTEM_AUTHORITY" not in systems_text:
+        errors.append("SYSTEMS.md approved system authority marker missing")
 
     if errors:
         print("RVTT retired module/system/function validation failed:")
@@ -60,7 +68,7 @@ def main() -> int:
     print(
         "RVTT retired module/system/function validation passed: "
         "currentModules=0; currentSystems=0; currentStableFunctions=0; "
-        "new contracts must be re-derived at E0 checkpoint freeze"
+        "33-system authority approved; new Module/Stable Function contracts wait for R4"
     )
     return 0
 
