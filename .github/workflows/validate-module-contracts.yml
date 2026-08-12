@@ -10,11 +10,17 @@ on:
       - "AGENTS.md"
       - ".github/workflows/validate-module-contracts.yml"
       - "implementation/roblox/MODULE-CONTRACTS.md"
+      - "implementation/roblox/SYSTEM-FUNCTION-CONTRACTS.md"
+      - "implementation/roblox/GREENFIELD-EXECUTION-LAYERS.md"
+      - "implementation/roblox/GREENFIELD-SYSTEM-SEQUENCE.md"
       - "implementation/roblox/ROBLOX-STUDIO-MCP-TEST-POLICY.md"
       - "implementation/roblox/manifests/module-contracts.json"
+      - "implementation/roblox/manifests/system-function-contracts.json"
+      - "implementation/roblox/manifests/execution-layers.json"
       - "implementation/roblox/tooling/validate_module_contracts.py"
-      - "implementation/roblox/src/**"
-      - "implementation/roblox/tests/**"
+      - "implementation/roblox/tooling/validate_execution_layers.py"
+      - "implementation/roblox/greenfield/src/**"
+      - "implementation/roblox/greenfield/tests/**"
   push:
     branches:
       - planning/rvtt-remake
@@ -22,11 +28,17 @@ on:
       - "AGENTS.md"
       - ".github/workflows/validate-module-contracts.yml"
       - "implementation/roblox/MODULE-CONTRACTS.md"
+      - "implementation/roblox/SYSTEM-FUNCTION-CONTRACTS.md"
+      - "implementation/roblox/GREENFIELD-EXECUTION-LAYERS.md"
+      - "implementation/roblox/GREENFIELD-SYSTEM-SEQUENCE.md"
       - "implementation/roblox/ROBLOX-STUDIO-MCP-TEST-POLICY.md"
       - "implementation/roblox/manifests/module-contracts.json"
+      - "implementation/roblox/manifests/system-function-contracts.json"
+      - "implementation/roblox/manifests/execution-layers.json"
       - "implementation/roblox/tooling/validate_module_contracts.py"
-      - "implementation/roblox/src/**"
-      - "implementation/roblox/tests/**"
+      - "implementation/roblox/tooling/validate_execution_layers.py"
+      - "implementation/roblox/greenfield/src/**"
+      - "implementation/roblox/greenfield/tests/**"
   workflow_dispatch:
 
 permissions:
@@ -44,5 +56,8 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Validate module contracts
+      - name: Validate module system and function contracts
         run: python implementation/roblox/tooling/validate_module_contracts.py
+
+      - name: Validate execution layers
+        run: python implementation/roblox/tooling/validate_execution_layers.py
