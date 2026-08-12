@@ -10,7 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = ROOT.parents[1]
-BASE = ROOT / "manifests/architecture-coverage.json"
+BASE = ROOT / "manifests/scenario-base-catalog.json"
 EXPANDED = ROOT / "manifests/architecture-scenarios.json"
 MODEL = ROOT / "manifests/implementation-system-model.json"
 AUDIT = ROOT / "manifests/scenario-semantic-audit.json"
@@ -37,6 +37,7 @@ REQUIRED_RECOVERY_SENTINELS = {
     "SCN_ATTACK_REACTION_RESOLUTION": {"RECONNECT"},
     "SCN_CHARACTER_SHEET_LIVE_DAMAGE_SYNC": {"CLIENT_RESYNC"},
     "SCN_SCENE_CANDIDATE_TEST_PUBLISH": {"LAST_KNOWN_GOOD"},
+    "SCN_DM_RECOVERY_REVIEW_BRANCH": {"SERVER_RESTART", "ROLLBACK_BRANCH", "CLIENT_RESYNC"},
 }
 SCHEMA_KEYS = [
     "mutationSemantic",
@@ -47,6 +48,7 @@ SCHEMA_KEYS = [
     "lastKnownGoodOwnerCandidates",
     "scenarioAudit",
 ]
+FORBIDDEN_BASE_SCENARIO_KEYS = {"capabilityRefs", "systemRefs", "moduleRefs", "knownGapRefs"}
 
 
 def load(path: Path) -> dict:
@@ -90,16 +92,30 @@ def main() -> int:
     except Exception as exc:
         return fail([str(exc)])
 
-    if audit.get("schemaVersion") != 2:
-        errors.append("audit schemaVersion must be 2")
-    if audit.get("registryId") != "rvtt-scenario-semantic-audit-v2":
-        errors.append("audit registryId must be rvtt-scenario-semantic-audit-v2")
-    if audit.get("status") != "ACTIVE_R3_PENDING_FREEZE":
-        errors.append("audit status must remain ACTIVE_R3_PENDING_FREEZE during R3")
-    if audit.get("scenarioCount") != 61:
-        errors.append("audit scenarioCount must be 61")
+    if base.get("registryId") != "rvtt-scenario-base-catalog-v1":
+        errors.append("base scenario source must be the clean rvtt-scenario-base-catalog-v1 registry")
+    base_policy = base.get("policy") if isinstance(base.get("policy"), dict) else {}
+    if base_policy.get("legacyGreenfieldReferencesExcluded") is not True:
+        errors.append("base scenario catalog must exclude legacy Greenfield references")
 
-    source_scenarios = [*base.get("scenarios", []), *expanded.get("scenarios", [])]
+    base_scenarios = base.get("scenarios", [])
+    expanded_scenarios = expanded.get("scenarios", [])
+    if not isinstance(base_scenarios, list) or len(base_scenarios) != 14:
+        errors.append(f"canonical base scenario catalog must contain 14 scenarios, found {len(base_scenarios) if isinstance(base_scenarios, list) else 'non-list'}")
+        base_scenarios = []
+    if not isinstance(expanded_scenarios, list) or len(expanded_scenarios) != 47:
+        errors.append(f"expanded scenario catalog must contain 47 scenarios, found {len(expanded_scenarios) if isinstance(expanded_scenarios, list) else 'non-list'}")
+        expanded_scenarios = []
+
+    for scenario in base_scenarios:
+        if not isinstance(scenario, dict):
+            errors.append("base scenario entry must be object")
+            continue
+        forbidden = sorted(FORBIDDEN_BASE_SCENARIO_KEYS & set(scenario))
+        if forbidden:
+            errors.append(f"{scenario.get('id', '<missing>')}: canonical base scenario leaked legacy mapping keys {forbidden}")
+
+    source_scenarios = [*base_scenarios, *expanded_scenarios]
     source_ids = [s.get("id") for s in source_scenarios if isinstance(s, dict)]
     if len(source_ids) != 61 or len(set(source_ids)) != 61:
         errors.append(f"source scenario catalog must contain 61 unique ids, found {len(source_ids)}")
@@ -115,11 +131,16 @@ def main() -> int:
         if not isinstance(scenario.get("negativeCases"), list) or not scenario.get("negativeCases"):
             errors.append(f"{sid}: source negativeCases must be non-empty")
 
-    binding = audit.get("sourceBinding")
-    if not isinstance(binding, dict):
-        errors.append("sourceBinding must be object")
-        binding = {}
+    if audit.get("schemaVersion") != 2:
+        errors.append("audit schemaVersion must be 2")
+    if audit.get("registryId") != "rvtt-scenario-semantic-audit-v2":
+        errors.append("audit registryId must be rvtt-scenario-semantic-audit-v2")
+    if audit.get("status") != "ACTIVE_R3_VALIDATED_AWAITING_FREEZE":
+        errors.append("audit status must be ACTIVE_R3_VALIDATED_AWAITING_FREEZE after full R3 validation")
+    if audit.get("scenarioCount") != 61:
+        errors.append("audit scenarioCount must be 61")
 
+    binding = audit.get("sourceBinding") if isinstance(audit.get("sourceBinding"), dict) else {}
     actual_base_sha = blob_sha(BASE)
     actual_expanded_sha = blob_sha(EXPANDED)
     if binding.get("baseScenarioBlobSha") != actual_base_sha:
@@ -138,7 +159,7 @@ def main() -> int:
     req_ids = {x.get("id") for x in requirements if isinstance(x, dict) and isinstance(x.get("id"), str)}
     trace_by_id = {x.get("id"): x for x in traces if isinstance(x, dict) and isinstance(x.get("id"), str)}
     if set(trace_by_id) != set(source_ids):
-        errors.append("implementation model scenarioTrace IDs must exactly match source scenario IDs")
+        errors.append("implementation model scenarioTrace IDs must exactly match canonical source scenario IDs")
 
     entry_defs = audit.get("entryKindDefinitions")
     recovery_defs = audit.get("recoveryKindDefinitions")
@@ -151,10 +172,7 @@ def main() -> int:
     if audit.get("recoveryBoundaryExpansion") != EXPECTED_RECOVERY_EXPANSIONS:
         errors.append("recoveryBoundaryExpansion must exactly preserve typed recovery semantics")
 
-    for mapping_name, mapping in [
-        ("entryBoundaryExpansion", EXPECTED_ENTRY_EXPANSIONS),
-        ("recoveryBoundaryExpansion", EXPECTED_RECOVERY_EXPANSIONS),
-    ]:
+    for mapping_name, mapping in (("entryBoundaryExpansion", EXPECTED_ENTRY_EXPANSIONS), ("recoveryBoundaryExpansion", EXPECTED_RECOVERY_EXPANSIONS)):
         for kind, expansion in mapping.items():
             unknown_s = [x for x in expansion["systemRefs"] if x not in system_ids]
             unknown_r = [x for x in expansion["requirementRefs"] if x not in req_ids]
@@ -183,7 +201,7 @@ def main() -> int:
         audit_entries = []
     audit_by_id = {x.get("id"): x for x in audit_entries if isinstance(x, dict) and isinstance(x.get("id"), str)}
     if len(audit_entries) != 61 or len(audit_by_id) != 61 or set(audit_by_id) != set(source_ids):
-        errors.append("scenarioAudit must contain exactly the 61 source scenario IDs")
+        errors.append("scenarioAudit must contain exactly the 61 canonical source scenario IDs")
 
     entry_counts: Counter[str] = Counter()
     recovery_counts: Counter[str] = Counter()
@@ -216,24 +234,14 @@ def main() -> int:
         effective_systems = set(trace.get("systemRefs", []))
         effective_requirements = set(trace.get("requirementCapabilityRefs", []))
         stages = set(trace.get("semanticStages", []))
-
         for kind in entry_kinds:
             expansion = EXPECTED_ENTRY_EXPANSIONS.get(kind, {"systemRefs": [], "requirementRefs": []})
-            required_s = set(expansion["systemRefs"])
-            required_r = set(expansion["requirementRefs"])
-            effective_systems.update(required_s)
-            effective_requirements.update(required_r)
-            if not required_s.issubset(effective_systems) or not required_r.issubset(effective_requirements):
-                errors.append(f"{sid}: {kind} ingress missing required System/Requirement pressure")
-
+            effective_systems.update(expansion["systemRefs"])
+            effective_requirements.update(expansion["requirementRefs"])
         for kind in recovery_kinds:
             expansion = EXPECTED_RECOVERY_EXPANSIONS.get(kind, {"systemRefs": [], "requirementRefs": []})
-            required_s = set(expansion["systemRefs"])
-            required_r = set(expansion["requirementRefs"])
-            effective_systems.update(required_s)
-            effective_requirements.update(required_r)
-            if not required_s.issubset(effective_systems) or not required_r.issubset(effective_requirements):
-                errors.append(f"{sid}: {kind} recovery missing required System/Requirement pressure")
+            effective_systems.update(expansion["systemRefs"])
+            effective_requirements.update(expansion["requirementRefs"])
 
         if "MUTATION" in stages and "A3" not in effective_systems:
             errors.append(f"{sid}: effective MUTATION path must include A3")
@@ -279,9 +287,8 @@ def main() -> int:
 
     print(
         "RVTT scenario semantic audit passed: "
-        f"scenarios={len(audit_by_id)}; effective_recovery_scenarios={effective_recovery_scenarios}; "
-        f"entryKinds={dict(sorted(entry_counts.items()))}; "
-        f"recoveryKinds={dict(sorted(recovery_counts.items()))}; "
+        f"base=14; expanded=47; scenarios={len(audit_by_id)}; effective_recovery_scenarios={effective_recovery_scenarios}; "
+        f"entryKinds={dict(sorted(entry_counts.items()))}; recoveryKinds={dict(sorted(recovery_counts.items()))}; "
         f"schemaDigest={actual_schema_digest}; combinedDigest={actual_combined}"
     )
     return 0
