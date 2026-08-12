@@ -10,6 +10,7 @@ REPO_ROOT = ROOT.parents[1]
 ACTIVE_TASK = REPO_ROOT / ".github/CODEX-ACTIVE-TASK.md"
 ROUTING_README = REPO_ROOT / ".github/README.md"
 AGENTS = REPO_ROOT / "AGENTS.md"
+PLANNING_ADDENDUM = REPO_ROOT / "AGENTS-PLANNING-ADDENDUM.md"
 AGENT_TEST_STATUS = REPO_ROOT / "AGENT-TEST-STATUS.md"
 REMAKE_README = REPO_ROOT / "docs/remake/README.md"
 REMAKE_WORK_ORDER = REPO_ROOT / "docs/remake/CURRENT-WORK-ORDER.md"
@@ -84,6 +85,7 @@ def main() -> int:
         "Active Task": ACTIVE_TASK.read_text(encoding="utf-8"),
         "Routing README": ROUTING_README.read_text(encoding="utf-8"),
         "AGENTS.md": AGENTS.read_text(encoding="utf-8"),
+        "Planning Addendum": PLANNING_ADDENDUM.read_text(encoding="utf-8"),
         "Agent Test Status": AGENT_TEST_STATUS.read_text(encoding="utf-8"),
         "Remake README": REMAKE_README.read_text(encoding="utf-8"),
         "Remake Work Order": REMAKE_WORK_ORDER.read_text(encoding="utf-8"),
@@ -105,6 +107,9 @@ def main() -> int:
         ("AGENTS.md", "OLD GREENFIELD MODEL = RETIRED"),
         ("AGENTS.md", "R3 = VALIDATED · NOT FROZEN · AWAITING USER FREEZE DECISION"),
         ("AGENTS.md", "NEXT = USER R3 FREEZE DECISION"),
+        ("Planning Addendum", "CURRENT · SUBORDINATE_TO_ACTIVE_EXECUTION_GATE"),
+        ("Planning Addendum", "SOURCE = BLOCKED"),
+        ("Planning Addendum", "E1 Studio/MCP gate가 열린 뒤"),
         ("Agent Test Status", "CURRENT · R3_VALIDATED_AWAITING_FREEZE_DECISION"),
         ("Agent Test Status", "STUDIO_BLOCKED"),
         ("Remake README", "ACTIVE · R3_VALIDATED_AWAITING_FREEZE_DECISION"),
