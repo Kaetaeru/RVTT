@@ -28,7 +28,7 @@ Scenario Semantic Audit v1 direct-stage base
 ↕
 Scenario Semantic Audit v2 classification/schema evidence
 ↕
-Scenario Semantic Audit v3 clean-source binding
+Scenario Semantic Audit v3 clean-source + historical-evidence binding
 ↕
 R3 execution boundary
 ↕
@@ -41,15 +41,15 @@ Requirement Capability는 System 이름의 별칭이 아니다. 하나의 Requir
 
 ## 2. 권위 역할
 
-- `scenario-base-catalog.json`: Base 14 canonical body. legacy Greenfield capability/system/module mapping 금지.
-- `scenario-expanded-catalog.json`: Expanded 47 canonical body. legacy Greenfield capability/system/module mapping 금지.
+- `scenario-base-catalog.json`: Base 14 canonical body. Scenario object는 `id / phase / steps / expectedOutcome / negativeCases`만 가진다.
+- `scenario-expanded-catalog.json`: Expanded 47 canonical body. Scenario object는 `id / phase / steps / expectedOutcome / negativeCases`만 가진다.
 - `implementation-system-model.json`: 34 System, 30 Requirement Capability, 61 direct Scenario Requirement/System trace, v1 semanticStages.
 - `scenario-semantic-audit.json`: v2 immutable evidence. mutation semantic, typed ingress/recovery expansion, LKG owner set, 61 classification, semantic schema digest를 보존한다.
-- `scenario-semantic-audit-v3.json`: clean Base/Expanded blobs + direct trace + immutable v2 audit blob + semantic schema를 묶는 현재 effective audit.
+- `scenario-semantic-audit-v3.json`: clean Base/Expanded blobs + direct trace + immutable v2 audit blob + immutable historical Expanded evidence blob + semantic schema를 묶는 현재 effective audit.
 - `architecture-coverage.json`: authority corpus snapshot과 과거 Greenfield coverage/gap evidence.
-- `architecture-scenarios.json`: 과거 Expanded Scenario Greenfield registry evidence. `capabilityRefs`는 historical vocabulary일 뿐 구현 권위가 아니다.
+- `architecture-scenarios.json`: 과거 Expanded Scenario Greenfield registry evidence. `capabilityRefs/status` 등은 historical vocabulary일 뿐 구현 권위가 아니다.
 
-v3 validator는 historical `architecture-scenarios.json`의 `id/phase/steps/expectedOutcome/negativeCases` projection이 clean Expanded 47과 정확히 같은지 검사한다. 따라서 historical evidence를 보존하면서 구현 AI는 legacy mapping을 읽지 않는다.
+clean Expanded를 처음 분리할 때 historical Expanded의 semantic body projection equivalence는 검증됐다. 그 이후 `architecture-scenarios.json`은 **불변 historical evidence**로 고정한다. canonical Scenario가 정상적인 semantic re-audit를 통해 진화할 때 historical evidence를 같이 수정하거나 계속 exact-match시키지 않는다.
 
 ## 3. Scenario Semantic Audit v3
 
@@ -63,7 +63,7 @@ v2 semanticSchemaDigest
 sha256:dcc766c1161332789e91aadc362c4765687af3efc2f7193cf23f748df0eb6489
 
 v3 combinedAuditDigest
-sha256:3d548607d17c7ca7fb13cb44b6b3e8f305f0cb5e5a3a46eacdae7ee19497e46e
+sha256:bd2db9a2d97c224c73265cd11dc6db32e81a17fc24b7fe6909254a5185196f38
 ```
 
 v3 감사 단위:
@@ -71,20 +71,24 @@ v3 감사 단위:
 ```text
 Clean Base Scenario blob SHA
 + Clean Expanded Scenario blob SHA
++ immutable Historical Expanded evidence blob SHA
 + v1 direct trace digest
 + immutable v2 classification-audit blob SHA
 + v2 semantic schema digest
 → v3 combinedAuditDigest
 ```
 
-Clean catalog에는 다음 key가 들어가면 실패한다.
+Clean Scenario object에는 정확히 다음 key만 허용한다.
 
 ```text
-capabilityRefs
-systemRefs
-moduleRefs
-knownGapRefs
+id
+phase
+steps
+expectedOutcome
+negativeCases
 ```
+
+따라서 legacy `status`, `capabilityRefs`, `systemRefs`, `moduleRefs`, `knownGapRefs` 등 coverage/mapping metadata가 canonical Scenario body로 재유입되면 실패한다.
 
 Ingress는 System과 Requirement를 함께 검증한다.
 
@@ -216,13 +220,13 @@ AGENTS.md
 → 필요한 상위 Authority만 선택적으로
 ```
 
-`architecture-coverage.json`과 `architecture-scenarios.json`의 legacy Greenfield mapping은 구현 AI 기본 읽기 대상이 아니다.
+`architecture-coverage.json`과 `architecture-scenarios.json`의 legacy Greenfield mapping/status는 구현 AI 기본 읽기 대상이 아니다.
 
 미모델링 책임이나 미래 충돌을 발견하면 helper로 우회하지 않고 `ESCALATE_TO_PLANNING`한다.
 
 ## 8. 변경 Gate
 
-현재 합의 방향 안의 명백한 문서 상태 drift, stale pointer, validator false-green, workflow trigger 누락은 발견 즉시 수정하고 최종 HEAD에서 재검증한다.
+현재 합의 방향 안의 명백한 legacy metadata leak, 문서 상태 drift, stale pointer, validator false-green, workflow trigger 누락은 발견 즉시 수정하고 최종 HEAD에서 재검증한다.
 
 다음은 사용자 결정 없이 자동 적용하지 않는다.
 
