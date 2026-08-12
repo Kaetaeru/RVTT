@@ -141,7 +141,7 @@ Clean Base 14 + Clean Expanded 47 = 61 Scenario다.
 
 v2 `scenario-semantic-audit.json`은 61개 entry/recovery classification, mutation semantic, ingress/recovery expansion, LKG owner set과 semantic schema를 보존하는 immutable evidence다.
 
-현재 완전한 R3 semantic audit 권위는 **v3 `scenario-semantic-audit-v3.json`**이다. v3는 clean Base/Expanded blobs, v1 direct trace, immutable v2 audit blob, v2 semantic schema digest를 묶는다.
+현재 완전한 R3 semantic audit 권위는 **v3 `scenario-semantic-audit-v3.json`**이다. v3는 clean Base/Expanded blobs, immutable historical Expanded evidence blob, v1 direct trace, immutable v2 audit blob, v2 semantic schema digest를 묶는다. Historical Expanded evidence와 v2 classification evidence의 승인된 blob SHA는 `validate_r3_immutable_evidence.py`가 별도로 고정 검증한다.
 
 현재 typed recovery Scenario는 **27개**다. 특히 다음 누락을 다시 막는다.
 
