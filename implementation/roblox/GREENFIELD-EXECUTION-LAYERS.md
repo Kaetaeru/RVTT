@@ -2,14 +2,27 @@
 
 - 상태: `ACTIVE · EXECUTION_ENVIRONMENT_AUTHORITY`
 - 최종 갱신일: 2026-08-13
+- Architecture Coverage Gate: [`ARCHITECTURE-COVERAGE-POLICY.md`](ARCHITECTURE-COVERAGE-POLICY.md)
+- Coverage Registry: [`manifests/architecture-coverage.json`](manifests/architecture-coverage.json)
 - Machine-readable plan: [`manifests/execution-layers.json`](manifests/execution-layers.json)
 - Module contracts: [`MODULE-CONTRACTS.md`](MODULE-CONTRACTS.md)
 - System/function contracts: [`SYSTEM-FUNCTION-CONTRACTS.md`](SYSTEM-FUNCTION-CONTRACTS.md)
 - Build order: [`GREENFIELD-SYSTEM-SEQUENCE.md`](GREENFIELD-SYSTEM-SEQUENCE.md)
 
-이 문서는 **어디에서 무엇을 먼저 구현하고 어떤 종류의 테스트로 통과시킬지**를 소유한다.
+이 문서는 **Coverage가 확인된 책임을 어디에서 구현하고 어떤 종류의 테스트로 통과시킬지**를 소유한다.
 
-핵심 원칙은 다음이다.
+Execution Class는 Product Coverage를 대신하지 않는다.
+
+```text
+Architecture Coverage
+→ System / Module / Stable Function Contract
+→ Execution Class
+→ 구현 / 검증 환경
+```
+
+현재 Architecture Coverage Gate가 `BLOCKED_BY_FOUNDATION_COVERAGE_GAPS`이므로 E0 Source는 아직 시작하지 않는다.
+
+핵심 실행 원칙은 다음이다.
 
 ```text
 보이지 않는 순수 엔진
@@ -24,7 +37,22 @@ Roblox Runtime 의존 엔진/Adapter
 
 Studio를 일반 코드 에디터 대신 **Roblox Runtime Integration + Presentation/Feel 검증 도구**로 사용한다.
 
-## 1. 공통 Source 권위
+## 1. Coverage 선행 조건
+
+각 Execution Phase를 시작하기 전에 `architecture-coverage.json.phaseGates`를 확인한다.
+
+```text
+Phase blockedBy = []
++ Coverage Validator PASS
++ implementationGate가 해당 Phase를 허용
+→ Execution Phase 진입 가능
+```
+
+OPEN Blocking Gap이 있으면 해당 Phase에 배정된 Module이 이미 Registry에 있어도 Source를 만들지 않는다.
+
+Coverage Finding을 해소하려고 Execution Class만 바꿔 책임 누락을 숨기지 않는다. System/Module/Authority 변경이 필요하면 사용자에게 먼저 제안한다.
+
+## 2. 공통 Source 권위
 
 어느 Execution Class든 최종 Source 권위는 `greenfield/src`다.
 
@@ -33,11 +61,11 @@ Studio를 일반 코드 에디터 대신 **Roblox Runtime Integration + Presenta
 - 최종 완료를 Studio-only truth로 선언하지 않는다.
 - Rojo로 같은 DataModel을 재현할 수 있어야 한다.
 
-## 2. CORE_ENGINE
+## 3. CORE_ENGINE
 
 Roblox Workspace/서비스의 실제 결과가 없어도 correctness를 판단할 수 있는 엔진 코드다.
 
-현재 범위:
+현재 Execution Registry의 **잠정 E0 후보**:
 
 ```text
 CommandEnvelope
@@ -52,7 +80,20 @@ MovementDomain
 ExplorationDomain
 ```
 
-구현 순서:
+이 목록은 아직 구현 명령이 아니다. Coverage Audit의 E0 Blocker가 해소된 뒤 책임 경계를 다시 확인하고 최종화한다.
+
+현재 E0 blocker:
+
+```text
+GAP-001 Session Policy Boundary
+GAP-002 Transaction / Event / Projection Barrier
+GAP-003 Runtime Object / Scene Identity
+GAP-005 Navigation / Movement Boundary
+GAP-007 Capability / Action Availability Projection
+GAP-008 RuleExecution Boundary
+```
+
+Coverage가 READY가 된 뒤 구현 순서:
 
 ```text
 System/Module/Stable Function Contract
@@ -70,12 +111,12 @@ System/Module/Stable Function Contract
 - duplicate command id
 - stale revision
 - authorization denial
-- transactional revision semantics
+- transactional/revision semantics according to resolved transaction architecture
 - viewer disclosure filtering
-- movement/interaction domain validation
+- movement/interaction domain validation according to resolved capability/navigation architecture
 - structured failure/result semantics
 
-## 3. ROBLOX_RUNTIME_ENGINE
+## 4. ROBLOX_RUNTIME_ENGINE
 
 엔진이지만 correctness가 Roblox Runtime 자체에 의존하는 경우다.
 
@@ -83,7 +124,7 @@ System/Module/Stable Function Contract
 
 - `PathfindingService`
 - 실제 NavMesh와 Agent parameter
-- Workspace raycast/spatial query
+- Workspace raycast/spatial provider
 - physics/collision 결과
 - StreamingEnabled 영향
 - DataStore/MemoryStore adapter
@@ -93,7 +134,7 @@ System/Module/Stable Function Contract
 단:
 
 ```text
-Contract
+Coverage + Contract
 → GitHub Canonical Source 또는 즉시 canonicalizable Source
 → Studio/MCP Runtime iteration
 → Studio automated runtime test
@@ -105,39 +146,38 @@ Studio에서만 존재하는 엔진은 허용하지 않는다.
 
 ### Pathfinding 예
 
-Pathfinding 하나도 세 부분으로 나눈다.
+현재는 `GAP-005`가 OPEN이므로 구체 Module/API를 고정하지 않는다.
 
-**Repository/Core:**
+Gap 해결 뒤 Pathfinding 하나도 세 부분으로 나눈다.
+
+**Repository/Core 후보 책임:**
 
 - path request/response data shape
 - movement permission/budget rules
 - 실패 코드와 recompute 정책
-- Workspace와 무관한 waypoint normalization
+- Workspace와 무관한 waypoint/plan normalization
 - pure fallback/path policy가 있다면 그 알고리즘
 
-**Studio/Runtime:**
+**Studio/Runtime 후보 책임:**
 
-- `PathfindingService` 실제 호출
-- NavMesh 생성 결과
-- AgentRadius/AgentHeight/AgentCanJump 등 실제 영향
+- `PathfindingService` 실제 호출 또는 승인된 Runtime Navigation Provider
+- NavMesh/Agent parameter 결과
 - 장애물/CollisionGroup과 경로 결과
-- raycast/line-of-sight
+- raycast/spatial-provider 실제 결과
 - 동적 장애물 재탐색
 
 **Human/Feel:**
 
-- 경로 Preview가 보인다면 읽기 좋은가
-- 클릭 후 반응이 자연스러운가
-- Token 이동이 끊겨 보이지 않는가
-- 사용자가 의도한 목적지와 실제 움직임이 자연스럽게 대응하는가
+- 경로 Preview 가독성
+- 클릭 후 반응
+- Token 이동의 부드러움
+- 사용자 의도와 실제 이동의 대응
 
-즉 Pathfinding은 `Studio에서만 만드는 엔진`이 아니라 **Roblox-dependent 부분의 개발/검증이 Studio 중심인 엔진**이다.
-
-## 4. ROBLOX_INTEGRATION
+## 5. ROBLOX_INTEGRATION
 
 이미 검증된 Core Engine과 Roblox Runtime을 연결하는 Adapter/Composition이다.
 
-현재 범위:
+현재 잠정 범위:
 
 ```text
 CommandGateway
@@ -150,10 +190,13 @@ ServerApp / ServerBootstrap
 ClientApp / ClientBootstrap
 ```
 
+E1 Coverage blocker가 없어야 진입한다.
+
 주 검증 환경은 Studio/MCP다.
 
 ```text
 CORE_ENGINE_READY
+→ Coverage E1 READY
 → Rojo build
 → Studio boot
 → Remote/Player/Instance/Input 연결
@@ -164,11 +207,11 @@ CORE_ENGINE_READY
 
 이 단계는 원칙적으로 사용자에게 UI 평가를 요구하지 않는다.
 
-## 5. PRESENTATION_FEEL
+## 6. PRESENTATION_FEEL
 
 사람이 실제로 보고 만져야 평가 가능한 부분이다.
 
-현재 범위:
+현재 잠정 범위:
 
 ```text
 SelectionController
@@ -178,10 +221,12 @@ MovementController
 ContextActionController
 ```
 
-이 단계에서만 Human Checkpoint가 중심이 된다.
+각 Checkpoint의 Coverage blocker가 없어야 구현한다.
 
 ```text
-ENGINE_READY + INTEGRATION_READY
+Coverage Checkpoint READY
++ ENGINE_READY
++ INTEGRATION_READY
 → Presentation/Controller 연결
 → Codex Studio self-check
 → READY_FOR_USER
@@ -192,9 +237,9 @@ ENGINE_READY + INTEGRATION_READY
 → ACCEPTED
 ```
 
-## 6. 분류 규칙
+## 7. 분류 규칙
 
-새 Module이 생기면 구현 전에 반드시 한 Execution Class를 고른다.
+새 Module이 승인돼 생기면 구현 전에 반드시 한 Execution Class를 고른다.
 
 판정 순서:
 
@@ -213,12 +258,15 @@ YES → PRESENTATION_FEEL
 
 `ROBLOX_RUNTIME_ENGINE`과 `ROBLOX_INTEGRATION`의 차이:
 
-- Runtime Engine: Roblox 서비스 결과 자체가 도메인/엔진 계산의 일부.
+- Runtime Engine: Roblox 서비스/공간 결과 자체가 도메인/엔진 계산의 일부.
 - Integration: 이미 존재하는 엔진을 Remote/Player/Input/Instance lifecycle에 연결.
 
-## 7. 테스트 권위
+## 8. 테스트 권위
 
 ```text
+Architecture Coverage
+= 어떤 책임/Scenario가 반드시 존재해야 하는가
+
 CORE_ENGINE
 = Repository automated tests가 1차 PASS 권위
 
@@ -234,15 +282,13 @@ PRESENTATION_FEEL
 
 Console 호출은 보조 수단이다. 반복 가능한 Harness/Test가 가능한 경우 콘솔 수동 호출만으로 완료 처리하지 않는다.
 
-## 8. 수직 개발과의 관계
+## 9. 수직 개발과의 관계
 
 수직 개발을 폐기하지 않는다.
 
-수직 슬라이스는 **사용자 경험을 전달하는 단계**에서 유지한다.
+수직 슬라이스는 **Coverage가 준비된 사용자 경험 전달 단계**에서 유지한다.
 
 ```text
-엔진을 기능마다 조금씩 다시 만듦  X
-
 공통 Core Engine 선완성
 → Roblox Integration 선검증
 → Selection vertical slice
@@ -254,8 +300,6 @@ Console 호출은 보조 수단이다. 반복 가능한 Harness/Test가 가능�
 
 단 아직 설계가 확정되지 않은 먼 미래 시스템의 Domain/API를 추측해 구현하지 않는다.
 
-## 9. 변경 Gate
+## 10. 변경 Gate
 
-Execution Class를 바꾸는 것이 단순 테스트 위치 변경을 넘어 Module 책임, Authority, state owner, System flow를 바꾸면 사용자에게 먼저 제안한다.
-
-Pathfinding처럼 새 Runtime Engine 경계가 실제로 필요해질 때도 구체 Module split/API는 해당 Checkpoint 설계 직전에 제안·확정한다. 이 문서는 미리 특정 Pathfinding Module 구조를 강제하지 않는다.
+Coverage Gap 해결, Execution Class 변경 또는 더 나은 구조가 Module 책임, Authority, state owner, System flow를 바꾸면 자동 적용하지 않는다. 문제·대안·영향을 사용자에게 먼저 제안한다.
