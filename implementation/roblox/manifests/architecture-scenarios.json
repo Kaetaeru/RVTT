@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "registryId": "rvtt-greenfield-architecture-scenarios-v1",
   "authorityDocument": "implementation/roblox/ARCHITECTURE-COVERAGE-POLICY.md",
-  "baseRegistry": "implementation/roblox/manifests/architecture-coverage.json",
+  "baseRegistry": "implementation/roblox/manifests/scenario-base-catalog.json",
   "scope": "DESIGNED_PRODUCT_SCENARIOS_NOT_YET_REPRESENTED_IN_BASE_CATALOG",
   "policy": {
     "scenarioDoesNotAuthorizeArchitectureChange": true,
