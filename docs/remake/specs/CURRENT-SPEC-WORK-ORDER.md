@@ -1,64 +1,55 @@
 # RVTT Implementation Specs 현재 상태
 
-- 상태: `BASELINE_COMPLETE · STUDIO_FIRST_HANDOFF`
-- 최종 갱신일: 2026-08-12
+- 상태: `REFERENCE_BASELINE_COMPLETE · NOT_CURRENT_IMPLEMENTATION_AUTHORITY`
+- 최종 갱신일: 2026-08-13
 - 상위 작업 순서: [`../CURRENT-WORK-ORDER.md`](../CURRENT-WORK-ORDER.md)
-- Production 작업 순서: [`implementation/roblox/CURRENT-WORK-ORDER.md`](../../../implementation/roblox/CURRENT-WORK-ORDER.md)
+- 현재 구현 권위: [`../../../implementation/roblox/IMPLEMENTATION-MODEL.md`](../../../implementation/roblox/IMPLEMENTATION-MODEL.md)
 
 ## 역할
 
-이 문서는 16개 Slice Baseline Spec과 ADR-0092 Delta의 준비 상태를 기록한다. **현재 Runtime 개발 순서를 소유하지 않는다.** 실제 개발 순서는 Production Work Order와 Studio 결과가 소유한다.
+이 문서는 16개 Slice Baseline Spec과 ADR Delta의 준비·역사 상태를 기록한다. **현재 Runtime 개발 순서, Module split, Stable Function, Source/Studio 시작 시점을 소유하지 않는다.**
+
+기존 Spec은 Product/Architecture 요구를 추적하는 reference corpus로 사용할 수 있지만, 폐기된 Greenfield 구현 모델의 Module/Type/Command/Execution 구조를 새 구현에 자동 재사용하지 않는다.
 
 ## 현재 상태
 
 ```text
 16 Slice Baseline
-→ COMPLETE
+→ HISTORICAL/REQUIREMENT REFERENCE COMPLETE
 
-UI·UX Global Policy
-→ COMPLETE
+Current System Model
+→ 34 Systems
 
-Production Baseline Source
-→ EXISTS
+Requirement Capability
+→ 30
 
-ADR-0092 Upper Planning
-→ COMPLETE
+Clean Scenario
+→ 61
 
-ADR-0092 Slice 06·07 Delta
-→ COMPLETE
+R3
+→ VALIDATED · NOT FROZEN
 
-ADR-0092 Slice 11·12·15·16
-→ QUEUED
+Source
+→ NOT STARTED / BLOCKED
+
+Studio/MCP
+→ BLOCKED UNTIL CORE_ENGINE_COMPLETE
 ```
 
-## Studio-first 인계
-
-Spec은 구현자가 중요한 제품·Authority 결정을 추측하지 않을 정도로 명확해야 한다. 하지만 Studio에서 빠르게 판단 가능한 배치·감각·표현 세부를 문서만으로 과도하게 고정하지 않는다.
-
-Production 구현은:
+## 현재 인계 규칙
 
 ```text
-Spec·Authority 읽기
-→ 기존 Source Mapping
-→ Studio MCP 직접 구현·Play
-→ 사용자 판단
-→ Source 정규화
-→ Focused Test
+사용자 R3 Freeze
+→ R4 E0 Checkpoint Freeze
+→ 현재 System/Requirement/Scenario pressure에서 Module/Stable Function JIT 도출
+→ Dedicated Implementation Branch
+→ E0 Repository 구현
+→ CORE_ENGINE_COMPLETE
+→ E1 Studio/MCP Runtime Integration
 ```
 
-를 따른다.
+과거 `Studio-first handoff`, 기존 Source Mapping, Slice별 implementation sequence는 현재 실행 명령이 아니다.
 
-## ADR-0092 순서
+## 사용 방법
 
-1. Slice 06 — Supply Metadata·Protection·Allocation·Reservation
-2. Slice 07 — Policy·Settlement·Ledger
-3. Slice 11 — Campaign Rules·Supply Preview·Reconcile DM Tool
-4. Slice 12 — Requirement·Schema·Catalog Content Platform
-5. Slice 15 — Actor Model·Stat Block·Template Pipeline
-6. Slice 16 — Integration·Fault·Disclosure·Performance·Runbook
-
-후속 Phase의 중요한 제품 의미를 선행 Phase에서 임의로 확정하지 않는다.
-
-## 사용자 결정 Gate
-
-Studio 구현 중 Spec보다 나아 보이는 제품·Architecture 방향이 발견되면 해당 Spec을 바로 바꾸지 않는다. 사용자에게 대안과 영향 범위를 먼저 제안한다.
+R4에서 특정 Checkpoint를 설계할 때 필요한 Product/Architecture 요구를 확인하기 위한 근거로 선택적으로 읽는다. 현재 권위와 충돌하면 `AGENTS.md`, Active Task, Accepted ADR, Current Architecture, Current Implementation Model이 우선한다.
