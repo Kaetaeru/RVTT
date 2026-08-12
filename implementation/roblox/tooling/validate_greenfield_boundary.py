@@ -11,10 +11,10 @@ MODEL = ROOT / "IMPLEMENTATION-MODEL.md"
 SYSTEMS = ROOT / "SYSTEMS.md"
 AGENTS = REPO_ROOT / "AGENTS.md"
 CURRENT_MANIFEST = ROOT / "manifests/implementation-system-model.json"
+BASE_SCENARIOS = ROOT / "manifests/scenario-base-catalog.json"
+EXPANDED_SCENARIOS = ROOT / "manifests/scenario-expanded-catalog.json"
+SEMANTIC_AUDIT_V3 = ROOT / "manifests/scenario-semantic-audit-v3.json"
 
-# User-directed implementation-model reset started from this PR head.
-# Legacy files already changed earlier in the planning PR are accepted as historical baseline,
-# but no new Legacy mutation is allowed after this point.
 RESET_BASELINE_COMMIT = "cce0f4fbc01e91437ccbfc8b2341d903f15bc785"
 LEGACY_LOCK_PATHS = [
     "implementation/roblox/src",
@@ -43,20 +43,30 @@ def main() -> int:
     systems = SYSTEMS.read_text(encoding="utf-8") if SYSTEMS.exists() else ""
     agents = AGENTS.read_text(encoding="utf-8")
 
-    if "R3_REPAIRED_AWAITING_FREEZE_DECISION" not in active:
-        errors.append("active task must remain in repaired-but-not-frozen R3 state until user Freeze decision")
+    if "- status: `R3_VALIDATED_AWAITING_FREEZE_DECISION`" not in active:
+        errors.append("active task status must be exactly R3_VALIDATED_AWAITING_FREEZE_DECISION until user Freeze decision")
     if "sourceImplementationAllowed: `false`" not in active:
         errors.append("source implementation must remain disabled during R3 planning")
     if "studioImplementationAllowed: `false`" not in active:
         errors.append("Studio implementation must remain disabled during R3 planning")
     if "OLD GREENFIELD MODEL = RETIRED" not in agents:
         errors.append("AGENTS.md must declare old Greenfield model retired")
+    if "R3 = VALIDATED · NOT FROZEN · AWAITING USER FREEZE DECISION" not in agents:
+        errors.append("AGENTS.md current state must match validated-awaiting-freeze execution state")
+    if "NEXT = USER R3 FREEZE DECISION" not in agents:
+        errors.append("AGENTS.md next action must be user R3 Freeze decision")
     if "SYSTEM_MODEL_V2_REPAIRED" not in model:
         errors.append("implementation model must declare repaired System Model v2")
     if "APPROVED_SYSTEM_AUTHORITY" not in systems or "34 System Responsibility Model" not in systems:
         errors.append("SYSTEMS.md repaired 34-System authority marker missing")
-    if not CURRENT_MANIFEST.exists():
-        errors.append("implementation-system-model.json must exist")
+    for path, label in (
+        (CURRENT_MANIFEST, "implementation-system-model.json"),
+        (BASE_SCENARIOS, "scenario-base-catalog.json"),
+        (EXPANDED_SCENARIOS, "scenario-expanded-catalog.json"),
+        (SEMANTIC_AUDIT_V3, "scenario-semantic-audit-v3.json"),
+    ):
+        if not path.exists():
+            errors.append(f"{label} must exist before R3 Freeze")
     if "DEDICATED IMPLEMENTATION BRANCH = NOT YET CREATED" not in model:
         errors.append("dedicated implementation branch must not be created before R4 E0 checkpoint freeze")
 
@@ -80,7 +90,8 @@ def main() -> int:
 
     print(
         "RVTT implementation planning boundary validation passed: "
-        f"resetBaseline={RESET_BASELINE_COMMIT[:12]}; systemModel=34-v2-repaired; R3=NOT_FROZEN; "
+        f"resetBaseline={RESET_BASELINE_COMMIT[:12]}; systemModel=34-v2-repaired; "
+        "R3=VALIDATED_AWAITING_FREEZE; cleanScenarioCatalogs=PASS; "
         "source=BLOCKED; studio=BLOCKED; legacy write-lock=PASS"
     )
     return 0
