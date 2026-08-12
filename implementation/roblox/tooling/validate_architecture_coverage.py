@@ -11,6 +11,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = ROOT.parents[1]
 LEGACY_COVERAGE = ROOT / "manifests/architecture-coverage.json"
+BASE_SCENARIOS = ROOT / "manifests/scenario-base-catalog.json"
 SCENARIOS = ROOT / "manifests/architecture-scenarios.json"
 CURRENT_MODEL = ROOT / "manifests/implementation-system-model.json"
 MODEL_DOC = ROOT / "IMPLEMENTATION-MODEL.md"
@@ -52,6 +53,7 @@ def main() -> int:
     errors: list[str] = []
     try:
         legacy = load_json(LEGACY_COVERAGE)
+        base = load_json(BASE_SCENARIOS)
         expanded = load_json(SCENARIOS)
         current = load_json(CURRENT_MODEL)
     except Exception as exc:
@@ -92,16 +94,18 @@ def main() -> int:
                     "perform semantic coverage review before updating the snapshot"
                 )
 
-    base_scenarios = legacy.get("scenarios", [])
+    if base.get("registryId") != "rvtt-scenario-base-catalog-v1":
+        errors.append("canonical base scenario source must be rvtt-scenario-base-catalog-v1")
+    base_scenarios = base.get("scenarios", [])
     expanded_scenarios = expanded.get("scenarios", [])
     if not isinstance(base_scenarios, list):
-        errors.append("legacy coverage.scenarios must be an array")
+        errors.append("scenario-base-catalog.scenarios must be an array")
         base_scenarios = []
     if not isinstance(expanded_scenarios, list):
         errors.append("architecture-scenarios.scenarios must be an array")
         expanded_scenarios = []
 
-    legacy_scenario_ids: list[str] = []
+    scenario_ids: list[str] = []
     for source, scenario in [("base", s) for s in base_scenarios] + [("expanded", s) for s in expanded_scenarios]:
         if not isinstance(scenario, dict):
             errors.append(f"{source} scenario entry must be object")
@@ -110,17 +114,17 @@ def main() -> int:
         if not isinstance(sid, str) or not sid:
             errors.append(f"{source} scenario.id is required")
             continue
-        legacy_scenario_ids.append(sid)
+        scenario_ids.append(sid)
         if not isinstance(scenario.get("steps"), list) or not scenario.get("steps"):
             errors.append(f"{sid}: steps must be non-empty")
         if not isinstance(scenario.get("negativeCases"), list) or not scenario.get("negativeCases"):
             errors.append(f"{sid}: negativeCases must be non-empty")
         if not isinstance(scenario.get("expectedOutcome"), str) or not scenario.get("expectedOutcome", "").strip():
             errors.append(f"{sid}: expectedOutcome is required")
-    if len(legacy_scenario_ids) != len(set(legacy_scenario_ids)):
+    if len(scenario_ids) != len(set(scenario_ids)):
         errors.append("base + expanded scenario ids must be unique")
-    if len(legacy_scenario_ids) != 61:
-        errors.append(f"representative scenario catalog must contain 61 scenarios, found {len(legacy_scenario_ids)}")
+    if len(scenario_ids) != 61:
+        errors.append(f"representative scenario catalog must contain 61 scenarios, found {len(scenario_ids)}")
 
     if current.get("status") != "ACTIVE_R3_REPAIRED_PENDING_FREEZE":
         errors.append("implementation-system-model status must be ACTIVE_R3_REPAIRED_PENDING_FREEZE")
@@ -302,10 +306,10 @@ def main() -> int:
         errors.append(f"scenarioTrace must contain 61 entries, found {len(trace_ids)}")
     if len(trace_ids) != len(set(trace_ids)):
         errors.append("scenarioTrace ids must be unique")
-    if set(trace_ids) != set(legacy_scenario_ids):
+    if set(trace_ids) != set(scenario_ids):
         errors.append(
             "scenarioTrace ID set must exactly match base+expanded scenario catalogs; "
-            f"missing={sorted(set(legacy_scenario_ids)-set(trace_ids))} extra={sorted(set(trace_ids)-set(legacy_scenario_ids))}"
+            f"missing={sorted(set(scenario_ids)-set(trace_ids))} extra={sorted(set(trace_ids)-set(scenario_ids))}"
         )
     unused_requirements = sorted(req_set - used_requirements)
     if unused_requirements:
