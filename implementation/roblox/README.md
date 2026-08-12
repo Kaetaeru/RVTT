@@ -1,80 +1,68 @@
 # RVTT Roblox Implementation Workspace
 
-이 디렉터리는 RVTT의 Production Source, Test, Rojo Project, Runtime·Release Tooling을 둔다.
+- 상태: `R3_VALIDATED · NOT_FROZEN · SOURCE_BLOCKED · STUDIO_BLOCKED`
+- 현재 실행 권위: [`../../AGENTS.md`](../../AGENTS.md) → [`.github/CODEX-ACTIVE-TASK.md`](../../.github/CODEX-ACTIVE-TASK.md)
+- 구현 모델: [`IMPLEMENTATION-MODEL.md`](IMPLEMENTATION-MODEL.md)
+- System 권위: [`SYSTEMS.md`](SYSTEMS.md)
 
-## 먼저 읽을 것
+이 디렉터리는 현재와 과거의 Roblox Source/Test/Tooling을 함께 보존한다. **파일이 존재한다는 이유만으로 현재 구현 권위나 재사용 대상이 되지 않는다.**
 
-현재 실행할 작업은 이 디렉터리의 여러 문서에서 추측하지 않는다.
+## 현재 읽기 순서
 
 ```text
 AGENTS.md
-→ .github/README.md
 → .github/CODEX-ACTIVE-TASK.md
-→ 그 파일의 commandPath
+→ IMPLEMENTATION-MODEL.md
+→ SYSTEMS.md
+→ current machine-readable manifests
 ```
 
-- [`CURRENT-WORK-ORDER.md`](CURRENT-WORK-ORDER.md) — 단계·기능군 우선순위 Context
-- [`MODULE-CONTRACTS.md`](MODULE-CONTRACTS.md) — Production Module 안정 경계
-- [`EXECUTION-TEST-RULES.md`](EXECUTION-TEST-RULES.md) — Studio-first 개발과 Release 검증 구분
-- [`ROBLOX-STUDIO-MCP-TEST-POLICY.md`](ROBLOX-STUDIO-MCP-TEST-POLICY.md) — MCP 직접 구현 규칙
-- [`CODEX-REVIEW-TEST-GATE.md`](CODEX-REVIEW-TEST-GATE.md) — Stabilization·고위험 Review Gate
-- [`FULL-UI-UX-ACCEPTANCE.md`](FULL-UI-UX-ACCEPTANCE.md) — Release/Regression Acceptance Reference, 현재 작업 아님
-- [`GRAND-ACCEPTANCE-CAMPAIGN.md`](GRAND-ACCEPTANCE-CAMPAIGN.md) — Release 통합 Campaign, 현재 작업 아님
-- [`ADR-0092-PHASED-PRODUCTION-PLAN.md`](ADR-0092-PHASED-PRODUCTION-PLAN.md) — Queued ADR-0092 기능 순서
+현재 상태는 `R3_VALIDATED_AWAITING_FREEZE_DECISION`이다. Source와 Studio/MCP 구현을 시작하지 않는다.
 
-## 현재 개발 루프
+## Source 경계
 
 ```text
-GitHub Authority·Module Contract·Source 조사
-→ Studio MCP로 현재 DataModel 조사
-→ 실제 UI·Instance·Script 구현
-→ Play
-→ 즉시 수정
-→ 사용자 판단
-→ GitHub Source·필요한 Module Contract·Rojo Mapping 정규화
-→ Focused Test
+src/**
+= 기존 Production Source
+= READ_ONLY_REFERENCE
+= 새 Greenfield 구현 baseline 아님
+= 자동 재사용 금지
+
+greenfield/src/**
+= 새 Greenfield Source root
+= 현재 비어 있음
+= R3/R4 동안 BLOCKED
 ```
 
-Acceptance Harness와 Grand Campaign은 위 루프의 선행조건이 아니다.
+`default.project.json`과 기존 `src/**`는 legacy reference/regression surface로 잠겨 있다. 새 구현은 R3 Freeze 후 R4 E0 Checkpoint를 확정하고 Dedicated Implementation Branch를 만든 뒤 `greenfield/src/**`에서 시작한다.
 
-## Source 구조
+## 현재 실행 순서
 
 ```text
-src/ReplicatedFirst
-src/ReplicatedStorage
-src/ServerScriptService
-src/ServerStorage
-src/StarterGui
-src/StarterPlayer
-tests
-tooling
+R3 validation complete
+→ 사용자 R3 Freeze 결정
+→ R4 E0 Checkpoint Freeze
+→ Dedicated Implementation Branch
+→ E0 Repository Core Engine 구현/자동 검증
+→ CORE_ENGINE_COMPLETE
+→ E1 Roblox Runtime Checkpoint Freeze
+→ Studio/MCP Runtime Provider + Integration
+→ INTEGRATION_READY
+→ U0 Product UI Shell
+→ UI_SHELL_READY
+→ E2 Presentation / Feel
 ```
 
-## Rojo Project
+**CORE_ENGINE_COMPLETE 전 Studio/MCP 구현은 금지한다.**
 
-- `default.project.json` — Production Place
-- `test.project.json` — Unit·Integration
-- `multi-client.project.json` — DM·Player·Observer
-- `live-datastore.project.json` — DataStore Baseline
-- `persistence-acceptance.project.json` — Persistence Acceptance
-- `slice01-acceptance.project.json` — World/Context Focused Regression Harness
+## Studio/MCP 역할
 
-Rojo는 Source↔DataModel 연결, 재현 가능한 Build와 CI를 담당한다. 매 개발 Play마다 Acceptance Place를 새로 Build할 필요는 없다.
+Studio/MCP는 폐기하지 않는다. E1에서 Roblox-dependent provider와 실제 DataModel integration을 직접 구현·실행·관찰하는 핵심 개발 환경으로 사용한다. 다만 현재 R3/R4와 E0 이전에는 사용하지 않는다.
 
-## Historical / Release reference 주의
+## CI 해석 주의
 
-- `tests/Slice01Acceptance/`는 현재 `slice01-acceptance.project.json`에 마운트되지 않는 legacy persistence-era harness다.
-- 현재 Slice01 focused project는 `tests/WorldTokenAcceptance`와 `tests/ContextInputAcceptance`를 마운트하고 Persistence를 끈다.
-- `FULL-UI-UX-ACCEPTANCE.md` 안의 Phase 10 상태는 historical static snapshot이며 현재 개발 작업 순서가 아니다.
-- `.github/archive/**`는 과거 Codex Command 보존소다.
+`Validate RVTT implementation` 등 기존 Source/Test Workflow는 잠긴 legacy `src/**` reference의 regression/재현성 검증이다. 그 성공은 새 Greenfield Source가 구현되었거나 `CORE_ENGINE_COMPLETE`를 달성했다는 뜻이 아니다.
 
-## 핵심 Production 경계
+## Retired 문서
 
-- Client는 Intent만 제출한다.
-- Server가 Authorization·Rules·Transaction·Projection을 소유한다.
-- UI는 Remote를 직접 호출하지 않는다.
-- Player·DM·Observer 정보는 Viewer별 Projection으로 분리한다.
-- Private Content와 Credential을 Public Source·Client에 노출하지 않는다.
-- Studio-only Production 의존성을 남기지 않는다.
-- AI Draft와 Campaign Data를 실행 Code로 사용하지 않는다.
-- 문서·Static·Codex Review PASS는 Runtime PASS가 아니다.
+`MODULE-CONTRACTS.md`, `SYSTEM-FUNCTION-CONTRACTS.md`, `GREENFIELD-EXECUTION-LAYERS.md`, `GREENFIELD-SYSTEM-SEQUENCE.md`, `GREENFIELD-PREFLIGHT.md` 등 `RETIRED_IMPLEMENTATION_MODEL` 표기가 있는 문서는 역사적 reference다. R4에서 새 Module/Stable Function/Checkpoint를 처음부터 도출한다.
