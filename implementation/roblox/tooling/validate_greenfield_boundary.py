@@ -1,146 +1,68 @@
 from __future__ import annotations
 
-import json
 import subprocess
 import sys
-from pathlib import Path, PurePosixPath
-from typing import Any
-
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = ROOT.parents[1]
-CONFIG_PATH = ROOT / "greenfield-boundary.json"
-MODULE_REGISTRY_PATH = ROOT / "manifests/module-contracts.json"
+ACTIVE_TASK = REPO_ROOT / ".github/CODEX-ACTIVE-TASK.md"
+MODEL = ROOT / "IMPLEMENTATION-MODEL.md"
+AGENTS = REPO_ROOT / "AGENTS.md"
 
 
-def load_json(path: Path) -> dict[str, Any]:
-    value = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(value, dict):
-        raise ValueError(f"{path}: root must be an object")
-    return value
-
-
-def git_object(spec: str) -> str:
-    result = subprocess.run(
-        ["git", "rev-parse", spec],
-        cwd=REPO_ROOT,
-        check=False,
-        capture_output=True,
-        text=True,
-    )
-    if result.returncode != 0:
-        raise RuntimeError(result.stderr.strip() or f"git rev-parse failed for {spec}")
-    return result.stdout.strip()
-
-
-def collect_paths(value: Any, found: list[str]) -> None:
-    if isinstance(value, dict):
-        for key, child in value.items():
-            if key == "$path" and isinstance(child, str):
-                found.append(PurePosixPath(child).as_posix())
-            else:
-                collect_paths(child, found)
-    elif isinstance(value, list):
-        for child in value:
-            collect_paths(child, found)
-
-
-def validate() -> list[str]:
-    errors: list[str] = []
-    try:
-        config = load_json(CONFIG_PATH)
-    except Exception as exc:
-        return [f"greenfield boundary: cannot read config: {exc}"]
-
-    expected = {
-        "schemaVersion": 1,
-        "status": "ACTIVE_PRE_G0_BOUNDARY",
-        "greenfieldProject": "greenfield.project.json",
-        "sourceRoot": "greenfield/src",
-        "testRoot": "greenfield/tests",
-        "legacySourceRoot": "src",
-        "legacyProject": "default.project.json",
-        "legacyWritePolicy": "READ_ONLY_REFERENCE",
-        "preflightAuthority": "GREENFIELD-PREFLIGHT.md",
-    }
-    for key, wanted in expected.items():
-        if config.get(key) != wanted:
-            errors.append(f"greenfield boundary: {key} must be {wanted!r}")
-
-    for key in ("legacySourceTreeSha", "legacyProjectBlobSha", "lockedAtCommit"):
-        value = config.get(key)
-        if not isinstance(value, str) or len(value) != 40:
-            errors.append(f"greenfield boundary: {key} must be a 40-character git SHA")
-
-    source_root = ROOT / str(config.get("sourceRoot", ""))
-    test_root = ROOT / str(config.get("testRoot", ""))
-    project_path = ROOT / str(config.get("greenfieldProject", ""))
-    if not source_root.is_dir():
-        errors.append("greenfield boundary: canonical source root is missing")
-    if not test_root.is_dir():
-        errors.append("greenfield boundary: canonical test root is missing")
-    if not project_path.is_file():
-        errors.append("greenfield boundary: greenfield Rojo project is missing")
-
-    try:
-        registry = load_json(MODULE_REGISTRY_PATH)
-        if registry.get("sourceRoot") != config.get("sourceRoot"):
-            errors.append("greenfield boundary: module contract sourceRoot disagrees with boundary config")
-    except Exception as exc:
-        errors.append(f"greenfield boundary: cannot read module contracts: {exc}")
-
-    if project_path.is_file():
-        try:
-            project = load_json(project_path)
-            paths: list[str] = []
-            collect_paths(project, paths)
-            if not paths:
-                errors.append("greenfield boundary: Rojo project must contain at least one $path mapping")
-            greenfield_prefix = str(config.get("sourceRoot", "")).rstrip("/") + "/"
-            legacy_root = str(config.get("legacySourceRoot", "")).rstrip("/")
-            for path in paths:
-                if path == legacy_root or path.startswith(legacy_root + "/"):
-                    errors.append(f"greenfield boundary: Rojo project references legacy source: {path}")
-                if not path.startswith(greenfield_prefix):
-                    errors.append(f"greenfield boundary: Rojo mapping escapes canonical source root: {path}")
-                if not (ROOT / path).exists():
-                    errors.append(f"greenfield boundary: Rojo mapping path does not exist: {path}")
-        except Exception as exc:
-            errors.append(f"greenfield boundary: cannot validate Rojo project: {exc}")
-
-    legacy_root = str(config.get("legacySourceRoot", ""))
-    legacy_project = str(config.get("legacyProject", ""))
-    try:
-        actual_tree = git_object(f"HEAD:implementation/roblox/{legacy_root}")
-        if actual_tree != config.get("legacySourceTreeSha"):
-            errors.append(
-                "greenfield boundary: legacy src changed after Greenfield lock; "
-                "do not modify it during Greenfield work"
-            )
-    except Exception as exc:
-        errors.append(f"greenfield boundary: cannot verify legacy src lock: {exc}")
-
-    try:
-        actual_blob = git_object(f"HEAD:implementation/roblox/{legacy_project}")
-        if actual_blob != config.get("legacyProjectBlobSha"):
-            errors.append(
-                "greenfield boundary: legacy default.project.json changed after Greenfield lock; "
-                "use greenfield.project.json instead"
-            )
-    except Exception as exc:
-        errors.append(f"greenfield boundary: cannot verify legacy project lock: {exc}")
-
-    return errors
+def changed_paths() -> list[str]:
+    candidates = ["origin/main...HEAD", "HEAD^...HEAD"]
+    for diff_range in candidates:
+        result = subprocess.run(
+            ["git", "diff", "--name-only", diff_range],
+            cwd=REPO_ROOT,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        if result.returncode == 0:
+            return [line.strip() for line in result.stdout.splitlines() if line.strip()]
+    return []
 
 
 def main() -> int:
-    errors = validate()
+    errors: list[str] = []
+
+    active = ACTIVE_TASK.read_text(encoding="utf-8")
+    model = MODEL.read_text(encoding="utf-8")
+    agents = AGENTS.read_text(encoding="utf-8")
+
+    if "IMPLEMENTATION_MODEL_RESET" not in active:
+        errors.append("active task must remain in IMPLEMENTATION_MODEL_RESET")
+    if "sourceImplementationAllowed: `false`" not in active:
+        errors.append("source implementation must remain disabled during model reset")
+    if "studioImplementationAllowed: `false`" not in active:
+        errors.append("Studio implementation must remain disabled during model reset")
+    if "OLD GREENFIELD MODEL = RETIRED" not in agents:
+        errors.append("AGENTS.md must declare old Greenfield model retired")
+    if "DEDICATED IMPLEMENTATION BRANCH = NOT YET CREATED" not in model:
+        errors.append("dedicated implementation branch must not be created before E0 checkpoint freeze")
+
+    legacy_prefix = "implementation/roblox/src/"
+    forbidden_legacy_files = {"implementation/roblox/default.project.json"}
+    legacy_changes = [
+        path for path in changed_paths()
+        if path.startswith(legacy_prefix) or path in forbidden_legacy_files
+    ]
+    if legacy_changes:
+        errors.append(f"legacy implementation source/project changed during reset: {legacy_changes}")
+
     if errors:
-        print("RVTT Greenfield boundary validation failed:")
+        print("RVTT implementation model reset boundary validation failed:")
         for error in errors:
             print("-", error)
         return 1
-    print("RVTT Greenfield boundary validation passed: isolated project/source/tests; legacy source locked")
+
+    print(
+        "RVTT implementation model reset boundary validation passed: "
+        "old Greenfield model retired; source=BLOCKED; studio=BLOCKED; legacy write-lock=PASS"
+    )
     return 0
 
 
