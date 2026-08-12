@@ -8,6 +8,7 @@ on:
   pull_request:
     paths:
       - "AGENTS.md"
+      - "AGENTS-PLANNING-ADDENDUM.md"
       - "AGENT-TEST-STATUS.md"
       - ".github/README.md"
       - ".github/CODEX-ACTIVE-TASK.md"
@@ -48,6 +49,7 @@ on:
       - planning/rvtt-remake
     paths:
       - "AGENTS.md"
+      - "AGENTS-PLANNING-ADDENDUM.md"
       - "AGENT-TEST-STATUS.md"
       - ".github/README.md"
       - ".github/CODEX-ACTIVE-TASK.md"
