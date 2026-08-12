@@ -16,6 +16,7 @@ REMAKE_README = REPO_ROOT / "docs/remake/README.md"
 REMAKE_WORK_ORDER = REPO_ROOT / "docs/remake/CURRENT-WORK-ORDER.md"
 SPEC_README = REPO_ROOT / "docs/remake/specs/README.md"
 SPEC_WORK_ORDER = REPO_ROOT / "docs/remake/specs/CURRENT-SPEC-WORK-ORDER.md"
+PROCESS_POLICY = REPO_ROOT / "docs/remake/product/codex-supervised-review-and-test-policy.md"
 MODEL = ROOT / "IMPLEMENTATION-MODEL.md"
 SYSTEMS = ROOT / "SYSTEMS.md"
 WORKSPACE_README = ROOT / "README.md"
@@ -23,6 +24,7 @@ WORK_ORDER = ROOT / "CURRENT-WORK-ORDER.md"
 IMPLEMENTATION_STATUS = ROOT / "IMPLEMENTATION-STATUS.md"
 EXECUTION_RULES = ROOT / "EXECUTION-TEST-RULES.md"
 STUDIO_POLICY = ROOT / "ROBLOX-STUDIO-MCP-TEST-POLICY.md"
+REVIEW_GATE = ROOT / "CODEX-REVIEW-TEST-GATE.md"
 BOUNDARY = ROOT / "greenfield-boundary.json"
 GREENFIELD_PROJECT = ROOT / "greenfield.project.json"
 CURRENT_MANIFEST = ROOT / "manifests/implementation-system-model.json"
@@ -91,6 +93,7 @@ def main() -> int:
         "Remake Work Order": REMAKE_WORK_ORDER.read_text(encoding="utf-8"),
         "Spec README": SPEC_README.read_text(encoding="utf-8"),
         "Spec Work Order": SPEC_WORK_ORDER.read_text(encoding="utf-8"),
+        "Process Policy": PROCESS_POLICY.read_text(encoding="utf-8"),
         "Implementation Model": MODEL.read_text(encoding="utf-8"),
         "SYSTEMS.md": SYSTEMS.read_text(encoding="utf-8"),
         "Workspace README": WORKSPACE_README.read_text(encoding="utf-8"),
@@ -98,6 +101,7 @@ def main() -> int:
         "Implementation Status": IMPLEMENTATION_STATUS.read_text(encoding="utf-8"),
         "Execution Rules": EXECUTION_RULES.read_text(encoding="utf-8"),
         "Studio Policy": STUDIO_POLICY.read_text(encoding="utf-8"),
+        "Review Gate": REVIEW_GATE.read_text(encoding="utf-8"),
     }
 
     required_markers = [
@@ -120,6 +124,10 @@ def main() -> int:
         ("Spec README", "SOURCE = BLOCKED"),
         ("Spec Work Order", "REFERENCE_BASELINE_COMPLETE · NOT_CURRENT_IMPLEMENTATION_AUTHORITY"),
         ("Spec Work Order", "Studio/MCP\n→ BLOCKED UNTIL CORE_ENGINE_COMPLETE"),
+        ("Process Policy", "확정 · STAGED_BY_CURRENT_EXECUTION_GATE"),
+        ("Process Policy", "E0 Repository Core Engine 구현/자동 검증"),
+        ("Process Policy", "CORE_ENGINE_COMPLETE\n→ E1 Runtime Checkpoint Freeze"),
+        ("Process Policy", "현재 R3에서는 Source와 Studio/MCP 구현을 시작하지 않는다"),
         ("Implementation Model", "DEDICATED IMPLEMENTATION BRANCH = NOT YET CREATED"),
         ("Implementation Model", "CORE_ENGINE_COMPLETE 전 Studio/MCP 작업을 시작하지 않는다"),
         ("SYSTEMS.md", "APPROVED_SYSTEM_AUTHORITY"),
@@ -136,6 +144,8 @@ def main() -> int:
         ("Execution Rules", "CORE_ENGINE_COMPLETE 이후에만"),
         ("Studio Policy", "ACTIVE_FUTURE_E1_PATH · CURRENTLY_BLOCKED"),
         ("Studio Policy", "CORE_ENGINE_COMPLETE 전 Studio/MCP 구현을 시작하지 않는다"),
+        ("Review Gate", "ACTIVE · STAGED_BY_CURRENT_EXECUTION_GATE"),
+        ("Review Gate", "현재는 Studio 반복이 기본 개발 모드가 아니다"),
     ]
     for label, marker in required_markers:
         if marker not in texts[label]:
@@ -198,8 +208,9 @@ def main() -> int:
     print(
         "RVTT implementation planning boundary validation passed: "
         f"resetBaseline={RESET_BASELINE_COMMIT[:12]}; R3=VALIDATED_AWAITING_FREEZE; "
-        "routing=CURRENT; current_status_surfaces=PASS; greenfield_source=BLOCKED; "
-        "studio=BLOCKED_UNTIL_CORE_ENGINE_COMPLETE; legacy_src=READ_ONLY_REFERENCE; legacy_write_lock=PASS"
+        "routing=CURRENT; current_status_surfaces=PASS; process_policy=STAGED; "
+        "greenfield_source=BLOCKED; studio=BLOCKED_UNTIL_CORE_ENGINE_COMPLETE; "
+        "legacy_src=READ_ONLY_REFERENCE; legacy_write_lock=PASS"
     )
     return 0
 
