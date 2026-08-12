@@ -42,6 +42,8 @@ Product / Accepted ADR / Current Architecture / UI
 
 ## 3. Scenario Semantic Audit v2
 
+기반 direct-stage layer는 계속 검증한다: **Scenario Semantic Audit = V1 · 61/61**. v2는 이를 폐기하지 않고 Scenario 본문/ingress/recovery 의미를 추가로 묶는다.
+
 ### Body binding
 
 다음을 하나의 검증 단위로 묶는다.
@@ -167,7 +169,7 @@ Client/DM Command
 
 A8 Handler가 상태를 바꿀 필요가 있으면 새 Command/RuleExecution을 제출한다. A8이 Store/A3 internals를 직접 수정하지 않는다.
 
-Durability:
+Durability shorthand는 **A8 delivery semantics → A7 durability seam**이며, 정확한 mechanism은 다음이다.
 
 ```text
 A3 = outbox atomicity + committed event fact
