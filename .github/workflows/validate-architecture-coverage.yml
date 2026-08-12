@@ -24,6 +24,7 @@ on:
       - "implementation/roblox/audits/IMPLEMENTATION-MODEL-R2-SCENARIO-PRESSURE-001.md"
       - "implementation/roblox/audits/IMPLEMENTATION-MODEL-R3-BOUNDARY-001.md"
       - "implementation/roblox/audits/IMPLEMENTATION-MODEL-R3-AUTHORITY-HYGIENE-002.md"
+      - "implementation/roblox/manifests/r3-authority-corpus.json"
       - "implementation/roblox/manifests/architecture-coverage.json"
       - "implementation/roblox/manifests/architecture-scenarios.json"
       - "implementation/roblox/manifests/scenario-base-catalog.json"
@@ -56,6 +57,7 @@ on:
       - "implementation/roblox/audits/IMPLEMENTATION-MODEL-R2-SCENARIO-PRESSURE-001.md"
       - "implementation/roblox/audits/IMPLEMENTATION-MODEL-R3-BOUNDARY-001.md"
       - "implementation/roblox/audits/IMPLEMENTATION-MODEL-R3-AUTHORITY-HYGIENE-002.md"
+      - "implementation/roblox/manifests/r3-authority-corpus.json"
       - "implementation/roblox/manifests/architecture-coverage.json"
       - "implementation/roblox/manifests/architecture-scenarios.json"
       - "implementation/roblox/manifests/scenario-base-catalog.json"
@@ -85,7 +87,7 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Validate repaired system and requirement coverage
+      - name: Validate current R3 authority and repaired system coverage
         run: python implementation/roblox/tooling/validate_architecture_coverage.py
 
       - name: Validate clean scenario catalogs and full semantic audit v3
