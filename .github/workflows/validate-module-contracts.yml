@@ -9,14 +9,17 @@ on:
     paths:
       - "AGENTS.md"
       - ".github/workflows/validate-module-contracts.yml"
+      - "implementation/roblox/ARCHITECTURE-COVERAGE-POLICY.md"
       - "implementation/roblox/MODULE-CONTRACTS.md"
       - "implementation/roblox/SYSTEM-FUNCTION-CONTRACTS.md"
       - "implementation/roblox/GREENFIELD-EXECUTION-LAYERS.md"
       - "implementation/roblox/GREENFIELD-SYSTEM-SEQUENCE.md"
       - "implementation/roblox/ROBLOX-STUDIO-MCP-TEST-POLICY.md"
+      - "implementation/roblox/manifests/architecture-coverage.json"
       - "implementation/roblox/manifests/module-contracts.json"
       - "implementation/roblox/manifests/system-function-contracts.json"
       - "implementation/roblox/manifests/execution-layers.json"
+      - "implementation/roblox/tooling/validate_architecture_coverage.py"
       - "implementation/roblox/tooling/validate_module_contracts.py"
       - "implementation/roblox/tooling/validate_execution_layers.py"
       - "implementation/roblox/greenfield/src/**"
@@ -27,14 +30,17 @@ on:
     paths:
       - "AGENTS.md"
       - ".github/workflows/validate-module-contracts.yml"
+      - "implementation/roblox/ARCHITECTURE-COVERAGE-POLICY.md"
       - "implementation/roblox/MODULE-CONTRACTS.md"
       - "implementation/roblox/SYSTEM-FUNCTION-CONTRACTS.md"
       - "implementation/roblox/GREENFIELD-EXECUTION-LAYERS.md"
       - "implementation/roblox/GREENFIELD-SYSTEM-SEQUENCE.md"
       - "implementation/roblox/ROBLOX-STUDIO-MCP-TEST-POLICY.md"
+      - "implementation/roblox/manifests/architecture-coverage.json"
       - "implementation/roblox/manifests/module-contracts.json"
       - "implementation/roblox/manifests/system-function-contracts.json"
       - "implementation/roblox/manifests/execution-layers.json"
+      - "implementation/roblox/tooling/validate_architecture_coverage.py"
       - "implementation/roblox/tooling/validate_module_contracts.py"
       - "implementation/roblox/tooling/validate_execution_layers.py"
       - "implementation/roblox/greenfield/src/**"
@@ -55,6 +61,9 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+
+      - name: Validate architecture coverage
+        run: python implementation/roblox/tooling/validate_architecture_coverage.py
 
       - name: Validate module system and function contracts
         run: python implementation/roblox/tooling/validate_module_contracts.py
