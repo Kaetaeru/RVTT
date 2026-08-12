@@ -1,0 +1,126 @@
+{
+  "schemaVersion": 1,
+  "registryId": "rvtt-scenario-base-catalog-v1",
+  "authorityDocument": "implementation/roblox/ARCHITECTURE-COVERAGE-POLICY.md",
+  "scope": "CANONICAL_BASE_SCENARIO_BODIES",
+  "policy": {
+    "legacyGreenfieldReferencesExcluded": true,
+    "requirementMappingOwnedBy": "implementation/roblox/manifests/implementation-system-model.json",
+    "semanticAuditOwnedBy": "implementation/roblox/manifests/scenario-semantic-audit.json",
+    "negativeCaseRequired": true
+  },
+  "scenarios": [
+    {
+      "id": "SCN_JOIN_RECONNECT_ACTIVE_SCENE",
+      "status": "BLOCKED",
+      "phase": "E0_E1",
+      "steps": ["join or reconnect", "authority handshake", "snapshot/projection sync", "presentation ready", "gameplay input enabled"],
+      "expectedOutcome": "input is enabled only after epoch-safe authority/projection readiness",
+      "negativeCases": ["stale authority epoch", "projection gap", "reconnect during transition"]
+    },
+    {
+      "id": "SCN_SELECT_VISIBLE_ACTOR",
+      "status": "BLOCKED",
+      "phase": "S1_SELECTION",
+      "steps": ["primary semantic input", "pointer/focus spatial query", "visibility filter", "candidate selection", "local selection presentation"],
+      "expectedOutcome": "only disclosed valid actor candidates can be selected",
+      "negativeCases": ["hidden actor", "stale actor incarnation", "no valid candidate"]
+    },
+    {
+      "id": "SCN_CAMERA_LOCAL_CONTROL",
+      "status": "MAPPED",
+      "phase": "C1_CAMERA",
+      "steps": ["camera semantic input", "CameraController local state", "camera presentation"],
+      "expectedOutcome": "camera changes locally without gameplay command",
+      "negativeCases": ["UI input context captures same physical input"]
+    },
+    {
+      "id": "SCN_CLICK_MOVE_WITH_PATH",
+      "status": "BLOCKED",
+      "phase": "M1_MOVE",
+      "steps": ["destination intent", "server path plan", "preview/approval", "authoritative movement execution", "checkpoint/transaction", "projection/presentation"],
+      "expectedOutcome": "client never commits final token position and runtime path agrees with authoritative movement policy",
+      "negativeCases": ["unreachable destination", "dynamic obstruction", "stale movement budget", "concurrent occupancy"]
+    },
+    {
+      "id": "SCN_EXPLORATION_WASD_MOVE",
+      "status": "BLOCKED",
+      "phase": "M1_MOVE",
+      "steps": ["WASD semantic intent", "server movement policy", "short-horizon traversal validation", "authoritative movement checkpoints", "client interpolation"],
+      "expectedOutcome": "responsive exploration movement remains server authoritative",
+      "negativeCases": ["encounter mode forbids token WASD", "collision/path invalidation", "client position claim"]
+    },
+    {
+      "id": "SCN_CONTEXT_INTERACTION",
+      "status": "BLOCKED",
+      "phase": "X1_I1",
+      "steps": ["selected/focused target", "interaction capability query", "viewer-safe option projection", "command proposal", "server revalidation", "rule execution or adjudication", "transaction/projection"],
+      "expectedOutcome": "context actions are capability-derived rather than target-type hardcoded",
+      "negativeCases": ["hidden capability", "stale target", "out of range", "action opportunity unavailable"]
+    },
+    {
+      "id": "SCN_CHARACTER_CONSOLE_DASH",
+      "status": "DEFERRED_BLOCKED_BY_GAP",
+      "phase": "P3_CHARACTER_CONSOLE",
+      "steps": ["effective capability view", "action opportunity/context resolution", "available action projection", "console button", "server revalidation", "Dash execution", "updated projection"],
+      "expectedOutcome": "client learns Dash availability from server projection, never by reconstructing rules",
+      "negativeCases": ["action already spent", "resource/condition blocks action", "viewer not controller"]
+    },
+    {
+      "id": "SCN_HIDDEN_OBJECT_NONDISCLOSURE",
+      "status": "BLOCKED",
+      "phase": "S1_X1",
+      "steps": ["server computes hidden object/capability", "observer spatial/query context", "disclosure filter", "projection"],
+      "expectedOutcome": "undisclosed object/capability existence is not sent to player",
+      "negativeCases": ["blocked_visible accidentally reveals existence", "candidate count/timing leaks hidden object"]
+    },
+    {
+      "id": "SCN_CONCURRENT_DOOR_INTERACTION",
+      "status": "BLOCKED",
+      "phase": "I1_INTERACTION",
+      "steps": ["two users submit same object interaction", "stable object/revision validation", "ordering reservation", "single atomic commit or idempotent normalization", "projection"],
+      "expectedOutcome": "concurrent interaction cannot create partial or contradictory object state",
+      "negativeCases": ["stale incarnation", "ordering timeout", "state changed"]
+    },
+    {
+      "id": "SCN_ATTACK_REACTION_RESOLUTION",
+      "status": "DEFERRED",
+      "phase": "P3_ENCOUNTER",
+      "steps": ["Attack capability", "selection/frozen target", "RuleExecution", "timing/reaction window", "atomic damage/resource commit", "projection/presentation"],
+      "expectedOutcome": "attack/reaction shares common rule execution and transaction boundaries",
+      "negativeCases": ["reaction reconnect", "duplicate response", "target invalidated before commit"]
+    },
+    {
+      "id": "SCN_ITEM_PICKUP",
+      "status": "DEFERRED",
+      "phase": "P4_INVENTORY",
+      "steps": ["item presence selection", "Pick Up capability", "item/location transaction", "presence removal", "inventory/world projection"],
+      "expectedOutcome": "ItemInstance transfer and world presence change commit atomically",
+      "negativeCases": ["two users pick same item", "private item not disclosed", "container state changed"]
+    },
+    {
+      "id": "SCN_ROLLBACK_THEN_STALE_COMMAND",
+      "status": "DEFERRED",
+      "phase": "P7_RECOVERY",
+      "steps": ["rollback creates new authority epoch", "full resync", "old client command/prompt arrives"],
+      "expectedOutcome": "old epoch command and UI tokens are rejected",
+      "negativeCases": ["late remote response", "stale selection", "stale pending prompt"]
+    },
+    {
+      "id": "SCN_SURVIVAL_SETTLEMENT",
+      "status": "DEFERRED",
+      "phase": "P8_ADR_0092",
+      "steps": ["time advance boundary", "requirements/allocation", "reservation", "DM confirmation/policy", "atomic time+inventory+effect commit", "ledger/projection"],
+      "expectedOutcome": "no partial supply settlement and private consumers do not leak",
+      "negativeCases": ["reservation conflict", "restart during commit", "insufficient supplies", "policy toggle nonretroactivity"]
+    },
+    {
+      "id": "SCN_DM_ACTOR_DRAFT_PUBLISH_SPAWN",
+      "status": "DEFERRED",
+      "phase": "P8_ADR_0092",
+      "steps": ["model registry selection", "strict statblock draft", "validation", "preview", "campaign-local publish", "SceneNpc spawn"],
+      "expectedOutcome": "untrusted AI draft cannot execute code and only validated published data enters runtime",
+      "negativeCases": ["invalid model", "unknown recipe", "script/remote field", "empty model catalog"]
+    }
+  ]
+}
