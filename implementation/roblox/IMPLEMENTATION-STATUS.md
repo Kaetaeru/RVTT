@@ -1,50 +1,51 @@
 # RVTT Production Implementation Status
 
-- 상태: `READY_FOR_G0_PREFLIGHT`
-- 최종 갱신일: 2026-08-12
+- 상태: `R3_VALIDATED · NOT_FROZEN · SOURCE_NOT_STARTED`
+- 최종 갱신일: 2026-08-13
+- 현재 실행 권위: [`../../.github/CODEX-ACTIVE-TASK.md`](../../.github/CODEX-ACTIVE-TASK.md)
 
 ## 현재 상태
 
 ```text
 Legacy Production Source
-→ PRESERVED + WRITE LOCKED AS REFERENCE
+→ PRESERVED
+→ READ_ONLY_REFERENCE
+→ 새 Greenfield baseline 아님
 
 Legacy default.project.json
-→ PRESERVED + WRITE LOCKED AS REFERENCE
+→ PRESERVED
+→ READ_ONLY_REFERENCE
 
 Greenfield Rojo Project
 → PREPARED
 
 Greenfield Source/Test Roots
-→ PREPARED · NO G0 SOURCE YET
+→ PREPARED · EMPTY/NOT STARTED
 
-Current Build
-→ GREENFIELD_ARCHITECTURE_FIRST
+R3 Model
+→ VALIDATED · NOT FROZEN
+
+Source
+→ BLOCKED
+
+Studio/MCP
+→ BLOCKED
 ```
 
-현재 새 Build의 구현 상태는 Legacy Source의 완성도나 과거 PASS에서 상속하지 않는다.
+기존 Production Source의 완성도나 과거 Runtime/Acceptance PASS는 새 Greenfield 구현 상태로 상속하지 않는다.
 
 ## 다음 실행
 
 ```text
-Repository Boundary 검증
-→ Studio Workbench 식별
-→ MCP Capability Handshake
-→ READY_FOR_G0 확인
-→ G0_SHARED_CONTRACTS 구현 시작
+사용자 R3 Freeze 결정
+→ R4 E0 Checkpoint Freeze
+→ Dedicated Implementation Branch
+→ E0 Repository Core Engine 구현/자동 검증
+→ CORE_ENGINE_COMPLETE
+→ E1 Runtime Checkpoint Freeze
+→ Studio/MCP Runtime Provider + Integration
 ```
 
-G0의 `CommandEnvelope`, `ProjectionEnvelope`, `WorldContract`는 아직 구현하지 않은 상태로 유지한다.
+`READY_FOR_G0_PREFLIGHT`, `G0_SHARED_CONTRACTS`, 기존 Module/Stable Function 실행 순서는 폐기된 Greenfield implementation model의 역사적 상태이며 현재 다음 작업이 아니다.
 
-## 이후 순서
-
-```text
-G0 → G1 → G2 → G3 → G4 → G5
-→ S1 Selection
-→ C1 Camera
-→ M1 Move
-→ X1 Context
-→ I1 Interaction
-```
-
-각 사용자 Checkpoint는 수용 후 Authority Reconciliation과 Promotion Commit이 다음 Checkpoint보다 우선한다.
+새 Module/Stable Function은 R4 E0 Checkpoint에서 현재 34-System / 30-Requirement / 61-Scenario 압력으로 처음부터 도출한다.
