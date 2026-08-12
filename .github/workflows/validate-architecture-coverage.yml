@@ -33,6 +33,7 @@ on:
       - "implementation/roblox/manifests/scenario-semantic-audit-v3.json"
       - "implementation/roblox/tooling/validate_architecture_coverage.py"
       - "implementation/roblox/tooling/validate_scenario_semantic_audit.py"
+      - "implementation/roblox/tooling/validate_r3_immutable_evidence.py"
   push:
     branches:
       - main
@@ -64,6 +65,7 @@ on:
       - "implementation/roblox/manifests/scenario-semantic-audit-v3.json"
       - "implementation/roblox/tooling/validate_architecture_coverage.py"
       - "implementation/roblox/tooling/validate_scenario_semantic_audit.py"
+      - "implementation/roblox/tooling/validate_r3_immutable_evidence.py"
   workflow_dispatch:
 
 permissions:
@@ -88,3 +90,6 @@ jobs:
 
       - name: Validate clean scenario catalogs and full semantic audit v3
         run: python implementation/roblox/tooling/validate_scenario_semantic_audit.py
+
+      - name: Validate immutable R3 evidence pins
+        run: python implementation/roblox/tooling/validate_r3_immutable_evidence.py
