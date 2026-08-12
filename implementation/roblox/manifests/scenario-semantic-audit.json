@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "registryId": "rvtt-scenario-semantic-audit-v2",
   "status": "ACTIVE_R3_PENDING_FREEZE",
   "scenarioCount": 61,
@@ -7,9 +7,9 @@
     "baseScenarioBlobSha": "cf82d9829903eca1900cc20d535925c5cf9f9867",
     "expandedScenarioBlobSha": "a36bde28daf236b2192fb8cdb7dcccecb06e6ac8",
     "scenarioTraceDigest": "sha256:57e485a0cec6d753542e4bc202a881e10e2bd5ae63e314cc609c7e2d99f38140",
-    "entryRecoveryDigest": "sha256:6495d053293ae6aa8c032fff682157da003c817db08699dea0a91ff4f5bdafb6",
-    "combinedAuditDigest": "sha256:301639d88a9e8accf6c33e7f42332a8915c558ddb752242db62619e84eccab1b",
-    "combinedDigestInput": "base:<blob>\\nexpanded:<blob>\\ntrace:<digest>\\nentryRecovery:<digest>"
+    "semanticSchemaDigest": "sha256:bba741b54f72b1320bafa7994ca1cc009cf55b3dc909b0035fffac36560a9797",
+    "combinedAuditDigest": "sha256:8d929e2fee969da391344d3877a73315c5b1a8c1cecf2055dcbe9fe40897173e",
+    "combinedDigestInput": "base:<blob>\\nexpanded:<blob>\\ntrace:<digest>\\nschema:<digest>"
   },
   "mutationSemantic": {
     "stage": "MUTATION",
@@ -57,8 +57,8 @@
     "CONTROL_FAILOVER": {"systemRefs": ["A1"], "requirementRefs": ["REQ_SESSION_PLAYABILITY", "REQ_CONTROL_PERMISSION"]}
   },
   "lastKnownGoodOwnerCandidates": ["U1", "W1", "R1", "D1", "D6", "U2"],
-  "effectiveRecoveryScenarioCount": 24,
-  "auditInterpretation": "implementation-system-model.json keeps direct scenario participants; this audit adds typed ingress/recovery boundary expansion to form the effective semantic path without duplicating every common boundary ref into every scenario line.",
+  "effectiveRecoveryScenarioCount": 27,
+  "auditInterpretation": "implementation-system-model.json keeps direct scenario participants; this audit defines the effective R3 semantic path by binding source scenario bodies, direct trace, ingress expansion, recovery expansion, mutation meaning, last-known-good owners, and per-scenario classifications into one digest.",
   "scenarioAudit": [
     {"id":"SCN_JOIN_RECONNECT_ACTIVE_SCENE","entryKinds":["SYNC_CONTROL"],"recoveryKinds":["RECONNECT","CLIENT_RESYNC"]},
     {"id":"SCN_SELECT_VISIBLE_ACTOR","entryKinds":["LOCAL"],"recoveryKinds":[]},
@@ -69,13 +69,13 @@
     {"id":"SCN_CHARACTER_CONSOLE_DASH","entryKinds":["COMMAND"],"recoveryKinds":[]},
     {"id":"SCN_HIDDEN_OBJECT_NONDISCLOSURE","entryKinds":["SERVER_TRIGGER"],"recoveryKinds":[]},
     {"id":"SCN_CONCURRENT_DOOR_INTERACTION","entryKinds":["COMMAND"],"recoveryKinds":[]},
-    {"id":"SCN_ATTACK_REACTION_RESOLUTION","entryKinds":["COMMAND","EVENT_TRIGGER"],"recoveryKinds":[]},
+    {"id":"SCN_ATTACK_REACTION_RESOLUTION","entryKinds":["COMMAND","EVENT_TRIGGER"],"recoveryKinds":["RECONNECT"]},
     {"id":"SCN_ITEM_PICKUP","entryKinds":["COMMAND"],"recoveryKinds":[]},
     {"id":"SCN_ROLLBACK_THEN_STALE_COMMAND","entryKinds":["COMMAND","SYNC_CONTROL"],"recoveryKinds":["ROLLBACK_BRANCH","CLIENT_RESYNC"]},
     {"id":"SCN_SURVIVAL_SETTLEMENT","entryKinds":["COMMAND","SERVER_TRIGGER"],"recoveryKinds":["SERVER_RESTART"]},
     {"id":"SCN_DM_ACTOR_DRAFT_PUBLISH_SPAWN","entryKinds":["COMMAND"],"recoveryKinds":[]},
     {"id":"SCN_CHARACTER_CREATE_LEVEL1","entryKinds":["COMMAND"],"recoveryKinds":[]},
-    {"id":"SCN_CHARACTER_SHEET_LIVE_DAMAGE_SYNC","entryKinds":["LOCAL","EVENT_TRIGGER"],"recoveryKinds":[]},
+    {"id":"SCN_CHARACTER_SHEET_LIVE_DAMAGE_SYNC","entryKinds":["LOCAL","EVENT_TRIGGER"],"recoveryKinds":["CLIENT_RESYNC"]},
     {"id":"SCN_CHARACTER_SHEET_VIEWER_PRIVACY","entryKinds":["READ_REQUEST"],"recoveryKinds":[]},
     {"id":"SCN_LEVEL_UP_ATOMIC_ACTIVATION","entryKinds":["COMMAND"],"recoveryKinds":["LAST_KNOWN_GOOD"]},
     {"id":"SCN_CHARACTER_MIGRATION_MISSING_CONTENT","entryKinds":["SERVER_TRIGGER","COMMAND"],"recoveryKinds":["LAST_KNOWN_GOOD","CLIENT_RESYNC"]},
@@ -104,7 +104,7 @@
     {"id":"SCN_JOURNAL_EDIT_CONFLICT","entryKinds":["COMMAND"],"recoveryKinds":["LAST_KNOWN_GOOD"]},
     {"id":"SCN_POINT_PATH_PING_AUDIENCE","entryKinds":["COMMAND"],"recoveryKinds":[]},
     {"id":"SCN_SCENE_DRAFT_COMPILE_FAIL_LKG","entryKinds":["COMMAND"],"recoveryKinds":["LAST_KNOWN_GOOD"]},
-    {"id":"SCN_SCENE_CANDIDATE_TEST_PUBLISH","entryKinds":["COMMAND","TEST_HARNESS"],"recoveryKinds":[]},
+    {"id":"SCN_SCENE_CANDIDATE_TEST_PUBLISH","entryKinds":["COMMAND","TEST_HARNESS"],"recoveryKinds":["LAST_KNOWN_GOOD"]},
     {"id":"SCN_SCENE_CONCURRENT_EDIT_CONFLICT","entryKinds":["COMMAND"],"recoveryKinds":[]},
     {"id":"SCN_DM_PLAYER_VIEW_PREVIEW","entryKinds":["READ_REQUEST"],"recoveryKinds":[]},
     {"id":"SCN_DM_TAKEOVER_DISCONNECTED_ACTOR","entryKinds":["COMMAND","SYNC_CONTROL"],"recoveryKinds":["CONTROL_FAILOVER","RECONNECT"]},
