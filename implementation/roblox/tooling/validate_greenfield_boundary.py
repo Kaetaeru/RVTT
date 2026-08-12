@@ -10,10 +10,16 @@ REPO_ROOT = ROOT.parents[1]
 ACTIVE_TASK = REPO_ROOT / ".github/CODEX-ACTIVE-TASK.md"
 ROUTING_README = REPO_ROOT / ".github/README.md"
 AGENTS = REPO_ROOT / "AGENTS.md"
+AGENT_TEST_STATUS = REPO_ROOT / "AGENT-TEST-STATUS.md"
+REMAKE_README = REPO_ROOT / "docs/remake/README.md"
+REMAKE_WORK_ORDER = REPO_ROOT / "docs/remake/CURRENT-WORK-ORDER.md"
+SPEC_README = REPO_ROOT / "docs/remake/specs/README.md"
+SPEC_WORK_ORDER = REPO_ROOT / "docs/remake/specs/CURRENT-SPEC-WORK-ORDER.md"
 MODEL = ROOT / "IMPLEMENTATION-MODEL.md"
 SYSTEMS = ROOT / "SYSTEMS.md"
 WORKSPACE_README = ROOT / "README.md"
 WORK_ORDER = ROOT / "CURRENT-WORK-ORDER.md"
+IMPLEMENTATION_STATUS = ROOT / "IMPLEMENTATION-STATUS.md"
 EXECUTION_RULES = ROOT / "EXECUTION-TEST-RULES.md"
 STUDIO_POLICY = ROOT / "ROBLOX-STUDIO-MCP-TEST-POLICY.md"
 BOUNDARY = ROOT / "greenfield-boundary.json"
@@ -74,40 +80,60 @@ def main() -> int:
         print(f"RVTT implementation planning boundary validation failed: {exc}")
         return 1
 
-    active = ACTIVE_TASK.read_text(encoding="utf-8")
-    routing = ROUTING_README.read_text(encoding="utf-8")
-    agents = AGENTS.read_text(encoding="utf-8")
-    model = MODEL.read_text(encoding="utf-8")
-    systems = SYSTEMS.read_text(encoding="utf-8")
-    workspace = WORKSPACE_README.read_text(encoding="utf-8")
-    work_order = WORK_ORDER.read_text(encoding="utf-8")
-    execution_rules = EXECUTION_RULES.read_text(encoding="utf-8")
-    studio_policy = STUDIO_POLICY.read_text(encoding="utf-8")
+    texts = {
+        "Active Task": ACTIVE_TASK.read_text(encoding="utf-8"),
+        "Routing README": ROUTING_README.read_text(encoding="utf-8"),
+        "AGENTS.md": AGENTS.read_text(encoding="utf-8"),
+        "Agent Test Status": AGENT_TEST_STATUS.read_text(encoding="utf-8"),
+        "Remake README": REMAKE_README.read_text(encoding="utf-8"),
+        "Remake Work Order": REMAKE_WORK_ORDER.read_text(encoding="utf-8"),
+        "Spec README": SPEC_README.read_text(encoding="utf-8"),
+        "Spec Work Order": SPEC_WORK_ORDER.read_text(encoding="utf-8"),
+        "Implementation Model": MODEL.read_text(encoding="utf-8"),
+        "SYSTEMS.md": SYSTEMS.read_text(encoding="utf-8"),
+        "Workspace README": WORKSPACE_README.read_text(encoding="utf-8"),
+        "Current Work Order": WORK_ORDER.read_text(encoding="utf-8"),
+        "Implementation Status": IMPLEMENTATION_STATUS.read_text(encoding="utf-8"),
+        "Execution Rules": EXECUTION_RULES.read_text(encoding="utf-8"),
+        "Studio Policy": STUDIO_POLICY.read_text(encoding="utf-8"),
+    }
 
     required_markers = [
-        ("Active Task", active, "- status: `R3_VALIDATED_AWAITING_FREEZE_DECISION`"),
-        ("Active Task", active, "sourceImplementationAllowed: `false`"),
-        ("Active Task", active, "studioImplementationAllowed: `false`"),
-        ("AGENTS.md", agents, "OLD GREENFIELD MODEL = RETIRED"),
-        ("AGENTS.md", agents, "R3 = VALIDATED · NOT FROZEN · AWAITING USER FREEZE DECISION"),
-        ("AGENTS.md", agents, "NEXT = USER R3 FREEZE DECISION"),
-        ("Implementation Model", model, "DEDICATED IMPLEMENTATION BRANCH = NOT YET CREATED"),
-        ("Implementation Model", model, "CORE_ENGINE_COMPLETE 전 Studio/MCP 작업을 시작하지 않는다"),
-        ("SYSTEMS.md", systems, "APPROVED_SYSTEM_AUTHORITY"),
-        ("SYSTEMS.md", systems, "34 System Responsibility Model"),
-        ("Routing README", routing, "R3_VALIDATED_AWAITING_FREEZE_DECISION"),
-        ("Workspace README", workspace, "src/**\n= 기존 Production Source\n= READ_ONLY_REFERENCE"),
-        ("Workspace README", workspace, "greenfield/src/**\n= 새 Greenfield Source root"),
-        ("Workspace README", workspace, "CORE_ENGINE_COMPLETE 전 Studio/MCP 구현은 금지"),
-        ("Current Work Order", work_order, "- 상태: `R3_VALIDATED_AWAITING_FREEZE_DECISION`"),
-        ("Current Work Order", work_order, "NEXT = USER R3 FREEZE DECISION"),
-        ("Execution Rules", execution_rules, "- 상태: `ACTIVE · STAGED_EXECUTION_POLICY`"),
-        ("Execution Rules", execution_rules, "CORE_ENGINE_COMPLETE 이후에만"),
-        ("Studio Policy", studio_policy, "ACTIVE_FUTURE_E1_PATH · CURRENTLY_BLOCKED"),
-        ("Studio Policy", studio_policy, "CORE_ENGINE_COMPLETE 전 Studio/MCP 구현을 시작하지 않는다"),
+        ("Active Task", "- status: `R3_VALIDATED_AWAITING_FREEZE_DECISION`"),
+        ("Active Task", "sourceImplementationAllowed: `false`"),
+        ("Active Task", "studioImplementationAllowed: `false`"),
+        ("AGENTS.md", "OLD GREENFIELD MODEL = RETIRED"),
+        ("AGENTS.md", "R3 = VALIDATED · NOT FROZEN · AWAITING USER FREEZE DECISION"),
+        ("AGENTS.md", "NEXT = USER R3 FREEZE DECISION"),
+        ("Agent Test Status", "CURRENT · R3_VALIDATED_AWAITING_FREEZE_DECISION"),
+        ("Agent Test Status", "STUDIO_BLOCKED"),
+        ("Remake README", "ACTIVE · R3_VALIDATED_AWAITING_FREEZE_DECISION"),
+        ("Remake README", "CORE_ENGINE_COMPLETE 전 Studio/MCP 구현을 시작하지 않는다"),
+        ("Remake Work Order", "ACTIVE · CONTEXT_ONLY · R3_VALIDATED_AWAITING_FREEZE_DECISION"),
+        ("Remake Work Order", "NEXT = USER R3 FREEZE DECISION"),
+        ("Spec README", "REFERENCE_SPEC_CORPUS · NOT_CURRENT_IMPLEMENTATION_MODEL"),
+        ("Spec README", "SOURCE = BLOCKED"),
+        ("Spec Work Order", "REFERENCE_BASELINE_COMPLETE · NOT_CURRENT_IMPLEMENTATION_AUTHORITY"),
+        ("Spec Work Order", "Studio/MCP\n→ BLOCKED UNTIL CORE_ENGINE_COMPLETE"),
+        ("Implementation Model", "DEDICATED IMPLEMENTATION BRANCH = NOT YET CREATED"),
+        ("Implementation Model", "CORE_ENGINE_COMPLETE 전 Studio/MCP 작업을 시작하지 않는다"),
+        ("SYSTEMS.md", "APPROVED_SYSTEM_AUTHORITY"),
+        ("SYSTEMS.md", "34 System Responsibility Model"),
+        ("Routing README", "R3_VALIDATED_AWAITING_FREEZE_DECISION"),
+        ("Workspace README", "src/**\n= 기존 Production Source\n= READ_ONLY_REFERENCE"),
+        ("Workspace README", "greenfield/src/**\n= 새 Greenfield Source root"),
+        ("Workspace README", "CORE_ENGINE_COMPLETE 전 Studio/MCP 구현은 금지"),
+        ("Current Work Order", "- 상태: `R3_VALIDATED_AWAITING_FREEZE_DECISION`"),
+        ("Current Work Order", "NEXT = USER R3 FREEZE DECISION"),
+        ("Implementation Status", "R3_VALIDATED · NOT_FROZEN · SOURCE_NOT_STARTED"),
+        ("Implementation Status", "Studio/MCP\n→ BLOCKED"),
+        ("Execution Rules", "- 상태: `ACTIVE · STAGED_EXECUTION_POLICY`"),
+        ("Execution Rules", "CORE_ENGINE_COMPLETE 이후에만"),
+        ("Studio Policy", "ACTIVE_FUTURE_E1_PATH · CURRENTLY_BLOCKED"),
+        ("Studio Policy", "CORE_ENGINE_COMPLETE 전 Studio/MCP 구현을 시작하지 않는다"),
     ]
-    for label, text, marker in required_markers:
-        if marker not in text:
+    for label, marker in required_markers:
+        if marker not in texts[label]:
             errors.append(f"{label}: missing current-boundary marker {marker}")
 
     expected_boundary = {
@@ -167,8 +193,8 @@ def main() -> int:
     print(
         "RVTT implementation planning boundary validation passed: "
         f"resetBaseline={RESET_BASELINE_COMMIT[:12]}; R3=VALIDATED_AWAITING_FREEZE; "
-        "routing=CURRENT; greenfield_source=BLOCKED; studio=BLOCKED_UNTIL_CORE_ENGINE_COMPLETE; "
-        "legacy_src=READ_ONLY_REFERENCE; legacy_write_lock=PASS"
+        "routing=CURRENT; current_status_surfaces=PASS; greenfield_source=BLOCKED; "
+        "studio=BLOCKED_UNTIL_CORE_ENGINE_COMPLETE; legacy_src=READ_ONLY_REFERENCE; legacy_write_lock=PASS"
     )
     return 0
 
