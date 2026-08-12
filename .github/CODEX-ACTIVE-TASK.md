@@ -10,6 +10,7 @@
 - buildMode: `GREENFIELD_ARCHITECTURE_FIRST`
 - coverageAuthorityDoc: `implementation/roblox/ARCHITECTURE-COVERAGE-POLICY.md`
 - coverageRegistry: `implementation/roblox/manifests/architecture-coverage.json`
+- scenarioRegistry: `implementation/roblox/manifests/architecture-scenarios.json`
 - coverageAudit: `implementation/roblox/audits/ARCHITECTURE-COVERAGE-AUDIT-001.md`
 - coverageValidator: `implementation/roblox/tooling/validate_architecture_coverage.py`
 - executionAuthorityDoc: `implementation/roblox/GREENFIELD-EXECUTION-LAYERS.md`
@@ -38,12 +39,14 @@ Initial Architecture Coverage Audit에서 상위 Product/ADR/Architecture와 현
 ```text
 Authority Corpus
 → Capability Catalog
-→ Scenario Trace
+→ Base + Expanded Scenario Trace
 → Cross-cutting Matrix
 → Gap Resolution
 → Coverage Gate PASS
 → E0 Repository Core Engine
 ```
+
+`architecture-coverage.json`의 초기 Scenario와 `architecture-scenarios.json`의 확장 Scenario를 하나의 현재 Scenario Catalog로 취급한다.
 
 ## 현재 E0 Blocker
 
@@ -63,14 +66,17 @@ GAP-008 RuleExecution Boundary
 1. `AGENTS.md`를 읽는다.
 2. 이 파일을 읽는다.
 3. `ARCHITECTURE-COVERAGE-POLICY.md`를 읽는다.
-4. `architecture-coverage.json`과 Initial Audit를 읽는다.
-5. `validate_architecture_coverage.py`를 실행한다.
-6. Coverage Authority Tree Snapshot이 현재 Checkout과 일치하는지 확인한다.
-7. E0 Blocker를 의존성 순서로 검토한다.
-8. 각 Gap마다 현재 문제, 최소 경계 대안, 미래 확장 영향, 기존 Contract 영향 범위를 사용자에게 제안한다.
-9. 사용자 결정 전에는 System/Module/Stable Function 책임을 실질적으로 추가·분리·통합하지 않는다.
-10. Gap을 하나씩 해결하면서 Coverage Registry와 상위 Authority/Contract를 Top-down 정합화한다.
-11. E0 `blockedBy`가 비고 `implementationGate=READY_FOR_E0`가 된 뒤에만 Source 구현 모드로 전환한다.
+4. `architecture-coverage.json`을 읽는다.
+5. `architecture-scenarios.json`을 읽고 현재/미래 사용자·DM·운영 Scenario를 확인한다.
+6. Initial Audit를 읽는다.
+7. `validate_architecture_coverage.py`를 실행한다.
+8. Coverage Authority Tree Snapshot이 현재 Checkout과 일치하는지 확인한다.
+9. E0 Blocker를 의존성 순서로 검토한다.
+10. 각 Gap마다 현재 문제, 최소 경계 대안, 미래 확장 영향, 기존 Contract 영향 범위를 사용자에게 제안한다.
+11. 해당 Gap이 어떤 Base/Expanded Scenario를 막는지도 함께 확인한다.
+12. 사용자 결정 전에는 System/Module/Stable Function 책임을 실질적으로 추가·분리·통합하지 않는다.
+13. Gap을 하나씩 해결하면서 Coverage Registry와 상위 Authority/Contract를 Top-down 정합화한다.
+14. E0 `blockedBy`가 비고 `implementationGate=READY_FOR_E0`가 된 뒤에만 Source 구현 모드로 전환한다.
 
 ## Gap Resolution 권장 순서
 
@@ -100,6 +106,8 @@ Validator가 확인하는 것:
 
 - Product/ADR/Architecture/System/UI/Spec Authority Tree Snapshot.
 - Capability/Scenario/Gap reference integrity.
+- Base + Expanded Scenario ID 중복과 Capability 참조.
+- Scenario Steps·Expected Outcome·Negative Case 존재.
 - 모든 현재 System/Module의 Product Capability mapping.
 - Cross-cutting Dimension 누락.
 - Phase Gate와 Gap consistency.
@@ -154,7 +162,7 @@ Playable Checkpoint 최종 수용 시에는:
 사용자 최종 수용
 → Authority Impact Scan
 → Product / ADR / Architecture / System / UI / Spec
-→ Architecture Coverage Capability / Scenario / Gap
+→ Architecture Coverage Capability / Base+Expanded Scenario / Gap
 → Execution / System / Module / Stable Function Contract
 → Canonical Source / Tests
 → conflict re-scan
@@ -169,24 +177,26 @@ Playable Checkpoint 최종 수용 시에는:
 2. 이 파일
 3. `implementation/roblox/ARCHITECTURE-COVERAGE-POLICY.md`
 4. `implementation/roblox/manifests/architecture-coverage.json`
-5. `implementation/roblox/audits/ARCHITECTURE-COVERAGE-AUDIT-001.md`
-6. `implementation/roblox/GREENFIELD-EXECUTION-LAYERS.md`
-7. `implementation/roblox/manifests/execution-layers.json`
-8. `implementation/roblox/GREENFIELD-PREFLIGHT.md`
-9. `implementation/roblox/GREENFIELD-SYSTEM-SEQUENCE.md`
-10. `implementation/roblox/MODULE-CONTRACTS.md`
-11. `implementation/roblox/SYSTEM-FUNCTION-CONTRACTS.md`
-12. `implementation/roblox/manifests/module-contracts.json`
-13. `implementation/roblox/manifests/system-function-contracts.json`
-14. 현재 `commandPath`
-15. `implementation/roblox/AUTHORITY-RECONCILIATION-POLICY.md`
-16. Gap Evidence가 가리키는 Product/ADR/Architecture/System/UI/Spec
-17. Legacy Source는 필요한 경우 읽기 참고만
+5. `implementation/roblox/manifests/architecture-scenarios.json`
+6. `implementation/roblox/audits/ARCHITECTURE-COVERAGE-AUDIT-001.md`
+7. `implementation/roblox/GREENFIELD-EXECUTION-LAYERS.md`
+8. `implementation/roblox/manifests/execution-layers.json`
+9. `implementation/roblox/GREENFIELD-PREFLIGHT.md`
+10. `implementation/roblox/GREENFIELD-SYSTEM-SEQUENCE.md`
+11. `implementation/roblox/MODULE-CONTRACTS.md`
+12. `implementation/roblox/SYSTEM-FUNCTION-CONTRACTS.md`
+13. `implementation/roblox/manifests/module-contracts.json`
+14. `implementation/roblox/manifests/system-function-contracts.json`
+15. 현재 `commandPath`
+16. `implementation/roblox/AUTHORITY-RECONCILIATION-POLICY.md`
+17. Gap Evidence와 관련 Scenario가 가리키는 Product/ADR/Architecture/System/UI/Spec
+18. Legacy Source는 필요한 경우 읽기 참고만
 
 ## 지금 하지 않는 것
 
 - E0 Source 구현.
 - Coverage Gap을 무시한 임시 System/Module 추가.
+- Scenario 추가를 Architecture 승인으로 해석.
 - Spatial Query 대신 Controller에서 Workspace 직접 순회.
 - Context Menu를 대상 타입별 하드코딩으로 우회.
 - Character/Interaction Capability를 Client가 재계산하도록 구현.
