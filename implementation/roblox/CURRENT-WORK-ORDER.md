@@ -5,6 +5,8 @@
 - 현재 실행 포인터: [`../../.github/CODEX-ACTIVE-TASK.md`](../../.github/CODEX-ACTIVE-TASK.md)
 - Pre-G0 Gate: [`GREENFIELD-PREFLIGHT.md`](GREENFIELD-PREFLIGHT.md)
 - 시스템 순서 권위: [`GREENFIELD-SYSTEM-SEQUENCE.md`](GREENFIELD-SYSTEM-SEQUENCE.md)
+- Module Contract: [`MODULE-CONTRACTS.md`](MODULE-CONTRACTS.md)
+- System/Function Contract: [`SYSTEM-FUNCTION-CONTRACTS.md`](SYSTEM-FUNCTION-CONTRACTS.md)
 - Greenfield 정책: [`GREENFIELD-BUILD-POLICY.md`](GREENFIELD-BUILD-POLICY.md)
 - 확정 동기화 Gate: [`AUTHORITY-RECONCILIATION-POLICY.md`](AUTHORITY-RECONCILIATION-POLICY.md)
 
@@ -13,14 +15,31 @@
 Repository 측 G0 사전 준비의 목표 상태는 다음이다.
 
 ```text
-Greenfield Project = implementation/roblox/greenfield.project.json
-Canonical Source   = implementation/roblox/greenfield/src
-Focused Tests      = implementation/roblox/greenfield/tests
-Legacy src         = READ_ONLY_REFERENCE
-G0 Source          = NOT_STARTED
+Greenfield Project       = implementation/roblox/greenfield.project.json
+Canonical Source         = implementation/roblox/greenfield/src
+Focused Tests            = implementation/roblox/greenfield/tests
+Module Contracts         = Foundation + Exploration PLANNED
+System Contracts         = Foundation + Exploration PLANNED
+Stable Function Contracts= Foundation + Exploration DECLARED
+Legacy src               = READ_ONLY_REFERENCE
+G0 Source                = NOT_STARTED
 ```
 
-다음 실행의 첫 행동은 `GREENFIELD-PREFLIGHT.md`의 Repository 검증과 Studio/MCP Capability Handshake다. 허용 상태가 확인되면 즉시 `G0_SHARED_CONTRACTS` 구현을 시작한다.
+다음 실행의 첫 행동은 `GREENFIELD-PREFLIGHT.md`의 Repository 검증, Code Contract 검증, Studio/MCP Capability Handshake다. 허용 상태가 확인되면 선언된 G0 Contract를 그대로 구현한다.
+
+## Source 이전 순서
+
+```text
+System Contract
+→ Module Contract
+→ Stable Function Contract
+→ validate_module_contracts.py
+→ Source
+```
+
+다른 Contract-bearing Module이 호출할 함수는 Source를 쓰기 전에 Stable Function Contract가 있어야 한다. private/local helper는 이 대상이 아니다.
+
+현재 `module-contracts.json.entryPoints`는 Function 이름 인덱스이고, 실제 입력/출력/authority/read/write/side-effect/failure/revision 의미는 `system-function-contracts.json`이 소유한다.
 
 ## 고정 구현 순서
 
@@ -48,10 +67,14 @@ S1 Selection
 → I1 Interaction
 ```
 
-각 Checkpoint는 사용자 최종 수용 뒤 Authority Reconciliation, Canonical Source, Focused Test, Promotion Commit까지 완료되어야 다음 Checkpoint로 간다.
+각 Checkpoint는 사용자 최종 수용 뒤 Authority Reconciliation, System/Module/Stable Function Contract 정합화, Canonical Source, Focused Test, Promotion Commit까지 완료되어야 다음 Checkpoint로 간다.
 
 ## 금지
 
+- Contract 없이 Source/API 먼저 생성
+- undeclared cross-module function 사용
+- private helper를 암묵적인 cross-module API로 사용
+- 미래 P2~P10의 구체 Module/API를 현재 미리 발명
 - `default.project.json`을 Greenfield 실행 Project로 사용
 - Legacy `src/` 직접 수정
 - 기존 Production Place를 새 Build Baseline으로 사용
