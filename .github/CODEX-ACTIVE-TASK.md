@@ -2,6 +2,7 @@
 
 - executionAuthority: `ONLY_CURRENT_EXECUTABLE_TASK`
 - status: `R3_SEMANTIC_AUDIT_V2_AWAITING_FINAL_VALIDATION`
+- priorRepairedBaseStatus: `R3_REPAIRED_AWAITING_FREEZE_DECISION`
 - commandId: `RVTT-R3-SEMANTIC-AUDIT-V2-001`
 - repository: `Kaetaeru/RVTT`
 - pullRequest: `2`
@@ -11,12 +12,15 @@
 - systemModel: `34_SYSTEM_V2_REPAIRED`
 - requirementCapabilityCatalog: `30_REQUIREMENT_CAPABILITY_V3`
 - scenarioTrace: `61_OF_61_MACHINE_READABLE`
-- scenarioSemanticAudit: `V2_61_OF_61_BODY_BOUND_INGRESS_RECOVERY_TYPED`
+- scenarioSemanticAudit: `V1_61_OF_61`
+- scenarioSemanticAuditV2: `V2_61_OF_61_BODY_BOUND_INGRESS_RECOVERY_TYPED`
 - scenarioTraceDigest: `sha256:57e485a0cec6d753542e4bc202a881e10e2bd5ae63e314cc609c7e2d99f38140`
 - scenarioCombinedAuditDigest: `sha256:301639d88a9e8accf6c33e7f42332a8915c558ddb752242db62619e84eccab1b`
 - effectiveRecoveryScenarios: `24`
 - r3BoundaryAudit: `REPAIRED_NOT_FROZEN`
 - updatedAt: `2026-08-13`
+
+`scenarioSemanticAudit: V1_61_OF_61`은 폐기 상태가 아니라 `implementation-system-model.json` 안의 **direct semantic-stage base layer**를 뜻한다. 현재 완전한 R3 감사 권위는 그 위에 body/ingress/recovery를 결합한 `scenarioSemanticAuditV2`다.
 
 ## 1. 기본 읽기 경로
 
