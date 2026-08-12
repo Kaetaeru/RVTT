@@ -17,8 +17,7 @@ MODEL = ROOT / "manifests/implementation-system-model.json"
 AUDIT_V2 = ROOT / "manifests/scenario-semantic-audit.json"
 AUDIT_V3 = ROOT / "manifests/scenario-semantic-audit-v3.json"
 
-FORBIDDEN_SCENARIO_KEYS = {"capabilityRefs", "systemRefs", "moduleRefs", "knownGapRefs"}
-BODY_KEYS = ("id", "phase", "steps", "expectedOutcome", "negativeCases")
+CLEAN_SCENARIO_KEYS = {"id", "phase", "steps", "expectedOutcome", "negativeCases"}
 EXPECTED_ENTRY_EXPANSIONS = {
     "LOCAL": {"systemRefs": [], "requirementRefs": []},
     "COMMAND": {"systemRefs": ["A2", "A1"], "requirementRefs": ["REQ_REQUEST_PROTOCOL", "REQ_CONTROL_PERMISSION"]},
@@ -78,10 +77,6 @@ def digest(value: object) -> str:
     return "sha256:" + hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
-def body_projection(scenario: dict) -> dict:
-    return {key: scenario.get(key) for key in BODY_KEYS}
-
-
 def fail(errors: list[str]) -> int:
     print("RVTT scenario semantic audit validation failed:")
     for error in errors:
@@ -101,27 +96,28 @@ def main() -> int:
     except Exception as exc:
         return fail([str(exc)])
 
+    expected_catalog_policy = {
+        "legacyGreenfieldReferencesExcluded": True,
+        "requirementMappingOwnedBy": "implementation/roblox/manifests/implementation-system-model.json",
+        "semanticAuditOwnedBy": "implementation/roblox/manifests/scenario-semantic-audit-v3.json",
+        "negativeCaseRequired": True,
+    }
     if base.get("registryId") != "rvtt-scenario-base-catalog-v1":
         errors.append("canonical Base source must be rvtt-scenario-base-catalog-v1")
     if expanded.get("registryId") != "rvtt-scenario-expanded-catalog-v1":
         errors.append("canonical Expanded source must be rvtt-scenario-expanded-catalog-v1")
     for label, catalog in (("Base", base), ("Expanded", expanded)):
-        policy = catalog.get("policy") if isinstance(catalog.get("policy"), dict) else {}
-        if policy.get("legacyGreenfieldReferencesExcluded") is not True:
-            errors.append(f"{label} catalog must exclude legacy Greenfield references")
+        if catalog.get("policy") != expected_catalog_policy:
+            errors.append(f"{label} catalog policy drifted from clean current authority")
 
     base_scenarios = base.get("scenarios", [])
     expanded_scenarios = expanded.get("scenarios", [])
-    legacy_expanded_scenarios = legacy_expanded.get("scenarios", [])
     if not isinstance(base_scenarios, list) or len(base_scenarios) != 14:
         errors.append("canonical Base catalog must contain exactly 14 scenarios")
         base_scenarios = []
     if not isinstance(expanded_scenarios, list) or len(expanded_scenarios) != 47:
         errors.append("canonical Expanded catalog must contain exactly 47 scenarios")
         expanded_scenarios = []
-    if not isinstance(legacy_expanded_scenarios, list) or len(legacy_expanded_scenarios) != 47:
-        errors.append("historical Expanded registry must still contain 47 evidence scenarios")
-        legacy_expanded_scenarios = []
 
     for label, scenarios in (("Base", base_scenarios), ("Expanded", expanded_scenarios)):
         for scenario in scenarios:
@@ -129,9 +125,16 @@ def main() -> int:
                 errors.append(f"{label} scenario entry must be object")
                 continue
             sid = scenario.get("id", "<missing>")
-            forbidden = sorted(FORBIDDEN_SCENARIO_KEYS & set(scenario))
-            if forbidden:
-                errors.append(f"{sid}: clean {label} catalog leaked legacy mapping keys {forbidden}")
+            actual_keys = set(scenario)
+            if actual_keys != CLEAN_SCENARIO_KEYS:
+                errors.append(
+                    f"{sid}: clean {label} scenario keys must be exactly {sorted(CLEAN_SCENARIO_KEYS)}, "
+                    f"found={sorted(actual_keys)}"
+                )
+            if not isinstance(scenario.get("id"), str) or not scenario.get("id", "").strip():
+                errors.append(f"{sid}: id must be non-empty string")
+            if not isinstance(scenario.get("phase"), str) or not scenario.get("phase", "").strip():
+                errors.append(f"{sid}: phase must be non-empty string")
             if not isinstance(scenario.get("steps"), list) or not scenario.get("steps"):
                 errors.append(f"{sid}: steps must be non-empty")
             if not isinstance(scenario.get("expectedOutcome"), str) or not scenario.get("expectedOutcome", "").strip():
@@ -139,19 +142,13 @@ def main() -> int:
             if not isinstance(scenario.get("negativeCases"), list) or not scenario.get("negativeCases"):
                 errors.append(f"{sid}: negativeCases must be non-empty")
 
-    expected_base_registry = "implementation/roblox/manifests/scenario-base-catalog.json"
-    if legacy_expanded.get("baseRegistry") != expected_base_registry:
-        errors.append("historical architecture-scenarios.baseRegistry must point to canonical Base catalog")
-
-    clean_projection = [body_projection(x) for x in expanded_scenarios if isinstance(x, dict)]
-    legacy_projection = [body_projection(x) for x in legacy_expanded_scenarios if isinstance(x, dict)]
-    if clean_projection != legacy_projection:
-        errors.append("clean Expanded catalog must exactly preserve the semantic body projection of historical architecture-scenarios")
-
     source_scenarios = [*base_scenarios, *expanded_scenarios]
     source_ids = [x.get("id") for x in source_scenarios if isinstance(x, dict)]
     if len(source_ids) != 61 or len(set(source_ids)) != 61:
         errors.append("clean Scenario catalogs must contain exactly 61 unique IDs")
+
+    if legacy_expanded.get("registryId") != "rvtt-greenfield-architecture-scenarios-v1":
+        errors.append("historical Expanded evidence identity drifted")
 
     if audit_v2.get("schemaVersion") != 2 or audit_v2.get("registryId") != "rvtt-scenario-semantic-audit-v2":
         errors.append("v2 semantic classification audit identity drifted")
@@ -280,12 +277,15 @@ def main() -> int:
 
     actual_base_sha = blob_sha(BASE)
     actual_expanded_sha = blob_sha(EXPANDED)
+    actual_legacy_sha = blob_sha(LEGACY_EXPANDED)
     actual_v2_sha = blob_sha(AUDIT_V2)
     trace_digest = model.get("scenarioSemanticAuditDigest")
     if binding.get("baseScenarioBlobSha") != actual_base_sha:
         errors.append("v3 Base catalog blob binding drifted")
     if binding.get("expandedScenarioBlobSha") != actual_expanded_sha:
         errors.append("v3 Expanded catalog blob binding drifted")
+    if binding.get("legacyExpandedEvidenceBlobSha") != actual_legacy_sha:
+        errors.append("historical Expanded evidence changed; historical evidence must not be rewritten")
     if binding.get("semanticClassificationAuditV2BlobSha") != actual_v2_sha:
         errors.append("v3 v2-classification audit blob binding drifted")
     if binding.get("scenarioTraceDigest") != trace_digest:
@@ -296,6 +296,7 @@ def main() -> int:
     combined_input = (
         f"base:{actual_base_sha}\n"
         f"expanded:{actual_expanded_sha}\n"
+        f"legacyEvidence:{actual_legacy_sha}\n"
         f"trace:{trace_digest}\n"
         f"v2audit:{actual_v2_sha}\n"
         f"schema:{actual_schema_digest}"
@@ -313,8 +314,10 @@ def main() -> int:
     required_policy = {
         "v2SemanticClassificationPreserved": True,
         "cleanCatalogsForbidLegacyMappingKeys": True,
+        "cleanCatalogsForbidLegacyCoverageStatus": True,
         "legacyExpandedRegistryHistoricalOnly": True,
-        "legacyExpandedProjectionMustMatchCleanExpanded": True,
+        "legacyExpandedProjectionVerifiedAtExtraction": True,
+        "legacyExpandedEvidenceImmutable": True,
         "scenarioMeaningChanged": False,
     }
     if policy != required_policy:
@@ -325,7 +328,7 @@ def main() -> int:
 
     print(
         "RVTT scenario semantic audit validation passed: "
-        "clean_base=14; clean_expanded=47; scenarios=61; legacy_expanded_projection=EQUIVALENT; "
+        "clean_base=14; clean_expanded=47; scenarios=61; historical_expanded_evidence=IMMUTABLE; "
         f"recovery_scenarios={effective_recovery_scenarios}; recovery_kinds={dict(sorted(recovery_counts.items()))}; "
         "v2_semantic_classification=PASS; v3_clean_source_binding=PASS; R3=VALIDATED_NOT_FROZEN"
     )
