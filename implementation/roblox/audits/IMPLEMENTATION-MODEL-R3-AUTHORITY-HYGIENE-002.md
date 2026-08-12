@@ -1,6 +1,6 @@
 # RVTT R3 Authority Hygiene Audit 002
 
-- 상태: `RECONCILED · VALIDATED_PENDING_FINAL_HEAD_CI · R3_NOT_FROZEN`
+- 상태: `RECONCILED · VALIDATED · R3_NOT_FROZEN · AWAITING_USER_FREEZE_DECISION`
 - 작성일: 2026-08-13
 - 대상: `R3 current-state / Scenario source / validator authority hygiene`
 - Architecture 변경: `없음`
@@ -112,9 +112,9 @@ R3 = VALIDATED · NOT FROZEN · AWAITING USER FREEZE DECISION
 NEXT = USER R3 FREEZE DECISION
 ```
 
-## 6. Completion Condition
+## 6. Validation Evidence
 
-다음이 동일 최종 HEAD에서 모두 성공해야 이 reconciliation을 완료로 본다.
+Reconciliation 구현이 완료된 HEAD `702bc4777c605822da5f2e13f9dad412cfe16b53`에서 9개 Pull Request Workflow가 모두 `completed / success`를 기록했다.
 
 ```text
 Validate RVTT architecture coverage
@@ -128,4 +128,6 @@ Validate RVTT content templates
 Validate remake documentation
 ```
 
-R3는 이 검증이 성공해도 자동 Freeze하지 않는다.
+이 상태 표기 커밋이 만든 최종 HEAD에서도 동일 9개 Workflow 성공을 다시 확인하는 것을 최종 완료 조건으로 한다.
+
+R3는 검증 성공으로 자동 Freeze되지 않는다.
