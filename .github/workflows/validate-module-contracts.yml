@@ -21,6 +21,7 @@ on:
       - "implementation/roblox/audits/IMPLEMENTATION-MODEL-R3-BOUNDARY-001.md"
       - "implementation/roblox/manifests/architecture-coverage.json"
       - "implementation/roblox/manifests/architecture-scenarios.json"
+      - "implementation/roblox/manifests/implementation-system-model.json"
       - "implementation/roblox/manifests/module-contracts.json"
       - "implementation/roblox/manifests/system-function-contracts.json"
       - "implementation/roblox/manifests/execution-layers.json"
@@ -44,6 +45,7 @@ on:
       - "implementation/roblox/audits/IMPLEMENTATION-MODEL-R3-BOUNDARY-001.md"
       - "implementation/roblox/manifests/architecture-coverage.json"
       - "implementation/roblox/manifests/architecture-scenarios.json"
+      - "implementation/roblox/manifests/implementation-system-model.json"
       - "implementation/roblox/manifests/module-contracts.json"
       - "implementation/roblox/manifests/system-function-contracts.json"
       - "implementation/roblox/manifests/execution-layers.json"
@@ -61,17 +63,19 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      - name: Validate approved system/scenario coverage
+      - name: Validate repaired system requirement and scenario coverage
         run: python implementation/roblox/tooling/validate_architecture_coverage.py
 
-      - name: Validate retired module system function registries
+      - name: Validate retired module and stable-function registries
         run: python implementation/roblox/tooling/validate_module_contracts.py
 
-      - name: Validate retired execution registry and preserved process rules
+      - name: Validate execution semantics and preserved process rules
         run: python implementation/roblox/tooling/validate_execution_layers.py
