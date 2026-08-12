@@ -1,6 +1,6 @@
 # RVTT Agent Rules
 
-- 상태: `CURRENT · SYSTEM_MODEL_V2_REPAIRED · R3_NOT_FROZEN`
+- 상태: `CURRENT · SYSTEM_MODEL_V2_REPAIRED · R3_VALIDATED_AWAITING_FREEZE_DECISION`
 - 최종 갱신일: 2026-08-13
 
 ## 1. 현재 실행 권위
@@ -13,6 +13,9 @@
 → implementation/roblox/IMPLEMENTATION-MODEL.md
 → implementation/roblox/SYSTEMS.md
 → implementation/roblox/manifests/implementation-system-model.json
+→ implementation/roblox/manifests/scenario-semantic-audit-v3.json
+→ implementation/roblox/manifests/scenario-semantic-audit.json
+→ 필요한 canonical Scenario catalog
 → 현재 R3/R4 audit 또는 Scenario Working Set
 ```
 
@@ -44,6 +47,7 @@ WorldState.transact 중심 모델
 34 System Responsibility Model v2
 30 Requirement Capability Catalog v3
 61 Representative Scenario machine trace
+14 clean Base Scenario + 47 clean Expanded Scenario
 ```
 
 중요:
@@ -57,10 +61,12 @@ A3 Outbox ≠ A8 Event Delivery
 
 Canonical machine-readable 구조는 `implementation-system-model.json`이다.
 
+Scenario body source는 `scenario-base-catalog.json`과 `scenario-expanded-catalog.json`이다. `architecture-scenarios.json`은 historical Greenfield evidence로만 남는다.
+
 ## 4. 개발 순서
 
 ```text
-R3 repaired model validation
+R3 semantic/model validation = COMPLETE
 → 사용자 R3 Freeze 결정
 → R4 E0 Checkpoint Freeze
 → Dedicated Implementation Branch
@@ -73,7 +79,7 @@ R3 repaired model validation
 → E2 Presentation / Feel Checkpoints
 ```
 
-현재는 **R3 repaired model 검증 단계**다. Source와 Studio 구현을 시작하지 않는다.
+현재는 **R3 검증 완료 후 사용자 Freeze 결정을 기다리는 단계**다. Source와 Studio 구현을 시작하지 않는다.
 
 ## 5. REPOSITORY_LOGIC와 E0_CORE_ENGINE
 
@@ -204,6 +210,7 @@ HTML/UI Reference Distillation
 15. 더 좋은 Architecture가 보이면 자동 적용하지 않고 문제·대안·영향을 사용자에게 먼저 보고한다.
 16. A8 Event Delivery를 두 번째 Command Bus로 만들지 않는다.
 17. technical monotonic time을 Campaign Game Time으로 사용하지 않는다.
+18. 검증 중 현재 합의 방향 안의 명백한 문서 정합성, stale pointer, validator false-green, workflow trigger 누락은 발견 즉시 수정하고 최종 HEAD에서 다시 검증한다.
 
 ## 11. 사용자 승인 없이 바꾸지 않는 것
 
@@ -216,7 +223,7 @@ HTML/UI Reference Distillation
 - 개발 방식과 Checkpoint 시점
 - Release scope/priority
 
-명백한 bug, 기존 의도 안의 UX 미세 조정, private helper 분해는 즉시 수행 가능하다.
+위 항목과 다른 Architecture/Authority 변경은 먼저 문제·대안·영향을 보고한다. 반면 명백한 bug, 기존 의도 안의 UX 미세 조정, private helper 분해, 합의된 방향 안의 정합성/validator 수정은 즉시 수행한다.
 
 ## 12. 현재 상태
 
@@ -225,8 +232,11 @@ OLD GREENFIELD MODEL = RETIRED
 SYSTEM MODEL = V2 · 34 · REPAIRED
 REQUIREMENT CAPABILITY = V3 · 30
 SCENARIO TRACE = 61/61 MACHINE-READABLE
-R3 = NOT FROZEN
+SCENARIO SOURCE = CLEAN BASE 14 + CLEAN EXPANDED 47
+SEMANTIC AUDIT V2 = CLASSIFICATION EVIDENCE · VALIDATED
+SEMANTIC AUDIT V3 = CLEAN SOURCE BINDING · VALIDATED
+R3 = VALIDATED · NOT FROZEN · AWAITING USER FREEZE DECISION
 SOURCE = NOT STARTED
 STUDIO = NOT STARTED
-NEXT = FULL REPAIRED-MODEL VALIDATION, THEN USER FREEZE DECISION
+NEXT = USER R3 FREEZE DECISION
 ```
