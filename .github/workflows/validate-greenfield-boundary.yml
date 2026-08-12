@@ -13,6 +13,10 @@ on:
       - "implementation/roblox/IMPLEMENTATION-MODEL.md"
       - "implementation/roblox/SYSTEMS.md"
       - "implementation/roblox/manifests/implementation-system-model.json"
+      - "implementation/roblox/manifests/scenario-base-catalog.json"
+      - "implementation/roblox/manifests/scenario-expanded-catalog.json"
+      - "implementation/roblox/manifests/scenario-semantic-audit.json"
+      - "implementation/roblox/manifests/scenario-semantic-audit-v3.json"
       - "implementation/roblox/MODULE-CONTRACTS.md"
       - "implementation/roblox/SYSTEM-FUNCTION-CONTRACTS.md"
       - "implementation/roblox/GREENFIELD-EXECUTION-LAYERS.md"
@@ -35,6 +39,10 @@ on:
       - "implementation/roblox/IMPLEMENTATION-MODEL.md"
       - "implementation/roblox/SYSTEMS.md"
       - "implementation/roblox/manifests/implementation-system-model.json"
+      - "implementation/roblox/manifests/scenario-base-catalog.json"
+      - "implementation/roblox/manifests/scenario-expanded-catalog.json"
+      - "implementation/roblox/manifests/scenario-semantic-audit.json"
+      - "implementation/roblox/manifests/scenario-semantic-audit-v3.json"
       - "implementation/roblox/MODULE-CONTRACTS.md"
       - "implementation/roblox/SYSTEM-FUNCTION-CONTRACTS.md"
       - "implementation/roblox/GREENFIELD-EXECUTION-LAYERS.md"
@@ -66,11 +74,11 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Validate repaired planning boundary and legacy write lock
+      - name: Validate current planning boundary and legacy write lock
         run: python implementation/roblox/tooling/validate_greenfield_boundary.py
 
       - name: Validate retired module and stable-function registries
         run: python implementation/roblox/tooling/validate_module_contracts.py
 
-      - name: Validate repaired execution semantics
+      - name: Validate current execution semantics
         run: python implementation/roblox/tooling/validate_execution_layers.py
