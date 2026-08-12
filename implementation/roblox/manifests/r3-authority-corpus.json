@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "registryId": "rvtt-r3-authority-corpus-v1",
+  "status": "ACTIVE_R3_VALIDATED_AWAITING_FREEZE",
+  "scope": "CURRENT_PRODUCT_ADR_ARCHITECTURE_SYSTEM_UI_AUTHORITY_BINDING",
+  "authorityDocument": "implementation/roblox/ARCHITECTURE-COVERAGE-POLICY.md",
+  "treeSnapshots": [
+    {
+      "path": "docs/remake/product",
+      "expectedTreeSha": "32338e3ddccbf6497d806ceb1e649f2a2c809329"
+    },
+    {
+      "path": "docs/remake/decisions",
+      "expectedTreeSha": "54125338b3af1650b4bce9d7e3ff31496ae7e03c"
+    },
+    {
+      "path": "docs/remake/architecture",
+      "expectedTreeSha": "249d9a7293380c33f6d7195ddfa38da58fe86979"
+    },
+    {
+      "path": "docs/remake/systems",
+      "expectedTreeSha": "742efb372264b85fa26a3f57b2541fd0405d26e2"
+    },
+    {
+      "path": "docs/remake/ui",
+      "expectedTreeSha": "2effbddd018b02074daa2becc3d7d0b72e6e438b"
+    }
+  ],
+  "policy": {
+    "legacyArchitectureCoverageHistoricalOnly": true,
+    "implementationSpecsReferenceOnly": true,
+    "currentAuthorityChangeRequiresR3Revalidation": true
+  }
+}
