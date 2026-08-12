@@ -17,12 +17,51 @@
     "humanReviewIsForPresentationAndFeel": true,
     "runtimeCoupledStudioAuthoringAllowed": true,
     "runtimeCoupledMustCanonicalizeToGitHub": true,
-    "doNotHumanTestPureEngineFunctions": true
+    "doNotHumanTestPureEngineFunctions": true,
+    "futureCompatibilityReviewRequiredAtCheckpointFreeze": true,
+    "futureCapabilitiesConstrainArchitectureWithoutExpandingScope": true,
+    "futureScenarioPressureSetRequired": true,
+    "extensionSeamsRequired": true,
+    "forbiddenShortcutsRequired": true
   },
   "checkpointConcretization": {
     "E0_REPOSITORY_CORE_ENGINE": "AFTER_COVERAGE_AND_SYSTEM_BOUNDARY_FREEZE_BEFORE_SOURCE",
     "E1_ROBLOX_RUNTIME_INTEGRATION": "AFTER_CORE_ENGINE_COMPLETE_BEFORE_STUDIO",
     "E2_PRESENTATION_AND_FEEL": "AFTER_INTEGRATION_READY_JIT_ONE_USER_CHECKPOINT_AT_A_TIME"
+  },
+  "implementationSpecRequirements": {
+    "scenarioSources": [
+      "implementation/roblox/manifests/architecture-coverage.json",
+      "implementation/roblox/manifests/architecture-scenarios.json"
+    ],
+    "futureCapabilitiesAre": "COMPATIBILITY_CONSTRAINTS_NOT_CURRENT_IMPLEMENTATION_SCOPE",
+    "requiredAtCheckpointFreeze": [
+      "currentDeliverable",
+      "systemModuleScope",
+      "stableFunctionScope",
+      "authorityStateOwnership",
+      "inputOutputContract",
+      "currentScenarioWorkingSet",
+      "futureConsumers",
+      "futureScenarioPressureSet",
+      "extensionSeams",
+      "stableOwnershipAndIdentitySeams",
+      "persistenceReconnectRollbackSeams",
+      "observabilityFailureSeams",
+      "forbiddenShortcuts",
+      "explicitDeferredNonGoals",
+      "automatedTests",
+      "futureCompatibilityContractTests",
+      "completionCondition"
+    ],
+    "freezeRejectedWhen": [
+      "future consumer requires rewriting the checkpoint public contract instead of extending an explicit seam",
+      "future scenario is ignored without an explicit non-applicability reason",
+      "current feature owns state that belongs to a reusable shared authority boundary",
+      "feature-specific helper direct store edit direct Remote client rule reconstruction or Studio-only truth bypasses a future shared boundary",
+      "deferred future implementation is accidentally pulled into current source scope"
+    ],
+    "implementationEscalation": "ESCALATE_TO_PLANNING_ON_UNMODELED_FUTURE_CONFLICT"
   },
   "executionClasses": {
     "CORE_ENGINE": {
@@ -111,9 +150,12 @@
       "gate": [
         "architecture coverage phase has no open blockers",
         "E0 implementation checkpoints are concretized after system boundary freeze",
+        "each E0 checkpoint includes future consumers scenario pressure extension seams forbidden shortcuts and deferred non-goals",
+        "future compatibility review confirms future systems can extend shared seams without rewriting current public contracts",
         "contracts valid",
         "canonical source implemented in greenfield/src",
         "repository automated tests pass",
+        "future compatibility contract tests pass",
         "negative authority/revision/disclosure/domain cases pass",
         "no Studio or MCP implementation was used to complete E0"
       ]
@@ -141,6 +183,7 @@
         "architecture coverage phase has no open blockers",
         "all E0 core engine checkpoints are complete",
         "E1 Studio controller manager service adapter and harness checkpoints are concretized",
+        "E1 checkpoints preserve the future consumers and extension seams frozen by E0",
         "greenfield Rojo build succeeds",
         "Studio/MCP runtime engine and integration tests pass",
         "Remote/Player/Instance/lifecycle boundaries behave correctly",
@@ -165,6 +208,7 @@
         "current checkpoint architecture coverage phase has no open blockers",
         "E0 and E1 are complete",
         "only the current user-facing checkpoint has been concretized",
+        "current presentation checkpoint does not reconstruct or bypass future shared engine authority",
         "current checkpoint is playable in Studio",
         "Codex Studio self-check passes",
         "visible behavior is handed to the user for acceptance"
