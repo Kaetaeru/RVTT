@@ -109,7 +109,8 @@ def main() -> int:
         ("implementation model", model, "CORE_ENGINE_COMPLETE"),
         ("implementation model", model, "U0-A HTML/UI Reference Distillation"),
         ("system model", systems_text, "Repository Core Engine 전체 완료 전 Studio/MCP 구현을 시작하지 않는다"),
-        ("system model", systems_text, "A3 commit + transactional Outbox"),
+        ("system model", systems_text, "A3 Ordering + Transaction + Outbox atomic commit"),
+        ("system model", systems_text, "A8 Event Delivery"),
         ("active task", task, "R3_REPAIRED_AWAITING_FREEZE_DECISION"),
         ("active task", task, "CORE_ENGINE_COMPLETE 전 Studio/MCP 작업 금지"),
     ]
@@ -126,7 +127,7 @@ def main() -> int:
     print(
         "RVTT execution-layer validation passed: "
         f"systems={len(all_system_ids)}; e0_required_seams={len(e0)}; deferred_repository_features={len(deferred)}; "
-        "REPOSITORY_LOGIC!=E0_CORE_ENGINE; A1_ready_gate=PASS; "
+        "REPOSITORY_LOGIC!=E0_CORE_ENGINE; A1_ready_gate=PASS; A3_to_A8_event_boundary=PASS; "
         "R3->user freeze->R4->Implementation Branch->E0->CORE_ENGINE_COMPLETE->E1 Studio->U0->E2 preserved"
     )
     return 0
