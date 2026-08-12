@@ -1,11 +1,12 @@
 # RVTT Architecture Coverage Policy
 
-- 상태: `ACTIVE · SYSTEM_MODEL_V2_REPAIRED · SEMANTIC_AUDIT_V2`
+- 상태: `ACTIVE · SYSTEM_MODEL_V2_REPAIRED · SEMANTIC_AUDIT_V2_VALIDATED`
 - System Authority: `SYSTEMS.md`
+- Canonical Base Scenario source: `manifests/scenario-base-catalog.json`
+- Expanded Scenario source: `manifests/architecture-scenarios.json`의 `scenarios[]`
 - Direct model: `manifests/implementation-system-model.json`
 - Effective Scenario audit: `manifests/scenario-semantic-audit.json`
-- Base Scenario source: `manifests/architecture-coverage.json`
-- Expanded Scenario source: `manifests/architecture-scenarios.json`
+- Historical legacy coverage: `manifests/architecture-coverage.json`
 
 이 문서는 Product/ADR/Architecture/UI 요구가 구현 모델에서 빠지는 것을 막는 Coverage 방법을 소유한다. 폐기된 Greenfield 25 Module / 10 System / 64 Stable Function 모델은 새 구현 권위가 아니다.
 
@@ -18,7 +19,9 @@ Product / Accepted ADR / Current Architecture / UI
 ↕ many-to-many
 34 System Responsibility Model v2
 ↕
-61 Scenario source bodies
+61 Canonical Scenario bodies
+  - Base 14: scenario-base-catalog.json
+  - Expanded 47: architecture-scenarios.json scenarios[]
 ↕
 Scenario Semantic Audit v1 direct-stage base
 ↕
@@ -35,10 +38,11 @@ Requirement Capability는 System 이름의 별칭이 아니다. 하나의 Requir
 
 ## 2. 권위 역할
 
+- `scenario-base-catalog.json`: Base 14 Scenario의 canonical body. legacy Greenfield capability/system/module mapping을 포함하지 않는다.
+- `architecture-scenarios.json`: Expanded 47 Scenario의 `scenarios[]` body source. top-level legacy metadata와 `capabilityRefs`는 새 Requirement/System mapping 권위가 아니다.
 - `implementation-system-model.json`: 34 System, 30 Requirement Capability, 61 direct Scenario Requirement/System trace, v1 semanticStages.
-- `scenario-semantic-audit.json`: Scenario 원문 binding, mutation semantic, typed ingress/recovery expansion, LKG owner set, 61 classification, full semantic schema digest.
-- `architecture-coverage.json`의 기존 22 Capability/GAP/system/module refs: historical requirement evidence만 보존.
-- `architecture-scenarios.json`: Expanded Scenario 원문 권위.
+- `scenario-semantic-audit.json`: Scenario source blob binding, mutation semantic, typed ingress/recovery expansion, LKG owner set, 61 classification, full semantic schema digest.
+- `architecture-coverage.json`: authority corpus snapshot과 과거 Greenfield coverage/gap evidence 보존용. 안에 남은 Base Scenario 사본 및 system/module refs는 historical evidence일 뿐 canonical Scenario source가 아니다.
 
 완전한 R3 Scenario semantic audit는 **v2**다. v1은 direct-stage base layer이며 단독 완전 권위가 아니다.
 
@@ -47,7 +51,7 @@ Requirement Capability는 System 이름의 별칭이 아니다. 하나의 Requir
 다음을 하나의 감사 단위로 묶는다.
 
 ```text
-Base Scenario registry blob SHA
+Canonical Base Scenario registry blob SHA
 + Expanded Scenario registry blob SHA
 + v1 direct trace digest
 + mutationSemantic
@@ -61,7 +65,17 @@ Base Scenario registry blob SHA
 → combinedAuditDigest
 ```
 
-Scenario body뿐 아니라 공통 의미/확장 규칙이 바뀌어도 semantic re-audit 없이 통과하지 못해야 한다.
+현재 digest:
+
+```text
+semanticSchemaDigest
+sha256:dcc766c1161332789e91aadc362c4765687af3efc2f7193cf23f748df0eb6489
+
+combinedAuditDigest
+sha256:48477cd70757d4450980162d49c62e12115229762bee4127542d6a167099a723
+```
+
+Scenario body뿐 아니라 공통 의미/확장 규칙이 바뀌어도 semantic re-audit 없이 통과하지 못한다.
 
 Ingress는 System과 Requirement를 함께 검증한다.
 
@@ -100,6 +114,15 @@ CONTROL_FAILOVER
 ```
 
 현재 전수감사 결과 **27개 Scenario**가 typed recovery pressure를 가진다.
+
+강제 sentinel:
+
+```text
+SCN_ATTACK_REACTION_RESOLUTION → RECONNECT
+SCN_CHARACTER_SHEET_LIVE_DAMAGE_SYNC → CLIENT_RESYNC
+SCN_SCENE_CANDIDATE_TEST_PUBLISH → LAST_KNOWN_GOOD
+SCN_DM_RECOVERY_REVIEW_BRANCH → SERVER_RESTART + ROLLBACK_BRANCH + CLIENT_RESYNC
+```
 
 ## 4. Cross-cutting Coverage
 
@@ -178,8 +201,12 @@ AGENTS.md
 → SYSTEMS.md
 → implementation-system-model.json
 → scenario-semantic-audit.json
-→ 필요한 상위 Authority / Scenario 원문만 선택적으로
+→ scenario-base-catalog.json
+→ 필요한 Expanded Scenario의 architecture-scenarios.json scenarios[]
+→ 필요한 상위 Authority만 선택적으로
 ```
+
+`architecture-coverage.json`의 legacy Greenfield system/module/capabilityRefs와 Base Scenario 사본은 구현 AI 기본 읽기 대상이 아니다.
 
 미모델링 책임이나 미래 충돌을 발견하면 helper로 우회하지 않고 `ESCALATE_TO_PLANNING`한다.
 
@@ -202,10 +229,11 @@ Coverage Finding은 Architecture 변경 승인과 동일하지 않다.
 ```text
 SYSTEM_MODEL_V2_REPAIRED
 REQUIREMENT_CAPABILITY_V3_ACTIVE
-SCENARIO_SEMANTIC_AUDIT_V2_ACTIVE
+SCENARIO_SEMANTIC_AUDIT_V2_VALIDATED
 R3_NOT_FROZEN
+AWAITING_USER_FREEZE_DECISION
 SOURCE = BLOCKED
 STUDIO = BLOCKED
 ```
 
-최종 전체 검증이 통과해도 R3는 자동 Freeze하지 않는다. 사용자 결정 후에만 R4로 넘어간다.
+검증이 통과해도 R3는 자동 Freeze하지 않는다. 사용자 결정 후에만 R4로 넘어간다.
