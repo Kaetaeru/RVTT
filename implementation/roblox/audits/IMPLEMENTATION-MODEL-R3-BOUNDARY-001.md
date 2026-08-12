@@ -1,284 +1,287 @@
 # RVTT Implementation Model R3 Boundary Audit 001
 
-- 상태: `DRAFT · NON_AUTHORITY · USER_APPROVAL_REQUIRED`
+- 상태: `REPAIRED · NON_FROZEN · USER_FREEZE_DECISION_REQUIRED`
 - 작성일: 2026-08-13
-- 대상: `R3 — Core / Roblox Runtime / Presentation Boundary Freeze`
-- System Authority: `implementation/roblox/SYSTEMS.md`
+- 대상: `R3 — Repository Logic / E0 Core / Roblox Runtime / Human Presentation Boundary`
+- System Authority: `implementation/roblox/SYSTEMS.md` v2
+- Machine-readable model: `implementation/roblox/manifests/implementation-system-model.json`
 - 구현 상태: `SOURCE_BLOCKED · STUDIO_BLOCKED`
 
 ## 1. 목적
 
-33-System Model v1의 책임을 구현 환경에 맞게 분해한다.
-
-중요:
+R2 이후 승인됐던 33-System 모델과 최초 R3 Matrix를 스스로 반대 입장에서 검토했고 다음 결함을 발견했다.
 
 ```text
-System 하나 = 실행 환경 하나
+Event Delivery owner 누락
+REPOSITORY_LOGIC와 E0_CORE_ENGINE 의미 혼합
+E1 Provider 선행 Core seam 누락
+Capability와 System의 사실상 1:1 매핑
+61 Scenario 새 trace의 비기계적 상태
+Ready Gate 중복 소유
+Reservation 의미 충돌
+공통 nondeterministic provider 계약 불명확
+Validator가 승인 문자열만 확인
 ```
 
-가 아니다.
+이 Audit은 위 문제를 수정한 R3 경계를 기록한다. 아직 `FROZEN`이 아니며 Source/Studio 구현 권한을 열지 않는다.
 
-같은 System 안에서도 Roblox 없이 검증 가능한 정책은 Repository Core Engine에 두고, Roblox 결과가 correctness에 필요한 Provider만 E1 Studio Runtime으로 미룬다. 사람이 보고 만져야 판단 가능한 감각은 U0/E2 Presentation으로 미룬다.
+## 2. 네 분류를 분리한다
 
-## 2. 분류 기준
+### REPOSITORY_LOGIC
 
-### CORE
+Roblox 없이 구현하고 correctness를 자동 검증할 수 있는 모든 production logic의 분류다.
 
-Repository에서 Roblox 없이 자동 검증할 수 있는 책임.
+### E0_CORE_ENGINE
 
-- data contracts / schema
-- identity, revision, epoch rules
-- deterministic state machines
-- policy composition
-- pure queries/calculation
-- orchestration
-- failure semantics
-- adapter interfaces
-- serialization-neutral domain logic
-
-### RUNTIME
-
-Roblox Runtime 결과가 correctness의 일부인 Provider/Adapter.
-
-- Player / Instance lifecycle binding
-- Remote transport
-- PathfindingService / NavMesh
-- raycast / overlap / collision / physics
-- Workspace/asset materialization
-- StreamingEnabled integration
-- UserInputService / ContextActionService / GUI focus bridge
-- Roblox Camera / animation / audio / VFX execution
-- DataStore/MemoryStore persistence adapter
-
-### HUMAN
-
-사람이 실제 플레이 화면에서 판단해야 하는 결과.
-
-- visual hierarchy / layout
-- path preview readability
-- selection/interaction readability
-- camera feel
-- movement perceived intent
-- VFX timing and clarity
-- UI shell / accessibility feel
-
-## 3. 전체 경계 행렬
-
-| ID | System | CORE · E0 candidate | RUNTIME · E1 after CORE_ENGINE_COMPLETE | HUMAN · U0/E2 |
-|---|---|---|---|---|
-| A1 | Session & Control Policy | role/control/mode/context/overlay/transition state machine, command-policy composition, ready gating contract | Roblox Player join/leave identity events as input adapter only | mode/transition/ready messaging clarity |
-| A2 | Request Runtime | protocol envelopes, schema/version validation, Command vs Read semantic split, idempotency/correlation/rate-policy interfaces, result model | RemoteEvent/RemoteFunction or lane transport adapter, connection binding | pending/retry/error wording through C1 |
-| A3 | Transaction, Ordering & Outbox | ordering keys, reservation state machine, typed preconditions, transaction plan/commit, authority revision, outbox, commit marker interfaces | monotonic clock/lease provider if Roblox-coupled; durable journal sink delegated to A7 | none |
-| A4 | Cross-Domain Outcome Integration | immediate closure graph, deferred consequence model, cycle/budget rules, domain proposal composition | none by default | none |
-| A5 | Projection Runtime | viewer context contract, disclosure-safe builders, snapshot/delta model, projection revision, redaction rules | none by default; runtime data enters through system provider contracts | projection readability belongs to C1/C3, not A5 |
-| A6 | Client Synchronization Runtime | stream/cursor/sequence, connection epoch, gap detection, snapshot segmentation, resync state machine | Remote transport, Roblox connection lifecycle, payload budget measurements | reconnect/resync feedback through C1 |
-| A7 | Persistence & Branch Recovery | manifest/chunk/journal schemas, snapshot materialization logic, integrity, reconstruction, rollback branch/epoch rules, migration interfaces | DataStore/MemoryStore or approved storage adapters, server shutdown hooks | DM recovery review surface later |
-| W1 | Scene Runtime & Build Activation | published build binding, active build state, runtime snapshot composition, safe build swap/rebase policy | Roblox scene materialization bindings only where required; no Instance as authority | transition/fallback visual state via W7/C3 |
-| W2 | Runtime Object & Entity Lifecycle | RuntimeObjectId/incarnation, lifecycle state machine, domain bindings, tombstone/archive rules | Instance binding/materializer, physics presence adapter, Collection/Workspace hooks if used | token/object representation via C3 |
-| W3 | Spatial Query Runtime | typed query/request/result contracts, snapshot binding, provider composition, disclosure-safe evidence shape, budget/failure policy | raycast/overlap/collision/geometry providers backed by Workspace/physics | debug visualization only; gameplay feel consumers elsewhere |
-| W4 | Visibility & Knowledge Runtime | detection/knowledge state, disclosure policy, perception evaluation using typed spatial evidence, negative-disclosure rules | no direct Workspace access; consumes W3 provider results | fog/hover readability via C1/C3 |
-| W5 | Selection & Frozen Binding Runtime | candidate/session/targeting state machine, freeze/validate binding, stale-incarnation policy | pointer/focus world-ray input enters through C1→W3 adapters; no direct input service | selection outline/preview readability via C3 |
-| W6 | Navigation & Movement Runtime | request/result, traversal policy, movement budget, occupancy/reservation contract, replan/failure/interruption/checkpoint state machine | PathfindingService/NavMesh, raycast/collision, dynamic obstacle and physics providers | path preview, click response, interpolation/movement feel |
-| W7 | Scene Delivery & Ready Activation | interest sets, chunk manifest, prefetch/activation/eviction policy, essential-vs-optional readiness state machine | StreamingEnabled, Instance/material asset loading, client cache/materialization adapters | streaming veil, placeholder, loading clarity |
-| R1 | Content & Ruleset Runtime | stable IDs, pack/dependency/version graph, frozen ruleset/policy composition, compile/catalog rules, locale identity separation | asset/content source adapters if Roblox asset metadata is required; persistence delegated A7 | content reader/authoring surfaces later |
-| R2 | Capability & Derived Rule Query Runtime | grant graph, passive/override composition, derived values, effective capability, contextual availability and explanation contracts | none by default | action/context presentation through C1 |
-| R3 | Rule Execution & Adjudication Runtime | persistent execution state machine, step/timing/reaction/prompt model, reservation orchestration, adjudication contract | monotonic timeout provider; network prompt delivery through A6 | prompt/reaction interaction UX through C1/C3 |
-| R4 | Dice & Resolution Runtime | RollIntent/Plan, RNG provider interface, sealed result/record, d20/check/save/attack resolution, reveal-state contract | production RNG/entropy provider if runtime-specific; presentation ACK comes through C3 adapter | dice animation/reveal timing via C3 |
-| R5 | Effect & Ongoing Runtime | EffectInstance state/lifecycle, duration binding, concentration, stacking/suppression/aura contribution model | spatial aura evidence via W3; no direct Workspace access | condition/aura presentation via C1/C3 |
-| D1 | Character Runtime | source/build/state models, compile/activation/migration, resources, progression contracts | persistence adapter through A7 only | sheet/console surfaces through C1 |
-| D2 | Encounter Runtime | participant/timeline/turn/opportunity/objective state machine, transition policy inputs | none by default | combat HUD/turn readability through C1/C3 |
-| D3 | Inventory & Item Runtime | ItemInstance/container/equipment/location/transfer invariants, world-presence binding request | W2 materializes scene presence; persistence through A7 | inventory/loot UI through C1 |
-| D4 | Game Time & Scheduler Runtime | campaign chronology, time advance plan, duration handles, scheduler, due-event checkpoint model | authority monotonic wall-clock adapter only for technical leases; gameplay time stays core | calendar/time display through C1 |
-| D5 | Downtime & Activity Runtime | activity-session state, participants, progress, long reservation coordination, checkpoint/completion plan | none by default | rest/travel/crafting workflow surfaces through C1 |
-| D6 | Journal Runtime | document/section/anchor/ACL/search/edit/conflict/navigation-capability model | persistence/search-storage adapter as needed through A7/external interface | journal reader/editor UI through C1 |
-| D7 | Campaign Logistics Runtime | survival requirement/allocation/reservation/settlement/ledger plans | none by default | DM/player preview and ledger surfaces through C1 |
-| U1 | Scene Authoring & Compiler | canonical source model, editor command semantics, source revision/conflict rules, semantic compiler pipeline, candidate/LKG/publish proposal | Roblox asset geometry/metadata inspection provider, runtime candidate test adapter using production E1 providers | actual Scene Editor tools/workspace and authoring feel after integration |
-| U2 | Actor Authoring & Publish | draft schema/budgets, strict validation, reference resolution, candidate/publish definition, provenance | approved Roblox model/asset registry and appearance validation adapter | actor authoring/preview UI after integration |
-| C1 | UI & Input Runtime | projection replica atomic commit, ViewModel/selectors, input-context/focus state machine, pending/result reconciliation, local workspace-state contracts | UserInputService/ContextActionService/Gui focus/Roblox UI adapter; no product shell yet | U0 Product UI Shell, layout, hierarchy, actual widgets and debug fixture controls |
-| C2 | Camera Runtime | CameraRequest, priority/policy/focus/follow/free-override/restore state machine and target contracts | Roblox CurrentCamera adapter, camera collision provider via W3, input adapter via C1 | camera sensitivity, easing, obstruction recovery feel, accessibility tuning |
-| C3 | Presentation Runtime | recipe schema/compiler, playback plan, priority/interrupt, marker/reveal-gate state machine, accessibility/fallback policy | Roblox animation/audio/VFX/tween/lighting/camera-request adapters | VFX timing, clarity, polish, reduced-motion feel |
-| S1 | Diagnostics & Observability Runtime | trace/span/correlation, decision record, incident/budget model, redaction, support reference, sink interfaces | runtime metrics/sink adapters, Roblox memory/network measurements | developer/DM diagnostic surfaces later |
-| S2 | Deterministic Simulation Harness | scenario compiler, fixture model, deterministic RNG/clock/ID/transport/storage adapters, interleaving/fault plan, semantic/security assertions | E1 production-parity Roblox integration harness adapter; does not replace core harness | human acceptance harness references only |
-
-## 4. E0 Repository Core Engine 범위 후보
-
-R3 기준으로 **33개 System 전부가 최소 하나 이상의 Core contract/policy seam을 가진다.** 이것은 33개 System의 모든 기능을 E0에서 완성한다는 뜻이 아니다.
-
-E0의 목적은 다음이다.
+Studio에 들어가기 전에 반드시 완성해야 하는 Repository Foundation subset이다.
 
 ```text
-나중에 E1/P3/P6/P7/P8 기능을 붙일 때
-공통 권위 경계와 public contract를 갈아엎지 않도록
-필요한 Core foundation을 먼저 완성한다.
+REPOSITORY_LOGIC ⊃ E0_CORE_ENGINE
 ```
 
-따라서 R4에서는 33개 전체를 한 번에 Module화하지 않는다.
+따라서 미래 Journal/Logistics/Actor Authoring 로직이 Repository에서 구현 가능해도 자동으로 E0 완료 조건이 되지 않는다.
 
-R4가 골라야 할 것은:
+### E1_ROBLOX_RUNTIME
+
+Roblox 서비스, geometry, physics, Player/Instance/Remote/Streaming/Input/Camera/asset 결과가 correctness의 일부인 Provider/Adapter다. `CORE_ENGINE_COMPLETE` 뒤에만 구현한다.
+
+### HUMAN_PRESENTATION
+
+실제 UI 구조, 가독성, VFX, Camera feel, 이동감처럼 사람이 실제 화면에서 판단해야 하는 결과다. Integration 뒤 U0/E2에서 다룬다.
+
+## 3. 34-System 실행 경계 Matrix
+
+| ID | E0 pre-Studio seam | E1 Roblox provider | Human/U0/E2 |
+|---|---|---|---|
+| A1 | role/control/mode/context/overlay/transition policy, readiness evidence composition, final Command gate | Player join/leave identity input adapter | mode/transition/ready messaging |
+| A2 | Command/Read envelopes, schema/version, idempotency/correlation, result model, transport interface | Remote transport and connection binding | pending/retry/error wording |
+| A3 | OrderingKey, OrderingReservation, typed preconditions, transaction plan/commit, revision, commit marker, transactional outbox | monotonic clock/lease adapter only as needed | none |
+| A4 | immediate closure graph, deferred consequence model, budget/cycle rules, proposal composition | none by default | none |
+| A5 | observer context, disclosure-safe projection build, snapshot/delta model | runtime state arrives only through public system contracts | readability belongs to C1/C3 |
+| A6 | epoch/sequence/cursor/gap/resync state machine, `projectionSyncReady` evidence | Remote delivery, Roblox connection lifecycle, payload measurement | reconnect feedback via C1 |
+| A7 | snapshot/journal schemas, reconstruction, rollback branch/epoch and integrity interfaces, `authorityRecoveryReady` evidence | DataStore/MemoryStore or approved storage adapter, shutdown hook | recovery review surface later |
+| A8 | committed outbox dispatcher, subscription registry, ordering scope, retry/receipt/dead-letter semantics | durable/local delivery adapter if required | none |
+| W1 | published build binding, active build state, runtime snapshot composition, safe swap policy | scene materialization binder where required | transition/fallback presentation |
+| W2 | RuntimeObjectId/incarnation, lifecycle state machine, domain bindings, tombstone/archive | Instance/materializer/physics presence binding | token/object representation |
+| W3 | typed spatial request/result, snapshot binding, provider composition, budget/failure semantics | Workspace raycast/overlap/collision/geometry providers | debug visualization only |
+| W4 | visibility/detection/knowledge/disclosure policy using typed W3 evidence | no direct Workspace traversal | fog/hover readability |
+| W5 | selection/targeting session, candidate policy, frozen binding, stale-incarnation rules | pointer/focus world-ray adapter enters through C1/W3 | selection/target preview readability |
+| W6 | navigation request/result, planner/executor policy, movement budget, OccupancyReservation, replan/interruption/checkpoint | PathfindingService/NavMesh/raycast/collision/dynamic obstacle provider | path preview, click response, movement feel |
+| W7 | interest/chunk/prefetch/activation/eviction policy, `sceneEssentialReady` evidence | StreamingEnabled, asset/chunk materialization/cache | veil/loading/placeholder clarity |
+| R1 | stable IDs, pack dependency/version, frozen ruleset policy, compile/catalog contract | approved content/asset metadata adapter as required | content surfaces later |
+| R2 | grant/passive/override composition, derived value/effective capability/context availability | none by default | action/context presentation |
+| R3 | persistent execution/timing/reaction/prompt state machine, ResourceReservation orchestration | technical timeout provider and A6 prompt delivery | reaction/prompt UX |
+| R4 | RollIntent/Plan, RNG interface, sealed result/record, d20/check/save/attack resolution | production RNG/entropy provider if runtime-specific | dice/reveal timing through C3 |
+| R5 | EffectInstance lifecycle, duration binding, concentration, stacking/suppression/aura model | aura spatial evidence consumes W3 provider result | condition/aura presentation |
+| D1 | minimal source/build/state/resource/progression ownership contracts required by shared rules | persistence only through A7 | sheet/console later |
+| D2 | minimal participant/timeline/opportunity/objective contracts required by session/rules | none by default | combat HUD later |
+| D3 | minimal Item/container/equipment/location/world-presence binding contracts | W2 materializes presence | inventory/loot later |
+| D4 | campaign chronology, duration/scheduler contract; explicitly separate from monotonic clock | technical clock is not D4 | calendar/time display later |
+| D5 | activity-session/participant/progress/ActivityReservation/completion-plan contracts | none by default | rest/travel/crafting workflow later |
+| D6 | **deferred repository feature implementation**; preserve ownership/ACL/projection pressure only | optional storage/search adapter later | journal UI later |
+| D7 | **deferred repository feature implementation**; preserve settlement/domain integration pressure only | none by default | logistics surfaces later |
+| U1 | canonical scene source, editor command semantics, compile/candidate/LKG/publish contracts needed before E1 geometry inspection | Roblox asset geometry/metadata inspection and candidate runtime test adapter | actual Scene Editor later |
+| U2 | **deferred repository feature implementation**; preserve draft/validation/publish ownership pressure | model/asset registry later | actor authoring UI later |
+| C1 | projection replica atomic commit, ViewModel/selectors, input-context/focus/pending/recovery state machine, `clientReplicaReady` evidence | UserInputService/ContextActionService/Gui focus adapter; no product shell yet | U0 Product UI Shell and debug fixtures |
+| C2 | CameraRequest priority/focus/follow/free/restore policy and target contracts | CurrentCamera/collision/input adapters | sensitivity/easing/obstruction feel |
+| C3 | recipe/playback plan, priority/interrupt/marker/reveal/accessibility/fallback state machine | animation/audio/VFX/tween/lighting adapters | timing/clarity/polish/reduced motion |
+| S1 | trace/span/correlation/decision/incident/redaction/sink interfaces | runtime metrics/network/memory adapters | developer/DM diagnostics later |
+| S2 | scenario compiler, fixture contract, deterministic Clock/ID/RNG/Transport/Storage adapters, interleaving/fault/assertion foundation | production-parity Roblox integration harness adapter after E0 | human acceptance references only |
+
+## 4. E0 Core Engine 완료 정의
+
+Machine-readable `e0RequiredSystemSeams`는 다음 31 System의 **Foundation seam**을 R4에서 구체화할 대상으로 지정한다.
 
 ```text
-어떤 Core seam이 다른 대부분의 System보다 선행해야 하는가
-어떤 Core seam은 미래 Phase까지 interface만 보존하고 구현을 미룰 수 있는가
+A1 A2 A3 A4 A5 A6 A7 A8
+W1 W2 W3 W4 W5 W6 W7
+R1 R2 R3 R4 R5
+D1 D2 D3 D4 D5
+U1
+C1 C2 C3
+S1 S2
 ```
 
-## 5. R3에서 확인된 Foundation 우선 Core 후보
+이것은 위 31 System의 모든 feature를 구현한다는 뜻이 아니다.
 
-아래는 **R4 E0 Checkpoint 후보군**이지 아직 승인된 Checkpoint가 아니다.
+R4는 각 System에서 **E1 Provider 또는 여러 미래 기능이 공유하는 public seam만** Checkpoint로 Freeze한다.
 
-### F0 Authority Kernel
+현재 `CORE_ENGINE_COMPLETE` 필수 feature 구현에서 제외:
 
 ```text
-A1 Session/Control policy core
-A2 Request contracts/runtime core
-A3 Transaction/Ordering/Outbox core
-A4 Cross-Domain Outcome seam
-A5 Projection core
-A6 Sync state-machine core
-A7 persistence/recovery interfaces + epoch/revision lineage seam
-S1 correlation/error/diagnostic seam
+D6 Journal full repository feature
+D7 Campaign Logistics full repository feature
+U2 Actor Authoring full repository feature
 ```
 
-### F1 Identity / Snapshot / Query Kernel
+단, R4에서 실제 E1 선행 dependency가 증명되면 사용자 결정으로 승격한다.
+
+## 5. Domain Event 경계 수정
+
+기존 33-System에는 Transaction Outbox 이후의 책임 소유자가 없었다. 이를 A8로 분리한다.
 
 ```text
-W1 Scene runtime build/snapshot contracts
-W2 Runtime Object identity/lifecycle contracts
-W3 typed Spatial Query contracts/provider interface
-W4 visibility/disclosure evidence seam
+A3
+Authority Mutation + DomainEventDraft + CommitMarker
+→ atomic commit
+→ CommittedDomainEvent in Outbox
+
+A8
+→ committed-only dispatch
+→ SubscriptionDefinition
+→ ordering scope
+→ at-least-once delivery
+→ SubscriberReceipt
+→ retry / failure isolation / dead-letter
+
+A5/S1/authorized follow-up subscriber
+→ consume delivered event
 ```
 
-### F2 Rule / Capability Kernel
+불변식:
+
+- Abort된 Event Draft는 A8에 보이지 않는다.
+- Subscriber 실패가 A3 commit을 rollback하지 않는다.
+- A8은 Store를 직접 수정하지 않는다.
+- 후속 권위 변경은 새 Command/RuleExecution이다.
+- Projection Subscriber는 Domain Event raw payload를 Client에 보내지 않는다.
+
+## 6. Ready Gate 단일 소유
+
+준비 상태를 `loaded=true` 하나로 합치지 않는다.
 
 ```text
-R1 frozen content/ruleset identity seam
-R2 capability/derived-query contracts
-R3 persistent RuleExecution state-machine seam
-R4 Dice/Resolution contracts + RNG provider interface
-R5 EffectInstance lifecycle contracts
+A7 → authorityRecoveryReady
+A6 → projectionSyncReady
+W7 → sceneEssentialReady
+C1 → clientReplicaReady
+
+A1
+→ required readiness evidence 조합
+→ EffectiveGameplayReady
+→ final gameplay Command gate
 ```
 
-### F3 Domain Foundation
+A6/A7/W7/C1은 증거를 만들 뿐 Gameplay Command를 직접 활성화하지 않는다.
+
+## 7. Reservation Taxonomy
+
+다섯 타입을 명시적으로 분리한다.
 
 ```text
-D1 Character source/build/state contracts
-D2 Encounter/opportunity contracts
-D3 Item/container/location contracts
-D4 GameTime/scheduler contracts
-D5 activity coordination contracts
+OrderingReservation            A3   concurrency ordering, short-lived
+ResourceReservation            R3   pending execution consumption right
+OccupancyReservation           W6   movement-space coordination
+ActivityReservation            D5   long-running activity hold
+LogisticsAllocationReservation D7   settlement allocation hold
 ```
 
-여기서 `contracts`는 먼 미래 기능을 구현한다는 뜻이 아니다. E0에서 실제로 구현할 수준은 R4에서 scenario/future-pressure 기준으로 다시 최소화한다.
+금지:
 
-## 6. E1 Roblox Runtime Provider 후보
+- 범용 `ReservationManager`로 수명주기 통합.
+- ResourceReservation을 Ordering lock으로 사용.
+- OccupancyReservation을 Authority transaction lock으로 사용.
+- Domain reservation을 commit 전 실제 ownership transfer로 처리.
 
-`CORE_ENGINE_COMPLETE` 이후에만 구체화한다.
+## 8. 공통 Provider Contract
+
+각 System이 직접 `os.clock`, GUID, Random, Remote, DataStore를 선택하지 않는다.
 
 ```text
-Remote Transport Adapter                       ← A2/A6
-Player/Connection Adapter                      ← A1/A6
-Storage Adapter                                ← A7
-Runtime Object Instance/Physics Binder          ← W2
-Spatial Raycast/Overlap/Collision Provider      ← W3
-Navigation PathfindingService/NavMesh Provider  ← W6
-Scene Streaming/Materialization Adapter         ← W7
-Asset Geometry/Metadata Inspection Provider     ← U1/U2
-Roblox Input/GUI Focus Adapter                  ← C1
-Roblox Camera Adapter                           ← C2
-Animation/Audio/VFX/Lighting Playback Adapter   ← C3
-Runtime Metrics Adapter                         ← S1
-Roblox Production-Parity Test Adapter           ← S2
+AuthorityMonotonicClock
+DeterministicIdFactory
+RngProvider
+TransportAdapter
+StorageAdapter
 ```
 
-이 목록의 이름은 Module/Manager 이름이 아니라 **Provider responsibility**다. 실제 Studio Controller/Manager 이름은 `CORE_ENGINE_COMPLETE` 후 E1 Checkpoint Freeze에서 정한다.
+- technical monotonic time은 Campaign Game Time(D4)과 다르다.
+- R4가 authoritative random outcome을 소유한다.
+- A2/A6 transport semantics를 공유한다.
+- A7 storage/recovery semantics를 소유한다.
+- S2는 동일 contract의 deterministic test adapter를 제공한다.
 
-## 7. U0 / E2 Human-facing 경계
+## 9. Requirement Capability와 System 분리
 
-`INTEGRATION_READY` 이후:
+최초 v2 Capability는 사실상 System label이었다. 이를 폐기하고 **Requirement Capability Catalog v3 = 30**으로 교체한다.
+
+Requirement Capability는 제품/Architecture 결과를 나타내며 여러 System을 동시에 압박한다.
+
+예:
 
 ```text
-U0-A HTML/UI Reference Distillation
-→ U0-B 전체 Product UI Shell
-→ U0-C Human Shell Review
-→ UI_SHELL_READY
+REQ_SESSION_PLAYABILITY
+→ A1 + A6 + A7 + W7 + C1
+
+REQ_COMMITTED_EVENT_PROPAGATION
+→ A3 + A8 + A5 + A7 + S1
+
+REQ_SELECTION_TARGETING
+→ C1 + W3 + W4 + W5 + R2
+
+REQ_RULE_EXECUTION_RESOLUTION
+→ R2 + R3 + R4 + A4 + A3
 ```
 
-그 뒤 E2에서 시스템을 실제 Product Surface에 JIT 연결한다.
+전체 30개와 Authority sourceRefs는 `implementation-system-model.json`이 소유한다.
 
-Throwaway Test ScreenGui는 만들지 않는다. UI가 필요한 테스트는 Product Shell의 dev-mode Debug/Fixture Control을 사용한다.
+## 10. 61 Scenario Machine Trace
 
-Human-check 대상 예:
+기존 Scenario 정의는 그대로 유지한다. Legacy `capabilityRefs`는 historical requirement vocabulary다.
+
+새 canonical trace:
 
 ```text
-Selection/hover readability
-Path preview readability
-Movement response/intent
-Camera feel
-Combat/character/inventory/journal hierarchy
-DM workspace/scene editor usability
-VFX/reveal timing
-Loading/reconnect/recovery clarity
-Accessibility/reduced-motion behavior
+Scenario ID
+→ Requirement Capability[]
+→ System[]
 ```
 
-## 8. 금지되는 경계 위반
-
-- Core System이 Roblox Instance를 권위 원본으로 사용.
-- W3 이외 System이 편의를 위해 Workspace를 직접 순회해 spatial truth를 만듦.
-- W6 Core가 PathfindingService 결과 형식을 public domain contract로 노출.
-- C1 UI가 rule/permission/availability를 재계산.
-- C2 Camera transform이 selection/visibility/rule authority를 변경.
-- C3 Presentation failure가 gameplay transaction을 rollback.
-- E1 Adapter가 Core Store를 직접 수정하는 별도 authority path 생성.
-- 테스트를 위해 production Command/Transaction path를 우회하는 direct setter 생성.
-- Core Engine 미완료 상태에서 Studio prototype으로 architecture를 사실상 확정.
-
-## 9. Future Scenario Compatibility Check
-
-R3 Matrix를 61 Scenario에 대조한 결과 다음 유형 모두에 Core→Runtime→Human 경계가 존재한다.
+61/61 mapping은 `implementation-system-model.json`에 기록하며 Validator가 다음을 검사한다.
 
 ```text
-join/reconnect/recovery
-selection/visibility
-camera local control
-click/WASD movement
-interaction
-attack/reaction/dice/effect
-character sheet/progression
-inventory/equipment/item pickup
-rest/travel/crafting
-journal/search/edit/navigation
-scene compile/test/publish/live patch
-DM takeover/override/recovery
-content migration
-actor authoring/spawn
-long-session recovery
+legacy/base+expanded Scenario ID set == new Scenario Trace ID set
+모든 systemRefs가 34-System set 안에 존재
+모든 requirementCapabilityRefs가 30 Capability set 안에 존재
+각 Scenario는 둘 다 non-empty
+중복/누락 금지
 ```
 
-특히 다음 미래 기능은 Core public contract 재작성 없이 Provider/Domain implementation을 추가할 수 있어야 한다.
+대표 mutation Scenario에는 A8 Event Delivery가 명시되어야 한다.
+
+## 11. Future Compatibility Pressure
+
+R4/E0는 현재 Explorer vertical slice만 최적화하지 않는다.
+
+최소 미래 압력:
 
 ```text
-Character 1→20
-Encounter full action economy
-Official spell/content waves
-Persistence/rollback production adapters
-Survival logistics
-DM-authored actor pipeline
-Scene authoring tool expansion
+Character creation / level-up / sheet
+Encounter / reaction / ready / death save
+Inventory / equipment / consumables
+Spell / dice / concentration / effects
+Rest / travel / crafting / survival settlement
+Journal / scene authoring / live DM
+Content migration / actor authoring
+Reconnect / restart / rollback / branch recovery
+Streaming / accessibility / low-end fallback
 ```
 
-## 10. R3 권장 결론
+미래 기능 자체는 구현하지 않되, 위 기능 때문에 공통 public boundary를 갈아엎어야 하는 R4 Checkpoint는 Freeze하지 않는다.
+
+## 12. R3 결론
+
+현재 결론:
 
 ```text
-Boundary Model = ACCEPTABLE_FOR_R4
-Source = STILL BLOCKED
-Studio = STILL BLOCKED
+34-System Model v2 = REPAIRED
+30 Requirement Capabilities v3 = ACTIVE
+61 Scenario machine trace = PRESENT
+REPOSITORY_LOGIC ≠ E0_CORE_ENGINE = DEFINED
+Event Delivery / Ready / Reservation / Provider seams = DEFINED
+Source = BLOCKED
+Studio = BLOCKED
+R3 = NOT FROZEN
 ```
 
-권장 다음 단계:
-
-1. 이 Boundary Matrix를 사용자 승인.
-2. 승인 후 R3를 `FROZEN`으로 승격.
-3. R4에서 **Foundation Core Checkpoint만** JIT로 구체화.
-4. R4가 끝난 뒤 Dedicated Implementation Branch 생성.
-5. 그 Branch에서 E0 Core Engine 전체 구현.
-6. `CORE_ENGINE_COMPLETE` 이후에만 E1 Studio Provider/Manager/Controller 구체화.
+다음은 **전체 Validator/CI를 한 번 돌려 repaired model을 self-validate**하는 것이다. 모두 통과한 뒤에만 사용자에게 R3 Freeze 여부를 다시 제안한다.
