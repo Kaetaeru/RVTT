@@ -1,7 +1,9 @@
 # RVTT Implementation Model
 
-- 상태: `ACTIVE · SYSTEM_MODEL_V2_REPAIRED · R3_SEMANTIC_AUDIT_V2_PENDING_FINAL_VALIDATION`
+- 상태: `ACTIVE · SYSTEM_MODEL_V2_REPAIRED · R3_VALIDATED_AWAITING_FREEZE_DECISION`
 - System Authority: `SYSTEMS.md`
+- Canonical Base Scenario source: `manifests/scenario-base-catalog.json`
+- Expanded Scenario source: `manifests/architecture-scenarios.json`의 `scenarios[]`
 - Direct model: `manifests/implementation-system-model.json`
 - Effective Scenario audit: `manifests/scenario-semantic-audit.json`
 - Source 구현: `FORBIDDEN`
@@ -16,9 +18,9 @@ SYSTEM MODEL = V2 · 34 SYSTEMS · REPAIRED
 REQUIREMENT CAPABILITY = V3 · 30 · MANY-TO-MANY
 DIRECT SCENARIO TRACE = 61/61
 Scenario Semantic Audit = V1 · 61/61 direct-stage base
-SEMANTIC AUDIT = V2 · BODY/INGRESS/RECOVERY/SCHEMA BOUND
+SEMANTIC AUDIT = V2 · VALIDATED · BODY/INGRESS/RECOVERY/SCHEMA BOUND
 EFFECTIVE RECOVERY SCENARIOS = 27
-R3 = NOT FROZEN
+R3 = NOT FROZEN · VALIDATED_AWAITING_FREEZE_DECISION
 SOURCE = BLOCKED
 STUDIO/MCP = BLOCKED
 DEDICATED IMPLEMENTATION BRANCH = NOT YET CREATED
@@ -31,13 +33,17 @@ v1은 `implementation-system-model.json`의 direct stage layer다. 완전한 R3 
 ```text
 Product / Accepted ADR / Current Architecture / UI
 → Requirement Capability
-↔ Scenario source body
+↔ Canonical Scenario body
 → direct Scenario System/Requirement/semanticStages trace
 → v2 mutation + ingress + recovery semantic expansion
 → R3 execution boundary
 → R4 E0 checkpoint
 → Source/Test/Runtime/Human evidence
 ```
+
+Base 14 Scenario body는 `scenario-base-catalog.json`이 소유한다. 이 파일은 legacy Greenfield capability/system/module 참조를 포함하지 않는다. 기존 `architecture-coverage.json` 안의 Base Scenario 사본은 역사적 evidence일 뿐 새 구현의 canonical Scenario source가 아니다.
+
+Expanded 47 Scenario body는 현재 `architecture-scenarios.json`의 `scenarios[]`가 소유한다. 그 파일의 legacy top-level metadata/capabilityRefs는 구현 모델 권위가 아니며 Requirement/System 매핑은 `implementation-system-model.json`만 소유한다.
 
 ## 3. Scenario Semantic Audit v2
 
@@ -48,16 +54,16 @@ v1 direct trace digest
 sha256:57e485a0cec6d753542e4bc202a881e10e2bd5ae63e314cc609c7e2d99f38140
 
 v2 semanticSchemaDigest
-sha256:bba741b54f72b1320bafa7994ca1cc009cf55b3dc909b0035fffac36560a9797
+sha256:dcc766c1161332789e91aadc362c4765687af3efc2f7193cf23f748df0eb6489
 
 v2 combinedAuditDigest
-sha256:8d929e2fee969da391344d3877a73315c5b1a8c1cecf2055dcbe9fe40897173e
+sha256:48477cd70757d4450980162d49c62e12115229762bee4127542d6a167099a723
 ```
 
 Combined audit는 다음을 묶는다.
 
 ```text
-Base Scenario blob
+Canonical Base Scenario blob
 + Expanded Scenario blob
 + v1 trace digest
 + mutation semantic
@@ -79,12 +85,13 @@ EVENT_TRIGGER → A8 + REQ_COMMITTED_EVENT_PROPAGATION
 TEST_HARNESS → S2 + REQ_DIAGNOSTICS_REPRODUCIBILITY
 ```
 
-Typed recovery는 27개 Scenario에 존재한다. 재검증에서 추가된 세 항목:
+Typed recovery는 27개 Scenario에 존재한다. 재검증 sentinel:
 
 ```text
 SCN_ATTACK_REACTION_RESOLUTION → RECONNECT
 SCN_CHARACTER_SHEET_LIVE_DAMAGE_SYNC → CLIENT_RESYNC
 SCN_SCENE_CANDIDATE_TEST_PUBLISH → LAST_KNOWN_GOOD
+SCN_DM_RECOVERY_REVIEW_BRANCH → SERVER_RESTART + ROLLBACK_BRANCH + CLIENT_RESYNC
 ```
 
 `MUTATION`은 모든 transient record가 아니라 A3 transactional authoritative domain/source commit 또는 atomic commit attempt다.
@@ -180,8 +187,7 @@ Completion Condition
 ## 8. 실행 순서
 
 ```text
-Scenario Semantic Audit v2 final validation
-→ 사용자 R3 Freeze 결정
+사용자 R3 Freeze 결정
 → R4 E0 Checkpoint Freeze
 → R5 Dedicated Implementation Branch
 → E0 Core Engine 전체 구현/자동 검증
@@ -202,6 +208,7 @@ Scenario Semantic Audit v2 final validation
 ## 9. 금지
 
 - 폐기된 Greenfield 계약 복원.
+- legacy `architecture-coverage.json`의 Base Scenario capability/system/module refs를 새 구현 권위로 사용.
 - 사용자 승인 없이 새 System/Capability/state owner/authority/input grammar/개발 순서 변경.
 - A3 Outbox와 A8 Delivery 통합.
 - A6/A7/W7/C1이 final Command gate를 직접 엶.
