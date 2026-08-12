@@ -179,10 +179,10 @@ R3 = NOT FROZEN
 
 ## 8. Validation Evidence
 
-최종 재검증 HEAD:
+Final validated branch HEAD:
 
 ```text
-11e313db94dc8e5fd9a7f5a6aa4aab5b2d7eb8b8
+505598d2dae6ce0b4793880cf6c613f5d6d88261
 ```
 
 이 HEAD에서 다음 9개 Pull Request Workflow가 모두 `completed / success`를 기록했다.
