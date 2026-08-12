@@ -1,67 +1,46 @@
 # RVTT Agent Test Status
 
-- 상태: `ACTIVE`
-- 최종 갱신일: `2026-08-12`
-- 목적: 현재 Evidence와 다음 검증 수준을 간단히 추적한다.
+- 상태: `CURRENT · R3_VALIDATED_AWAITING_FREEZE_DECISION`
+- 최종 갱신일: `2026-08-13`
+- 목적: 현재 planning evidence와 구현 gate를 간단히 추적한다.
 
-이 문서는 상태 대시보드다. 개발 방식은 `AGENTS.md`, 구현 순서는 `implementation/roblox/CURRENT-WORK-ORDER.md`, 테스트 정의는 `implementation/roblox/EXECUTION-TEST-RULES.md`가 소유한다.
+이 문서는 상태 대시보드다. 실행 권위는 `AGENTS.md`와 `.github/CODEX-ACTIVE-TASK.md`가 소유한다.
 
 ## 현재 운영 모드
 
 ```text
-STUDIO_FIRST_ITERATION
+R3_PLANNING_VALIDATED
+SOURCE_BLOCKED
+STUDIO_BLOCKED
 ```
 
-```text
-GitHub 조사
-→ Studio MCP 직접 구현·Play
-→ 즉시 수정
-→ 사용자 판단
-→ GitHub Source 정규화
-→ Focused Test
-→ Stabilization·Release Evidence
-```
+현재는 Studio-first iteration이나 Greenfield Source 구현 단계가 아니다.
 
 ## 현재 Evidence
 
 | 영역 | 상태 | 의미 |
 |---|---|---|
-| Production Source baseline | `EXISTS` | 16 Slice와 주요 UI Source 존재 |
-| ADR-0091 Source/Static | `STATIC_VERIFIED` | Runtime·Human PASS 아님 |
-| Full UI·UX Static Matrix | `STATIC_VERIFIED` | Runtime·Human PASS 아님 |
-| contextual-pointer-actions | `PASS · 9/9` | 현재 G1 Harness에서 사용자 실행 확인 |
-| historical slice01-world-interaction | `HISTORICAL_PASS · 16/16` | OLD INPUT CONTRACT; 현재 UX 전체 PASS 아님 |
-| Production Studio UX | `IN_PROGRESS` | 이제 직접 제품 흐름을 반복 확인·수정 |
-| Human UI·UX | `IN_PROGRESS_BY_FEATURE` | 작은 기능별 판단 후 Release 전 종합 확인 |
-| Multi-client | `NOT_EXECUTED_CURRENT_CONTRACT` | Stabilization 이후 |
-| Persistence | `DEFERRED_TO_RELEVANT_STABILIZATION` | Persistence 변경/Release에서 실행 |
-| Performance·Soak | `PENDING` | 기능 안정 후 측정 |
-| Grand Acceptance | `RELEASE_TOOLING` | 개발 선행 Gate 아님 |
+| System Model | `34 · VALIDATED` | R3 System Responsibility Model v2 |
+| Requirement Capability | `30 · VALIDATED` | many-to-many catalog v3 |
+| Scenario | `61 · VALIDATED` | clean Base 14 + Expanded 47 |
+| Typed Recovery | `27 · VALIDATED` | v2 classification evidence |
+| Semantic Audit | `V3 · VALIDATED` | clean source + immutable evidence binding |
+| Legacy `src/**` | `READ_ONLY_REFERENCE` | 새 구현 baseline 아님 |
+| Greenfield `greenfield/src/**` | `NOT STARTED` | R3/R4 동안 Source 구현 금지 |
+| Studio/MCP | `BLOCKED` | `CORE_ENGINE_COMPLETE` 이후 E1에서 활성화 |
+| Human UI/UX acceptance | `NOT CURRENT GATE` | U0/E2에서 수행 |
 
-## 현재 다음 행동
+기존 Production Source/Studio/Acceptance PASS는 historical regression/reference evidence이며 새 Greenfield 구현의 현재 PASS를 의미하지 않는다.
 
-```text
-Production Studio에서 Exploration 흐름 직접 실행
-→ 실제 UI·입력·Camera·Move·Context 문제 확인
-→ Studio에서 즉시 수정
-→ 받아들인 결과를 Source에 정규화
-```
-
-`slice01-world-interaction` 재실행 자체를 다음 개발 목표로 삼지 않는다.
-
-## Evidence 규칙
+## 다음 Gate
 
 ```text
-Development Observation
-≠ Static
-≠ Stabilization Runtime
-≠ Human Final
-≠ Multi-client
-≠ Persistence
-≠ Performance
-≠ Release
+사용자 R3 Freeze 결정
+→ R4 E0 Checkpoint Freeze
+→ Dedicated Implementation Branch
+→ E0 Repository Core Engine
+→ CORE_ENGINE_COMPLETE
+→ E1 Studio/MCP Runtime Integration
 ```
 
-- 실행하지 않은 범위를 PASS로 바꾸지 않는다.
-- 개발 중 빠른 Play는 SHA-fixed Release Evidence와 구분한다.
-- 기능이 안정되면 그 시점의 정확한 Branch·SHA에서 필요한 검증을 다시 수행한다.
+R3는 자동 Freeze하지 않는다.
