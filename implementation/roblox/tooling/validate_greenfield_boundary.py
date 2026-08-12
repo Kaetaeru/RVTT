@@ -10,6 +10,7 @@ ACTIVE_TASK = REPO_ROOT / ".github/CODEX-ACTIVE-TASK.md"
 MODEL = ROOT / "IMPLEMENTATION-MODEL.md"
 SYSTEMS = ROOT / "SYSTEMS.md"
 AGENTS = REPO_ROOT / "AGENTS.md"
+CURRENT_MANIFEST = ROOT / "manifests/implementation-system-model.json"
 
 # User-directed implementation-model reset started from this PR head.
 # Legacy files already changed earlier in the planning PR are accepted as historical baseline,
@@ -42,18 +43,20 @@ def main() -> int:
     systems = SYSTEMS.read_text(encoding="utf-8") if SYSTEMS.exists() else ""
     agents = AGENTS.read_text(encoding="utf-8")
 
-    if "R3_BOUNDARY_FREEZE" not in active:
-        errors.append("active task must remain in R3_BOUNDARY_FREEZE until user approves the boundary matrix")
+    if "R3_REPAIRED_AWAITING_FREEZE_DECISION" not in active:
+        errors.append("active task must remain in repaired-but-not-frozen R3 state until user Freeze decision")
     if "sourceImplementationAllowed: `false`" not in active:
         errors.append("source implementation must remain disabled during R3 planning")
     if "studioImplementationAllowed: `false`" not in active:
         errors.append("Studio implementation must remain disabled during R3 planning")
     if "OLD GREENFIELD MODEL = RETIRED" not in agents:
         errors.append("AGENTS.md must declare old Greenfield model retired")
-    if "SYSTEM_MODEL_V1_APPROVED" not in model:
-        errors.append("implementation model must declare approved System Model v1")
-    if "APPROVED_SYSTEM_AUTHORITY" not in systems:
-        errors.append("SYSTEMS.md approved authority marker missing")
+    if "SYSTEM_MODEL_V2_REPAIRED" not in model:
+        errors.append("implementation model must declare repaired System Model v2")
+    if "APPROVED_SYSTEM_AUTHORITY" not in systems or "34 System Responsibility Model" not in systems:
+        errors.append("SYSTEMS.md repaired 34-System authority marker missing")
+    if not CURRENT_MANIFEST.exists():
+        errors.append("implementation-system-model.json must exist")
     if "DEDICATED IMPLEMENTATION BRANCH = NOT YET CREATED" not in model:
         errors.append("dedicated implementation branch must not be created before R4 E0 checkpoint freeze")
 
@@ -77,7 +80,7 @@ def main() -> int:
 
     print(
         "RVTT implementation planning boundary validation passed: "
-        f"resetBaseline={RESET_BASELINE_COMMIT[:12]}; systemModel=33-v1; R3=ACTIVE; "
+        f"resetBaseline={RESET_BASELINE_COMMIT[:12]}; systemModel=34-v2-repaired; R3=NOT_FROZEN; "
         "source=BLOCKED; studio=BLOCKED; legacy write-lock=PASS"
     )
     return 0
