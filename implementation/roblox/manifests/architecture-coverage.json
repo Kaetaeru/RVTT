@@ -1,0 +1,343 @@
+{
+  "schemaVersion": 1,
+  "registryId": "rvtt-greenfield-architecture-coverage-v1",
+  "authorityDocument": "implementation/roblox/ARCHITECTURE-COVERAGE-POLICY.md",
+  "auditDocument": "implementation/roblox/audits/ARCHITECTURE-COVERAGE-AUDIT-001.md",
+  "moduleRegistry": "implementation/roblox/manifests/module-contracts.json",
+  "systemFunctionRegistry": "implementation/roblox/manifests/system-function-contracts.json",
+  "executionRegistry": "implementation/roblox/manifests/execution-layers.json",
+  "implementationGate": "BLOCKED_BY_FOUNDATION_COVERAGE_GAPS",
+  "policy": {
+    "requirementsTraceBidirectionally": true,
+    "authorityCorpusSnapshotRequired": true,
+    "unmappedCurrentCapabilityBlocksItsPhase": true,
+    "deferredCapabilityRequiresOwnerAndReason": true,
+    "futureCapabilityDoesNotRequirePrematureModuleDesign": true,
+    "crossCuttingDimensionsMustBeExplicit": true,
+    "newAuthorityChangeRequiresCoverageReview": true,
+    "coverageFindingDoesNotAuthorizeArchitectureChange": true
+  },
+  "authorityCorpus": {
+    "treeSnapshots": [
+      {"path":"docs/remake/product","expectedTreeSha":"ab4cbfe828536f6de19946f22772f92f8b679e0e","role":"PRODUCT_AUTHORITY"},
+      {"path":"docs/remake/decisions","expectedTreeSha":"54125338b3af1650b4bce9d7e3ff31496ae7e03c","role":"ADR_AUTHORITY"},
+      {"path":"docs/remake/architecture","expectedTreeSha":"249d9a7293380c33f6d7195ddfa38da58fe86979","role":"ARCHITECTURE_AUTHORITY"},
+      {"path":"docs/remake/systems","expectedTreeSha":"742efb372264b85fa26a3f57b2541fd0405d26e2","role":"SYSTEM_AUTHORITY"},
+      {"path":"docs/remake/ui","expectedTreeSha":"2effbddd018b02074daa2becc3d7d0b72e6e438b","role":"UI_AUTHORITY"},
+      {"path":"docs/remake/specs","expectedTreeSha":"54da95b3aec97cef9eba8c4a698b534abc29505c","role":"IMPLEMENTATION_SPEC_AUTHORITY"}
+    ],
+    "directFiles": [
+      {"path":"docs/remake/CURRENT-WORK-ORDER.md","expectedBlobSha":"cf48db8c6fb242405d5b628fb6620c35d11ba4ca8","role":"CURRENT_PLANNING_AUTHORITY"},
+      {"path":"docs/remake/DOCUMENT-ROLE-ACCESS-AUTHORING-RULE.md","expectedBlobSha":"11956d2a5cca871eb4e3e85f43b03d746a2a15bf","role":"ROLE_ACCESS_AUTHORITY"}
+    ]
+  },
+  "crossCuttingDimensions": [
+    "AUTHORITY",
+    "PERMISSION",
+    "STATE_OWNERSHIP",
+    "COMMAND",
+    "PROJECTION_DISCLOSURE",
+    "PERSISTENCE",
+    "RECONNECT",
+    "ROLLBACK",
+    "MULTIPLAYER_CONCURRENCY",
+    "FAILURE",
+    "OBSERVABILITY",
+    "SECURITY",
+    "AUTOMATED_TEST",
+    "HUMAN_TEST"
+  ],
+  "capabilities": [
+    {
+      "id":"CAP_SESSION_CONTROL_CONTEXT",
+      "title":"Session lifecycle, role, control, play mode, context, overlay and transition gates",
+      "plannedPhase":"FOUNDATION",
+      "coverageState":"PARTIAL",
+      "authorityRefs":["docs/remake/architecture/session-play-mode-context-overlay-and-transition-contract.md","docs/remake/decisions/ADR-0070-orthogonal-session-modes-contexts-overlays-and-transitions.md"],
+      "systemRefs":["system.server-authority-core","system.client-world-shell"],
+      "moduleRefs":["server.session.authority","client.input.semantic-router"],
+      "knownGapRefs":["GAP-001"],
+      "flow":"role/control + base mode/context/overlay/transition -> effective command policy -> projection/input gate",
+      "crossCutting":{"AUTHORITY":"UNRESOLVED:session mode/context/transition authority boundary is not represented","PERMISSION":"PARTIAL:role/control exists but effective command policy does not","STATE_OWNERSHIP":"UNRESOLVED:mode/context/overlay/transition owner missing","COMMAND":"PARTIAL:CommandRuntime exists without full session policy gate","PROJECTION_DISCLOSURE":"PARTIAL:session policy projection not mapped","PERSISTENCE":"DEFERRED:session persistence belongs later but boundary must remain","RECONNECT":"UNRESOLVED:transition and reconnect gate missing","ROLLBACK":"DEFERRED:authority epoch policy exists in upper architecture","MULTIPLAYER_CONCURRENCY":"PARTIAL:server session authority exists","FAILURE":"PARTIAL:structured command failure exists","OBSERVABILITY":"UNRESOLVED:effective policy decision trace not mapped","SECURITY":"PARTIAL:server role claims are not trusted","AUTOMATED_TEST":"UNRESOLVED:no session policy coverage test yet","HUMAN_TEST":"N/A:engine policy correctness is automated"}
+    },
+    {
+      "id":"CAP_COMMAND_AUTHORITY_PROTOCOL",
+      "title":"Versioned client intent, authorization and server command execution",
+      "plannedPhase":"FOUNDATION",
+      "coverageState":"MAPPED",
+      "authorityRefs":["docs/remake/architecture/networking-command-event-and-client-synchronization-contract.md","docs/remake/architecture/runtime-architecture-principles.md"],
+      "systemRefs":["system.shared-data-contracts","system.server-authority-core","system.command-transport"],
+      "moduleRefs":["shared.protocol.command-envelope","server.authorization","server.command.runtime","server.transport.command-gateway","client.command"],
+      "knownGapRefs":["GAP-002"],
+      "flow":"client intent -> bounded command envelope -> gateway -> authorization/runtime -> authoritative execution receipt",
+      "crossCutting":{"AUTHORITY":"COVERED:server authoritative command boundary","PERMISSION":"COVERED:AuthorizationService is server-owned","STATE_OWNERSHIP":"COVERED:runtime owns command lifecycle not domain state","COMMAND":"COVERED:single declared command path","PROJECTION_DISCLOSURE":"DEFERRED:result state returns through projection capability","PERSISTENCE":"DEFERRED:command journal is part of transaction gap","RECONNECT":"DEFERRED:idempotency and epoch integration pending","ROLLBACK":"DEFERRED:old epoch commands must be rejected","MULTIPLAYER_CONCURRENCY":"UNRESOLVED:ordering coordinator is not mapped","FAILURE":"COVERED:structured rejection semantics contracted","OBSERVABILITY":"UNRESOLVED:correlation/decision trace not mapped","SECURITY":"COVERED:bounded input and no client authority claims","AUTOMATED_TEST":"PLANNED:repository negative command tests required","HUMAN_TEST":"N/A:pure command correctness is automated"}
+    },
+    {
+      "id":"CAP_TRANSACTION_EVENT_PROJECTION_BARRIER",
+      "title":"Ordering, reservation, atomic transaction, outbox and projection barrier",
+      "plannedPhase":"FOUNDATION",
+      "coverageState":"UNMAPPED",
+      "authorityRefs":["docs/remake/architecture/command-ordering-logical-time-and-transaction-coordinator-contract.md","docs/remake/architecture/domain-event-outbox-subscription-and-projection-runtime-contract.md"],
+      "systemRefs":["system.server-authority-core","system.projection-pipeline"],
+      "moduleRefs":["server.world.state","server.projection"],
+      "knownGapRefs":["GAP-002"],
+      "flow":"validated command/rule execution -> ordering/reservation -> atomic transaction -> revision + outbox -> projection barrier",
+      "crossCutting":{"AUTHORITY":"UNRESOLVED:Transaction Coordinator boundary missing","PERMISSION":"DEFERRED:permission precedes transaction","STATE_OWNERSHIP":"UNRESOLVED:WorldState.transact is narrower than cross-domain transaction authority","COMMAND":"UNRESOLVED:CommandRuntime has no ordering/transaction coordinator mapping","PROJECTION_DISCLOSURE":"UNRESOLVED:projection barrier/outbox path missing","PERSISTENCE":"UNRESOLVED:commit journal seam missing","RECONNECT":"DEFERRED:replay/resync depends on journal/outbox","ROLLBACK":"DEFERRED:authority epoch and branch recovery depend on transaction journal","MULTIPLAYER_CONCURRENCY":"UNRESOLVED:ordering/reservation missing","FAILURE":"UNRESOLVED:atomic commit/recovery_required semantics not mapped","OBSERVABILITY":"UNRESOLVED:transaction correlation trace missing","SECURITY":"PARTIAL:server mutation is authoritative but atomic boundary incomplete","AUTOMATED_TEST":"UNRESOLVED:no atomicity/outbox tests mapped","HUMAN_TEST":"N/A:transaction correctness is automated"}
+    },
+    {
+      "id":"CAP_PROJECTION_DISCLOSURE_SYNC",
+      "title":"Viewer-safe projection, replica synchronization and disclosure",
+      "plannedPhase":"FOUNDATION",
+      "coverageState":"PARTIAL",
+      "authorityRefs":["docs/remake/architecture/ui-projection-view-model-input-context-and-recovery-runtime-contract.md","docs/remake/architecture/domain-event-outbox-subscription-and-projection-runtime-contract.md"],
+      "systemRefs":["system.projection-pipeline"],
+      "moduleRefs":["shared.protocol.projection-envelope","server.projection","server.transport.projection-gateway","client.projection"],
+      "knownGapRefs":["GAP-002","GAP-009","GAP-010"],
+      "flow":"authority state/event -> viewer disclosure -> bounded projection stream -> atomic client replica -> derived presentation",
+      "crossCutting":{"AUTHORITY":"COVERED:server selects viewer-safe projection","PERMISSION":"PARTIAL:role/disclosure inputs exist conceptually","STATE_OWNERSHIP":"COVERED:client replica is non-authoritative","COMMAND":"N/A:projection is output path","PROJECTION_DISCLOSURE":"PARTIAL:generic filter exists but visibility/knowledge and event barrier are unmapped","PERSISTENCE":"N/A:projection is regenerated from authority state","RECONNECT":"UNRESOLVED:full resync/atomic recovery coordinator missing","ROLLBACK":"UNRESOLVED:authority epoch UI recovery not mapped","MULTIPLAYER_CONCURRENCY":"PARTIAL:viewer-specific build is contracted","FAILURE":"PARTIAL:revision regression rejection exists","OBSERVABILITY":"UNRESOLVED:projection gap/cursor trace missing","SECURITY":"PARTIAL:viewer-safe invariant exists","AUTOMATED_TEST":"PLANNED:negative disclosure and revision tests required","HUMAN_TEST":"N/A:disclosure correctness is automated"}
+    },
+    {
+      "id":"CAP_RUNTIME_OBJECT_SCENE_IDENTITY",
+      "title":"Scene runtime objects, stable identities and actor/object presence",
+      "plannedPhase":"FOUNDATION_EXPLORATION",
+      "coverageState":"PARTIAL",
+      "authorityRefs":["docs/remake/architecture/runtime-object-system-and-entity-lifecycle-contract.md","docs/remake/architecture/scene-compiler-and-compiled-runtime-scene-contract.md"],
+      "systemRefs":["system.shared-data-contracts","system.server-authority-core"],
+      "moduleRefs":["shared.world.contract","server.world.state"],
+      "knownGapRefs":["GAP-003"],
+      "flow":"compiled scene/runtime identity -> authoritative runtime object/actor state -> projection/selection/interaction references",
+      "crossCutting":{"AUTHORITY":"PARTIAL:WorldState owns actors but generic runtime-object lifecycle is missing","PERMISSION":"DEFERRED:object access is capability/disclosure driven","STATE_OWNERSHIP":"UNRESOLVED:actor-only world state does not map full runtime object ownership","COMMAND":"PARTIAL:object mutation should use command/transaction path","PROJECTION_DISCLOSURE":"PARTIAL:public object identity needs viewer-safe projection","PERSISTENCE":"DEFERRED:scene/runtime lifecycle persistence later","RECONNECT":"DEFERRED:stable ids/incarnations required","ROLLBACK":"DEFERRED:incarnation and branch semantics required","MULTIPLAYER_CONCURRENCY":"UNRESOLVED:object ordering keys depend on transaction gap","FAILURE":"UNRESOLVED:stale incarnation/object lifecycle errors not mapped","OBSERVABILITY":"UNRESOLVED:runtime object trace not mapped","SECURITY":"PARTIAL:no Instance references over network","AUTOMATED_TEST":"UNRESOLVED:no stable identity/lifecycle tests mapped","HUMAN_TEST":"N/A:identity correctness is automated"}
+    },
+    {
+      "id":"CAP_SPATIAL_QUERY",
+      "title":"Snapshot-bound spatial evidence and candidate queries",
+      "plannedPhase":"FOUNDATION_EXPLORATION",
+      "coverageState":"UNMAPPED",
+      "authorityRefs":["docs/remake/architecture/spatial-query-engine-and-provider-contract.md","docs/remake/decisions/ADR-0055-snapshot-bound-typed-spatial-query-and-navigation-boundary.md"],
+      "systemRefs":[],
+      "moduleRefs":[],
+      "knownGapRefs":["GAP-004"],
+      "flow":"runtime scene snapshot lease -> typed spatial query -> deterministic evidence/candidates -> rules/selection/navigation interpretation",
+      "crossCutting":{"AUTHORITY":"UNRESOLVED:no SpatialQueryService boundary","PERMISSION":"UNRESOLVED:disclosure scope/query authority mode not mapped","STATE_OWNERSHIP":"N/A:read-only evidence service","COMMAND":"N/A:query does not mutate state","PROJECTION_DISCLOSURE":"UNRESOLVED:candidate disclosure filter integration missing","PERSISTENCE":"N/A:query is derived from snapshot","RECONNECT":"N/A:query is recomputed","ROLLBACK":"DEFERRED:historical snapshot query later","MULTIPLAYER_CONCURRENCY":"PARTIAL:snapshot-bound read consistency required","FAILURE":"UNRESOLVED:query budget/unsupported policy errors not mapped","OBSERVABILITY":"UNRESOLVED:query trace missing","SECURITY":"UNRESOLVED:hidden candidate leakage protection not mapped","AUTOMATED_TEST":"UNRESOLVED:deterministic query tests missing","HUMAN_TEST":"N/A:geometry/query correctness is automated/runtime-tested"}
+    },
+    {
+      "id":"CAP_NAVIGATION_MOVEMENT",
+      "title":"Path planning, movement coordination/execution and player movement intent",
+      "plannedPhase":"M1_MOVE",
+      "coverageState":"PARTIAL",
+      "authorityRefs":["docs/remake/architecture/runtime-navigation-path-planning-and-movement-execution-contract.md","docs/remake/product/platform-movement-and-input-scope.md"],
+      "systemRefs":["system.movement"],
+      "moduleRefs":["server.domain.movement","client.world.movement"],
+      "knownGapRefs":["GAP-004","GAP-005"],
+      "flow":"movement intent -> spatial snapshot/path planning -> approval -> authoritative movement executor/checkpoints -> projection -> presentation",
+      "crossCutting":{"AUTHORITY":"PARTIAL:server MovementDomain exists but planner/coordinator/executor split is unmapped","PERMISSION":"PARTIAL:authorization precedes movement","STATE_OWNERSHIP":"UNRESOLVED:movement execution/budget/occupancy owners incomplete","COMMAND":"COVERED:movement command path planned","PROJECTION_DISCLOSURE":"PARTIAL:movement result projects through world projection","PERSISTENCE":"DEFERRED:movement checkpoints/recovery later but seam required","RECONNECT":"DEFERRED:checkpointed execution recovery later","ROLLBACK":"DEFERRED:movement checkpoints must be branch-safe","MULTIPLAYER_CONCURRENCY":"UNRESOLVED:occupancy/ordering reservation missing","FAILURE":"UNRESOLVED:unreachable/partial/replan semantics not mapped","OBSERVABILITY":"UNRESOLVED:path/movement trace missing","SECURITY":"COVERED:client cannot commit final position","AUTOMATED_TEST":"UNRESOLVED:path planner/runtime movement tests not mapped","HUMAN_TEST":"REQUIRED:preview/readability/responsiveness/smoothness in M1"}
+    },
+    {
+      "id":"CAP_SELECTION_TARGETING",
+      "title":"Selection, targeting, candidate resolution, preview and frozen binding",
+      "plannedPhase":"S1_SELECTION",
+      "coverageState":"PARTIAL",
+      "authorityRefs":["docs/remake/architecture/selection-targeting-preview-and-frozen-binding-runtime-contract.md","docs/remake/decisions/ADR-0071-input-context-selection-sessions-and-frozen-bindings.md","docs/remake/decisions/ADR-0088-direct-play-pointer-grammar-and-feedback.md"],
+      "systemRefs":["system.selection","system.client-world-shell"],
+      "moduleRefs":["client.world.selection","client.world.presenter","client.input.semantic-router","client.projection"],
+      "knownGapRefs":["GAP-001","GAP-003","GAP-004","GAP-010"],
+      "flow":"semantic input + input context -> intent -> spatial/disclosure candidate set -> selection session/preview -> server validation/frozen binding when execution-bound",
+      "crossCutting":{"AUTHORITY":"PARTIAL:inspection selection may be client-local but execution-bound selection needs server frozen binding","PERMISSION":"UNRESOLVED:input context/control/disclosure policy incomplete","STATE_OWNERSHIP":"PARTIAL:local selected actor state exists; selection session authority absent","COMMAND":"DEFERRED:S1 inspection may not command; execution targeting later requires command","PROJECTION_DISCLOSURE":"UNRESOLVED:Spatial Query + Visibility Filter candidate path absent","PERSISTENCE":"N/A:basic inspection selection is ephemeral","RECONNECT":"DEFERRED:pending execution selection later","ROLLBACK":"DEFERRED:epoch invalidation later","MULTIPLAYER_CONCURRENCY":"N/A:local inspection selection","FAILURE":"UNRESOLVED:stale/hidden/invalid candidate behavior incomplete","OBSERVABILITY":"UNRESOLVED:selection trace not mapped","SECURITY":"UNRESOLVED:hidden candidate must never reach player","AUTOMATED_TEST":"UNRESOLVED:candidate/disclosure tests missing","HUMAN_TEST":"REQUIRED:selection clarity and click feel in S1"}
+    },
+    {
+      "id":"CAP_INTERACTION_CAPABILITY",
+      "title":"Contextual interaction capability query, option projection and command proposal",
+      "plannedPhase":"X1_CONTEXT_I1_INTERACTION",
+      "coverageState":"PARTIAL",
+      "authorityRefs":["docs/remake/architecture/interaction-capability-contextual-command-and-adjudication-contract.md","docs/remake/decisions/ADR-0072-contextual-interactions-as-capability-derived-commands.md"],
+      "systemRefs":["system.context-interaction"],
+      "moduleRefs":["client.world.context","server.domain.exploration"],
+      "knownGapRefs":["GAP-003","GAP-004","GAP-006","GAP-007","GAP-008"],
+      "flow":"frozen/selected target + actor/context providers -> interaction capability query -> viewer-safe options -> command proposal -> rule execution/adjudication -> transaction",
+      "crossCutting":{"AUTHORITY":"UNRESOLVED:ExplorationDomain does not explicitly own capability query vs execution boundaries","PERMISSION":"UNRESOLVED:control/capability/object access combined policy missing","STATE_OWNERSHIP":"N/A:option query is derived; domain mutations owned elsewhere","COMMAND":"PARTIAL:standard command path exists","PROJECTION_DISCLOSURE":"UNRESOLVED:option availability/hidden filtering projection missing","PERSISTENCE":"DEFERRED:pending adjudication/execution later","RECONNECT":"DEFERRED:pending interaction recovery later","ROLLBACK":"DEFERRED:transaction/history later","MULTIPLAYER_CONCURRENCY":"UNRESOLVED:interaction commit ordering missing","FAILURE":"UNRESOLVED:capability unavailable/stale target/access path errors not mapped","OBSERVABILITY":"UNRESOLVED:option/decision trace missing","SECURITY":"UNRESOLVED:hidden capabilities/targets disclosure gap","AUTOMATED_TEST":"UNRESOLVED:interaction option/command tests missing","HUMAN_TEST":"REQUIRED:context menu/default E interaction clarity"}
+    },
+    {
+      "id":"CAP_CHARACTER_ACTION_AVAILABILITY",
+      "title":"Effective character capabilities, action opportunities and available-action projection",
+      "plannedPhase":"X1_FOUNDATION_AND_P3_CHARACTER_CONSOLE",
+      "coverageState":"UNMAPPED",
+      "authorityRefs":["docs/remake/architecture/character-runtime-and-compiled-character-build-contract.md","docs/remake/architecture/character-action-opportunity-and-2024-core-action-runtime-contract.md","docs/remake/decisions/ADR-0067-2024-core-actions-as-registered-action-capabilities.md","docs/remake/decisions/ADR-0090-multi-row-action-matrices-and-modular-dm-tool-windows.md"],
+      "systemRefs":[],
+      "moduleRefs":[],
+      "knownGapRefs":["GAP-007"],
+      "flow":"compiled build + active item/effect grants + action opportunity + context -> effective/available capability projection -> HUD/console -> server revalidation",
+      "crossCutting":{"AUTHORITY":"UNRESOLVED:no capability/action-opportunity resolver mapped","PERMISSION":"UNRESOLVED:controller/viewer-specific availability not mapped","STATE_OWNERSHIP":"UNRESOLVED:action opportunity/resource owners not mapped","COMMAND":"DEFERRED:execution uses common command path","PROJECTION_DISCLOSURE":"UNRESOLVED:available action projection missing","PERSISTENCE":"DEFERRED:encounter opportunity state later","RECONNECT":"DEFERRED:available action view must regenerate from authority state","ROLLBACK":"DEFERRED:opportunity/resource state branch-safe later","MULTIPLAYER_CONCURRENCY":"DEFERRED:reservations later","FAILURE":"UNRESOLVED:unavailable reason vocabulary not mapped","OBSERVABILITY":"UNRESOLVED:availability contribution trace missing","SECURITY":"UNRESOLVED:DM-only/hidden capability projection filter missing","AUTOMATED_TEST":"UNRESOLVED:availability matrix tests missing","HUMAN_TEST":"REQUIRED_LATER:Character Console information/action layout"}
+    },
+    {
+      "id":"CAP_RULE_EXECUTION",
+      "title":"Persistent RuleExecution, reservations, timing windows and adjudication",
+      "plannedPhase":"X1_FOUNDATION_AND_CORE_RULES",
+      "coverageState":"UNMAPPED",
+      "authorityRefs":["docs/remake/architecture/rule-runtime-orchestrator-and-pending-execution-contract.md","docs/remake/decisions/ADR-0061-persistent-rule-execution-orchestrator-and-nested-timing-windows.md"],
+      "systemRefs":[],
+      "moduleRefs":[],
+      "knownGapRefs":["GAP-008","GAP-002"],
+      "flow":"validated intent -> capability/cost reservation -> recipe/timing windows -> pending effects -> authority transaction -> aftermath",
+      "crossCutting":{"AUTHORITY":"UNRESOLVED:no Rule Runtime Orchestrator mapped","PERMISSION":"DEFERRED:capability validation integrates authorization","STATE_OWNERSHIP":"UNRESOLVED:pending execution/reservation owner missing","COMMAND":"PARTIAL:CommandRuntime can initiate but not orchestrate rules","PROJECTION_DISCLOSURE":"UNRESOLVED:pending prompt/reaction/adjudication projection missing","PERSISTENCE":"DEFERRED:persistent pending execution required later","RECONNECT":"DEFERRED:pending execution recovery required later","ROLLBACK":"DEFERRED:execution incarnation/epoch required later","MULTIPLAYER_CONCURRENCY":"UNRESOLVED:resource reservation/transaction integration missing","FAILURE":"UNRESOLVED:safe cancellation/rejection/expiry semantics not mapped","OBSERVABILITY":"UNRESOLVED:rule execution trace missing","SECURITY":"PARTIAL:server-only execution intended","AUTOMATED_TEST":"UNRESOLVED:rule execution state-machine tests missing","HUMAN_TEST":"N/A:engine execution correctness automated; prompts later human UX"}
+    },
+    {
+      "id":"CAP_VISIBILITY_KNOWLEDGE",
+      "title":"Visibility, detection, knowledge and disclosure filtering",
+      "plannedPhase":"EXPLORATION",
+      "coverageState":"PARTIAL",
+      "authorityRefs":["docs/remake/architecture/visibility-knowledge-detection-and-hover-information-runtime-contract.md","docs/remake/ui/README.md"],
+      "systemRefs":["system.projection-pipeline"],
+      "moduleRefs":["server.projection","client.projection"],
+      "knownGapRefs":["GAP-010"],
+      "flow":"authority scene/perception evidence + observer context -> knowledge/disclosure relation -> viewer-safe entity/action/hover projection",
+      "crossCutting":{"AUTHORITY":"UNRESOLVED:generic ProjectionService exists but perception/knowledge authority is absent","PERMISSION":"PARTIAL:viewer context planned","STATE_OWNERSHIP":"UNRESOLVED:knowledge/detection relationship owner missing","COMMAND":"DEFERRED:Search/Hide later use command/rule runtime","PROJECTION_DISCLOSURE":"PARTIAL:viewer-safe invariant exists but domain filter missing","PERSISTENCE":"DEFERRED:knowledge relations may persist later","RECONNECT":"COVERED_BY_REGEN:projection should rebuild from authority state","ROLLBACK":"DEFERRED:knowledge branch state later","MULTIPLAYER_CONCURRENCY":"N/A:primarily read/projection relation","FAILURE":"UNRESOLVED:unknown/hidden/stale visibility results not mapped","OBSERVABILITY":"UNRESOLVED:disclosure decision trace missing","SECURITY":"UNRESOLVED:negative disclosure needs dedicated tests","AUTOMATED_TEST":"UNRESOLVED:negative disclosure scenarios missing","HUMAN_TEST":"REQUIRED_LATER:hover/fog/readability only"}
+    },
+    {
+      "id":"CAP_ENCOUNTER_ACTION_ECONOMY",
+      "title":"Encounter timeline, turn, opportunity, reaction and objective state",
+      "plannedPhase":"P3_ENCOUNTER",
+      "coverageState":"DEFERRED",
+      "authorityRefs":["docs/remake/architecture/encounter-timeline-turn-opportunity-and-objective-runtime-contract.md","docs/remake/architecture/character-action-opportunity-and-2024-core-action-runtime-contract.md"],
+      "systemRefs":[],"moduleRefs":[],"knownGapRefs":[],
+      "flow":"encounter proposal -> initiative/timeline -> turn/opportunity/reaction -> command/rule execution -> encounter projection",
+      "crossCutting":{"AUTHORITY":"DEFERRED:server encounter state later","PERMISSION":"DEFERRED:turn/control policy later","STATE_OWNERSHIP":"DEFERRED:encounter owns turn/action economy only","COMMAND":"DEFERRED:common command path reused","PROJECTION_DISCLOSURE":"DEFERRED:encounter view later","PERSISTENCE":"DEFERRED:encounter snapshot later","RECONNECT":"DEFERRED:mid-encounter sync later","ROLLBACK":"DEFERRED:encounter checkpoint later","MULTIPLAYER_CONCURRENCY":"DEFERRED:timeline/response ordering later","FAILURE":"DEFERRED:turn/opportunity errors later","OBSERVABILITY":"DEFERRED:encounter trace later","SECURITY":"DEFERRED:server authority reused","AUTOMATED_TEST":"DEFERRED:encounter scenario suite later","HUMAN_TEST":"DEFERRED:combat HUD/flow later"}
+    },
+    {
+      "id":"CAP_CHARACTER_BUILD_STATE",
+      "title":"Character source, compiled build, persistent state, resources and derived view",
+      "plannedPhase":"P3_P4_CHARACTER",
+      "coverageState":"DEFERRED",
+      "authorityRefs":["docs/remake/architecture/character-runtime-and-compiled-character-build-contract.md","docs/remake/specs/SLICE-ROADMAP.md"],
+      "systemRefs":[],"moduleRefs":[],"knownGapRefs":[],
+      "flow":"progression source -> compiler -> immutable build + persistent state + context -> runtime/derived projection",
+      "crossCutting":{"AUTHORITY":"DEFERRED:character services later","PERMISSION":"DEFERRED:owner/DM projection later","STATE_OWNERSHIP":"DEFERRED:source/build/state split fixed by architecture","COMMAND":"DEFERRED:changes via proposals/transactions","PROJECTION_DISCLOSURE":"DEFERRED:CharacterProjection later","PERSISTENCE":"DEFERRED:required by character state","RECONNECT":"DEFERRED:projection regeneration later","ROLLBACK":"DEFERRED:source/build/state branch restore later","MULTIPLAYER_CONCURRENCY":"DEFERRED:character ordering key later","FAILURE":"DEFERRED:compile/migration failures later","OBSERVABILITY":"DEFERRED:contribution/compile diagnostics later","SECURITY":"DEFERRED:raw build/private state not sent to client","AUTOMATED_TEST":"DEFERRED:compiler/state tests later","HUMAN_TEST":"DEFERRED:sheet UX later"}
+    },
+    {
+      "id":"CAP_INVENTORY_ITEM_WORLD_PRESENCE",
+      "title":"Inventory, equipment, item instances, containers and world presence",
+      "plannedPhase":"P4_P6_INVENTORY",
+      "coverageState":"DEFERRED",
+      "authorityRefs":["docs/remake/architecture/inventory-item-instance-and-world-presence-runtime-contract.md","docs/remake/specs/SLICE-ROADMAP.md"],
+      "systemRefs":[],"moduleRefs":[],"knownGapRefs":[],
+      "flow":"item definition/build + item instance/location -> transfer/equip/use command -> transaction -> world/inventory projection",
+      "crossCutting":{"AUTHORITY":"DEFERRED:item instance/location authority later","PERMISSION":"DEFERRED:owner/container/disclosure later","STATE_OWNERSHIP":"DEFERRED:inventory/item/world presence split later","COMMAND":"DEFERRED:common command/transaction reused","PROJECTION_DISCLOSURE":"DEFERRED:inventory/public presence views later","PERSISTENCE":"DEFERRED:required","RECONNECT":"DEFERRED:required","ROLLBACK":"DEFERRED:required","MULTIPLAYER_CONCURRENCY":"DEFERRED:item/container ordering later","FAILURE":"DEFERRED:transfer/resource failures later","OBSERVABILITY":"DEFERRED:item transaction trace later","SECURITY":"DEFERRED:hidden/private item disclosure later","AUTOMATED_TEST":"DEFERRED:inventory scenarios later","HUMAN_TEST":"DEFERRED:inventory/loot UX later"}
+    },
+    {
+      "id":"CAP_TIME_DOWNTIME_PERSISTENCE",
+      "title":"Game time, scheduler, downtime, persistence, reconnect, recovery and rollback",
+      "plannedPhase":"P2_P7",
+      "coverageState":"DEFERRED",
+      "authorityRefs":["docs/remake/architecture/game-time-calendar-duration-and-scheduler-runtime-contract.md","docs/remake/architecture/downtime-activity-time-coordination-and-atomic-completion-runtime-contract.md","docs/remake/architecture/persistence-and-session-recovery-model.md"],
+      "systemRefs":[],"moduleRefs":[],"knownGapRefs":["GAP-011"],
+      "flow":"authority snapshot/journal + time/scheduler/downtime state -> recoverable transaction history -> reconnect/recovery/rollback branch",
+      "crossCutting":{"AUTHORITY":"DEFERRED:server time/recovery authority later","PERMISSION":"DEFERRED:DM/user activity permissions later","STATE_OWNERSHIP":"DEFERRED:time/scheduler/persistence stores later","COMMAND":"DEFERRED:time advance/recovery commands later","PROJECTION_DISCLOSURE":"DEFERRED:progress/recovery views later","PERSISTENCE":"DEFERRED:primary capability","RECONNECT":"DEFERRED:primary capability","ROLLBACK":"DEFERRED:primary capability","MULTIPLAYER_CONCURRENCY":"DEFERRED:activity/time transaction coordination later","FAILURE":"DEFERRED:restart/migration/recovery policy later","OBSERVABILITY":"DEFERRED:journal/support trace later","SECURITY":"DEFERRED:branch/epoch validation later","AUTOMATED_TEST":"DEFERRED:fault/restart scenarios later","HUMAN_TEST":"DEFERRED:recovery UX later"}
+    },
+    {
+      "id":"CAP_UI_PRESENTATION_CAMERA",
+      "title":"Projection-driven UI runtime, input context, camera and presentation feel",
+      "plannedPhase":"E1_E2",
+      "coverageState":"PARTIAL",
+      "authorityRefs":["docs/remake/architecture/ui-projection-view-model-input-context-and-recovery-runtime-contract.md","docs/remake/architecture/camera-policy-focus-follow-and-presentation-runtime-contract.md","docs/remake/ui/README.md","docs/remake/decisions/ADR-0088-direct-play-pointer-grammar-and-feedback.md"],
+      "systemRefs":["system.client-world-shell","system.camera","system.composition-boot"],
+      "moduleRefs":["client.input.semantic-router","client.world.system","client.world.presenter","client.world.camera","client.app","client.bootstrap","server.app","server.bootstrap"],
+      "knownGapRefs":["GAP-001","GAP-009"],
+      "flow":"atomic projection replica -> derived view model -> component/input context -> intent/camera/presentation request -> visible feedback",
+      "crossCutting":{"AUTHORITY":"COVERED:client presentation is non-authoritative","PERMISSION":"PARTIAL:viewer-safe projection exists","STATE_OWNERSHIP":"PARTIAL:local camera/world lifecycle exists; ViewModel/workspace state unmapped","COMMAND":"COVERED:UI must use client intent path not direct Remote","PROJECTION_DISCLOSURE":"PARTIAL:replica exists but atomic UI commit/ViewModel layer missing","PERSISTENCE":"DEFERRED:local settings/workspace persistence later","RECONNECT":"UNRESOLVED:epoch-safe UI/input recovery boundary missing","ROLLBACK":"UNRESOLVED:old prompt/input tokens invalidation missing","MULTIPLAYER_CONCURRENCY":"N/A:per-client presentation","FAILURE":"UNRESOLVED:UI error boundary/reconciliation missing","OBSERVABILITY":"UNRESOLVED:UI/projection gap diagnostics missing","SECURITY":"COVERED:UI cannot be authority","AUTOMATED_TEST":"UNRESOLVED:input context/recovery integration tests missing","HUMAN_TEST":"REQUIRED:selection/camera/movement/context presentation checkpoints"}
+    },
+    {
+      "id":"CAP_JOURNAL_KNOWLEDGE_NAVIGATION",
+      "title":"Journal documents, permission-aware search, anchors and safe navigation",
+      "plannedPhase":"P5_JOURNAL",
+      "coverageState":"DEFERRED",
+      "authorityRefs":["docs/remake/architecture/journal-document-section-anchor-permission-search-and-projection-runtime-contract.md","docs/remake/specs/SLICE-ROADMAP.md"],
+      "systemRefs":[],"moduleRefs":[],"knownGapRefs":[],
+      "flow":"journal source/compiled document + permission -> projection/search/backlink -> safe camera/selection navigation intent",
+      "crossCutting":{"AUTHORITY":"DEFERRED:journal service later","PERMISSION":"DEFERRED:permission partitions later","STATE_OWNERSHIP":"DEFERRED:document/anchor identity later","COMMAND":"DEFERRED:edit/navigation intents later","PROJECTION_DISCLOSURE":"DEFERRED:permission-aware journal projection later","PERSISTENCE":"DEFERRED:required","RECONNECT":"DEFERRED:draft/navigation recovery later","ROLLBACK":"DEFERRED:document revision/branch later","MULTIPLAYER_CONCURRENCY":"DEFERRED:edit revision later","FAILURE":"DEFERRED:anchor/search/edit failures later","OBSERVABILITY":"DEFERRED:journal trace later","SECURITY":"DEFERRED:secret search negative disclosure later","AUTOMATED_TEST":"DEFERRED:journal permission/search tests later","HUMAN_TEST":"DEFERRED:journal navigation UX later"}
+    },
+    {
+      "id":"CAP_CONTENT_RULESET_EXTENSION",
+      "title":"Ruleset/content policy composition, trusted content and extension boundaries",
+      "plannedPhase":"P6_RULES_CONTENT",
+      "coverageState":"DEFERRED",
+      "authorityRefs":["docs/remake/architecture/ruleset-policy-registry-composition-and-frozen-snapshot-runtime-contract.md","docs/remake/product/content-automation-rollback-storage-and-exclusions.md","docs/remake/specs/SLICE-ROADMAP.md"],
+      "systemRefs":[],"moduleRefs":[],"knownGapRefs":[],
+      "flow":"versioned ruleset/source pack/campaign policy -> frozen snapshot + trusted registries -> compiled capabilities/recipes/content projection",
+      "crossCutting":{"AUTHORITY":"DEFERRED:policy/content registries later","PERMISSION":"DEFERRED:private/public content scope later","STATE_OWNERSHIP":"DEFERRED:immutable definitions/snapshots later","COMMAND":"N/A:content definitions are not client commands","PROJECTION_DISCLOSURE":"DEFERRED:public/private content partition later","PERSISTENCE":"DEFERRED:version/binding refs later","RECONNECT":"COVERED_BY_VERSION:rebuild from frozen refs later","ROLLBACK":"DEFERRED:versioned snapshots later","MULTIPLAYER_CONCURRENCY":"N/A:mostly immutable compiled content","FAILURE":"DEFERRED:missing/untrusted content failure later","OBSERVABILITY":"DEFERRED:compile/provenance diagnostics later","SECURITY":"DEFERRED:trusted extension/no arbitrary code boundary later","AUTOMATED_TEST":"DEFERRED:content schema/rights/pack tests later","HUMAN_TEST":"DEFERRED:reader/authoring surfaces later"}
+    },
+    {
+      "id":"CAP_DIAGNOSTICS_SIMULATION_TESTING",
+      "title":"Correlated diagnostics, deterministic scenarios and fault/negative-disclosure testing",
+      "plannedPhase":"CROSS_CUTTING",
+      "coverageState":"PARTIAL",
+      "authorityRefs":["docs/remake/architecture/diagnostics-observability-correlated-trace-and-incident-runtime-contract.md","docs/remake/architecture/deterministic-simulation-scenario-and-test-harness-runtime-contract.md","docs/remake/specs/SLICE-ROADMAP.md"],
+      "systemRefs":[],"moduleRefs":[],"knownGapRefs":["GAP-012"],
+      "flow":"correlation context across command/execution/transaction/event/projection + deterministic adapters/scenarios -> diagnostic evidence",
+      "crossCutting":{"AUTHORITY":"N/A:diagnostics is not gameplay authority","PERMISSION":"DEFERRED:diagnostic redaction later","STATE_OWNERSHIP":"DEFERRED:trace/scenario registries later","COMMAND":"PARTIAL:command IDs exist but correlation chain missing","PROJECTION_DISCLOSURE":"DEFERRED:diagnostic projection must redact later","PERSISTENCE":"DEFERRED:retention later","RECONNECT":"DEFERRED:fault scenarios later","ROLLBACK":"DEFERRED:branch/epoch scenarios later","MULTIPLAYER_CONCURRENCY":"DEFERRED:interleaving scenarios later","FAILURE":"PARTIAL:structured errors planned","OBSERVABILITY":"UNRESOLVED:correlated trace boundary not mapped","SECURITY":"DEFERRED:negative disclosure suite later","AUTOMATED_TEST":"PARTIAL:validators exist; runtime scenario harness not mapped","HUMAN_TEST":"N/A:diagnostic engine testing automated"}
+    },
+    {
+      "id":"CAP_SURVIVAL_LOGISTICS",
+      "title":"Campaign survival policy, supply allocation, atomic settlement and ledger",
+      "plannedPhase":"P8_ADR_0092",
+      "coverageState":"DEFERRED",
+      "authorityRefs":["docs/remake/product/campaign-rules-survival-and-authored-actor-scope.md","docs/remake/architecture/campaign-survival-logistics-and-supply-settlement-runtime-contract.md","docs/remake/decisions/ADR-0092-campaign-survival-logistics-and-dm-authored-actor-tokens.md"],
+      "systemRefs":[],"moduleRefs":[],"knownGapRefs":[],
+      "flow":"campaign policy snapshot + time boundary + supply sources -> requirement/allocation/reservation -> atomic settlement -> ledger/projection",
+      "crossCutting":{"AUTHORITY":"DEFERRED:server settlement authority later","PERMISSION":"DEFERRED:DM policy/preview permissions later","STATE_OWNERSHIP":"DEFERRED:inventory/time/ledger domains later","COMMAND":"DEFERRED:settlement/preview commands later","PROJECTION_DISCLOSURE":"DEFERRED:hidden consumers/private containers must not leak","PERSISTENCE":"DEFERRED:ledger/snapshot required","RECONNECT":"DEFERRED:pending settlement recovery later","ROLLBACK":"DEFERRED:ledger/transaction branch later","MULTIPLAYER_CONCURRENCY":"DEFERRED:reservation conflicts later","FAILURE":"DEFERRED:shortage/retry/restart semantics later","OBSERVABILITY":"DEFERRED:settlement trace later","SECURITY":"DEFERRED:private supply negative disclosure later","AUTOMATED_TEST":"DEFERRED:ADR-0092 scenario suite later","HUMAN_TEST":"DEFERRED:DM preview/ledger UX later"}
+    },
+    {
+      "id":"CAP_DM_ACTOR_AUTHORING",
+      "title":"DM-authored actor model/statblock/token pipeline and campaign-local publish",
+      "plannedPhase":"P8_ADR_0092",
+      "coverageState":"DEFERRED",
+      "authorityRefs":["docs/remake/product/campaign-rules-survival-and-authored-actor-scope.md","docs/remake/decisions/ADR-0092-campaign-survival-logistics-and-dm-authored-actor-tokens.md","docs/remake/specs/SLICE-ROADMAP.md"],
+      "systemRefs":[],"moduleRefs":[],"knownGapRefs":[],
+      "flow":"trusted model registry + strict statblock draft -> validation/preview -> campaign-local publish -> SceneNpc spawn/migration",
+      "crossCutting":{"AUTHORITY":"DEFERRED:DM authoring/publish authority later","PERMISSION":"DEFERRED:DM-only publish/override later","STATE_OWNERSHIP":"DEFERRED:registry/template/campaign package later","COMMAND":"DEFERRED:authoring/publish/spawn commands later","PROJECTION_DISCLOSURE":"DEFERRED:model catalog and published actor views later","PERSISTENCE":"DEFERRED:campaign package/template persistence later","RECONNECT":"DEFERRED:authoring draft/published state later","ROLLBACK":"DEFERRED:publish/migration rollback later","MULTIPLAYER_CONCURRENCY":"DEFERRED:publish/migration ordering later","FAILURE":"DEFERRED:invalid schema/model/recipe/script rejection later","OBSERVABILITY":"DEFERRED:provenance/publish trace later","SECURITY":"DEFERRED:AI draft untrusted and no arbitrary code","AUTOMATED_TEST":"DEFERRED:strict schema/import/publish tests later","HUMAN_TEST":"DEFERRED:DM authoring preview UX later"}
+    }
+  ],
+  "infrastructureModules": [
+    {"moduleId":"client.world.system","reason":"client composition/lifecycle infrastructure also mapped under UI presentation"},
+    {"moduleId":"server.app","reason":"composition root infrastructure"},
+    {"moduleId":"server.bootstrap","reason":"auto-exec composition bootstrap"},
+    {"moduleId":"client.app","reason":"composition root infrastructure"},
+    {"moduleId":"client.bootstrap","reason":"auto-exec composition bootstrap"}
+  ],
+  "scenarios": [
+    {"id":"SCN_JOIN_RECONNECT_ACTIVE_SCENE","status":"BLOCKED","phase":"E0_E1","capabilityRefs":["CAP_SESSION_CONTROL_CONTEXT","CAP_PROJECTION_DISCLOSURE_SYNC","CAP_TIME_DOWNTIME_PERSISTENCE"],"steps":["join or reconnect","authority handshake","snapshot/projection sync","presentation ready","gameplay input enabled"],"expectedOutcome":"input is enabled only after epoch-safe authority/projection readiness","negativeCases":["stale authority epoch","projection gap","reconnect during transition"]},
+    {"id":"SCN_SELECT_VISIBLE_ACTOR","status":"BLOCKED","phase":"S1_SELECTION","capabilityRefs":["CAP_SELECTION_TARGETING","CAP_SPATIAL_QUERY","CAP_VISIBILITY_KNOWLEDGE","CAP_RUNTIME_OBJECT_SCENE_IDENTITY"],"steps":["primary semantic input","pointer/focus spatial query","visibility filter","candidate selection","local selection presentation"],"expectedOutcome":"only disclosed valid actor candidates can be selected","negativeCases":["hidden actor","stale actor incarnation","no valid candidate"]},
+    {"id":"SCN_CAMERA_LOCAL_CONTROL","status":"MAPPED","phase":"C1_CAMERA","capabilityRefs":["CAP_UI_PRESENTATION_CAMERA"],"steps":["camera semantic input","CameraController local state","camera presentation"],"expectedOutcome":"camera changes locally without gameplay command","negativeCases":["UI input context captures same physical input"]},
+    {"id":"SCN_CLICK_MOVE_WITH_PATH","status":"BLOCKED","phase":"M1_MOVE","capabilityRefs":["CAP_NAVIGATION_MOVEMENT","CAP_SPATIAL_QUERY","CAP_TRANSACTION_EVENT_PROJECTION_BARRIER","CAP_PROJECTION_DISCLOSURE_SYNC"],"steps":["destination intent","server path plan","preview/approval","authoritative movement execution","checkpoint/transaction","projection/presentation"],"expectedOutcome":"client never commits final token position and runtime path agrees with authoritative movement policy","negativeCases":["unreachable destination","dynamic obstruction","stale movement budget","concurrent occupancy"]},
+    {"id":"SCN_EXPLORATION_WASD_MOVE","status":"BLOCKED","phase":"M1_MOVE","capabilityRefs":["CAP_NAVIGATION_MOVEMENT","CAP_SPATIAL_QUERY","CAP_SESSION_CONTROL_CONTEXT"],"steps":["WASD semantic intent","server movement policy","short-horizon traversal validation","authoritative movement checkpoints","client interpolation"],"expectedOutcome":"responsive exploration movement remains server authoritative","negativeCases":["encounter mode forbids token WASD","collision/path invalidation","client position claim"]},
+    {"id":"SCN_CONTEXT_INTERACTION","status":"BLOCKED","phase":"X1_I1","capabilityRefs":["CAP_INTERACTION_CAPABILITY","CAP_SPATIAL_QUERY","CAP_CHARACTER_ACTION_AVAILABILITY","CAP_RULE_EXECUTION","CAP_TRANSACTION_EVENT_PROJECTION_BARRIER"],"steps":["selected/focused target","interaction capability query","viewer-safe option projection","command proposal","server revalidation","rule execution or adjudication","transaction/projection"],"expectedOutcome":"context actions are capability-derived rather than target-type hardcoded","negativeCases":["hidden capability","stale target","out of range","action opportunity unavailable"]},
+    {"id":"SCN_CHARACTER_CONSOLE_DASH","status":"DEFERRED_BLOCKED_BY_GAP","phase":"P3_CHARACTER_CONSOLE","capabilityRefs":["CAP_CHARACTER_BUILD_STATE","CAP_CHARACTER_ACTION_AVAILABILITY","CAP_RULE_EXECUTION","CAP_ENCOUNTER_ACTION_ECONOMY"],"steps":["effective capability view","action opportunity/context resolution","available action projection","console button","server revalidation","Dash execution","updated projection"],"expectedOutcome":"client learns Dash availability from server projection, never by reconstructing rules","negativeCases":["action already spent","resource/condition blocks action","viewer not controller"]},
+    {"id":"SCN_HIDDEN_OBJECT_NONDISCLOSURE","status":"BLOCKED","phase":"S1_X1","capabilityRefs":["CAP_VISIBILITY_KNOWLEDGE","CAP_SPATIAL_QUERY","CAP_SELECTION_TARGETING","CAP_INTERACTION_CAPABILITY","CAP_PROJECTION_DISCLOSURE_SYNC"],"steps":["server computes hidden object/capability","observer spatial/query context","disclosure filter","projection"],"expectedOutcome":"undisclosed object/capability existence is not sent to player","negativeCases":["blocked_visible accidentally reveals existence","candidate count/timing leaks hidden object"]},
+    {"id":"SCN_CONCURRENT_DOOR_INTERACTION","status":"BLOCKED","phase":"I1_INTERACTION","capabilityRefs":["CAP_INTERACTION_CAPABILITY","CAP_TRANSACTION_EVENT_PROJECTION_BARRIER","CAP_RUNTIME_OBJECT_SCENE_IDENTITY"],"steps":["two users submit same object interaction","stable object/revision validation","ordering reservation","single atomic commit or idempotent normalization","projection"],"expectedOutcome":"concurrent interaction cannot create partial or contradictory object state","negativeCases":["stale incarnation","ordering timeout","state changed"]},
+    {"id":"SCN_ATTACK_REACTION_RESOLUTION","status":"DEFERRED","phase":"P3_ENCOUNTER","capabilityRefs":["CAP_RULE_EXECUTION","CAP_CHARACTER_ACTION_AVAILABILITY","CAP_ENCOUNTER_ACTION_ECONOMY","CAP_TRANSACTION_EVENT_PROJECTION_BARRIER"],"steps":["Attack capability","selection/frozen target","RuleExecution","timing/reaction window","atomic damage/resource commit","projection/presentation"],"expectedOutcome":"attack/reaction shares common rule execution and transaction boundaries","negativeCases":["reaction reconnect","duplicate response","target invalidated before commit"]},
+    {"id":"SCN_ITEM_PICKUP","status":"DEFERRED","phase":"P4_INVENTORY","capabilityRefs":["CAP_INVENTORY_ITEM_WORLD_PRESENCE","CAP_INTERACTION_CAPABILITY","CAP_TRANSACTION_EVENT_PROJECTION_BARRIER"],"steps":["item presence selection","Pick Up capability","item/location transaction","presence removal","inventory/world projection"],"expectedOutcome":"ItemInstance transfer and world presence change commit atomically","negativeCases":["two users pick same item","private item not disclosed","container state changed"]},
+    {"id":"SCN_ROLLBACK_THEN_STALE_COMMAND","status":"DEFERRED","phase":"P7_RECOVERY","capabilityRefs":["CAP_TIME_DOWNTIME_PERSISTENCE","CAP_COMMAND_AUTHORITY_PROTOCOL","CAP_UI_PRESENTATION_CAMERA"],"steps":["rollback creates new authority epoch","full resync","old client command/prompt arrives"],"expectedOutcome":"old epoch command and UI tokens are rejected","negativeCases":["late remote response","stale selection","stale pending prompt"]},
+    {"id":"SCN_SURVIVAL_SETTLEMENT","status":"DEFERRED","phase":"P8_ADR_0092","capabilityRefs":["CAP_SURVIVAL_LOGISTICS","CAP_INVENTORY_ITEM_WORLD_PRESENCE","CAP_TIME_DOWNTIME_PERSISTENCE","CAP_TRANSACTION_EVENT_PROJECTION_BARRIER"],"steps":["time advance boundary","requirements/allocation","reservation","DM confirmation/policy","atomic time+inventory+effect commit","ledger/projection"],"expectedOutcome":"no partial supply settlement and private consumers do not leak","negativeCases":["reservation conflict","restart during commit","insufficient supplies","policy toggle nonretroactivity"]},
+    {"id":"SCN_DM_ACTOR_DRAFT_PUBLISH_SPAWN","status":"DEFERRED","phase":"P8_ADR_0092","capabilityRefs":["CAP_DM_ACTOR_AUTHORING","CAP_CONTENT_RULESET_EXTENSION","CAP_RUNTIME_OBJECT_SCENE_IDENTITY"],"steps":["model registry selection","strict statblock draft","validation","preview","campaign-local publish","SceneNpc spawn"],"expectedOutcome":"untrusted AI draft cannot execute code and only validated published data enters runtime","negativeCases":["invalid model","unknown recipe","script/remote field","empty model catalog"]}
+  ],
+  "knownGaps": [
+    {"id":"GAP-001","severity":"FOUNDATION_BLOCKER","status":"OPEN","blockingScopes":["E0_REPOSITORY_CORE_ENGINE","E1_ROBLOX_RUNTIME_INTEGRATION","S1_SELECTION"],"title":"Session Base Mode, Context, Overlay and Transitional command-policy boundary is absent from current Greenfield contracts","evidenceRefs":["docs/remake/architecture/session-play-mode-context-overlay-and-transition-contract.md"],"requiredDecision":"define the minimum Greenfield session-policy/system boundary before implementing SessionAuthority/CommandRuntime/InputRouter"},
+    {"id":"GAP-002","severity":"FOUNDATION_BLOCKER","status":"OPEN","blockingScopes":["E0_REPOSITORY_CORE_ENGINE"],"title":"WorldState.transact and direct projection path do not represent the accepted Ordering/Transaction/Outbox/Projection Barrier architecture","evidenceRefs":["docs/remake/architecture/command-ordering-logical-time-and-transaction-coordinator-contract.md","docs/remake/architecture/domain-event-outbox-subscription-and-projection-runtime-contract.md"],"requiredDecision":"choose the minimum transaction/event seam that E0 must implement without prematurely building later persistence"},
+    {"id":"GAP-003","severity":"FOUNDATION_BLOCKER","status":"OPEN","blockingScopes":["E0_REPOSITORY_CORE_ENGINE","S1_SELECTION","X1_CONTEXT","I1_INTERACTION"],"title":"Current WorldContract/WorldState are actor-centric while accepted Selection/Interaction architecture requires stable Runtime Object and incarnation identity","evidenceRefs":["docs/remake/architecture/runtime-object-system-and-entity-lifecycle-contract.md","docs/remake/architecture/interaction-capability-contextual-command-and-adjudication-contract.md"],"requiredDecision":"define the minimum runtime entity/object identity boundary used by selection, interaction and movement"},
+    {"id":"GAP-004","severity":"FOUNDATION_BLOCKER","status":"OPEN","blockingScopes":["S1_SELECTION","M1_MOVE","X1_CONTEXT","I1_INTERACTION"],"title":"Spatial Query is a required shared boundary but no Greenfield system/module/function contract represents it","evidenceRefs":["docs/remake/architecture/spatial-query-engine-and-provider-contract.md","docs/remake/architecture/selection-targeting-preview-and-frozen-binding-runtime-contract.md"],"requiredDecision":"introduce a typed snapshot-bound spatial query boundary before Selection/Movement/Interaction implementations depend on ad-hoc Workspace queries"},
+    {"id":"GAP-005","severity":"FOUNDATION_BLOCKER","status":"OPEN","blockingScopes":["E0_REPOSITORY_CORE_ENGINE","M1_MOVE"],"title":"MovementDomain alone does not represent accepted Navigation Planner, Movement Coordinator and Movement Executor boundaries","evidenceRefs":["docs/remake/architecture/runtime-navigation-path-planning-and-movement-execution-contract.md"],"requiredDecision":"define repository-side movement policy versus Roblox-runtime pathfinding/planner/executor boundaries before E0 MovementDomain is implemented"},
+    {"id":"GAP-006","severity":"EXPLORATION_BLOCKER","status":"OPEN","blockingScopes":["X1_CONTEXT","I1_INTERACTION"],"title":"ContextActionController plus ExplorationDomain does not explicitly provide Interaction Capability Query and viewer-safe Contextual Option Projection","evidenceRefs":["docs/remake/architecture/interaction-capability-contextual-command-and-adjudication-contract.md"],"requiredDecision":"define interaction provider/query/option projection boundary before X1"},
+    {"id":"GAP-007","severity":"FOUNDATION_BLOCKER","status":"OPEN","blockingScopes":["E0_REPOSITORY_CORE_ENGINE","X1_CONTEXT","I1_INTERACTION","P3_CHARACTER_CONSOLE"],"title":"Effective Capability and Action Availability/ActionOpportunity projection boundary is absent","evidenceRefs":["docs/remake/architecture/character-runtime-and-compiled-character-build-contract.md","docs/remake/architecture/character-action-opportunity-and-2024-core-action-runtime-contract.md"],"requiredDecision":"define a reusable capability/availability projection seam without implementing all future character content now"},
+    {"id":"GAP-008","severity":"FOUNDATION_BLOCKER","status":"OPEN","blockingScopes":["E0_REPOSITORY_CORE_ENGINE","I1_INTERACTION","P3_ENCOUNTER"],"title":"Accepted RuleExecution/Pending Execution orchestration boundary is absent from current Greenfield core","evidenceRefs":["docs/remake/architecture/rule-runtime-orchestrator-and-pending-execution-contract.md"],"requiredDecision":"define the minimum common execution boundary so interaction and later combat do not create feature-specific execution paths"},
+    {"id":"GAP-009","severity":"INTEGRATION_BLOCKER","status":"OPEN","blockingScopes":["E1_ROBLOX_RUNTIME_INTEGRATION","S1_SELECTION"],"title":"ProjectionReplica exists but accepted atomic Projection Replica -> Derived ViewModel -> Input Context/Recovery UI runtime boundary is incomplete","evidenceRefs":["docs/remake/architecture/ui-projection-view-model-input-context-and-recovery-runtime-contract.md"],"requiredDecision":"define the minimal client projection/view model/input context recovery boundary before user-facing checkpoints"},
+    {"id":"GAP-010","severity":"EXPLORATION_BLOCKER","status":"OPEN","blockingScopes":["S1_SELECTION","X1_CONTEXT","I1_INTERACTION"],"title":"Generic viewer-safe ProjectionService has no explicit Visibility/Knowledge/Detection authority feeding candidate and action disclosure","evidenceRefs":["docs/remake/architecture/visibility-knowledge-detection-and-hover-information-runtime-contract.md","docs/remake/architecture/selection-targeting-preview-and-frozen-binding-runtime-contract.md"],"requiredDecision":"define minimal disclosure/visibility relation needed for current exploration without prematurely implementing the full perception system"},
+    {"id":"GAP-011","severity":"TRACKED_DEFERRED","status":"OPEN","blockingScopes":["P2_SESSION_RECOVERY","P7_PERSISTENCE"],"title":"Persistence/reconnect/rollback services are intentionally deferred but every earlier authority object must preserve epoch/revision/recovery seams","evidenceRefs":["docs/remake/architecture/persistence-and-session-recovery-model.md","docs/remake/specs/SLICE-ROADMAP.md"],"requiredDecision":"no immediate new module; verify each earlier contract remains persistence-neutral and epoch-safe"},
+    {"id":"GAP-012","severity":"TRACKED_DEFERRED","status":"OPEN","blockingScopes":["RELEASE_HARDENING"],"title":"Correlated trace and deterministic runtime scenario harness are not yet mapped into Greenfield modules","evidenceRefs":["docs/remake/architecture/diagnostics-observability-correlated-trace-and-incident-runtime-contract.md","docs/remake/architecture/deterministic-simulation-scenario-and-test-harness-runtime-contract.md"],"requiredDecision":"add trace/test harness boundaries before stabilization, while using current focused validators meanwhile"}
+  ],
+  "phaseGates": [
+    {"phase":"E0_REPOSITORY_CORE_ENGINE","blockedBy":["GAP-001","GAP-002","GAP-003","GAP-005","GAP-007","GAP-008"]},
+    {"phase":"E1_ROBLOX_RUNTIME_INTEGRATION","blockedBy":["GAP-001","GAP-009"]},
+    {"phase":"S1_SELECTION","blockedBy":["GAP-001","GAP-003","GAP-004","GAP-009","GAP-010"]},
+    {"phase":"M1_MOVE","blockedBy":["GAP-004","GAP-005"]},
+    {"phase":"X1_CONTEXT","blockedBy":["GAP-003","GAP-004","GAP-006","GAP-007","GAP-010"]},
+    {"phase":"I1_INTERACTION","blockedBy":["GAP-003","GAP-004","GAP-006","GAP-007","GAP-008","GAP-010"]}
+  ]
+}
