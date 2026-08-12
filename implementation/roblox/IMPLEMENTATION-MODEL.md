@@ -3,9 +3,11 @@
 - 상태: `ACTIVE · SYSTEM_MODEL_V2_REPAIRED · R3_VALIDATED_AWAITING_FREEZE_DECISION`
 - System Authority: `SYSTEMS.md`
 - Canonical Base Scenario source: `manifests/scenario-base-catalog.json`
-- Expanded Scenario source: `manifests/architecture-scenarios.json`의 `scenarios[]`
+- Canonical Expanded Scenario source: `manifests/scenario-expanded-catalog.json`
+- Historical Expanded evidence: `manifests/architecture-scenarios.json`
 - Direct model: `manifests/implementation-system-model.json`
-- Effective Scenario audit: `manifests/scenario-semantic-audit.json`
+- Semantic classification evidence: `manifests/scenario-semantic-audit.json` (v2)
+- Effective Scenario audit: `manifests/scenario-semantic-audit-v3.json`
 - Source 구현: `FORBIDDEN`
 - Studio/MCP 구현: `FORBIDDEN`
 
@@ -18,7 +20,8 @@ SYSTEM MODEL = V2 · 34 SYSTEMS · REPAIRED
 REQUIREMENT CAPABILITY = V3 · 30 · MANY-TO-MANY
 DIRECT SCENARIO TRACE = 61/61
 Scenario Semantic Audit = V1 · 61/61 direct-stage base
-SEMANTIC AUDIT = V2 · VALIDATED · BODY/INGRESS/RECOVERY/SCHEMA BOUND
+SEMANTIC CLASSIFICATION = V2 · VALIDATED EVIDENCE
+SEMANTIC AUDIT = V3 · VALIDATED · CLEAN SOURCE BOUND
 EFFECTIVE RECOVERY SCENARIOS = 27
 R3 = NOT FROZEN · VALIDATED_AWAITING_FREEZE_DECISION
 SOURCE = BLOCKED
@@ -26,26 +29,27 @@ STUDIO/MCP = BLOCKED
 DEDICATED IMPLEMENTATION BRANCH = NOT YET CREATED
 ```
 
-v1은 `implementation-system-model.json`의 direct stage layer다. 완전한 R3 Scenario audit 권위는 v2 `scenario-semantic-audit.json`이다.
+v1은 `implementation-system-model.json`의 direct stage layer다. v2 `scenario-semantic-audit.json`은 61개 entry/recovery classification과 semantic schema의 immutable evidence다. 현재 완전한 R3 Scenario audit 권위는 clean Scenario sources와 v2 evidence를 묶는 v3 `scenario-semantic-audit-v3.json`이다.
 
 ## 2. Canonical Trace
 
 ```text
 Product / Accepted ADR / Current Architecture / UI
 → Requirement Capability
-↔ Canonical Scenario body
+↔ Clean Canonical Scenario body
 → direct Scenario System/Requirement/semanticStages trace
-→ v2 mutation + ingress + recovery semantic expansion
+→ v2 mutation + ingress + recovery semantic classification evidence
+→ v3 clean-source binding
 → R3 execution boundary
 → R4 E0 checkpoint
 → Source/Test/Runtime/Human evidence
 ```
 
-Base 14 Scenario body는 `scenario-base-catalog.json`이 소유한다. 이 파일은 legacy Greenfield capability/system/module 참조를 포함하지 않는다. 기존 `architecture-coverage.json` 안의 Base Scenario 사본은 역사적 evidence일 뿐 새 구현의 canonical Scenario source가 아니다.
+Base 14 Scenario body는 `scenario-base-catalog.json`, Expanded 47 Scenario body는 `scenario-expanded-catalog.json`이 소유한다. 두 clean catalog 모두 legacy Greenfield capability/system/module 참조를 포함하지 않는다.
 
-Expanded 47 Scenario body는 현재 `architecture-scenarios.json`의 `scenarios[]`가 소유한다. `baseRegistry`는 canonical Base catalog를 가리키며, legacy `capabilityRefs`는 구현 모델 권위가 아니고 Requirement/System 매핑은 `implementation-system-model.json`만 소유한다.
+`architecture-coverage.json`의 Base 사본과 `architecture-scenarios.json`의 Expanded 사본/capabilityRefs는 historical evidence다. v3 validator는 historical Expanded의 `id/phase/steps/expectedOutcome/negativeCases` projection이 clean Expanded와 정확히 같은지만 확인한다.
 
-## 3. Scenario Semantic Audit v2
+## 3. Scenario Semantic Audit v3
 
 현재 digest:
 
@@ -56,24 +60,31 @@ sha256:57e485a0cec6d753542e4bc202a881e10e2bd5ae63e314cc609c7e2d99f38140
 v2 semanticSchemaDigest
 sha256:dcc766c1161332789e91aadc362c4765687af3efc2f7193cf23f748df0eb6489
 
-v2 combinedAuditDigest
-sha256:2fa071defaa6ee6363378f9a31780f4d54328199fb4e21bc6eeae3c1b9e07bec
+v3 combinedAuditDigest
+sha256:3d548607d17c7ca7fb13cb44b6b3e8f305f0cb5e5a3a46eacdae7ee19497e46e
 ```
 
-Combined audit는 다음을 묶는다.
+v3 combined audit는 다음을 묶는다.
 
 ```text
-Canonical Base Scenario blob
-+ Expanded Scenario blob
+Clean Base Scenario blob
++ Clean Expanded Scenario blob
 + v1 trace digest
-+ mutation semantic
-+ entry definitions/expansions
-+ recovery definitions/expansions
-+ LKG owner set
-+ 61 entry/recovery classifications
++ immutable v2 classification-audit blob
++ v2 semantic schema digest
+→ v3 combinedAuditDigest
 ```
 
-Scenario body나 공통 semantic rule 어느 쪽이 바뀌어도 re-audit 없이 통과하지 못한다.
+추가 validator 규칙:
+
+```text
+Clean Base/Expanded catalog
+→ capabilityRefs/systemRefs/moduleRefs/knownGapRefs 금지
+
+Historical architecture-scenarios.json
+→ historical evidence only
+→ semantic body projection == clean Expanded 47 exact match
+```
 
 Ingress는 System과 Requirement를 함께 강제한다.
 
@@ -205,10 +216,16 @@ Completion Condition
 
 **CORE_ENGINE_COMPLETE 전 Studio/MCP 작업을 시작하지 않는다.**
 
-## 9. 금지
+## 9. 검증 중 즉시 수정 규칙
+
+현재 합의 방향 안의 명백한 stale pointer, 문서 상태 drift, validator false-green, workflow trigger 누락은 발견 즉시 수정하고 최종 HEAD에서 다시 검증한다.
+
+Product/Accepted ADR/Authority/state ownership/System responsibility/input grammar/개발 순서 변경은 사용자에게 문제·대안·영향을 먼저 보고한다.
+
+## 10. 금지
 
 - 폐기된 Greenfield 계약 복원.
-- legacy `architecture-coverage.json`의 Base Scenario capability/system/module refs를 새 구현 권위로 사용.
+- legacy Scenario capability/system/module refs를 새 구현 권위로 사용.
 - 사용자 승인 없이 새 System/Capability/state owner/authority/input grammar/개발 순서 변경.
 - A3 Outbox와 A8 Delivery 통합.
 - A6/A7/W7/C1이 final Command gate를 직접 엶.
