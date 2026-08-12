@@ -1,13 +1,17 @@
 # RVTT Current Executable Task
 
 - executionAuthority: `ONLY_CURRENT_EXECUTABLE_TASK`
-- status: `READY_FOR_E0_REPOSITORY_ENGINE`
+- status: `BLOCKED_BY_ARCHITECTURE_COVERAGE`
 - commandId: `RVTT-GREENFIELD-FOUNDATION-EXPLORATION-001`
 - repository: `Kaetaeru/RVTT`
 - pullRequest: `2`
 - branch: `agent/survival-logistics-token-authoring`
-- taskMode: `HYBRID_ENGINE_INTEGRATION_PRESENTATION`
+- taskMode: `ARCHITECTURE_COVERAGE_RECONCILIATION`
 - buildMode: `GREENFIELD_ARCHITECTURE_FIRST`
+- coverageAuthorityDoc: `implementation/roblox/ARCHITECTURE-COVERAGE-POLICY.md`
+- coverageRegistry: `implementation/roblox/manifests/architecture-coverage.json`
+- coverageAudit: `implementation/roblox/audits/ARCHITECTURE-COVERAGE-AUDIT-001.md`
+- coverageValidator: `implementation/roblox/tooling/validate_architecture_coverage.py`
 - executionAuthorityDoc: `implementation/roblox/GREENFIELD-EXECUTION-LAYERS.md`
 - executionRegistry: `implementation/roblox/manifests/execution-layers.json`
 - preflightAuthority: `implementation/roblox/GREENFIELD-PREFLIGHT.md`
@@ -27,30 +31,85 @@
 
 ## 현재 Handoff
 
-현재 첫 구현 대상은 Studio UI가 아니라 **E0 Repository Core Engine**이다.
+**E0 Source 구현을 시작하지 않는다.**
+
+Initial Architecture Coverage Audit에서 상위 Product/ADR/Architecture와 현재 25개 Greenfield Module 계획 사이의 구조적 Gap이 발견됐다.
 
 ```text
-Contracts + Execution Class
+Authority Corpus
+→ Capability Catalog
+→ Scenario Trace
+→ Cross-cutting Matrix
+→ Gap Resolution
+→ Coverage Gate PASS
 → E0 Repository Core Engine
-→ E1 Studio Runtime Integration
-→ E2 Presentation / Feel
 ```
+
+## 현재 E0 Blocker
+
+```text
+GAP-001 Session Policy Boundary
+GAP-002 Transaction / Event / Projection Barrier
+GAP-003 Runtime Object / Scene Identity
+GAP-005 Navigation / Movement Boundary
+GAP-007 Capability / Action Availability Projection
+GAP-008 RuleExecution Boundary
+```
+
+세부 Evidence와 다른 Phase Gap은 `architecture-coverage.json`과 `ARCHITECTURE-COVERAGE-AUDIT-001.md`가 소유한다.
 
 ## 다음 실행의 첫 행동
 
-1. `AGENTS.md`와 이 파일을 읽는다.
-2. `GREENFIELD-EXECUTION-LAYERS.md`와 `execution-layers.json`을 읽는다.
-3. Module/System/Stable Function Contract를 읽는다.
-4. E0 Repository Gate를 실행한다.
-5. PASS하면 Core Engine을 `greenfield/src`에 구현한다.
-6. `greenfield/tests`에 repository automated/negative tests를 추가한다.
-7. Core Engine test가 통과하기 전 Studio UI/Feel 구현을 시작하지 않는다.
+1. `AGENTS.md`를 읽는다.
+2. 이 파일을 읽는다.
+3. `ARCHITECTURE-COVERAGE-POLICY.md`를 읽는다.
+4. `architecture-coverage.json`과 Initial Audit를 읽는다.
+5. `validate_architecture_coverage.py`를 실행한다.
+6. Coverage Authority Tree Snapshot이 현재 Checkout과 일치하는지 확인한다.
+7. E0 Blocker를 의존성 순서로 검토한다.
+8. 각 Gap마다 현재 문제, 최소 경계 대안, 미래 확장 영향, 기존 Contract 영향 범위를 사용자에게 제안한다.
+9. 사용자 결정 전에는 System/Module/Stable Function 책임을 실질적으로 추가·분리·통합하지 않는다.
+10. Gap을 하나씩 해결하면서 Coverage Registry와 상위 Authority/Contract를 Top-down 정합화한다.
+11. E0 `blockedBy`가 비고 `implementationGate=READY_FOR_E0`가 된 뒤에만 Source 구현 모드로 전환한다.
 
-**Studio/MCP Handshake는 E0 시작 전 필수가 아니다.** E1 Runtime Integration 직전에 수행한다.
+## Gap Resolution 권장 순서
 
-## E0 Repository Core Engine
+```text
+1. GAP-002 Transaction / Event / Projection Barrier
+2. GAP-001 Session Mode / Context / Transition Policy
+3. GAP-003 Runtime Object / Scene Identity
+4. GAP-004 Spatial Query
+5. Selection Boundary 재검증
+6. GAP-005 Navigation / Runtime Pathfinding Boundary
+7. GAP-007 Capability / Availability / Action Opportunity
+8. GAP-008 RuleExecution minimum boundary
+9. GAP-006 Interaction Capability Query
+10. GAP-009 Client Projection / ViewModel / Input Context Recovery
+11. GAP-010 Visibility / Knowledge minimum boundary
+```
 
-현재 먼저 완성할 보이지 않는 Engine:
+이 순서는 **검토 순서**이며 구체 Architecture를 자동 승인하지 않는다.
+
+## Architecture Coverage Validator
+
+```text
+python implementation/roblox/tooling/validate_architecture_coverage.py
+```
+
+Validator가 확인하는 것:
+
+- Product/ADR/Architecture/System/UI/Spec Authority Tree Snapshot.
+- Capability/Scenario/Gap reference integrity.
+- 모든 현재 System/Module의 Product Capability mapping.
+- Cross-cutting Dimension 누락.
+- Phase Gate와 Gap consistency.
+- OPEN Blocker가 있는데 READY로 위장한 상태.
+
+Validator PASS는 `Gap 없음`을 뜻하지 않는다. 현재처럼 Gap이 명확히 기록되고 Gate가 정직하게 `BLOCKED`여도 Validator는 PASS할 수 있다.
+
+## 기존 E0 후보
+
+현재 Execution Registry에 등록된 E0 후보는 다음이다.
 
 ```text
 CommandEnvelope
@@ -65,85 +124,37 @@ MovementDomain
 ExplorationDomain
 ```
 
-검증 예:
+Coverage Gap 해결 과정에서 이 목록의 System/Module 책임을 바꿔야 하면 사용자 승인 후 Contract를 수정한다.
 
-- malformed envelope
-- unauthorized command
-- duplicate commandId
-- stale expected revision
-- `WorldState.transact` success/failure revision semantics
-- viewer-safe projection/disclosure
-- movement domain validation
-- exploration domain validation
-- structured failures
+현재 목록을 그대로 구현해서 Gap을 코드로 덮지 않는다.
 
-순수 Engine 함수를 사용자에게 Console로 수동 테스트시키지 않는다.
+## Execution Layer 원칙
 
-## E1 Roblox Runtime Integration
-
-E0가 준비된 뒤 Studio Gate를 실행하고 다음을 연결한다.
+Coverage Gate가 해제된 뒤에도 실행 방식은 유지한다.
 
 ```text
-CommandGateway / CommandClient
-ProjectionGateway / ProjectionReplica
-SemanticInputRouter / WorldSystem
-ServerApp / ServerBootstrap
-ClientApp / ClientBootstrap
+E0 Repository Core Engine
+→ E1 Roblox Runtime Integration
+→ E2 Presentation / Feel
 ```
 
-Codex/MCP가 Remote/Player/Instance/Input/lifecycle를 자동 통합 테스트한다.
+- Pure engine은 GitHub-first + automated test.
+- Roblox runtime-dependent engine은 Studio/MCP runtime test + GitHub canonical source.
+- UI/feel은 Studio self-check + Human acceptance.
 
-사용자 UI 판단은 요구하지 않는다.
-
-## Runtime-coupled Engine 예외
-
-PathfindingService, raycast, physics/collision처럼 실제 Roblox Runtime이 correctness의 일부면 `ROBLOX_RUNTIME_ENGINE`으로 다룬다.
-
-```text
-Contract / pure policy → GitHub
-actual Roblox service behavior → Studio/MCP automated runtime test
-visible preview / response / feel → Human checkpoint
-```
-
-Studio에서 구현·튜닝해도 최종 Source는 반드시 `greenfield/src`에 canonicalize한다.
-
-구체 Pathfinding Module split/API는 M1 Movement 설계 직전에 사용자에게 제안·확정한다.
-
-## E2 Presentation / Feel
-
-```text
-S1_SELECTION
-→ C1_CAMERA
-→ M1_MOVE
-→ X1_CONTEXT
-→ I1_INTERACTION
-```
-
-Presentation Module을 연결하고 Studio self-check가 끝난 뒤에만 `READY_FOR_USER`다.
-
-사용자가 수정 요청하면 같은 Checkpoint에서 즉시 수정한다.
-
-## 구현 전 Code Contract Gate
-
-```text
-System Contract
-→ Module Contract
-→ Stable Function Contract
-→ Execution Class
-→ Validator
-→ Source
-```
-
-- undeclared cross-module call 금지.
-- private helper는 자유.
-- Execution Class 변경이 Authority/state owner/Module responsibility/System flow를 바꾸면 사용자에게 먼저 제안.
+Pathfinding은 `GAP-005` 해결 전 구체 Module/API를 만들지 않는다.
 
 ## 사용자 확정 처리
+
+Coverage Gap 해결 결정도 Authority 변경이므로 관련 현재 문서를 위에서 아래로 정합화한다.
+
+Playable Checkpoint 최종 수용 시에는:
 
 ```text
 사용자 최종 수용
 → Authority Impact Scan
-→ Product / ADR / Architecture / Spec
+→ Product / ADR / Architecture / System / UI / Spec
+→ Architecture Coverage Capability / Scenario / Gap
 → Execution / System / Module / Stable Function Contract
 → Canonical Source / Tests
 → conflict re-scan
@@ -155,31 +166,34 @@ System Contract
 ## 스캔 순서
 
 1. `AGENTS.md`
-2. `.github/CODEX-ACTIVE-TASK.md`
-3. `implementation/roblox/GREENFIELD-EXECUTION-LAYERS.md`
-4. `implementation/roblox/manifests/execution-layers.json`
-5. `implementation/roblox/GREENFIELD-PREFLIGHT.md`
-6. `implementation/roblox/GREENFIELD-SYSTEM-SEQUENCE.md`
-7. `implementation/roblox/MODULE-CONTRACTS.md`
-8. `implementation/roblox/SYSTEM-FUNCTION-CONTRACTS.md`
-9. `implementation/roblox/manifests/module-contracts.json`
-10. `implementation/roblox/manifests/system-function-contracts.json`
-11. 현재 `commandPath`
-12. `implementation/roblox/AUTHORITY-RECONCILIATION-POLICY.md`
-13. 관련 Product/ADR/Spec
-14. Legacy Source는 필요한 경우 읽기 참고만
+2. 이 파일
+3. `implementation/roblox/ARCHITECTURE-COVERAGE-POLICY.md`
+4. `implementation/roblox/manifests/architecture-coverage.json`
+5. `implementation/roblox/audits/ARCHITECTURE-COVERAGE-AUDIT-001.md`
+6. `implementation/roblox/GREENFIELD-EXECUTION-LAYERS.md`
+7. `implementation/roblox/manifests/execution-layers.json`
+8. `implementation/roblox/GREENFIELD-PREFLIGHT.md`
+9. `implementation/roblox/GREENFIELD-SYSTEM-SEQUENCE.md`
+10. `implementation/roblox/MODULE-CONTRACTS.md`
+11. `implementation/roblox/SYSTEM-FUNCTION-CONTRACTS.md`
+12. `implementation/roblox/manifests/module-contracts.json`
+13. `implementation/roblox/manifests/system-function-contracts.json`
+14. 현재 `commandPath`
+15. `implementation/roblox/AUTHORITY-RECONCILIATION-POLICY.md`
+16. Gap Evidence가 가리키는 Product/ADR/Architecture/System/UI/Spec
+17. Legacy Source는 필요한 경우 읽기 참고만
 
 ## 지금 하지 않는 것
 
-- Studio Handshake를 기다리느라 E0 Core Engine 구현을 미루기
-- pure Engine을 Studio Console 수동 테스트만으로 완료 처리
-- E0 Engine test 전 Presentation 구현
-- undeclared cross-module function 추가
-- 미래 P2~P10 미확정 Domain/API 선행 구현
-- Legacy Source/Project 수정
-- 기존 Production Place를 Baseline으로 사용
-- user-visible Checkpoint skip
-- Authority Reconciliation 없이 다음 Checkpoint 진행
-- ready-for-review / merge / force push
+- E0 Source 구현.
+- Coverage Gap을 무시한 임시 System/Module 추가.
+- Spatial Query 대신 Controller에서 Workspace 직접 순회.
+- Context Menu를 대상 타입별 하드코딩으로 우회.
+- Character/Interaction Capability를 Client가 재계산하도록 구현.
+- WorldState.transact를 상위 Transaction Architecture 전체와 동일하다고 근거 없이 가정.
+- MovementDomain 안에 Pathfinding/Movement Executor/Presentation 책임을 몰아넣기.
+- future P2~P10 모든 내부 API를 미리 설계.
+- Legacy Source/Project 수정.
+- ready-for-review / merge / force push.
 
-더 좋은 Architecture/Execution Class/Authority 방향이 보이면 자동 적용하지 말고 사용자에게 먼저 제안한다.
+더 좋은 Architecture가 보이면 사용자에게 먼저 제안한다.
