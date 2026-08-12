@@ -1,18 +1,18 @@
 # RVTT Current Executable Task
 
 - executionAuthority: `ONLY_CURRENT_EXECUTABLE_TASK`
-- status: `R3_BOUNDARY_FREEZE`
-- commandId: `RVTT-R3-BOUNDARY-FREEZE-001`
+- status: `R3_REPAIRED_AWAITING_FREEZE_DECISION`
+- commandId: `RVTT-R3-REPAIRED-VALIDATION-001`
 - repository: `Kaetaeru/RVTT`
 - pullRequest: `2`
 - branch: `agent/survival-logistics-token-authoring`
-- taskMode: `CORE_RUNTIME_PRESENTATION_BOUNDARY_FREEZE`
+- taskMode: `REPAIRED_SYSTEM_BOUNDARY_VALIDATION`
 - sourceImplementationAllowed: `false`
 - studioImplementationAllowed: `false`
-- systemModel: `33_SYSTEM_V1_APPROVED`
-- capabilityCatalog: `34_CAPABILITY_V2_ACTIVE`
-- scenarioPressureReview: `61_OF_61_COMPLETE`
-- r3BoundaryAudit: `DRAFT_USER_APPROVAL_REQUIRED`
+- systemModel: `34_SYSTEM_V2_REPAIRED`
+- requirementCapabilityCatalog: `30_REQUIREMENT_CAPABILITY_V3`
+- scenarioTrace: `61_OF_61_MACHINE_READABLE`
+- r3BoundaryAudit: `REPAIRED_NOT_FROZEN`
 - updatedAt: `2026-08-13`
 
 ## 1. 기본 읽기 경로
@@ -24,129 +24,83 @@ Codex는 기본적으로 다음만 읽는다.
 2. .github/CODEX-ACTIVE-TASK.md
 3. implementation/roblox/IMPLEMENTATION-MODEL.md
 4. implementation/roblox/SYSTEMS.md
-5. implementation/roblox/audits/IMPLEMENTATION-MODEL-R3-BOUNDARY-001.md
+5. implementation/roblox/manifests/implementation-system-model.json
+6. implementation/roblox/audits/IMPLEMENTATION-MODEL-R3-BOUNDARY-001.md
 ```
 
-R3의 특정 책임을 검증할 때만 다음을 선택적으로 읽는다.
+특정 책임의 상위 근거가 필요할 때만 Product/Accepted ADR/Architecture/UI와 기존 Scenario Registry를 선택적으로 읽는다.
+
+폐기된 Greenfield System/Module/Stable Function/Execution 문서는 기본 읽기 대상이 아니다.
+
+## 2. 현재 모델
 
 ```text
-implementation/roblox/audits/IMPLEMENTATION-MODEL-R2-SCENARIO-PRESSURE-001.md
-implementation/roblox/manifests/architecture-scenarios.json
-implementation/roblox/manifests/architecture-coverage.json   # legacy requirement evidence only
-docs/remake/product/**
-docs/remake/decisions/**
-docs/remake/architecture/**
-docs/remake/ui/**
+System Responsibility Model v2 = 34
+Requirement Capability Catalog v3 = 30
+Representative Scenario Trace = 61 / 61
 ```
 
-기존 Greenfield System/Module/Stable Function/Execution 문서는 기본 읽기 대상이 아니다.
-
-## 2. 승인된 현재 모델
-
-현재 구현 System 권위:
+중요:
 
 ```text
-implementation/roblox/SYSTEMS.md
-33 systems
-34 capability v2
+Requirement Capability ≠ System alias
+REPOSITORY_LOGIC ≠ E0_CORE_ENGINE
+A3 Outbox ≠ A8 Event Delivery
+Readiness evidence producer ≠ final ready gate owner
 ```
 
-R2 결과:
+## 3. 현재 목표
+
+R3 self review에서 발견한 구조 결함은 문서/manifest에 수정됐다. 현재 작업은 이 repaired model 전체를 검증하는 것이다.
+
+검증 대상:
 
 ```text
-61/61 scenarios reviewed
-0 empty responsibility path
-0 old Greenfield module assumption
+34 unique System IDs and names
+30 unique Requirement Capabilities with many-to-many System refs
+61 exact Scenario traces with no missing/extra IDs
+A8 committed-event delivery ownership
+A1 sole final gameplay-ready gate
+A6/A7/W7/C1 typed readiness evidence
+Reservation taxonomy separation
+Platform provider contracts
+E1-consuming Core seams included in E0 pre-Studio set
+Source/Studio block preserved
 ```
 
-기존 22 Capability는 legacy coverage vocabulary다. 새 구현 경계는 `SYSTEMS.md`의 Capability v2와 System mapping을 사용한다.
+**이 검증이 끝나도 R3는 자동 FROZEN이 아니다.** 사용자 Freeze 결정이 있어야 R4로 간다.
 
-## 3. 현재 목표 — R3
+## 4. 실행환경 의미
 
-33개 System의 책임을 다음 세 층으로 나눈다.
+### REPOSITORY_LOGIC
 
-```text
-Repository Core Engine
-Roblox Runtime Engine / Adapter
-Presentation / Human Feel
-```
+Roblox 없이 구현 가능한 모든 production logic의 분류다.
 
-System 전체를 하나의 층에 강제로 배치하지 않는다.
+### E0_CORE_ENGINE
 
-현재 제안 Boundary Matrix는:
+Studio 전에 반드시 완성할 Foundation subset이다.
 
-```text
-implementation/roblox/audits/IMPLEMENTATION-MODEL-R3-BOUNDARY-001.md
-```
+`CORE_ENGINE_COMPLETE`는 `e0RequiredSystemSeams`의 R4 계약/구현/자동 검증 완료를 뜻하며 모든 미래 Repository feature 완료를 뜻하지 않는다.
 
-이며 **사용자 승인 전에는 R3 FROZEN이나 R4 진입으로 간주하지 않는다.**
+### E1_ROBLOX_RUNTIME
 
-각 System에 대해 다음을 확인한다.
+`CORE_ENGINE_COMPLETE` 이후에만 Roblox Provider/Adapter를 구현한다.
 
-```text
-Core responsibilities
-Roblox-runtime responsibilities
-Presentation/human responsibilities
-External adapter seams
-Forbidden cross-boundary shortcuts
-Future consumers
-Scenario pressure
-Test evidence class
-```
+### HUMAN_PRESENTATION
 
-## 4. 분류 기준
+Integration 이후 U0/E2에서 실제 UI/Camera/VFX/가독성을 검토한다.
 
-### Repository Core Engine
-
-Roblox Runtime 없이 correctness를 자동 검증할 수 있는 책임.
-
-예:
-
-- policy
-- state machine
-- schema / contract
-- deterministic orchestration
-- revision/identity rules
-- pure calculation
-- serialization-neutral domain logic
-- failure semantics
-
-### Roblox Runtime Engine / Adapter
-
-Roblox 서비스나 geometry/runtime 결과가 correctness의 일부인 책임.
-
-예:
-
-- PathfindingService / NavMesh
-- raycast / overlap / collision / physics
-- Instance / Player lifecycle
-- Remote transport adapter
-- StreamingEnabled / materialization
-- Roblox input adapter
-
-### Presentation / Human Feel
-
-실제 사용자에게 보이는 감각과 읽기성 검토가 필요한 책임.
-
-예:
-
-- final UI layout / shell feel
-- VFX timing
-- camera feel
-- path preview readability
-- movement perceived intent
-- hover/highlight readability
-
-## 5. 절대 순서
+## 5. 절대 실행 순서
 
 ```text
-R3 Boundary Freeze
+R3 repaired model validation
+→ 사용자 R3 Freeze 결정
 → R4 E0 Checkpoint Freeze
 → R5 Dedicated Implementation Branch
-→ E0 Repository Core Engine 전체 구현/자동 검증
+→ E0 Core Engine 구현/자동 검증
 → CORE_ENGINE_COMPLETE
 → E1 Runtime Checkpoint Freeze
-→ Studio/MCP Runtime Engine + Integration
+→ Studio/MCP Runtime Provider + Integration
 → INTEGRATION_READY
 → U0 HTML/UI distillation + full Product UI Shell
 → UI_SHELL_READY
@@ -155,13 +109,56 @@ R3 Boundary Freeze
 
 **CORE_ENGINE_COMPLETE 전 Studio/MCP 작업 금지.**
 
-Pathfinding/Raycast/Physics도 Core contract/policy/failure seam을 먼저 확정하고 실제 Roblox Provider는 E1에서 만든다.
+## 6. 구현 AI 필수 불변식
 
-## 6. 미래 호환성
+### Event
 
-R3/R4는 현재 Foundation만 보지 않는다.
+```text
+A3 commit + transactional outbox
+→ A8 committed-only delivery/retry/receipt
+→ subscribers
+```
 
-최소 미래 소비 압력:
+A8은 Store를 직접 수정하지 않는다.
+
+### Ready
+
+```text
+A7 authorityRecoveryReady
+A6 projectionSyncReady
+W7 sceneEssentialReady
+C1 clientReplicaReady
+→ A1 EffectiveGameplayReady
+→ final Command gate
+```
+
+### Reservation
+
+```text
+OrderingReservation → A3
+ResourceReservation → R3 orchestration
+OccupancyReservation → W6
+ActivityReservation → D5
+LogisticsAllocationReservation → D7
+```
+
+범용 ReservationManager로 합치지 않는다.
+
+### Shared Provider
+
+```text
+AuthorityMonotonicClock
+DeterministicIdFactory
+RngProvider
+TransportAdapter
+StorageAdapter
+```
+
+각 System이 직접 제각각의 clock/GUID/Random/Remote/Storage authority path를 만들지 않는다.
+
+## 7. 미래 호환성
+
+R4는 현재 기능뿐 아니라 다음 소비를 압력으로 본다.
 
 ```text
 Character creation / level-up / sheet
@@ -175,20 +172,20 @@ Reconnect / restart / rollback / branch recovery
 Streaming / accessibility / low-end fallback
 ```
 
-미래 기능 자체를 구현하지 않되, 미래 기능 때문에 shared public boundary를 재작성해야 하는 구조는 Reject한다.
+미래 기능을 지금 구현하지는 않는다. 대신 미래 기능 때문에 shared public boundary를 다시 설계해야 하는 E0 Checkpoint도 Freeze하지 않는다.
 
-## 7. 지금 하지 않는 것
+## 8. 지금 하지 않는 것
 
 - Source 생성.
 - Studio/MCP 진입.
+- R3 자동 Freeze.
 - Module/Stable Function 대량 설계.
 - Controller/Manager 이름 확정.
 - 폐기된 Greenfield 계약 복원.
-- 기존 GAP 번호를 맞추기 위한 System 왜곡.
 - UI Shell 조기 제작.
 
-## 8. 다음 행동
+## 9. 다음 행동
 
-**R3 Boundary Matrix 사용자 결정.**
+**모든 repaired model Validator/CI를 한 번 실행해 전체 정합성을 확인한다.**
 
-승인되면 R3를 `FROZEN`으로 올리고 R4 Foundation Core Checkpoint를 JIT로 구체화한다.
+통과 후 사용자에게 R3 Freeze 여부를 보고한다.
