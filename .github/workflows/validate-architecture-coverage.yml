@@ -24,6 +24,7 @@ on:
       - "implementation/roblox/audits/IMPLEMENTATION-MODEL-R2-SCENARIO-PRESSURE-001.md"
       - "implementation/roblox/audits/IMPLEMENTATION-MODEL-R3-BOUNDARY-001.md"
       - "implementation/roblox/manifests/architecture-coverage.json"
+      - "implementation/roblox/manifests/scenario-base-catalog.json"
       - "implementation/roblox/manifests/architecture-scenarios.json"
       - "implementation/roblox/manifests/implementation-system-model.json"
       - "implementation/roblox/manifests/scenario-semantic-audit.json"
@@ -51,6 +52,7 @@ on:
       - "implementation/roblox/audits/IMPLEMENTATION-MODEL-R2-SCENARIO-PRESSURE-001.md"
       - "implementation/roblox/audits/IMPLEMENTATION-MODEL-R3-BOUNDARY-001.md"
       - "implementation/roblox/manifests/architecture-coverage.json"
+      - "implementation/roblox/manifests/scenario-base-catalog.json"
       - "implementation/roblox/manifests/architecture-scenarios.json"
       - "implementation/roblox/manifests/implementation-system-model.json"
       - "implementation/roblox/manifests/scenario-semantic-audit.json"
@@ -78,5 +80,5 @@ jobs:
       - name: Validate repaired system, requirement and scenario coverage
         run: python implementation/roblox/tooling/validate_architecture_coverage.py
 
-      - name: Validate full scenario semantic schema, ingress and recovery audit
+      - name: Validate canonical scenario catalog and full semantic audit
         run: python implementation/roblox/tooling/validate_scenario_semantic_audit.py
