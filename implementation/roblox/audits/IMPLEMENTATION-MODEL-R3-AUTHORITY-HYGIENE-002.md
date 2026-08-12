@@ -187,3 +187,25 @@ Clean Base blob
 이번 변경은 System 34, Requirement 30, Scenario 61의 의미, Authority/state ownership, ingress grammar, 개발 순서, Source/Studio gate를 변경하지 않는다.
 
 최종 완료 조건은 이 second revalidation 변경을 포함한 동일 HEAD에서 9개 Pull Request Workflow가 모두 성공하는 것이다.
+
+## 8. Third Independent Revalidation · Immutable Evidence Guard
+
+추가 독립 재검증에서 v3가 historical Expanded와 v2 classification audit를 `immutable evidence`로 선언하면서도, 기존 validator가 단지 `현재 blob SHA == v3 manifest에 기록된 SHA`만 확인한다는 false-green 가능성을 발견했다.
+
+즉 evidence 파일과 v3 manifest의 SHA/digest를 동시에 변경하면 자기일관성 검증만으로는 통과할 수 있었다.
+
+이를 막기 위해 다음 승인 evidence SHA를 별도 validator trust pin으로 고정했다.
+
+```text
+architecture-scenarios.json
+→ 93f275b373c9f88b12ed3078149ff562642a5b1d
+
+scenario-semantic-audit.json (v2)
+→ 839f05d0d7ba1f53eec87fd35981d4b961d513ef
+```
+
+`validate_r3_immutable_evidence.py`는 실제 HEAD blob과 v3 `sourceBinding`이 모두 위 고정 SHA와 일치하는지 검사한다. `validate-architecture-coverage.yml`은 이 guard 자체의 변경도 trigger하고 매 실행에서 guard를 수행한다.
+
+`SYSTEMS.md`의 v3 설명도 실제 binding과 맞게 `immutable Historical Expanded evidence blob`을 포함하도록 정합화했다.
+
+이 변경 역시 Architecture/System/Requirement/Scenario 의미나 Source/Studio gate를 바꾸지 않는다. 최종 완료 조건은 이 guard와 문서 정합화를 포함한 동일 HEAD에서 9개 Pull Request Workflow가 모두 성공하는 것이다.
