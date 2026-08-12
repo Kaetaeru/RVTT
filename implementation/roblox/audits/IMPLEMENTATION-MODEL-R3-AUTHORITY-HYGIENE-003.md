@@ -169,16 +169,17 @@ R3 = NOT FROZEN
 
 Repository 내부 Audit 문서에는 current/final branch HEAD SHA를 기록하지 않는다.
 
-이유:
+Audit 파일을 수정할 때마다 새 commit SHA가 생기므로, Audit 내부에 자기 자신의 current HEAD를 복사하는 구조는 금지한다.
+
+Repository Audit은 다음만 기록한다.
 
 ```text
-Audit 파일에 current HEAD를 기록
-→ 그 Audit 파일을 커밋
-→ 새 HEAD 생성
-→ 기록된 HEAD가 즉시 stale
+검증 대상과 방법
+필수 Workflow 집합
+보존해야 할 Architecture/Authority 불변식
 ```
 
-따라서 Repository Audit은 검증 방법과 필수 검증 집합만 기록한다. 실제 branch HEAD와 그 HEAD의 Workflow 결과는 GitHub PR/Actions metadata가 source of truth다.
+실제 current branch HEAD와 해당 HEAD의 Workflow 결과는 GitHub branch ref, PR metadata, Actions metadata를 source of truth로 사용한다.
 
 필수 검증 집합:
 
