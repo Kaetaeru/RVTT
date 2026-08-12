@@ -2,10 +2,13 @@
   "schemaVersion": 1,
   "registryId": "rvtt-greenfield-execution-layers-v1",
   "authorityDocument": "implementation/roblox/GREENFIELD-EXECUTION-LAYERS.md",
+  "architectureCoverageAuthority": "implementation/roblox/ARCHITECTURE-COVERAGE-POLICY.md",
+  "architectureCoverageRegistry": "implementation/roblox/manifests/architecture-coverage.json",
   "moduleRegistry": "implementation/roblox/manifests/module-contracts.json",
   "canonicalSourceRoot": "greenfield/src",
   "canonicalTestRoot": "greenfield/tests",
   "policy": {
+    "requireCoverageGateBeforePhase": true,
     "canonicalSourceAlwaysGitHub": true,
     "coreEngineRepositoryFirst": true,
     "studioIsRuntimeIntegrationWorkbench": true,
@@ -19,7 +22,7 @@
       "authoring": "GITHUB_FIRST",
       "verification": ["REPOSITORY_AUTOMATED", "NEGATIVE_CASES"],
       "humanReview": false,
-      "description": "Roblox-runtime-independent contracts, authority, state, command, projection policy, and domain logic."
+      "description": "Roblox-runtime-independent contracts, authority, state, command, projection policy, and domain logic after architecture coverage for the phase is ready."
     },
     "ROBLOX_RUNTIME_ENGINE": {
       "authoring": "STUDIO_MCP_ITERATION_ALLOWED_GITHUB_CANONICAL",
@@ -31,17 +34,18 @@
       "authoring": "GITHUB_CANONICAL_STUDIO_INTEGRATION",
       "verification": ["STUDIO_AUTOMATED_INTEGRATION"],
       "humanReview": false,
-      "description": "Remote, Player, Instance, input, replica, composition, and lifecycle adapters that connect core engine code to Roblox runtime."
+      "description": "Remote, Player, Instance, input, replica, composition, and lifecycle adapters that connect coverage-ready core engine code to Roblox runtime."
     },
     "PRESENTATION_FEEL": {
       "authoring": "STUDIO_MCP",
       "verification": ["STUDIO_SELF_CHECK", "HUMAN_ACCEPTANCE"],
       "humanReview": true,
-      "description": "Visible presentation and player feel: selection visuals, camera, movement feel/preview, context presentation, and related interaction UX."
+      "description": "Visible presentation and player feel after the checkpoint architecture coverage gate is ready."
     }
   },
   "runtimeCoupledRule": {
     "class": "ROBLOX_RUNTIME_ENGINE",
+    "coverageRequiredFirst": true,
     "canonicalSource": "GITHUB",
     "studioAuthoringAllowed": true,
     "studioAutomatedVerificationRequired": true,
@@ -54,18 +58,19 @@
       "DataStore/MemoryStore runtime adapters"
     ],
     "pathfindingExample": {
+      "status": "PROVISIONAL_UNTIL_GAP_005_RESOLVED",
       "repositorySide": [
         "path request/response data contract",
         "movement permission and budget rules",
-        "waypoint normalization independent of Workspace",
+        "waypoint or plan normalization independent of Workspace",
         "failure/result semantics",
         "pure fallback/path policy if one exists"
       ],
       "studioSide": [
-        "PathfindingService invocation",
+        "PathfindingService or approved runtime navigation provider invocation",
         "actual navmesh/agent-parameter behavior",
         "obstacle and collision geometry",
-        "raycast/line-of-sight checks",
+        "raycast/spatial-provider behavior",
         "dynamic obstruction and recompute behavior"
       ],
       "humanSide": [
@@ -79,6 +84,8 @@
     {
       "id": "E0_REPOSITORY_CORE_ENGINE",
       "order": 0,
+      "coveragePhaseGate": "E0_REPOSITORY_CORE_ENGINE",
+      "status": "BLOCKED_BY_ARCHITECTURE_COVERAGE",
       "modules": [
         "shared.protocol.command-envelope",
         "shared.protocol.projection-envelope",
@@ -92,6 +99,7 @@
         "server.domain.exploration"
       ],
       "gate": [
+        "architecture coverage phase has no open blockers",
         "contracts valid",
         "canonical source implemented in greenfield/src",
         "repository automated tests pass",
@@ -101,6 +109,8 @@
     {
       "id": "E1_ROBLOX_RUNTIME_INTEGRATION",
       "order": 1,
+      "coveragePhaseGate": "E1_ROBLOX_RUNTIME_INTEGRATION",
+      "status": "WAITING_FOR_E0_AND_COVERAGE",
       "modules": [
         "server.transport.command-gateway",
         "client.command",
@@ -114,6 +124,7 @@
         "client.bootstrap"
       ],
       "gate": [
+        "architecture coverage phase has no open blockers",
         "E0 core engine repository gate passed",
         "greenfield Rojo build succeeds",
         "Studio/MCP runtime integration tests pass",
@@ -124,6 +135,8 @@
     {
       "id": "E2_PRESENTATION_AND_FEEL",
       "order": 2,
+      "coveragePhaseGate": "CHECKPOINT_SPECIFIC",
+      "status": "WAITING_FOR_E0_E1_AND_CHECKPOINT_COVERAGE",
       "modules": [
         "client.world.selection",
         "client.world.presenter",
@@ -132,6 +145,7 @@
         "client.world.context"
       ],
       "gate": [
+        "current checkpoint architecture coverage phase has no open blockers",
         "E0 and E1 are available",
         "current checkpoint is playable in Studio",
         "Codex Studio self-check passes",
