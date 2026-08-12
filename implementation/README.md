@@ -54,7 +54,7 @@ NEXT = USER R3 FREEZE DECISION
 3. Module/Stable Function은 R4 Checkpoint에서 current 34-System / 30-Requirement / 61-Scenario 압력으로 JIT 도출한다.
 4. Client는 Domain Store/DataStore/authority result를 직접 소유하지 않는다.
 5. Authority/Schema/Persistence/Remote 변경은 frozen contract와 focused tests를 함께 갱신한다.
-6. `CORE_ENGINE_COMPLETE` 전 Studio/MCP 구현을 시작하지 않는다.
+6. CORE_ENGINE_COMPLETE 전 Studio/MCP 구현을 시작하지 않는다.
 7. E1 Studio 결과는 GitHub greenfield Source와 Rojo mapping에서 재현 가능해야 한다.
 8. legacy Regression PASS를 new Greenfield implementation PASS로 해석하지 않는다.
 
