@@ -1,292 +1,144 @@
 # RVTT Agent Rules
 
-- 상태: `CURRENT`
+- 상태: `CURRENT · IMPLEMENTATION_MODEL_RESET`
 - 최종 갱신일: 2026-08-13
 
 ## 1. 현재 실행 권위
 
+기본 읽기 순서는 이것만 사용한다.
+
 ```text
 사용자의 최신 명시적 지시
 → .github/CODEX-ACTIVE-TASK.md
-→ commandPath
+→ implementation/roblox/IMPLEMENTATION-MODEL.md
+→ implementation/roblox/ARCHITECTURE-COVERAGE-POLICY.md
+→ architecture-coverage.json + architecture-scenarios.json
 ```
+
+필요한 근거가 있을 때만 Product/Accepted ADR/Architecture/UI 문서를 따라간다.
 
 Archive, 과거 Codex Command, PR 댓글, 과거 Acceptance에서 현재 TODO를 복구하지 않는다.
 
-## 2. 현재 Build 방식
+## 2. 기존 Greenfield 구현 모델 폐기
 
-현재 Roblox 구현은 다음 방식이다.
-
-```text
-Product / ADR / Architecture / System / UI / Spec
-→ Architecture Coverage Scan
-→ Product Capability / Representative Scenario / Cross-cutting Matrix
-→ Blocking Gap 없음 확인
-→ System Contract
-→ Module Contract
-→ Stable Function Contract
-→ Execution Class
-→ E0 Repository Core Engine
-→ E1 Roblox Runtime Integration
-→ E2 Presentation / Feel
-→ Human feedback
-→ Authority Reconciliation
-→ Promotion Commit
-```
-
-Execution environment authority는 `implementation/roblox/GREENFIELD-EXECUTION-LAYERS.md`와 `implementation/roblox/manifests/execution-layers.json`이다.
-
-Coverage authority는 다음이다.
-
-- `implementation/roblox/ARCHITECTURE-COVERAGE-POLICY.md`
-- `implementation/roblox/manifests/architecture-coverage.json`
-- `implementation/roblox/tooling/validate_architecture_coverage.py`
-
-## 3. Architecture Coverage Gate
-
-Code Contract가 내부적으로 일치하는 것만으로 구현 준비가 끝난 것이 아니다.
-
-반드시 다음 추적이 존재해야 한다.
+이전에 선언한 다음 구현 모델은 현재 권위가 아니다.
 
 ```text
-Product Requirement / Accepted ADR / Current Architecture
-↕
-Capability
-↕
-Representative Scenario
-↕
-System
-↕
-Module
-↕
-Stable Function
-↕
-Source / Test
+25 modules
+10 systems
+64 stable functions
+G0~G5
+기존 E0/E1 module classification
+기존 greenfield controller/service wiring
 ```
 
-규칙:
+관련 문서/Registry는 `RETIRED_IMPLEMENTATION_MODEL` 또는 historical reference로만 취급한다.
 
-- 현재 Authority Corpus는 Product, Decisions, Architecture, Systems, UI, Specs Root의 Git Tree SHA로 Snapshot한다.
-- Authority Root가 바뀌면 Coverage Review 없이 구현을 진행하지 않는다.
-- 현재 Capability가 `UNMAPPED`/`PARTIAL`이고 해당 Phase의 Blocking Gap이 있으면 Source를 시작하지 않는다.
-- 미래 Capability는 `DEFERRED`할 수 있지만 planned phase와 cross-cutting 검토 이유를 남긴다.
-- 모든 Capability는 Authority/Permission/State/Command/Projection/Persistence/Reconnect/Rollback/Concurrency/Failure/Observability/Security/Test/Human Test를 명시적으로 검토한다.
-- Coverage Finding은 Architecture 변경 승인 자체가 아니다. Gap을 발견하면 문제·대안·영향을 사용자에게 보고하고 결정 전에는 System/Module/Authority를 독단적으로 바꾸지 않는다.
+좋은 아이디어가 있어도 자동 재사용하지 않는다. 새 System Model에서 책임과 Scenario 압력을 다시 확인한 뒤 명시적으로 채택한다.
 
-현재 Initial Audit 결과 E0는 `BLOCKED_BY_FOUNDATION_COVERAGE_GAPS`다. `.github/CODEX-ACTIVE-TASK.md`와 Coverage Registry의 Phase Gate가 해제되기 전 E0 Source를 만들지 않는다.
-
-## 4. Execution Class
-
-### CORE_ENGINE
-
-Roblox Runtime 없이 correctness를 검증할 수 있는 보이지 않는 Engine.
-
-- GitHub `greenfield/src`에서 먼저 구현.
-- repository automated/negative tests를 먼저 통과.
-- 사람에게 Studio Console로 함수 하나씩 검증시키지 않는다.
-
-단, 해당 Phase의 Architecture Coverage Gate가 먼저 PASS해야 한다.
-
-### ROBLOX_RUNTIME_ENGINE
-
-Roblox Runtime 결과가 Engine correctness의 일부.
-
-- Studio/MCP에서 구현·튜닝 loop 허용.
-- 최종 Source는 반드시 `greenfield/src`에 canonicalize.
-- Studio automated runtime test 필요.
-
-대표: PathfindingService, raycast, physics/collision, streaming-sensitive behavior, DataStore adapter.
-
-### ROBLOX_INTEGRATION
-
-Core Engine을 Remote/Player/Input/Instance/lifecycle에 연결.
-
-- Studio/MCP automated integration test가 1차 검증.
-- 사용자 UX 판단을 요구하지 않는다.
-
-### PRESENTATION_FEEL
-
-사람이 보고 만져야 평가 가능한 UI/visual/control feel.
-
-- Studio self-check 후 `READY_FOR_USER`.
-- 사용자가 싫으면 같은 Checkpoint에서 즉시 수정.
-
-## 5. Source 권위
-
-- `implementation/roblox/greenfield/src`: Canonical Source.
-- `implementation/roblox/greenfield/tests`: Greenfield tests.
-- `implementation/roblox/greenfield.project.json`: Greenfield Rojo Project.
-- `implementation/roblox/src`: Legacy read-only reference.
-- `implementation/roblox/default.project.json`: Legacy read-only project.
-
-Studio-only production truth는 금지한다.
-
-## 6. Code Contract
-
-Source보다 먼저:
+## 3. 새 구현 모델
 
 ```text
-Architecture Coverage
-→ System
-→ Module
-→ Stable Function
-→ Execution Class
+Product / Accepted ADR / Current Architecture / UI
++ 22 Capabilities
++ 61 Representative Scenarios
++ Cross-cutting Coverage
+→ System Model From Scratch
+→ End-to-End Scenario Pressure Review
+→ Core Engine Boundary Freeze
+→ E0 Checkpoint Freeze
+→ Dedicated Implementation Branch
+→ Repository Core Engine
+→ CORE_ENGINE_COMPLETE
+→ Roblox Runtime Engine / Integration
+→ INTEGRATION_READY
+→ U0 Product UI Shell Session
+→ UI_SHELL_READY
+→ Presentation / Feel Checkpoints
 ```
 
-다른 Contract-bearing Module이 호출하는 함수는 Stable Function Contract가 먼저 있어야 한다.
+현재는 **System Model을 다시 만드는 Planning 단계**다. Source와 Studio 구현을 시작하지 않는다.
 
-private/local helper와 정확한 내부 call graph는 Source-derived다.
+## 4. Future Compatibility
 
-Coverage Registry에서 요구하는 Capability 경계가 현재 Contract에 없으면 Source로 임시 우회 구현하지 않는다.
+현재 Checkpoint만 통과하는 구조를 만들지 않는다.
 
-## 7. 현재 Engine-first 범위
+미래 Character / Encounter / Inventory / Rules / Persistence / DM / Scene / Journal 시나리오는 지금 구현 Scope가 아니라 **현재 Architecture의 Compatibility Constraint**다.
 
-현재 Foundation + Exploration에서 다음 Module들이 E0 후보로 분류되어 있다.
+각 구현 Checkpoint는 Future Consumers, Future Scenario Pressure, Extension Seams, Forbidden Shortcuts, Deferred Non-goals를 명시해야 한다.
 
-```text
-CommandEnvelope
-ProjectionEnvelope
-WorldContract
-SessionAuthority
-WorldState
-AuthorizationService
-CommandRuntime
-ProjectionService
-MovementDomain
-ExplorationDomain
-```
+## 5. Repository / Studio 순서
 
-그러나 **현재는 구현 시작 상태가 아니다.** Initial Architecture Coverage Audit에서 E0 구조에 영향을 주는 Gap이 발견되어 있다.
+**Studio/MCP는 Repository Core Engine 전체 완료 전 사용하지 않는다.**
 
-현재 E0 Blocker:
-
-```text
-GAP-001 Session Policy Boundary
-GAP-002 Transaction / Event / Projection Barrier
-GAP-003 Runtime Object / Scene Identity
-GAP-005 Navigation / Movement Boundary
-GAP-007 Capability / Action Availability Projection
-GAP-008 RuleExecution Boundary
-```
-
-이 Gap을 사용자 결정으로 해결하고 System/Module/Function Contract를 정합화한 뒤에만 E0 구현 목록을 최종 확정한다.
-
-그 뒤 Studio Integration 후보:
-
-```text
-CommandGateway / CommandClient
-ProjectionGateway / ProjectionReplica
-SemanticInputRouter / WorldSystem
-ServerApp / Bootstrap
-ClientApp / Bootstrap
-```
-
-사용자 Checkpoint 후보 순서는 유지한다.
-
-```text
-S1 Selection
-→ C1 Camera
-→ M1 Move
-→ X1 Context
-→ I1 Interaction
-```
-
-각 Checkpoint도 자신의 Coverage Phase Gate를 통과해야 한다.
-
-## 8. Pathfinding 규칙
-
-Pathfinding은 통째로 Studio-only Engine으로 만들지 않는다.
+Roblox Runtime이 필요한 Pathfinding/Raycast/Physics도:
 
 ```text
 Repository
-= data contract / permission / budget / failure / recompute / pure policy
+→ contract / policy / permission / failure semantics
 
-Studio Runtime
-= PathfindingService / NavMesh / Agent / Collision / Raycast / dynamic obstruction
-
-Human
-= preview readability / click response / movement smoothness
+CORE_ENGINE_COMPLETE 이후 Studio
+→ actual runtime provider / navmesh / collision / raycast / integration
 ```
 
-Initial Coverage Audit의 `GAP-005`가 먼저 해결되어 Repository-side Navigation/Movement 책임과 Runtime-coupled 경계를 결정해야 한다.
+순서를 따른다.
 
-구체 Pathfinding Module split/API는 사용자 결정 없이 자동 추가하지 않는다.
+## 6. UI Shell
 
-## 9. 사용자 Feedback
-
-`READY_FOR_USER`가 되면 다음 Presentation 기능 진행을 멈춘다.
+`INTEGRATION_READY` 뒤 E2 전에 U0를 한 번 수행한다.
 
 ```text
-CHANGE_REQUESTED
-→ 현재 Checkpoint 수정
-→ Studio self-check
-→ READY_FOR_USER
-→ 사용자 재확인
+HTML/UI Reference Distillation
+→ Product UI Surface Inventory
+→ Design Philosophy / IA / Visual Language / States / Accessibility / Roblox Mapping
+→ 실제 Product UI Shell 전체 Scaffold
+→ Human Shell Review
+→ UI_SHELL_READY
 ```
 
-Engine unit/negative test와 Studio automated integration은 사람이 직접 판정하지 않는다.
+`UI_SHELL_READY` 이후 throwaway Test ScreenGui를 만들지 않는다.
 
-## 10. 사용자 확정 후
+- UI 표현 테스트: 실제 Product Shell + dev Fixture Projection/ViewModel.
+- Gameplay 테스트: 실제 Product Shell Debug Control + 실제 Command/Server Authority path.
+- Debug UI가 Domain Store/World State를 직접 수정하거나 별도 Authority/Remote path를 만들면 안 된다.
 
-```text
-사용자 최종 수용
-→ Authority Impact Scan
-→ Product / ADR / Architecture / System / UI / Spec
-→ Architecture Coverage Capability / Scenario / Gap
-→ Execution / System / Module / Stable Function Contract
-→ Canonical Source / Tests
-→ conflict re-scan
-→ Promotion Commit
-→ ACCEPTED
-```
+## 7. 기술 비협상 규칙
 
-Promotion Commit 형식:
+1. Gameplay mutation 최종 권한은 Server다.
+2. Client Role/Owner/Controller/result claim은 untrusted다.
+3. Authoritative mutation은 승인된 Command/Transaction 경계를 통과한다.
+4. Remote payload type/size/depth/rate를 제한한다.
+5. Network에 Roblox Instance를 보내지 않는다.
+6. command identity / epoch / typed precondition을 검증한다.
+7. duplicate/stale mutation은 fail closed다.
+8. Projection은 viewer-safe이며 existence leakage를 막는다.
+9. UI/Presenter는 Remote나 Domain Store를 직접 소유하지 않는다.
+10. Bootstrap/App은 composition/lifecycle만 담당한다.
+11. lifecycle cleanup을 명시한다.
+12. Persistence는 명시적 boundary 뒤에 둔다.
+13. Studio-only production truth를 허용하지 않는다.
+14. 구현 전 책임 경계를 선언한다. Private helper는 Source-derived다.
+15. 더 좋은 Architecture가 보이면 자동 적용하지 않고 문제·대안·영향을 사용자에게 먼저 보고한다.
 
-```text
-checkpoint(<CHECKPOINT_ID>): accept <summary>
-```
-
-Authority 문서가 바뀌면 Coverage Tree Snapshot과 영향 Capability를 함께 재검토한다. Tree SHA만 기계적으로 갱신하지 않는다.
-
-## 11. 사용자 승인 없이 바꾸지 않는 것
+## 8. 사용자 승인 없이 바꾸지 않는 것
 
 - Product 목표/비목표
 - Accepted ADR
-- 핵심 입력 문법
-- Server/Client Authority / Data ownership
-- Module responsibility 실질 분리/통합
-- System flow
-- Execution Class 정책/개발 방식
-- Foundation/Checkpoint 순서
+- 입력 문법
+- Server/Client Authority와 state ownership
+- 핵심 System/Module responsibility
+- System sequence
+- 개발 방식과 Checkpoint 시점
 - Release scope/priority
-- Legacy write lock
-- Coverage Gap 해결을 위한 새로운 핵심 Architecture 경계
 
-명백한 bug, 기존 intent 안의 UX 미세 조정, private helper 분해는 즉시 수행 가능하다.
+명백한 bug, 기존 의도 안의 UX 미세 조정, private helper 분해는 즉시 수행 가능하다.
 
-## 12. 고정 제품 경계
-
-- RVTT는 Roblox에서 DM이 실시간 진행하는 게임형 D&D VTT다.
-- 기본 Ruleset은 `dnd5e-2024`, 기본 표시 언어는 `ko-KR`다.
-- 초기 입력은 PC keyboard/mouse다.
-- Token은 rigless OBJ/MeshPart 기반 3D Token이다.
-- 권위 이동은 연속 무격자 좌표이며 `5 ft = 4 studs`다.
-- Exploration은 목적지 Click + Token WASD, Encounter는 Token WASD 직접 이동 없음.
-- Left Click=Primary, Right Click=Context, Middle Drag=Camera Orbit, Q=한 단계 취소, E=확정, ESC=Gameplay 의미 없음.
-- 중요한 rule/permission/roll/confirmed movement/persistent state는 Server authoritative다.
-- Character Owner / Runtime Controller / Session Role은 분리한다.
-- Private Rule Content와 Public Release Content는 분리한다.
-- 공식 Stat Block/CR은 시스템이 자동 재조정하지 않는다.
-
-## 13. Evidence
+## 9. 현재 상태
 
 ```text
-Architecture Coverage PASS
-≠ Repository Engine Test
-≠ Studio Runtime Integration Test
-≠ Human Presentation/Feel Acceptance
-≠ Multi-client
-≠ Persistence
-≠ Performance
-≠ Release Acceptance
+IMPLEMENTATION MODEL RESET = ACTIVE
+OLD GREENFIELD MODEL = RETIRED
+SOURCE = NOT STARTED
+STUDIO = NOT STARTED
+NEXT = WHOLE-PRODUCT SYSTEM MODEL FROM SCRATCH
 ```
