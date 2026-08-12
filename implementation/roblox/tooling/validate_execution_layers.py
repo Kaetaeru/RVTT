@@ -68,6 +68,11 @@ def validate() -> list[str]:
         "runtimeCoupledStudioAuthoringAllowed": True,
         "runtimeCoupledMustCanonicalizeToGitHub": True,
         "doNotHumanTestPureEngineFunctions": True,
+        "futureCompatibilityReviewRequiredAtCheckpointFreeze": True,
+        "futureCapabilitiesConstrainArchitectureWithoutExpandingScope": True,
+        "futureScenarioPressureSetRequired": True,
+        "extensionSeamsRequired": True,
+        "forbiddenShortcutsRequired": True,
     }
     if not isinstance(policy, dict):
         errors.append("execution layers: policy must be an object")
@@ -87,6 +92,51 @@ def validate() -> list[str]:
             "execution layers: checkpointConcretization must preserve E0-before-source, "
             "E1-after-core-before-Studio, and E2-JIT-after-integration timing"
         )
+
+    spec_requirements = execution.get("implementationSpecRequirements")
+    expected_scenario_sources = [
+        "implementation/roblox/manifests/architecture-coverage.json",
+        "implementation/roblox/manifests/architecture-scenarios.json",
+    ]
+    required_checkpoint_fields = {
+        "currentDeliverable",
+        "systemModuleScope",
+        "stableFunctionScope",
+        "authorityStateOwnership",
+        "inputOutputContract",
+        "currentScenarioWorkingSet",
+        "futureConsumers",
+        "futureScenarioPressureSet",
+        "extensionSeams",
+        "stableOwnershipAndIdentitySeams",
+        "persistenceReconnectRollbackSeams",
+        "observabilityFailureSeams",
+        "forbiddenShortcuts",
+        "explicitDeferredNonGoals",
+        "automatedTests",
+        "futureCompatibilityContractTests",
+        "completionCondition",
+    }
+    if not isinstance(spec_requirements, dict):
+        errors.append("execution layers: implementationSpecRequirements is required")
+    else:
+        if spec_requirements.get("scenarioSources") != expected_scenario_sources:
+            errors.append("execution layers: implementation spec must derive pressure from base and expanded scenario registries")
+        if spec_requirements.get("futureCapabilitiesAre") != "COMPATIBILITY_CONSTRAINTS_NOT_CURRENT_IMPLEMENTATION_SCOPE":
+            errors.append("execution layers: future capabilities must constrain architecture without expanding current source scope")
+        required_fields = spec_requirements.get("requiredAtCheckpointFreeze")
+        if not isinstance(required_fields, list) or set(required_fields) != required_checkpoint_fields:
+            errors.append(
+                "execution layers: requiredAtCheckpointFreeze must include current scope plus future consumers, "
+                "scenario pressure, extension seams, forbidden shortcuts, deferred non-goals and compatibility tests"
+            )
+        freeze_rejected = spec_requirements.get("freezeRejectedWhen")
+        if not isinstance(freeze_rejected, list) or len(freeze_rejected) < 5 or not all(
+            isinstance(item, str) and item.strip() for item in freeze_rejected
+        ):
+            errors.append("execution layers: freezeRejectedWhen must define future-compatibility failure conditions")
+        if spec_requirements.get("implementationEscalation") != "ESCALATE_TO_PLANNING_ON_UNMODELED_FUTURE_CONFLICT":
+            errors.append("execution layers: unmodeled future conflict must escalate to planning")
 
     class_defs = execution.get("executionClasses")
     if not isinstance(class_defs, dict):
@@ -396,6 +446,7 @@ def main() -> int:
         "RVTT Greenfield execution layer validation passed: "
         + ", ".join(f"{class_id}={counts.get(class_id, 0)}" for class_id in sorted(VALID_CLASSES))
         + f"; phases={len(execution['phases'])}; checkpoints={len(execution['checkpointOrder'])}"
+        + f"; future_spec_fields={len(execution['implementationSpecRequirements']['requiredAtCheckpointFreeze'])}"
         + f"; open_architecture_blockers={len(open_blockers)}"
     )
     return 0
