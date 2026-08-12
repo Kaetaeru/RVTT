@@ -1,7 +1,7 @@
-name: Validate RVTT greenfield boundary
+name: Validate RVTT implementation model reset boundary
 
 concurrency:
-  group: rvtt-greenfield-boundary-${{ github.event.pull_request.number || github.ref }}
+  group: rvtt-model-reset-boundary-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 on:
@@ -9,18 +9,18 @@ on:
     paths:
       - "AGENTS.md"
       - ".github/CODEX-ACTIVE-TASK.md"
-      - ".github/CODEX-STUDIO-GREENFIELD-FOUNDATION-EXPLORATION-001.md"
       - ".github/workflows/validate-greenfield-boundary.yml"
-      - "implementation/roblox/GREENFIELD-PREFLIGHT.md"
-      - "implementation/roblox/GREENFIELD-BUILD-POLICY.md"
+      - "implementation/roblox/IMPLEMENTATION-MODEL.md"
+      - "implementation/roblox/MODULE-CONTRACTS.md"
+      - "implementation/roblox/SYSTEM-FUNCTION-CONTRACTS.md"
+      - "implementation/roblox/GREENFIELD-EXECUTION-LAYERS.md"
       - "implementation/roblox/GREENFIELD-SYSTEM-SEQUENCE.md"
-      - "implementation/roblox/ROBLOX-STUDIO-MCP-TEST-POLICY.md"
-      - "implementation/roblox/greenfield-boundary.json"
-      - "implementation/roblox/greenfield.project.json"
-      - "implementation/roblox/greenfield/**"
       - "implementation/roblox/manifests/module-contracts.json"
+      - "implementation/roblox/manifests/system-function-contracts.json"
+      - "implementation/roblox/manifests/execution-layers.json"
       - "implementation/roblox/tooling/validate_greenfield_boundary.py"
       - "implementation/roblox/tooling/validate_module_contracts.py"
+      - "implementation/roblox/tooling/validate_execution_layers.py"
       - "implementation/roblox/src/**"
       - "implementation/roblox/default.project.json"
   push:
@@ -30,18 +30,17 @@ on:
     paths:
       - "AGENTS.md"
       - ".github/CODEX-ACTIVE-TASK.md"
-      - ".github/CODEX-STUDIO-GREENFIELD-FOUNDATION-EXPLORATION-001.md"
-      - ".github/workflows/validate-greenfield-boundary.yml"
-      - "implementation/roblox/GREENFIELD-PREFLIGHT.md"
-      - "implementation/roblox/GREENFIELD-BUILD-POLICY.md"
+      - "implementation/roblox/IMPLEMENTATION-MODEL.md"
+      - "implementation/roblox/MODULE-CONTRACTS.md"
+      - "implementation/roblox/SYSTEM-FUNCTION-CONTRACTS.md"
+      - "implementation/roblox/GREENFIELD-EXECUTION-LAYERS.md"
       - "implementation/roblox/GREENFIELD-SYSTEM-SEQUENCE.md"
-      - "implementation/roblox/ROBLOX-STUDIO-MCP-TEST-POLICY.md"
-      - "implementation/roblox/greenfield-boundary.json"
-      - "implementation/roblox/greenfield.project.json"
-      - "implementation/roblox/greenfield/**"
       - "implementation/roblox/manifests/module-contracts.json"
+      - "implementation/roblox/manifests/system-function-contracts.json"
+      - "implementation/roblox/manifests/execution-layers.json"
       - "implementation/roblox/tooling/validate_greenfield_boundary.py"
       - "implementation/roblox/tooling/validate_module_contracts.py"
+      - "implementation/roblox/tooling/validate_execution_layers.py"
       - "implementation/roblox/src/**"
       - "implementation/roblox/default.project.json"
   workflow_dispatch:
@@ -49,57 +48,25 @@ on:
 permissions:
   contents: read
 
-env:
-  ROJO_VERSION: "7.7.0"
-
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      - name: Validate Greenfield boundary and Legacy lock
+      - name: Validate implementation model reset boundary and legacy write lock
         run: python implementation/roblox/tooling/validate_greenfield_boundary.py
 
-      - name: Validate Greenfield module contracts
+      - name: Validate retired module system function registries
         run: python implementation/roblox/tooling/validate_module_contracts.py
 
-      - name: Restore pinned Rojo
-        id: rojo-cache
-        uses: actions/cache/restore@v4
-        with:
-          path: |
-            ~/.cargo/bin/rojo
-            ~/.cargo/registry
-            ~/.cargo/git
-          key: rvtt-greenfield-rojo-${{ runner.os }}-${{ env.ROJO_VERSION }}
-
-      - name: Install pinned Rojo
-        shell: bash
-        run: |
-          set -euo pipefail
-          if ! command -v rojo >/dev/null 2>&1; then
-            cargo install rojo --version "${ROJO_VERSION}" --locked
-          fi
-          rojo --version
-
-      - name: Save pinned Rojo
-        if: steps.rojo-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
-        with:
-          path: |
-            ~/.cargo/bin/rojo
-            ~/.cargo/registry
-            ~/.cargo/git
-          key: rvtt-greenfield-rojo-${{ runner.os }}-${{ env.ROJO_VERSION }}
-
-      - name: Build isolated Greenfield place
-        working-directory: implementation/roblox
-        run: rojo build greenfield.project.json --output "${RUNNER_TEMP}/RVTT-greenfield.rbxlx"
+      - name: Validate retired execution registry and preserved process rules
+        run: python implementation/roblox/tooling/validate_execution_layers.py
