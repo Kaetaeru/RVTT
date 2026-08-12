@@ -1,0 +1,343 @@
+{
+  "schemaVersion": 1,
+  "registryId": "rvtt-scenario-expanded-catalog-v1",
+  "authorityDocument": "implementation/roblox/ARCHITECTURE-COVERAGE-POLICY.md",
+  "scope": "CANONICAL_EXPANDED_SCENARIO_BODIES",
+  "policy": {
+    "legacyGreenfieldReferencesExcluded": true,
+    "requirementMappingOwnedBy": "implementation/roblox/manifests/implementation-system-model.json",
+    "semanticAuditOwnedBy": "implementation/roblox/manifests/scenario-semantic-audit.json",
+    "negativeCaseRequired": true
+  },
+  "scenarios": [
+    {
+      "id": "SCN_CHARACTER_CREATE_LEVEL1",
+      "phase": "P3_CHARACTER_FOUNDATION",
+      "steps": ["create character draft", "freeze campaign ruleset and allowed option projection", "submit stored selections", "incremental validation and candidate preview", "compile immutable build", "plan initial persistent state", "player or DM review", "atomic source-build-state activation", "select session character"],
+      "expectedOutcome": "a level-1 character activates only when source, compiled build and initial persistent state are mutually valid and committed together",
+      "negativeCases": ["required choice missing", "content version disappears during review", "compile fails after source edit", "activation transaction partially fails"]
+    },
+    {
+      "id": "SCN_CHARACTER_SHEET_LIVE_DAMAGE_SYNC",
+      "phase": "P3_P4_CHARACTER_SHEET",
+      "steps": ["open character sheet", "receive ability skill save AC HP and resource projection", "server commits damage or healing", "projection barrier publishes new state", "client replica atomically commits", "sheet view model updates without recomputing authority rules"],
+      "expectedOutcome": "the sheet reflects authoritative build and persistent state changes without becoming a second rules engine",
+      "negativeCases": ["damage result arrives before projection", "projection batch is incomplete", "stale HP segment arrives", "sheet component tries to mutate HP directly"]
+    },
+    {
+      "id": "SCN_CHARACTER_SHEET_VIEWER_PRIVACY",
+      "phase": "P3_P4_CHARACTER_SHEET",
+      "steps": ["owner opens own sheet", "DM previews same character", "another player inspects permitted summary", "server builds viewer-specific projections", "each surface renders only permitted fields"],
+      "expectedOutcome": "owner, DM and other-player views can differ without sending private selections resources or notes to unauthorized clients",
+      "negativeCases": ["private resource appears in another player payload", "DM-only validation warning leaks through tooltip", "hidden field count reveals undisclosed data"]
+    },
+    {
+      "id": "SCN_LEVEL_UP_ATOMIC_ACTIVATION",
+      "phase": "P7_PROGRESSION",
+      "steps": ["start level-up activity", "choose class subclass feat ability or spell options", "create candidate character source", "compile candidate build", "derive state migration plan", "player and DM review", "atomically activate source build and migrated state", "refresh sheet and capabilities"],
+      "expectedOutcome": "level-up never exposes a half-upgraded character with mismatched source build resources or capabilities",
+      "negativeCases": ["new build compiles but state migration fails", "prerequisite changes before activation", "missing spell or item dependency", "duplicate activation request"]
+    },
+    {
+      "id": "SCN_CHARACTER_MIGRATION_MISSING_CONTENT",
+      "phase": "P7_P12_MIGRATION",
+      "steps": ["campaign pack version changes", "scan active character references", "recompile candidate against target versions", "produce compatibility diff and state migration plan", "review unresolved references", "activate migration or keep last known good"],
+      "expectedOutcome": "missing content never silently maps to a similarly named option and the active character remains usable or explicitly recoverable",
+      "negativeCases": ["removed subclass reference", "renamed content with no stable-id mapping", "migration adapter fails", "client still holds old build projection"]
+    },
+    {
+      "id": "SCN_CHANGE_SPELL_PREPARATION",
+      "phase": "P7_PROGRESSION",
+      "steps": ["reach a preparation-allowed boundary", "load acquisition repository and spellcasting profile", "choose preparation set", "validate access and readiness", "commit persistent preparation state", "rebuild available spell capabilities", "refresh sheet and action projection"],
+      "expectedOutcome": "prepared spell availability is derived from authoritative preparation state and appears consistently in sheet and action surfaces",
+      "negativeCases": ["spell not acquired", "repository access lost", "preparation limit exceeded", "old projection still shows removed spell"]
+    },
+    {
+      "id": "SCN_SPELLBOOK_COPY_AND_TRANSFER",
+      "phase": "P6_P7_INVENTORY_PROGRESSION",
+      "steps": ["choose source spell entry and destination spellbook", "reserve cost materials and time", "complete copy activity", "commit repository entry and costs", "transfer spellbook item to another location or owner", "recompute repository access projection"],
+      "expectedOutcome": "spell knowledge records and the physical spellbook item remain consistently linked while ownership and access may change",
+      "negativeCases": ["book transferred during copy", "materials reservation lost", "copy completion retried after reconnect", "user retains access after losing the book when policy forbids it"]
+    },
+    {
+      "id": "SCN_ABILITY_CHECK_WITH_HIDDEN_DC",
+      "phase": "P2_CORE_RULES",
+      "steps": ["player selects an available check capability", "server freezes derived stat and policy context", "server creates d20 roll plan against a hidden DC", "roll record resolves", "server reveals only permitted outcome and modifiers", "result projection updates"],
+      "expectedOutcome": "the check is server-resolved while secret DC and hidden modifier sources remain undisclosed",
+      "negativeCases": ["client submits final modifier", "hidden DC appears in payload", "roll is replayed after duplicate request", "ruleset version changes mid-execution"]
+    },
+    {
+      "id": "SCN_BASIC_ATTACK_DAMAGE_COMMIT",
+      "phase": "P2_P3_RULES_ENCOUNTER",
+      "steps": ["choose attack capability and target", "validate range line eligibility and opportunity", "resolve attack roll against AC", "resolve damage on hit", "apply temporary HP and HP pending effects", "atomically commit damage and resource effects", "project outcome and presentation"],
+      "expectedOutcome": "attack roll damage and HP state use one common rule-execution and transaction path",
+      "negativeCases": ["target incarnation changed", "attack opportunity already spent", "damage roll succeeds but transaction fails", "duplicate command spends resource twice"]
+    },
+    {
+      "id": "SCN_ZERO_HP_DEATH_SAVE_RECOVERY",
+      "phase": "P3_ENCOUNTER",
+      "steps": ["damage reduces character to zero HP", "vital-state closure creates or updates death-save lifecycle", "turn start offers required death-save execution", "roll resolves success or failure", "healing later changes vital state", "projection updates encounter and character sheet"],
+      "expectedOutcome": "zero-HP, death-save and recovery state transitions are authoritative and synchronized across encounter and sheet surfaces",
+      "negativeCases": ["healing and death-save resolve concurrently", "old death-save prompt used after recovery", "character reconnects while unconscious", "turn opportunity remains usable when policy closes it"]
+    },
+    {
+      "id": "SCN_CONCENTRATION_DAMAGE_CHECK",
+      "phase": "P3_P14_RULES",
+      "steps": ["character has an active concentration effect", "damage commits", "damage event creates concentration check follow-up", "saving throw resolves", "on failure concentration binding and dependent effects end", "projection updates affected viewers"],
+      "expectedOutcome": "concentration is not a UI flag; damage triggers a rule follow-up that safely closes dependent effects",
+      "negativeCases": ["new concentration starts while old check pending", "effect already ended", "duplicate damage event creates duplicate checks", "hidden source leaks through effect tooltip"]
+    },
+    {
+      "id": "SCN_READY_ACTION_TRIGGER",
+      "phase": "P3_ENCOUNTER",
+      "steps": ["actor chooses Ready using action opportunity", "store prepared capability and trigger condition", "later rule event matches trigger", "offer reaction opportunity", "reserve reaction", "run prepared child rule execution", "resume parent timeline"],
+      "expectedOutcome": "Ready consumes action now and executes later through the same reaction and rule-execution machinery",
+      "negativeCases": ["reaction already spent", "prepared target no longer valid", "trigger occurs after actor loses capability", "duplicate event fires prepared action twice"]
+    },
+    {
+      "id": "SCN_ENCOUNTER_LATE_JOIN",
+      "phase": "P3_ENCOUNTER",
+      "steps": ["encounter is already active", "new actor becomes eligible to participate", "server evaluates awareness faction and insertion policy", "participant binding is added", "timeline revision changes", "affected viewers receive updated initiative and control projection"],
+      "expectedOutcome": "late participation changes encounter membership and timeline explicitly without rebuilding the entire encounter or exposing hidden actors",
+      "negativeCases": ["hidden actor should not appear to some viewers", "actor already participant", "current cursor invalidated", "controller disconnected during insertion"]
+    },
+    {
+      "id": "SCN_ENCOUNTER_END_RETURN_EXPLORATION",
+      "phase": "P3_ENCOUNTER",
+      "steps": ["objective or DM produces end candidate", "verify no blocking execution reaction or reservation", "commit encounter end state", "close turn opportunities", "switch session base mode back to exploration", "rebuild movement action and UI projections"],
+      "expectedOutcome": "encounter termination is a coordinated transition rather than a UI toggle and world state continues into exploration",
+      "negativeCases": ["reaction window still open", "movement execution still active", "end request duplicated", "client retains encounter-only input context"]
+    },
+    {
+      "id": "SCN_EQUIP_WEAPON_UPDATES_ACTIONS",
+      "phase": "P6_INVENTORY",
+      "steps": ["select owned weapon item", "validate slot hand attunement and requirements", "commit equipment binding", "invalidate character derived view", "derive weapon attack profile and capabilities", "refresh sheet inventory and available-action projection"],
+      "expectedOutcome": "equipping an item changes capabilities through equipment contributions instead of editing character source or trusting UI-calculated attack values",
+      "negativeCases": ["slot conflict", "item transferred concurrently", "attunement requirement fails", "old attack capability remains available"]
+    },
+    {
+      "id": "SCN_UNIDENTIFIED_ITEM_DISCLOSURE",
+      "phase": "P6_INVENTORY",
+      "steps": ["player finds partially identified item", "server builds viewer-specific item projection", "inventory and tooltip show appearance-known fields only", "DM opens full item view", "identification state later advances", "player projection expands"],
+      "expectedOutcome": "secret definition properties curse value and DM notes are not sent before identification permits them",
+      "negativeCases": ["definition id leaks through tooltip", "search facet reveals hidden property", "error message names secret effect", "another player receives owner-only detail"]
+    },
+    {
+      "id": "SCN_STACK_SPLIT_TRANSFER_CONFLICT",
+      "phase": "P6_INVENTORY",
+      "steps": ["split quantity from stack", "create transfer plan to another container", "reserve source and destination revisions", "concurrent transfer changes source stack", "server rejects or replans stale operation", "total quantity remains conserved"],
+      "expectedOutcome": "stack split merge and transfer preserve total quantity and cannot duplicate items under concurrency",
+      "negativeCases": ["two split commands use same base revision", "destination capacity changes", "partial commit creates duplicate quantity", "retry creates second child stack"]
+    },
+    {
+      "id": "SCN_SHORT_REST_INTERRUPTED",
+      "phase": "P7_DOWNTIME",
+      "steps": ["party starts short rest", "freeze participant and policy context", "advance campaign time toward completion", "hazard or encounter interrupts rest", "suspend activity at checkpoint", "resolve interruption", "revalidate credited duration and resources", "resume or cancel with explicit settlement"],
+      "expectedOutcome": "interrupted rest never grants recovery just because the original duration elapsed",
+      "negativeCases": ["one participant joined late", "encounter starts at final checkpoint", "restart during suspension", "recovery applied before completion commit"]
+    },
+    {
+      "id": "SCN_LONG_REST_PARTICIPANT_DIFFERENCE",
+      "phase": "P7_DOWNTIME",
+      "steps": ["multiple characters join long rest at different times", "track participant-specific credited duration", "apply interruptions independently by policy", "build recovery candidate per participant", "commit eligible recovery together at boundary", "refresh resource projections"],
+      "expectedOutcome": "a shared party rest can produce different eligibility results without advancing separate campaign clocks",
+      "negativeCases": ["late joiner receives full recovery", "one participant becomes ineligible", "duplicate completion after reconnect", "campaign time advances twice"]
+    },
+    {
+      "id": "SCN_CRAFT_ITEM_ATOMIC_COMPLETION",
+      "phase": "P7_DOWNTIME",
+      "steps": ["choose recipe crafter tools and facility", "reserve input items currency and time", "advance progress checkpoints", "validate output candidate", "consume inputs and create output item instance", "bind output location", "commit atomically"],
+      "expectedOutcome": "craft completion cannot consume inputs without producing the validated output or produce output without consuming inputs",
+      "negativeCases": ["reserved item transferred", "recipe version changes mid-activity", "output container full", "completion retried after server restart"]
+    },
+    {
+      "id": "SCN_TRAVEL_HAZARD_INTERRUPT_RESUME",
+      "phase": "P7_DOWNTIME",
+      "steps": ["choose route participants transport and watch", "advance to next segment boundary", "scheduler or hazard becomes due", "suspend travel", "resolve hazard or encounter", "revalidate route resources and participants", "resume from checkpoint", "arrive and optionally transition scene"],
+      "expectedOutcome": "travel is campaign-time coordination with interruptions rather than a long navigation animation",
+      "negativeCases": ["party composition changes during hazard", "route becomes invalid", "supply settlement fails", "reconnect occurs before resume"]
+    },
+    {
+      "id": "SCN_PROJECTION_GAP_RESYNC",
+      "phase": "E1_CLIENT_RUNTIME",
+      "steps": ["client receives projection sequence", "one batch is missing or fails integrity", "client keeps last known good replica", "affected gameplay input scope closes", "request full resync", "atomically replace replica", "restore valid input contexts"],
+      "expectedOutcome": "a projection gap never leaves UI partially updated or gameplay enabled against an incoherent client replica",
+      "negativeCases": ["later sequence applied over missing batch", "old epoch snapshot arrives", "input reopens before resync", "view model retains stale selection"]
+    },
+    {
+      "id": "SCN_INPUT_CONTEXT_MODAL_BLOCKS_GAMEPLAY",
+      "phase": "E1_E2_CLIENT_RUNTIME",
+      "steps": ["gameplay context is active", "open text input or modal panel", "input context stack changes priority", "Q E pointer and movement are routed only to the top eligible context", "close modal", "focus token restores previous consumer"],
+      "expectedOutcome": "one physical input is consumed by exactly one semantic context and panels do not accidentally trigger world actions",
+      "negativeCases": ["E confirms modal and interacts with world", "camera or movement reacts while typing", "destroyed panel leaves focus trapped", "recovery overlay competes with gameplay"]
+    },
+    {
+      "id": "SCN_PENDING_RESULT_PROJECTION_REORDER",
+      "phase": "E1_CLIENT_RUNTIME",
+      "steps": ["client submits command and shows pending ghost", "server receipt arrives", "terminal result and authoritative projection arrive in either order", "client correlates request and expected revision", "projection reconciles pending state", "ghost clears"],
+      "expectedOutcome": "network delivery order does not create duplicate success UI or force the client to guess authoritative state",
+      "negativeCases": ["terminal result duplicated", "projection arrives before receipt", "request id reused", "resync happens while command pending"]
+    },
+    {
+      "id": "SCN_ACCESSIBILITY_REDUCED_MOTION",
+      "phase": "P4_UI_PRESENTATION",
+      "steps": ["player enables reduced motion and camera-shake limit", "important gameplay event emits presentation intent", "presentation runtime chooses accessible recipe or fallback", "required reveal remains readable", "camera request respects user hard limit"],
+      "expectedOutcome": "accessibility settings can reduce motion flash shake and effects without hiding required gameplay information",
+      "negativeCases": ["DM presentation overrides hard limit", "required warning is dropped with ambient effects", "setting changes mid-playback", "low-end fallback removes critical text"]
+    },
+    {
+      "id": "SCN_JOURNAL_SECRET_SEARCH_NONDISCLOSURE",
+      "phase": "P5_JOURNAL",
+      "steps": ["player searches journal", "server selects permission-safe index partition", "latest ACL revision is revalidated", "return redacted snippets and counts", "DM runs same query with broader permission"],
+      "expectedOutcome": "private documents do not leak through search hits counts facets recent lists backlinks or error wording",
+      "negativeCases": ["secret document changes result count", "stale ACL cache exposes hit", "snippet contains hidden anchor", "autocomplete reveals private title"]
+    },
+    {
+      "id": "SCN_JOURNAL_WORLD_LINK_NAVIGATION",
+      "phase": "P5_JOURNAL",
+      "steps": ["open journal world link", "resolve stable anchor", "validate current target incarnation or source mapping", "check viewer permission and disclosure", "produce navigation capability", "submit camera focus selection or scene-transition proposal", "session policy may accept or deny"],
+      "expectedOutcome": "journal links propose safe navigation instead of directly moving camera selection or scene authority state",
+      "negativeCases": ["runtime incarnation changed", "target became secret", "scene is not ready", "encounter mode forbids transition"]
+    },
+    {
+      "id": "SCN_JOURNAL_EDIT_CONFLICT",
+      "phase": "P5_JOURNAL",
+      "steps": ["two editors open same document revision", "editor A commits source change", "editor B submits change against stale base", "server determines independent-section merge or conflict", "show base current and proposed conflict information", "accepted source recompiles and activates"],
+      "expectedOutcome": "journal editing does not default to last-write-wins and compile failure preserves last known good view",
+      "negativeCases": ["same section edited concurrently", "ACL revoked during edit", "compile fails after merge", "client draft mistaken for server source"]
+    },
+    {
+      "id": "SCN_POINT_PATH_PING_AUDIENCE",
+      "phase": "P5_JOURNAL",
+      "steps": ["player creates point or path ping", "project coordinates onto publicly permitted surface", "simplify and bound path payload", "validate audience and rate limit", "emit short-lived presentation signal"],
+      "expectedOutcome": "pings communicate location without becoming movement targeting authority or leaking secret coordinates and entity ids",
+      "negativeCases": ["ping crosses secret room", "payload exceeds path limit", "audience includes unauthorized user", "lost ping changes gameplay state"]
+    },
+    {
+      "id": "SCN_SCENE_DRAFT_COMPILE_FAIL_LKG",
+      "phase": "P5_SCENE_AUTHORING",
+      "steps": ["DM edits canonical scene source", "authoring command commits source revision", "semantic compiler validates providers navigation visibility interaction and streaming layers", "compile fails with diagnostic", "draft source remains", "published last-known-good build remains active"],
+      "expectedOutcome": "authoring errors never mix candidate artifacts into the published runtime and the DM can repair the source from diagnostics",
+      "negativeCases": ["missing prefab provider", "navigation dependency cycle", "secret metadata enters player artifact", "compile failure overwrites active build"]
+    },
+    {
+      "id": "SCN_SCENE_CANDIDATE_TEST_PUBLISH",
+      "phase": "P5_SCENE_AUTHORING",
+      "steps": ["compile candidate scene build", "start isolated candidate test-play using production runtime path", "run spawn traversal interaction and disclosure scenarios", "review diagnostics", "issue publish command", "atomically swap published build pointer", "new session loads published build"],
+      "expectedOutcome": "only a validated candidate becomes published and active sessions are not silently patched by publication alone",
+      "negativeCases": ["critical route inaccessible", "secret object disclosed", "test play mutates campaign state", "publish command uses stale source revision"]
+    },
+    {
+      "id": "SCN_SCENE_CONCURRENT_EDIT_CONFLICT",
+      "phase": "P5_SCENE_AUTHORING",
+      "steps": ["two DM authoring clients edit scene", "independent object edits commit with deterministic ordering", "same-object or dependency-graph edits collide", "server returns structured conflict", "DM resolves against latest source revision"],
+      "expectedOutcome": "scene authoring can merge independent changes while refusing ambiguous last-write-wins on shared objects and layers",
+      "negativeCases": ["duplicate object id", "undo targets published build instead of source history", "tool version changes during edit", "client transform preview treated as authority"]
+    },
+    {
+      "id": "SCN_DM_PLAYER_VIEW_PREVIEW",
+      "phase": "P5_LIVE_DM",
+      "steps": ["DM opens workspace", "select target player", "run the real projection builder using that player's viewer context", "render preview", "compare with actual player projection revision"],
+      "expectedOutcome": "DM preview shows what the player can actually receive rather than merely hiding fields in the DM UI",
+      "negativeCases": ["preview uses DM visibility", "player role changes during preview", "secret raw state enters preview cache", "stale preview shown as current"]
+    },
+    {
+      "id": "SCN_DM_TAKEOVER_DISCONNECTED_ACTOR",
+      "phase": "P5_LIVE_DM",
+      "steps": ["player disconnects", "policy grace period expires or DM requests takeover", "server validates actor and controller state", "assign runtime controller to DM", "owner identity remains unchanged", "DM receives only appropriate control capabilities", "later release controller back to player"],
+      "expectedOutcome": "runtime control can move between users without changing character ownership or granting unrelated secret visibility",
+      "negativeCases": ["player reconnects during takeover", "DM control grants owner-only journal notes", "actor incarnation changed", "two controllers become active"]
+    },
+    {
+      "id": "SCN_DM_QUICK_ACTION_HP_CONDITION",
+      "phase": "P5_LIVE_DM",
+      "steps": ["DM selects actor context", "quick-action registry offers HP or condition adjustment", "route through normal command when possible or explicit override when necessary", "validate revision scope and audit", "commit domain change", "publish viewer-safe projections"],
+      "expectedOutcome": "DM convenience actions do not become direct store edits and override use remains explicit auditable and projection-safe",
+      "negativeCases": ["audit record cannot be written", "target revision stale", "override bypasses condition invariant", "player receives DM-only reason metadata"]
+    },
+    {
+      "id": "SCN_DM_RUNTIME_EDIT_SOURCE_PROMOTION",
+      "phase": "P5_LIVE_DM_SCENE",
+      "steps": ["DM performs runtime object or lighting quick edit", "store dynamic override record", "session continues on runtime state", "DM chooses promote-to-source", "map runtime object to source object", "create source change proposal", "compile diagnostic test and publish through authoring pipeline"],
+      "expectedOutcome": "runtime edits can be promoted deliberately without silently rewriting canonical scene source",
+      "negativeCases": ["runtime-only object has no source mapping", "source changed since override", "promotion compile fails", "failed promotion rolls back current runtime state"]
+    },
+    {
+      "id": "SCN_DM_LIVE_PATCH_REBASE_FAIL",
+      "phase": "P5_LIVE_DM_SCENE",
+      "steps": ["DM selects newer published scene build", "compute compatibility diff against active runtime dynamic state", "pause command gate", "stage essential content for clients", "attempt atomic build-runtime mapping swap", "rebase fails", "retain old build and dynamic state", "resume safely"],
+      "expectedOutcome": "a failed live patch does not strand clients between scene builds or destroy active dynamic state",
+      "negativeCases": ["one client never becomes ready", "runtime object mapping missing", "pending rule execution references old object", "new build auto-applies without DM command"]
+    },
+    {
+      "id": "SCN_DM_RECOVERY_REVIEW_BRANCH",
+      "phase": "P5_P7_RECOVERY",
+      "steps": ["automatic integrity check cannot choose a safe recovery point", "show permission-aware checkpoint candidates and diffs", "DM reviews damage knowledge time and content differences", "issue recovery command", "create new authority branch and epoch", "full resync all clients"],
+      "expectedOutcome": "ambiguous recovery requires explicit review and old-epoch commands prompts and caches are invalidated",
+      "negativeCases": ["candidate includes secret data outside DM scope", "old client command arrives after branch", "recovery selected while writer lease active", "full resync incomplete"]
+    },
+    {
+      "id": "SCN_CONTENT_LOCALE_CHANGE_NO_RULE_CHANGE",
+      "phase": "P6_CONTENT_PLATFORM",
+      "steps": ["campaign content pack is active", "player changes locale", "resolve names summaries and prompts through locale bundle", "keep stable content ids and authority digests", "continue an in-progress rule execution under the same frozen version"],
+      "expectedOutcome": "localization can change display strings without changing character builds capability identity or rules outcomes",
+      "negativeCases": ["translated label used as content id", "missing locale key changes rule fallback", "secret content key leaks", "in-progress execution swaps recipe version"]
+    },
+    {
+      "id": "SCN_CONTENT_PACK_DEPENDENCY_FAILURE",
+      "phase": "P6_CONTENT_PLATFORM",
+      "steps": ["prepare pack candidate set", "validate manifests dependencies versions and cycles", "compile deterministic catalog", "detect missing dependency or content-id conflict", "reject candidate activation", "keep active catalog and campaign binding"],
+      "expectedOutcome": "invalid content packs fail closed without partially replacing active registries",
+      "negativeCases": ["dependency cycle", "duplicate content id", "patch base mismatch", "filesystem iteration order changes catalog result"]
+    },
+    {
+      "id": "SCN_CONTENT_PACK_REMOVAL_IN_USE",
+      "phase": "P6_P7_CONTENT_MIGRATION",
+      "steps": ["request removal or upgrade of active pack", "scan character item actor scene journal and execution references", "build migration or deprecation plan", "review unsupported references", "atomically activate new catalog or retain last known good"],
+      "expectedOutcome": "pack removal cannot silently break active persisted references or substitute unrelated latest content",
+      "negativeCases": ["active rule execution uses removed recipe", "equipped item definition missing", "character feature dependency missing", "rollback requires old pack version"]
+    },
+    {
+      "id": "SCN_OFFICIAL_CHARACTER_OPTION_LEVEL_1_TO_20",
+      "phase": "P6_CHARACTER_CONTENT",
+      "steps": ["activate rights-approved official character option wave", "create representative level-1 character", "verify species background class grants and choices", "progress level by level", "apply subclass feat ability resource and spell choices", "compile scenario and migration coverage through level 20"],
+      "expectedOutcome": "official character options are data-driven coverage over the common compiler and capability runtime rather than bespoke class code",
+      "negativeCases": ["progression level missing", "duplicate grant", "unsupported spell dependency", "inactive or rights-unapproved option appears in normal catalog"]
+    },
+    {
+      "id": "SCN_SPELL_CAST_TARGET_RESOURCE_CONCENTRATION",
+      "phase": "P6_RULES_CONTENT",
+      "steps": ["choose cast capability", "validate acquisition preparation repository equipment opportunity and resource access", "select target or area and freeze binding", "run roll save damage or effect recipe", "reserve and spend resource", "create or replace concentration binding if required", "commit effects and projection"],
+      "expectedOutcome": "spell content reuses common capability targeting rule-execution effect and transaction boundaries",
+      "negativeCases": ["client claims castable true", "target leaves valid area before commit", "resource spent on cancelled execution contrary to policy", "new concentration does not close old dependent effect"]
+    },
+    {
+      "id": "SCN_CONSUMABLE_CANCEL_RELEASE_RESERVATION",
+      "phase": "P6_RULES_CONTENT",
+      "steps": ["use consumable capability", "reserve item quantity or charge", "start rule execution", "execution is cancelled or fails before commit", "apply consumption policy", "release reservation when not consumed", "refresh inventory and action projection"],
+      "expectedOutcome": "consumable quantity and charges cannot be lost or duplicated merely because an execution was retried or cancelled",
+      "negativeCases": ["item transferred while reserved", "duplicate cancel", "execution commits but reservation is released", "client inventory ghost becomes authority"]
+    },
+    {
+      "id": "SCN_NPC_JSON_IMPORT_REJECT_CODE",
+      "phase": "P8_NPC_CONTENT",
+      "steps": ["DM uploads campaign actor JSON", "apply size depth string and array budgets", "parse structured statblock fields", "resolve stable spell item capability references", "detect code remote URL callback or unsupported references", "reject candidate without changing active content"],
+      "expectedOutcome": "campaign-authored actor import remains pure data and cannot introduce executable code or arbitrary runtime references",
+      "negativeCases": ["embedded Luau", "external URL instruction", "unknown recipe reference", "recursive oversized graph"]
+    },
+    {
+      "id": "SCN_NPC_PUBLISH_SPAWN_CONTROL",
+      "phase": "P8_NPC_CONTENT",
+      "steps": ["compile and publish actor definition", "validate token prefab and appearance binding", "spawn actor instance into scene", "create runtime object binding and incarnation", "assign DM or delegated controller", "derive available capabilities", "use actor in exploration or encounter"],
+      "expectedOutcome": "NPC and monster actors use the same capability rules encounter control and runtime identity boundaries instead of a separate gameplay engine",
+      "negativeCases": ["missing prefab uses unsafe deletion instead of placeholder", "hidden statblock leaks to player", "spawned actor silently upgrades to newer definition", "controller gains DM-only secrets"]
+    },
+    {
+      "id": "SCN_FULL_SESSION_CROSS_SYSTEM_RECOVERY",
+      "phase": "P10_RELEASE_HARDENING",
+      "steps": ["run long session across exploration encounter inventory journal downtime and scene transitions", "inject reconnect and controlled server restart", "recover authority snapshot journal and projections", "continue play", "verify no duplicate command completion or hidden-data leakage", "collect performance and diagnostic evidence"],
+      "expectedOutcome": "the integrated product survives long-session lifecycle and recovery without cross-domain drift",
+      "negativeCases": ["restart during transaction", "reconnect during scene transition", "stale epoch command after rollback", "memory or projection backlog exceeds budget"]
+    }
+  ]
+}
