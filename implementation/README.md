@@ -1,61 +1,63 @@
 # RVTT Production Implementation Workspace
 
-- 상태: BOOTSTRAPPED
-- 작성일: 2026-08-05
-- 기획·명세 원본: [`docs/remake`](../docs/remake/README.md)
-- 현재 상위 작업 순서: [`docs/remake/CURRENT-WORK-ORDER.md`](../docs/remake/CURRENT-WORK-ORDER.md)
-- UI·UX Policy: [`docs/remake/ui/policies`](../docs/remake/ui/policies/README.md)
+- 상태: `CURRENT · R3_VALIDATED · SOURCE_NOT_STARTED`
+- 최종 갱신일: 2026-08-13
+- 현재 실행 권위: [`.github/CODEX-ACTIVE-TASK.md`](../.github/CODEX-ACTIVE-TASK.md)
+- 현재 Roblox 구현 모델: [`roblox/IMPLEMENTATION-MODEL.md`](roblox/IMPLEMENTATION-MODEL.md)
 
-이 폴더는 RVTT의 실제 Production Source, Test, Migration과 Build 도구만 소유한다.
+이 폴더는 Production Source/Test/Migration/Build tooling을 보존한다. **기존 Source가 존재한다고 해서 새 Greenfield 구현 baseline이 되는 것은 아니다.**
 
 ```text
 docs/remake/
-→ 사용자 경험·Product·Architecture·Guide·Spec·Audit
+→ Product / Accepted ADR / Architecture / UI / Guide / requirement-reference corpus
 
-implementation/
-→ 실제 Roblox Source·Test·Migration·Build Artifact 정의
+implementation/roblox/src/**
+→ legacy Production Source
+→ READ_ONLY_REFERENCE
+
+implementation/roblox/greenfield/src/**
+→ new Greenfield Source root
+→ 현재 NOT STARTED / BLOCKED
+```
+
+## 현재 Gate
+
+```text
+R3 = VALIDATED · NOT FROZEN
+SOURCE = BLOCKED
+STUDIO/MCP = BLOCKED
+NEXT = USER R3 FREEZE DECISION
+```
+
+현재는 Slice 01 Script Manifest, retired Module Contract, G0 Script 구현을 시작하는 단계가 아니다.
+
+## 현재 개발 순서
+
+```text
+사용자 R3 Freeze 결정
+→ R4 E0 Checkpoint Freeze
+→ Dedicated Implementation Branch
+→ E0 Repository Core Engine 구현/자동 검증
+→ CORE_ENGINE_COMPLETE
+→ E1 Runtime Checkpoint Freeze
+→ Studio/MCP Runtime Provider + Integration
+→ INTEGRATION_READY
+→ U0 Product UI Shell
+→ UI_SHELL_READY
+→ E2 Presentation / Feel
 ```
 
 ## 운영 원칙
 
-1. Production Script는 이 폴더 밖에 만들지 않는다.
-2. Script는 현재 Slice Work Order와 Script Manifest 순서대로 하나씩 추가한다.
-3. 빈 Framework 전체를 한 번에 생성하지 않는다.
-4. 하나의 Script는 명확한 책임·입출력·의존성·오류 경계·Test를 가진다.
-5. Shared, Server, Client와 UI Authority를 혼합하지 않는다.
-6. Client Script는 Domain Store와 DataStore에 직접 접근하지 않는다.
-7. Remote, Schema, Migration과 Registry 변경은 명세·Test와 같은 변경에 포함한다.
-8. UI Script는 [`UI·UX Global Policies`](../docs/remake/ui/policies/README.md)와 Review Checklist를 통과해야 한다.
-9. 실제 Roblox Studio·Test Host에서 검증하지 않은 구현을 완료로 표시하지 않는다.
-10. 자동 생성 파일과 Runtime Data를 Source 원본으로 Commit하지 않는다.
+1. 새 Greenfield Production Source는 current frozen Checkpoint와 Dedicated Implementation Branch가 준비된 뒤 `roblox/greenfield/src/**`에 작성한다.
+2. legacy `roblox/src/**`와 `default.project.json`은 `READ_ONLY_REFERENCE`다.
+3. Module/Stable Function은 R4 Checkpoint에서 current 34-System / 30-Requirement / 61-Scenario 압력으로 JIT 도출한다.
+4. Client는 Domain Store/DataStore/authority result를 직접 소유하지 않는다.
+5. Authority/Schema/Persistence/Remote 변경은 frozen contract와 focused tests를 함께 갱신한다.
+6. `CORE_ENGINE_COMPLETE` 전 Studio/MCP 구현을 시작하지 않는다.
+7. E1 Studio 결과는 GitHub greenfield Source와 Rojo mapping에서 재현 가능해야 한다.
+8. legacy Regression PASS를 new Greenfield implementation PASS로 해석하지 않는다.
 
 ## 현재 하위 Workspace
 
-- [`roblox/`](roblox/README.md) — Roblox DataModel Service 구조를 반영하는 Production Source
-
-## Script 추가 Gate
-
-```text
-Slice Integration Contract
-→ 실제 Folder·Package Mapping
-→ Script Manifest
-→ 첫 Script 책임 검수
-→ Script 작성
-→ Unit·Integration·Roblox Test
-→ UI·UX Checklist 또는 Domain Checklist
-→ Commit
-→ 다음 Script
-```
-
-현재 상태:
-
-```text
-Workspace Folder Structure
-→ CREATED
-
-Production Luau Script
-→ NOT STARTED
-
-현재 다음 작업
-→ Slice 01 Script Manifest 작성
-```
+- [`roblox/`](roblox/README.md) — current model, historical reference Source, Greenfield source root, Test/Build tooling
