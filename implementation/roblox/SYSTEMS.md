@@ -313,3 +313,98 @@ R3 repaired boundary validation
 ```
 
 **Repository Core Engine 전체 완료 전 Studio/MCP 구현을 시작하지 않는다.**
+
+## 11. Event Delivery Durability
+
+A3/A8/A7은 durable event 경로에서 역할이 다르다.
+
+```text
+A3
+= Transactional Outbox의 atomicity와 CommittedDomainEvent 사실
+
+A8
+= delivery cursor / subscription / ordering scope / retry / SubscriberReceipt / dead-letter 의미
+
+A7
+= durable persistence와 restart reconstruction mechanism
+
+A8 delivery semantics → A7 durability seam → StorageAdapter
+```
+
+규칙:
+
+- A8의 durable cursor/receipt/dead-letter는 A7 persistence contract를 통해 저장·복구한다.
+- A8은 `StorageAdapter`를 직접 사용하지 않는다.
+- `StorageAdapter`의 production consumer는 A7이다.
+- A7은 SubscriptionDefinition, delivery ordering, retry/failure policy를 소유하지 않는다.
+- A7 장애가 A8 delivery durability를 제한할 수는 있지만 A3의 이미 성공한 authority commit을 되돌리지 않는다.
+
+## 12. Scenario Semantic Audit v1
+
+Scenario trace는 이제 단순 System 목록이 아니다.
+
+```text
+Scenario
+→ Requirement Capability[]
+→ System Responsibility[]
+→ semanticStages[]
+```
+
+`semanticStages`는 다음 여섯 종류다.
+
+```text
+READ
+= query / validation / candidate evaluation. 그 자체로 authority commit을 뜻하지 않는다.
+
+MUTATION
+= 정상 authority state/source 변경 또는 atomic state-swap attempt.
+  A3 Transaction 의미를 반드시 통과한다.
+
+EVENT
+= committed Domain Event 전파 또는 durable delivery correctness가 결과의 일부다.
+
+PROJECTION
+= viewer-safe server projection + A6 client synchronization이 결과의 일부다.
+  local-only Camera/Presentation은 PROJECTION이 아니다.
+
+RECOVERY
+= reconnect / resync / restart / rollback / branch / retry-after-restart / LKG 보존이 correctness의 일부다.
+
+HUMAN
+= human review / authoring / accessibility / presentation feel / interactive surface behavior가 acceptance dependency다.
+```
+
+필수 불변식:
+
+```text
+MUTATION
+→ A3
++ REQ_ATOMIC_CONCURRENCY
+
+EVENT
+→ A3 + A8
++ REQ_COMMITTED_EVENT_PROPAGATION
+
+PROJECTION
+→ A5 + A6
++ REQ_VIEWER_SAFE_PROJECTION
+
+RECOVERY
+→ A6 또는 A7
++ REQ_RECOVERY_ROLLBACK 또는 REQ_SESSION_PLAYABILITY
+
+HUMAN
+→ C1/C2/C3/U1/U2 중 하나 이상
+```
+
+실패한 atomic attempt도 `MUTATION` 압력을 가진다. 다만 Commit이 되지 않아 Domain Event가 발생하지 않는 실패-only path는 `EVENT`를 강제로 붙이지 않는다.
+
+**Scenario Semantic Audit = V1 · 61/61**
+
+Canonical semantic audit와 digest는 `manifests/implementation-system-model.json`이 소유한다.
+
+현재 digest:
+
+```text
+sha256:57e485a0cec6d753542e4bc202a881e10e2bd5ae63e314cc609c7e2d99f38140
+```
