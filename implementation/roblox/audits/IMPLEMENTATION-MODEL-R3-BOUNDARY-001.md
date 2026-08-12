@@ -285,3 +285,110 @@ R3 = NOT FROZEN
 ```
 
 다음은 **전체 Validator/CI를 한 번 돌려 repaired model을 self-validate**하는 것이다. 모두 통과한 뒤에만 사용자에게 R3 Freeze 여부를 다시 제안한다.
+
+## 13. 후속 61 Scenario Semantic Audit v1
+
+위 결론 뒤 후속 self-review에서 machine trace의 **형식적 유효성**과 **의미적 완전성**을 별도로 재검사했다. 기존 61 Scenario body의 steps, expectedOutcome, negativeCases를 기준으로 각 trace에 다음 의미 단계를 부여했다.
+
+```text
+READ
+MUTATION
+EVENT
+PROJECTION
+RECOVERY
+HUMAN
+```
+
+불변식:
+
+```text
+MUTATION → A3 + REQ_ATOMIC_CONCURRENCY
+EVENT → A3 + A8 + REQ_COMMITTED_EVENT_PROPAGATION
+PROJECTION → A5 + A6 + REQ_VIEWER_SAFE_PROJECTION
+RECOVERY → A6 또는 A7 + recovery/session requirement
+HUMAN → C1/C2/C3/U1/U2 중 하나 이상
+```
+
+전수 감사에서 다음 유형의 누락을 수정했다.
+
+```text
+Actor/NPC publish+spawn
+→ A3/A8 commit-event pressure 추가
+
+Character migration / level-up / spell preparation
+→ activation transaction/event/projection pressure 보완
+
+Rollback stale command
+→ authoritative projection rebuild pressure 보완
+
+Ready action
+→ transaction + projection pressure 보완
+
+Rest / Craft / Travel restart negative cases
+→ A7 recovery pressure 보완
+
+Scene source commit / concurrent authoring
+→ A2/A3/A8 command-transaction-event pressure 보완
+
+DM takeover
+→ controller assignment mutation/event pressure 보완
+
+DM live patch rebase fail
+→ atomic swap attempt이므로 A3 MUTATION pressure 유지,
+   abort path이므로 EVENT는 강제하지 않음
+```
+
+최종 semantic stage 분포:
+
+```text
+READ       60
+MUTATION   41
+EVENT      41
+PROJECTION 41
+RECOVERY   17
+HUMAN      33
+```
+
+Canonical semantic digest:
+
+```text
+sha256:57e485a0cec6d753542e4bc202a881e10e2bd5ae63e314cc609c7e2d99f38140
+```
+
+## 14. A8 / A7 Durability Reconciliation
+
+Accepted Event 계약은 durable delivery class, Outbox Cursor, SubscriberReceipt, retry/dead-letter를 요구하고 Persistence 계약은 durable storage/reconstruction을 소유한다. 따라서 경계를 다음처럼 명확히 한다.
+
+```text
+A3
+= Transactional Outbox atomicity + committed event fact
+
+A8
+= delivery / subscription / ordering / retry / SubscriberReceipt / dead-letter semantics
+
+A7
+= durable persistence + restart reconstruction mechanism
+
+A8 delivery semantics → A7 durability seam → StorageAdapter
+```
+
+규칙:
+
+- A8 durable cursor/receipt/dead-letter는 A7 persistence seam으로 저장·복구한다.
+- A8은 `StorageAdapter`를 직접 사용하지 않는다.
+- `STORAGE_ADAPTER` production consumer는 A7 하나다.
+- A7은 A8의 SubscriptionDefinition, ordering scope, retry/failure policy를 소유하지 않는다.
+- Subscriber durability failure가 A3에서 이미 Commit된 gameplay transaction을 rollback하지 않는다.
+
+## 15. 후속 감사 결과
+
+```text
+Scenario Semantic Audit = V1 · 61/61
+semantic digest = PASS
+A8 delivery semantics → A7 durability seam = DEFINED
+Source = BLOCKED
+Studio = BLOCKED
+R3 = NOT FROZEN
+```
+
+후속 감사 결과는 기존 1~12절을 덮어쓰지 않고 추가 증거로 보존한다. R3 Freeze는 사용자 결정으로만 수행한다.
