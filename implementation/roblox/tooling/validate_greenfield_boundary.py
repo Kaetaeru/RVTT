@@ -7,6 +7,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = ROOT.parents[1]
+ROOT_README = REPO_ROOT / "README.md"
+IMPLEMENTATION_README = REPO_ROOT / "implementation/README.md"
 ACTIVE_TASK = REPO_ROOT / ".github/CODEX-ACTIVE-TASK.md"
 ROUTING_README = REPO_ROOT / ".github/README.md"
 AGENTS = REPO_ROOT / "AGENTS.md"
@@ -27,6 +29,7 @@ STUDIO_POLICY = ROOT / "ROBLOX-STUDIO-MCP-TEST-POLICY.md"
 REVIEW_GATE = ROOT / "CODEX-REVIEW-TEST-GATE.md"
 BOUNDARY = ROOT / "greenfield-boundary.json"
 GREENFIELD_PROJECT = ROOT / "greenfield.project.json"
+CURRENT_AUTHORITY = ROOT / "manifests/r3-authority-corpus.json"
 CURRENT_MANIFEST = ROOT / "manifests/implementation-system-model.json"
 BASE_SCENARIOS = ROOT / "manifests/scenario-base-catalog.json"
 EXPANDED_SCENARIOS = ROOT / "manifests/scenario-expanded-catalog.json"
@@ -84,6 +87,8 @@ def main() -> int:
         return 1
 
     texts = {
+        "Root README": ROOT_README.read_text(encoding="utf-8"),
+        "Implementation README": IMPLEMENTATION_README.read_text(encoding="utf-8"),
         "Active Task": ACTIVE_TASK.read_text(encoding="utf-8"),
         "Routing README": ROUTING_README.read_text(encoding="utf-8"),
         "AGENTS.md": AGENTS.read_text(encoding="utf-8"),
@@ -105,10 +110,18 @@ def main() -> int:
     }
 
     required_markers = [
+        ("Root README", "R3 = VALIDATED · NOT FROZEN"),
+        ("Root README", "NEXT = USER R3 FREEZE DECISION"),
+        ("Root README", "CORE_ENGINE_COMPLETE 전 Studio/MCP 구현을 시작하지 않습니다"),
+        ("Implementation README", "CURRENT · R3_VALIDATED · SOURCE_NOT_STARTED"),
+        ("Implementation README", "greenfield/src/**\n→ new Greenfield Source root"),
+        ("Implementation README", "CORE_ENGINE_COMPLETE 전 Studio/MCP 구현을 시작하지 않는다"),
         ("Active Task", "- status: `R3_VALIDATED_AWAITING_FREEZE_DECISION`"),
+        ("Active Task", "currentAuthorityCorpus: `implementation/roblox/manifests/r3-authority-corpus.json`"),
         ("Active Task", "sourceImplementationAllowed: `false`"),
         ("Active Task", "studioImplementationAllowed: `false`"),
         ("AGENTS.md", "OLD GREENFIELD MODEL = RETIRED"),
+        ("AGENTS.md", "CURRENT AUTHORITY CORPUS = PRODUCT + ADR + ARCHITECTURE + SYSTEM + UI"),
         ("AGENTS.md", "R3 = VALIDATED · NOT FROZEN · AWAITING USER FREEZE DECISION"),
         ("AGENTS.md", "NEXT = USER R3 FREEZE DECISION"),
         ("Planning Addendum", "CURRENT · SUBORDINATE_TO_ACTIVE_EXECUTION_GATE"),
@@ -179,6 +192,7 @@ def main() -> int:
             errors.append(f"greenfield.project.json must not map legacy source path: {path}")
 
     for path, label in (
+        (CURRENT_AUTHORITY, "r3-authority-corpus.json"),
         (CURRENT_MANIFEST, "implementation-system-model.json"),
         (BASE_SCENARIOS, "scenario-base-catalog.json"),
         (EXPANDED_SCENARIOS, "scenario-expanded-catalog.json"),
@@ -208,7 +222,7 @@ def main() -> int:
     print(
         "RVTT implementation planning boundary validation passed: "
         f"resetBaseline={RESET_BASELINE_COMMIT[:12]}; R3=VALIDATED_AWAITING_FREEZE; "
-        "routing=CURRENT; current_status_surfaces=PASS; process_policy=STAGED; "
+        "entrypoints=CURRENT; routing=CURRENT; current_status_surfaces=PASS; process_policy=STAGED; "
         "greenfield_source=BLOCKED; studio=BLOCKED_UNTIL_CORE_ENGINE_COMPLETE; "
         "legacy_src=READ_ONLY_REFERENCE; legacy_write_lock=PASS"
     )
