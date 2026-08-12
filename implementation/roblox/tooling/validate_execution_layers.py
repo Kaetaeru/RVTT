@@ -11,6 +11,7 @@ DOC = ROOT / "GREENFIELD-EXECUTION-LAYERS.md"
 MODEL = ROOT / "IMPLEMENTATION-MODEL.md"
 SYSTEMS = ROOT / "SYSTEMS.md"
 ACTIVE_TASK = ROOT.parents[1] / ".github/CODEX-ACTIVE-TASK.md"
+AGENTS = ROOT.parents[1] / "AGENTS.md"
 
 
 def load(path: Path) -> dict:
@@ -75,7 +76,7 @@ def main() -> int:
     if set(e0) | set(deferred) != all_system_ids:
         errors.append(
             "every current System must currently be classified as E0-required seam or deferred repository feature; "
-            f"unclassified={sorted(all_system_ids - (set(e0)|set(deferred)))}"
+            f"unclassified={sorted(all_system_ids - (set(e0) | set(deferred)))}"
         )
     if set(e0) & set(deferred):
         errors.append("E0-required and deferred repository feature sets must not overlap")
@@ -103,6 +104,7 @@ def main() -> int:
     model = MODEL.read_text(encoding="utf-8")
     systems_text = SYSTEMS.read_text(encoding="utf-8")
     task = ACTIVE_TASK.read_text(encoding="utf-8")
+    agents = AGENTS.read_text(encoding="utf-8")
     markers = [
         ("implementation model", model, "REPOSITORY_LOGIC"),
         ("implementation model", model, "E0_CORE_ENGINE"),
@@ -111,8 +113,10 @@ def main() -> int:
         ("system model", systems_text, "Repository Core Engine 전체 완료 전 Studio/MCP 구현을 시작하지 않는다"),
         ("system model", systems_text, "A3 Ordering + Transaction + Outbox atomic commit"),
         ("system model", systems_text, "A8 Event Delivery"),
-        ("active task", task, "R3_REPAIRED_AWAITING_FREEZE_DECISION"),
+        ("active task", task, "- status: `R3_VALIDATED_AWAITING_FREEZE_DECISION`"),
         ("active task", task, "CORE_ENGINE_COMPLETE 전 Studio/MCP 작업 금지"),
+        ("agent rules", agents, "R3 = VALIDATED · NOT FROZEN · AWAITING USER FREEZE DECISION"),
+        ("agent rules", agents, "NEXT = USER R3 FREEZE DECISION"),
     ]
     for label, text, marker in markers:
         if marker not in text:
@@ -128,7 +132,7 @@ def main() -> int:
         "RVTT execution-layer validation passed: "
         f"systems={len(all_system_ids)}; e0_required_seams={len(e0)}; deferred_repository_features={len(deferred)}; "
         "REPOSITORY_LOGIC!=E0_CORE_ENGINE; A1_ready_gate=PASS; A3_to_A8_event_boundary=PASS; "
-        "R3->user freeze->R4->Implementation Branch->E0->CORE_ENGINE_COMPLETE->E1 Studio->U0->E2 preserved"
+        "R3=VALIDATED_AWAITING_FREEZE; R3->user freeze->R4->Implementation Branch->E0->CORE_ENGINE_COMPLETE->E1 Studio->U0->E2 preserved"
     )
     return 0
 
