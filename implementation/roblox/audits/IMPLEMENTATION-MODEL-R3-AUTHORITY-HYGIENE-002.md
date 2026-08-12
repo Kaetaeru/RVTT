@@ -209,3 +209,101 @@ scenario-semantic-audit.json (v2)
 `SYSTEMS.md`의 v3 설명도 실제 binding과 맞게 `immutable Historical Expanded evidence blob`을 포함하도록 정합화했다.
 
 이 변경 역시 Architecture/System/Requirement/Scenario 의미나 Source/Studio gate를 바꾸지 않는다. 최종 완료 조건은 이 guard와 문서 정합화를 포함한 동일 HEAD에서 9개 Pull Request Workflow가 모두 성공하는 것이다.
+
+## 9. Fourth Independent Revalidation · Current Status Surface / Process Policy Repair
+
+추가 재검증에서 Scenario/semantic audit 자체가 아니라 **현재 작업과 구현 방식을 안내하는 문서 표면**에 오래된 Greenfield/Studio-first 상태가 남아 있음을 발견했다.
+
+확정 finding:
+
+```text
+implementation/roblox/README.md
+→ src/**를 현재 Production Source로 소개
+→ Studio MCP 직접 구현을 현재 개발 루프로 안내
+
+.github/README.md
+→ 현재 Active Task에 없는 commandPath 라우팅 모델을 요구
+
+implementation/roblox/EXECUTION-TEST-RULES.md
+→ ACTIVE 상태에서 Studio-first development를 기본값으로 선언
+
+implementation/roblox/ROBLOX-STUDIO-MCP-TEST-POLICY.md
+→ ACTIVE_DEFAULT_DEVELOPMENT_PATH로 Studio 직접 구현을 즉시 허용
+
+implementation/roblox/greenfield-boundary.json
+→ ACTIVE_PRE_G0_BOUNDARY + retired GREENFIELD-PREFLIGHT 포인터 유지
+
+implementation/roblox/IMPLEMENTATION-STATUS.md
+→ READY_FOR_G0_PREFLIGHT / Studio Workbench / G0 시작을 다음 실행으로 기록
+
+AGENT-TEST-STATUS.md
+→ STUDIO_FIRST_ITERATION / Production Studio UX IN_PROGRESS
+
+docs/remake/README.md
+→ 현재 개발 방식을 STUDIO-MCP IMPLEMENTATION으로 안내
+
+docs/remake/CURRENT-WORK-ORDER.md
+→ retired Module Contract → S1/C1/M1/X1/I1 순서를 현재 구현 순서로 기록
+
+docs/remake/specs/README.md + CURRENT-SPEC-WORK-ORDER.md
+→ 과거 implementation handoff / Studio-first 상태를 현재 구현 권위처럼 노출
+
+AGENTS-PLANNING-ADDENDUM.md
+→ READY/Studio 탐색 일반 원칙이 current execution gate를 우회한다고 오해될 여지
+
+docs/remake/product/codex-supervised-review-and-test-policy.md
+→ 확정 Process Policy가 retired Module Contract + legacy Source + immediate Studio MCP를 기본 개발 방향으로 고정
+
+implementation/roblox/CODEX-REVIEW-TEST-GATE.md
+→ 기본 Studio 반복을 현재 기본 모드로 선언
+```
+
+현재 사용자 결정과 기존 R3 execution invariant는 다음이다.
+
+```text
+R3 validation complete
+→ USER R3 FREEZE
+→ R4 E0 Checkpoint Freeze
+→ Dedicated Implementation Branch
+→ E0 Repository Core Engine
+→ CORE_ENGINE_COMPLETE
+→ E1 Runtime Checkpoint Freeze
+→ Studio/MCP Runtime Provider + Integration
+→ INTEGRATION_READY
+→ U0
+→ E2
+```
+
+따라서 위 finding은 새 개발 순서를 만드는 변경이 아니라 **이미 승인된 순서를 higher/current authority surface에 top-down으로 reconciliation**하는 작업이다.
+
+수정 결과:
+
+```text
+legacy implementation/roblox/src/**
+→ READ_ONLY_REFERENCE
+→ write lock 유지
+→ 새 Greenfield baseline 아님
+
+greenfield/src/**
+→ 새 Greenfield Source root
+→ 현재 NOT STARTED / BLOCKED
+
+Studio/MCP
+→ 폐기하지 않음
+→ CORE_ENGINE_COMPLETE 후 E1에서 직접 구현·Play loop 활성화
+
+16 Slice Specs
+→ requirement/reference corpus
+→ retired implementation split을 현재 권위로 자동 재사용 금지
+
+Current routing/status/process docs
+→ R3_VALIDATED_AWAITING_FREEZE_DECISION으로 통일
+```
+
+`validate_greenfield_boundary.py`는 이제 Active Task/AGENTS뿐 아니라 routing README, planning addendum, Agent Test Status, Remake current docs, Spec current indexes, Product Process Policy, Workspace README/Work Order/Implementation Status, Execution Rules, Studio Policy, Review Gate와 machine-readable `greenfield-boundary.json`을 직접 검사한다.
+
+또한 `greenfield.project.json`의 모든 `$path`가 `greenfield/src/` 아래인지 검사하고, legacy `src/**`와 `default.project.json`은 기존 reset baseline object와 계속 동일해야 통과한다.
+
+`validate-greenfield-boundary.yml`은 위 current-state/process surface들의 변경을 모두 trigger하도록 확장했다.
+
+이 reconciliation은 Product 목표, Accepted ADR, Authority/state ownership, 34 System, 30 Requirement, 61 Scenario, input grammar, E0→E1→U0 순서를 변경하지 않는다. 최종 완료 조건은 이 변경을 포함한 동일 HEAD에서 planning-boundary validator와 전체 Pull Request Workflow가 모두 성공하는 것이다.
