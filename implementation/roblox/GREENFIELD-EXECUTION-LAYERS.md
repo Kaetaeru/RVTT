@@ -17,25 +17,32 @@ Execution Class는 Product Coverage를 대신하지 않는다.
 Architecture Coverage
 → System / Module / Stable Function Contract
 → Execution Class
+→ 구현 Checkpoint
 → 구현 / 검증 환경
 ```
 
 현재 Architecture Coverage Gate가 `BLOCKED_BY_FOUNDATION_COVERAGE_GAPS`이므로 E0 Source는 아직 시작하지 않는다.
 
-핵심 실행 원칙은 다음이다.
+핵심 실행 원칙:
 
 ```text
 보이지 않는 순수 엔진
 → GitHub Canonical Source에서 먼저 구현·자동 테스트
+→ 모든 E0 Core Engine 완료
+→ CORE_ENGINE_COMPLETE
 
-Roblox Runtime 의존 엔진/Adapter
-→ GitHub Source를 기준으로 Studio/MCP에서 통합·런타임 테스트
+그 이후에만
+→ Roblox Runtime Engine / Adapter / Controller / Manager 상세화
+→ Studio/MCP Runtime Integration
 
-보이는 UI·Presentation·조작감
-→ Studio에서 Play 후 사용자 직접 판단
+그 이후에만
+→ 보이는 UI·Presentation·조작감
+→ Studio Play + 사용자 직접 판단
 ```
 
-Studio를 일반 코드 에디터 대신 **Roblox Runtime Integration + Presentation/Feel 검증 도구**로 사용한다.
+**`CORE_ENGINE_COMPLETE` 이전에는 어떤 Studio/MCP 구현·튜닝도 시작하지 않는다.** Runtime-coupled Engine도 E1 작업이며 예외가 아니다.
+
+Studio를 일반 코드 에디터 대신 **Core Engine 완료 후 Roblox Runtime Integration + Presentation/Feel 검증 도구**로 사용한다.
 
 ## 1. Coverage 선행 조건
 
@@ -52,16 +59,36 @@ OPEN Blocking Gap이 있으면 해당 Phase에 배정된 Module이 이미 Regist
 
 Coverage Finding을 해소하려고 Execution Class만 바꿔 책임 누락을 숨기지 않는다. System/Module/Authority 변경이 필요하면 사용자에게 먼저 제안한다.
 
-## 2. 공통 Source 권위
+## 2. Checkpoint 구체화 시점
+
+Implementation Checkpoint를 한 번에 전부 상세화하지 않는다.
+
+```text
+E0 Core Engine Checkpoint
+→ Coverage Gap 해결 + Core System Boundary 확정 직후
+→ E0 Source 작성 직전에 구체화
+
+E1 Studio Runtime Checkpoint
+→ 모든 E0 Checkpoint 완료 + CORE_ENGINE_COMPLETE 직후
+→ Studio를 열기 전에 구체화
+
+E2 Presentation / Feel Checkpoint
+→ INTEGRATION_READY 이후
+→ S1, C1, M1, X1, I1 각각 시작 직전에 JIT 구체화
+```
+
+E1 Checkpoint Freeze에서 직접 구현할 Roblox `Service / Manager / Controller / Adapter / Composition Root / Studio Harness` 목록을 확정한다. Core Engine이 아직 변하는 동안 Studio Runtime 구조를 먼저 고정하지 않는다.
+
+## 3. 공통 Source 권위
 
 어느 Execution Class든 최종 Source 권위는 `greenfield/src`다.
 
 - Studio에서 만든 코드만 남기는 상태 금지.
-- MCP를 이용해 Studio에서 빠르게 수정할 수 있지만 coherent change가 끝나면 `greenfield/src`와 즉시 정합화한다.
+- E1 이후 MCP를 이용해 Studio에서 빠르게 수정할 수 있지만 coherent change가 끝나면 `greenfield/src`와 즉시 정합화한다.
 - 최종 완료를 Studio-only truth로 선언하지 않는다.
 - Rojo로 같은 DataModel을 재현할 수 있어야 한다.
 
-## 3. CORE_ENGINE
+## 4. CORE_ENGINE
 
 Roblox Workspace/서비스의 실제 결과가 없어도 correctness를 판단할 수 있는 엔진 코드다.
 
@@ -80,7 +107,7 @@ MovementDomain
 ExplorationDomain
 ```
 
-이 목록은 아직 구현 명령이 아니다. Coverage Audit의 E0 Blocker가 해소된 뒤 책임 경계를 다시 확인하고 최종화한다.
+이 목록은 아직 구현 명령이 아니다. Coverage Audit의 E0 Blocker가 해소된 뒤 책임 경계를 다시 확인하고 E0 Checkpoint Freeze에서 최종화한다.
 
 현재 E0 blocker:
 
@@ -96,14 +123,16 @@ GAP-008 RuleExecution Boundary
 Coverage가 READY가 된 뒤 구현 순서:
 
 ```text
-System/Module/Stable Function Contract
+E0 Checkpoint Freeze
+→ System/Module/Stable Function Contract
 → greenfield/src 구현
 → repository automated test
 → negative/fail-closed test
-→ ENGINE_READY
+→ 모든 E0 Checkpoint 완료
+→ CORE_ENGINE_COMPLETE
 ```
 
-여기서는 사람이 Studio에서 클릭하며 확인하지 않는다.
+여기서는 Studio/MCP를 사용하지 않고 사람이 Engine 함수를 클릭하며 확인하지 않는다.
 
 대표 테스트:
 
@@ -116,7 +145,9 @@ System/Module/Stable Function Contract
 - movement/interaction domain validation according to resolved capability/navigation architecture
 - structured failure/result semantics
 
-## 4. ROBLOX_RUNTIME_ENGINE
+`CORE_ENGINE_COMPLETE`는 모든 E0 Module이 계약과 Repository Test Gate를 통과한 상태를 뜻한다. Studio Runtime Provider가 필요한 영역도 Request/Result Contract, Policy, Permission, Failure/Recompute Semantics처럼 Repository에서 정의 가능한 부분을 먼저 완료해야 한다.
+
+## 5. ROBLOX_RUNTIME_ENGINE
 
 엔진이지만 correctness가 Roblox Runtime 자체에 의존하는 경우다.
 
@@ -129,13 +160,13 @@ System/Module/Stable Function Contract
 - StreamingEnabled 영향
 - DataStore/MemoryStore adapter
 
-이 경우 **Studio에서 엔진 구현·튜닝 루프를 도는 것을 허용**한다.
-
-단:
+이 Class는 **E1에 속하며 `CORE_ENGINE_COMPLETE` 이후에만 Studio에서 구현·튜닝한다.**
 
 ```text
-Coverage + Contract
-→ GitHub Canonical Source 또는 즉시 canonicalizable Source
+CORE_ENGINE_COMPLETE
+→ E1 Coverage READY
+→ E1 Checkpoint Freeze
+→ GitHub-side Contract 준비 확인
 → Studio/MCP Runtime iteration
 → Studio automated runtime test
 → greenfield/src 정합화
@@ -150,7 +181,7 @@ Studio에서만 존재하는 엔진은 허용하지 않는다.
 
 Gap 해결 뒤 Pathfinding 하나도 세 부분으로 나눈다.
 
-**Repository/Core 후보 책임:**
+**E0 Repository/Core 책임:**
 
 - path request/response data shape
 - movement permission/budget rules
@@ -158,7 +189,7 @@ Gap 해결 뒤 Pathfinding 하나도 세 부분으로 나눈다.
 - Workspace와 무관한 waypoint/plan normalization
 - pure fallback/path policy가 있다면 그 알고리즘
 
-**Studio/Runtime 후보 책임:**
+**E1 Studio/Runtime 책임:**
 
 - `PathfindingService` 실제 호출 또는 승인된 Runtime Navigation Provider
 - NavMesh/Agent parameter 결과
@@ -166,14 +197,14 @@ Gap 해결 뒤 Pathfinding 하나도 세 부분으로 나눈다.
 - raycast/spatial-provider 실제 결과
 - 동적 장애물 재탐색
 
-**Human/Feel:**
+**E2 Human/Feel 책임:**
 
 - 경로 Preview 가독성
 - 클릭 후 반응
 - Token 이동의 부드러움
 - 사용자 의도와 실제 이동의 대응
 
-## 5. ROBLOX_INTEGRATION
+## 6. ROBLOX_INTEGRATION
 
 이미 검증된 Core Engine과 Roblox Runtime을 연결하는 Adapter/Composition이다.
 
@@ -190,16 +221,18 @@ ServerApp / ServerBootstrap
 ClientApp / ClientBootstrap
 ```
 
-E1 Coverage blocker가 없어야 진입한다.
+E1 Coverage blocker가 없어야 하고 `CORE_ENGINE_COMPLETE`가 반드시 선행되어야 한다.
 
 주 검증 환경은 Studio/MCP다.
 
 ```text
-CORE_ENGINE_READY
-→ Coverage E1 READY
+CORE_ENGINE_COMPLETE
+→ E1 Coverage READY
+→ E1 Checkpoint Freeze
 → Rojo build
+→ Studio/MCP handshake
 → Studio boot
-→ Remote/Player/Instance/Input 연결
+→ Runtime Engine + Remote/Player/Instance/Input 연결
 → Codex 자동 통합 테스트
 → cleanup/reconnect/error test
 → INTEGRATION_READY
@@ -207,7 +240,7 @@ CORE_ENGINE_READY
 
 이 단계는 원칙적으로 사용자에게 UI 평가를 요구하지 않는다.
 
-## 6. PRESENTATION_FEEL
+## 7. PRESENTATION_FEEL
 
 사람이 실제로 보고 만져야 평가 가능한 부분이다.
 
@@ -221,12 +254,12 @@ MovementController
 ContextActionController
 ```
 
-각 Checkpoint의 Coverage blocker가 없어야 구현한다.
+각 Checkpoint는 E1이 끝난 뒤 하나씩 JIT 상세화한다.
 
 ```text
-Coverage Checkpoint READY
-+ ENGINE_READY
-+ INTEGRATION_READY
+INTEGRATION_READY
+→ 현재 Checkpoint Coverage READY
+→ 현재 Checkpoint 상세 Contract 구체화
 → Presentation/Controller 연결
 → Codex Studio self-check
 → READY_FOR_USER
@@ -235,9 +268,10 @@ Coverage Checkpoint READY
 → 사용자 수용
 → Authority Reconciliation
 → ACCEPTED
+→ 다음 Checkpoint 상세화
 ```
 
-## 7. 분류 규칙
+## 8. 분류 규칙
 
 새 Module이 승인돼 생기면 구현 전에 반드시 한 Execution Class를 고른다.
 
@@ -261,7 +295,9 @@ YES → PRESENTATION_FEEL
 - Runtime Engine: Roblox 서비스/공간 결과 자체가 도메인/엔진 계산의 일부.
 - Integration: 이미 존재하는 엔진을 Remote/Player/Input/Instance lifecycle에 연결.
 
-## 8. 테스트 권위
+분류가 `ROBLOX_RUNTIME_ENGINE`이라고 해서 E0보다 먼저 Studio에 들어갈 수 있는 것은 아니다.
+
+## 9. 테스트 권위
 
 ```text
 Architecture Coverage
@@ -271,26 +307,26 @@ CORE_ENGINE
 = Repository automated tests가 1차 PASS 권위
 
 ROBLOX_RUNTIME_ENGINE
-= Repository contract tests + Studio automated runtime tests
+= E0 완료 후 Repository contract tests + Studio automated runtime tests
 
 ROBLOX_INTEGRATION
-= Studio automated integration tests
+= E0 완료 후 Studio automated integration tests
 
 PRESENTATION_FEEL
-= Studio self-check + Human Acceptance
+= E1 완료 후 Studio self-check + Human Acceptance
 ```
 
 Console 호출은 보조 수단이다. 반복 가능한 Harness/Test가 가능한 경우 콘솔 수동 호출만으로 완료 처리하지 않는다.
 
-## 9. 수직 개발과의 관계
+## 10. 수직 개발과의 관계
 
 수직 개발을 폐기하지 않는다.
 
-수직 슬라이스는 **Coverage가 준비된 사용자 경험 전달 단계**에서 유지한다.
-
 ```text
-공통 Core Engine 선완성
-→ Roblox Integration 선검증
+공통 Core Engine 전체 선완성
+→ CORE_ENGINE_COMPLETE
+→ Roblox Runtime Engine / Integration 선검증
+→ INTEGRATION_READY
 → Selection vertical slice
 → Camera vertical slice
 → Move vertical slice
@@ -298,8 +334,8 @@ Console 호출은 보조 수단이다. 반복 가능한 Harness/Test가 가능�
 → Interaction vertical slice
 ```
 
-단 아직 설계가 확정되지 않은 먼 미래 시스템의 Domain/API를 추측해 구현하지 않는다.
+사용자-facing 수직 슬라이스는 E2에서 유지한다. 아직 설계가 확정되지 않은 먼 미래 시스템의 Domain/API는 추측해 구현하지 않는다.
 
-## 10. 변경 Gate
+## 11. 변경 Gate
 
-Coverage Gap 해결, Execution Class 변경 또는 더 나은 구조가 Module 책임, Authority, state owner, System flow를 바꾸면 자동 적용하지 않는다. 문제·대안·영향을 사용자에게 먼저 제안한다.
+Coverage Gap 해결, Execution Class 변경, Checkpoint 상세화 시점 또는 더 나은 구조가 Module 책임, Authority, state owner, System flow를 바꾸면 자동 적용하지 않는다. 문제·대안·영향을 사용자에게 먼저 제안한다.
