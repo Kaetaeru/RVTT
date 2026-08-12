@@ -1,4 +1,4 @@
-name: Validate RVTT implementation model reset boundary
+name: Validate RVTT implementation planning boundary
 
 concurrency:
   group: rvtt-model-reset-boundary-${{ github.event.pull_request.number || github.ref }}
@@ -11,6 +11,8 @@ on:
       - ".github/CODEX-ACTIVE-TASK.md"
       - ".github/workflows/validate-greenfield-boundary.yml"
       - "implementation/roblox/IMPLEMENTATION-MODEL.md"
+      - "implementation/roblox/SYSTEMS.md"
+      - "implementation/roblox/manifests/implementation-system-model.json"
       - "implementation/roblox/MODULE-CONTRACTS.md"
       - "implementation/roblox/SYSTEM-FUNCTION-CONTRACTS.md"
       - "implementation/roblox/GREENFIELD-EXECUTION-LAYERS.md"
@@ -31,6 +33,8 @@ on:
       - "AGENTS.md"
       - ".github/CODEX-ACTIVE-TASK.md"
       - "implementation/roblox/IMPLEMENTATION-MODEL.md"
+      - "implementation/roblox/SYSTEMS.md"
+      - "implementation/roblox/manifests/implementation-system-model.json"
       - "implementation/roblox/MODULE-CONTRACTS.md"
       - "implementation/roblox/SYSTEM-FUNCTION-CONTRACTS.md"
       - "implementation/roblox/GREENFIELD-EXECUTION-LAYERS.md"
@@ -62,11 +66,11 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Validate implementation model reset boundary and legacy write lock
+      - name: Validate repaired planning boundary and legacy write lock
         run: python implementation/roblox/tooling/validate_greenfield_boundary.py
 
-      - name: Validate retired module system function registries
+      - name: Validate retired module and stable-function registries
         run: python implementation/roblox/tooling/validate_module_contracts.py
 
-      - name: Validate retired execution registry and preserved process rules
+      - name: Validate repaired execution semantics
         run: python implementation/roblox/tooling/validate_execution_layers.py
