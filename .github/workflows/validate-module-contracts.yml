@@ -1,50 +1,49 @@
-name: Validate RVTT module contracts
+name: Validate RVTT implementation model reset
 
 concurrency:
-  group: rvtt-module-contracts-${{ github.event.pull_request.number || github.ref }}
+  group: rvtt-implementation-model-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 on:
   pull_request:
     paths:
       - "AGENTS.md"
+      - ".github/CODEX-ACTIVE-TASK.md"
       - ".github/workflows/validate-module-contracts.yml"
+      - "implementation/roblox/IMPLEMENTATION-MODEL.md"
       - "implementation/roblox/ARCHITECTURE-COVERAGE-POLICY.md"
       - "implementation/roblox/MODULE-CONTRACTS.md"
       - "implementation/roblox/SYSTEM-FUNCTION-CONTRACTS.md"
       - "implementation/roblox/GREENFIELD-EXECUTION-LAYERS.md"
       - "implementation/roblox/GREENFIELD-SYSTEM-SEQUENCE.md"
-      - "implementation/roblox/ROBLOX-STUDIO-MCP-TEST-POLICY.md"
       - "implementation/roblox/manifests/architecture-coverage.json"
+      - "implementation/roblox/manifests/architecture-scenarios.json"
       - "implementation/roblox/manifests/module-contracts.json"
       - "implementation/roblox/manifests/system-function-contracts.json"
       - "implementation/roblox/manifests/execution-layers.json"
       - "implementation/roblox/tooling/validate_architecture_coverage.py"
       - "implementation/roblox/tooling/validate_module_contracts.py"
       - "implementation/roblox/tooling/validate_execution_layers.py"
-      - "implementation/roblox/greenfield/src/**"
-      - "implementation/roblox/greenfield/tests/**"
   push:
     branches:
       - planning/rvtt-remake
     paths:
       - "AGENTS.md"
-      - ".github/workflows/validate-module-contracts.yml"
+      - ".github/CODEX-ACTIVE-TASK.md"
+      - "implementation/roblox/IMPLEMENTATION-MODEL.md"
       - "implementation/roblox/ARCHITECTURE-COVERAGE-POLICY.md"
       - "implementation/roblox/MODULE-CONTRACTS.md"
       - "implementation/roblox/SYSTEM-FUNCTION-CONTRACTS.md"
       - "implementation/roblox/GREENFIELD-EXECUTION-LAYERS.md"
       - "implementation/roblox/GREENFIELD-SYSTEM-SEQUENCE.md"
-      - "implementation/roblox/ROBLOX-STUDIO-MCP-TEST-POLICY.md"
       - "implementation/roblox/manifests/architecture-coverage.json"
+      - "implementation/roblox/manifests/architecture-scenarios.json"
       - "implementation/roblox/manifests/module-contracts.json"
       - "implementation/roblox/manifests/system-function-contracts.json"
       - "implementation/roblox/manifests/execution-layers.json"
       - "implementation/roblox/tooling/validate_architecture_coverage.py"
       - "implementation/roblox/tooling/validate_module_contracts.py"
       - "implementation/roblox/tooling/validate_execution_layers.py"
-      - "implementation/roblox/greenfield/src/**"
-      - "implementation/roblox/greenfield/tests/**"
   workflow_dispatch:
 
 permissions:
@@ -62,11 +61,11 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Validate architecture coverage
+      - name: Validate model-neutral coverage
         run: python implementation/roblox/tooling/validate_architecture_coverage.py
 
-      - name: Validate module system and function contracts
+      - name: Validate retired module system function registries
         run: python implementation/roblox/tooling/validate_module_contracts.py
 
-      - name: Validate execution layers
+      - name: Validate retired execution registry and preserved process rules
         run: python implementation/roblox/tooling/validate_execution_layers.py
