@@ -18,7 +18,7 @@
 - expandedScenarioCatalog: `implementation/roblox/manifests/architecture-scenarios.json#scenarios`
 - scenarioTraceDigest: `sha256:57e485a0cec6d753542e4bc202a881e10e2bd5ae63e314cc609c7e2d99f38140`
 - semanticSchemaDigest: `sha256:dcc766c1161332789e91aadc362c4765687af3efc2f7193cf23f748df0eb6489`
-- scenarioCombinedAuditDigest: `sha256:48477cd70757d4450980162d49c62e12115229762bee4127542d6a167099a723`
+- scenarioCombinedAuditDigest: `sha256:2fa071defaa6ee6363378f9a31780f4d54328199fb4e21bc6eeae3c1b9e07bec`
 - effectiveRecoveryScenarios: `27`
 - r3BoundaryAudit: `VALIDATED_NOT_FROZEN`
 - updatedAt: `2026-08-13`
@@ -74,7 +74,7 @@ SCN_DM_RECOVERY_REVIEW_BRANCH → SERVER_RESTART + ROLLBACK_BRANCH + CLIENT_RESY
 
 Base 14의 canonical source는 `scenario-base-catalog.json`이다. 이 파일은 legacy Greenfield mapping을 포함하지 않는다.
 
-Expanded 47은 현재 `architecture-scenarios.json`의 `scenarios[]`만 Scenario body source로 사용한다. 그 파일의 legacy top-level metadata와 capabilityRefs는 Requirement/System mapping 권위가 아니다.
+Expanded 47은 현재 `architecture-scenarios.json`의 `scenarios[]`만 Scenario body source로 사용한다. 이 파일의 `baseRegistry`도 canonical Base catalog를 가리키며, legacy `capabilityRefs`는 Requirement/System mapping 권위가 아니다.
 
 Requirement/System/semantic stage mapping은 `implementation-system-model.json`, typed ingress/recovery 의미는 `scenario-semantic-audit.json`만 소유한다.
 
