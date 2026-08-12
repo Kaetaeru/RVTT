@@ -7,6 +7,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 ROBLOX = ROOT / "implementation" / "roblox"
 COVERAGE_PATH = ROBLOX / "manifests" / "architecture-coverage.json"
+SCENARIO_PATH = ROBLOX / "manifests" / "architecture-scenarios.json"
 MODULE_PATH = ROBLOX / "manifests" / "module-contracts.json"
 SYSTEM_PATH = ROBLOX / "manifests" / "system-function-contracts.json"
 EXECUTION_PATH = ROBLOX / "manifests" / "execution-layers.json"
@@ -61,6 +62,7 @@ def validate_file_ref(path, label):
 
 def main():
     coverage = load_json(COVERAGE_PATH)
+    scenario_catalog = load_json(SCENARIO_PATH)
     modules_doc = load_json(MODULE_PATH)
     systems_doc = load_json(SYSTEM_PATH)
     execution_doc = load_json(EXECUTION_PATH)
@@ -84,6 +86,39 @@ def main():
 
     if coverage.get("schemaVersion") != 1:
         error("coverage schemaVersion must be 1")
+
+    require_keys(
+        scenario_catalog,
+        [
+            "schemaVersion",
+            "registryId",
+            "authorityDocument",
+            "baseRegistry",
+            "policy",
+            "scenarios",
+        ],
+        "scenario catalog",
+    )
+    if scenario_catalog.get("schemaVersion") != 1:
+        error("scenario catalog schemaVersion must be 1")
+    if scenario_catalog.get("registryId") != "rvtt-greenfield-architecture-scenarios-v1":
+        error("scenario catalog registryId drifted")
+    if scenario_catalog.get("authorityDocument") != "implementation/roblox/ARCHITECTURE-COVERAGE-POLICY.md":
+        error("scenario catalog authorityDocument drifted")
+    if scenario_catalog.get("baseRegistry") != "implementation/roblox/manifests/architecture-coverage.json":
+        error("scenario catalog baseRegistry drifted")
+
+    scenario_policy = scenario_catalog.get("policy", {})
+    required_scenario_policy = {
+        "scenarioDoesNotAuthorizeArchitectureChange": True,
+        "futureScenarioMayRemainDeferred": True,
+        "scenarioMustReferenceExistingCapability": True,
+        "negativeCaseRequired": True,
+        "preferEndToEndUserOrOperatorFlow": True,
+    }
+    for key, expected in required_scenario_policy.items():
+        if scenario_policy.get(key) is not expected:
+            error(f"scenario catalog policy.{key} must remain {expected}")
 
     validate_file_ref(coverage.get("authorityDocument"), "coverage authorityDocument")
     validate_file_ref(coverage.get("auditDocument"), "coverage auditDocument")
@@ -271,7 +306,16 @@ def main():
             if gid not in gap_ids:
                 error(f"phase {phase} references unknown gap: {gid}")
 
-    scenarios = coverage.get("scenarios", [])
+    base_scenarios = coverage.get("scenarios", [])
+    additional_scenarios = scenario_catalog.get("scenarios", [])
+    if not isinstance(base_scenarios, list):
+        error("coverage scenarios must be a list")
+        base_scenarios = []
+    if not isinstance(additional_scenarios, list):
+        error("scenario catalog scenarios must be a list")
+        additional_scenarios = []
+    scenarios = base_scenarios + additional_scenarios
+
     scenario_ids = set()
     for scenario in scenarios:
         require_keys(
@@ -283,7 +327,7 @@ def main():
         if not sid:
             continue
         if sid in scenario_ids:
-            error(f"duplicate scenario id: {sid}")
+            error(f"duplicate scenario id across scenario catalogs: {sid}")
         scenario_ids.add(sid)
         refs = scenario.get("capabilityRefs", [])
         if not refs:
@@ -291,10 +335,16 @@ def main():
         for cid in refs:
             if cid not in capability_ids:
                 error(f"{sid} references unknown capability: {cid}")
-        if not scenario.get("steps"):
-            error(f"{sid} must have at least one step")
-        if not scenario.get("negativeCases"):
-            error(f"{sid} must have at least one negative case")
+        steps = scenario.get("steps", [])
+        if not isinstance(steps, list) or not steps or not all(isinstance(item, str) and item.strip() for item in steps):
+            error(f"{sid} must have at least one non-empty string step")
+        negative_cases = scenario.get("negativeCases", [])
+        if not isinstance(negative_cases, list) or not negative_cases or not all(
+            isinstance(item, str) and item.strip() for item in negative_cases
+        ):
+            error(f"{sid} must have at least one non-empty negative case")
+        if not isinstance(scenario.get("expectedOutcome"), str) or not scenario.get("expectedOutcome", "").strip():
+            error(f"{sid} expectedOutcome must be a non-empty string")
 
     gate = coverage.get("implementationGate", "")
     if open_blockers and not str(gate).startswith("BLOCKED"):
@@ -327,8 +377,8 @@ def main():
     print(
         "RVTT architecture coverage validation passed: "
         f"capabilities={len(capabilities)} {state_counts}; "
-        f"scenarios={len(scenarios)}; gaps={len(gaps)}; "
-        f"open_blockers={len(open_blockers)}; implementationGate={gate}; "
+        f"scenarios={len(scenarios)} (base={len(base_scenarios)}, expanded={len(additional_scenarios)}); "
+        f"gaps={len(gaps)}; open_blockers={len(open_blockers)}; implementationGate={gate}; "
         f"modules_covered={len(covered_modules | infrastructure_ids)}/{len(module_ids)}; "
         f"systems_covered={len(covered_systems)}/{len(system_ids)}"
     )
