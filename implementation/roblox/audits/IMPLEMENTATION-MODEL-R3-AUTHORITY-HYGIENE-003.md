@@ -179,21 +179,13 @@ R3 = NOT FROZEN
 
 ## 8. Validation Evidence
 
-Reconciliation 변경을 포함한 HEAD:
+최종 재검증 HEAD:
 
 ```text
-dab8ace91b31ed72355a6de3107cf8e0a8907961
+11e313db94dc8e5fd9a7f5a6aa4aab5b2d7eb8b8
 ```
 
-이 HEAD에서 9개 Pull Request Workflow가 모두 `completed / success`를 기록했다.
-
-Audit 상태를 `VALIDATED`로 올린 status-only HEAD:
-
-```text
-398a9114213a752fe5798ce9b6055d63b4ebcb10
-```
-
-이 HEAD에서도 동일 9개 Pull Request Workflow가 모두 `completed / success`를 기록했다.
+이 HEAD에서 다음 9개 Pull Request Workflow가 모두 `completed / success`를 기록했다.
 
 ```text
 Validate RVTT architecture coverage
