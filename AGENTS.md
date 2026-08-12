@@ -12,6 +12,7 @@
 → .github/CODEX-ACTIVE-TASK.md
 → implementation/roblox/IMPLEMENTATION-MODEL.md
 → implementation/roblox/SYSTEMS.md
+→ implementation/roblox/manifests/r3-authority-corpus.json
 → implementation/roblox/manifests/implementation-system-model.json
 → implementation/roblox/manifests/scenario-semantic-audit-v3.json
 → implementation/roblox/manifests/scenario-semantic-audit.json
@@ -20,6 +21,8 @@
 ```
 
 필요한 근거가 있을 때만 Product/Accepted ADR/Architecture/UI/Scenario 원문을 따라간다.
+
+`r3-authority-corpus.json`은 현재 Product/ADR/Architecture/System/UI tree binding이다. `architecture-coverage.json`의 과거 authority snapshot과 legacy Greenfield mapping은 historical evidence이며 current implementation input이 아니다.
 
 Archive, 과거 Codex Command, PR 댓글, 과거 Acceptance에서 현재 TODO를 복구하지 않는다.
 
@@ -231,6 +234,7 @@ HTML/UI Reference Distillation
 OLD GREENFIELD MODEL = RETIRED
 SYSTEM MODEL = V2 · 34 · REPAIRED
 REQUIREMENT CAPABILITY = V3 · 30
+CURRENT AUTHORITY CORPUS = PRODUCT + ADR + ARCHITECTURE + SYSTEM + UI
 SCENARIO TRACE = 61/61 MACHINE-READABLE
 SCENARIO SOURCE = CLEAN BASE 14 + CLEAN EXPANDED 47
 SEMANTIC AUDIT V2 = CLASSIFICATION EVIDENCE · VALIDATED
