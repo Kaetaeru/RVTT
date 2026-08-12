@@ -1,4 +1,4 @@
-name: Validate RVTT implementation model reset
+name: Validate RVTT implementation system model
 
 concurrency:
   group: rvtt-implementation-model-${{ github.event.pull_request.number || github.ref }}
