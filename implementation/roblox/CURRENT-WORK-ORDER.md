@@ -1,63 +1,65 @@
 # RVTT Roblox Implementation 현재 작업 순서
 
-- 상태: `PRE_G0_PREPARATION_COMPLETE`
-- 최종 갱신일: 2026-08-12
+- 상태: `READY_FOR_E0_REPOSITORY_ENGINE`
+- 최종 갱신일: 2026-08-13
 - 현재 실행 포인터: [`../../.github/CODEX-ACTIVE-TASK.md`](../../.github/CODEX-ACTIVE-TASK.md)
-- Pre-G0 Gate: [`GREENFIELD-PREFLIGHT.md`](GREENFIELD-PREFLIGHT.md)
-- 시스템 순서 권위: [`GREENFIELD-SYSTEM-SEQUENCE.md`](GREENFIELD-SYSTEM-SEQUENCE.md)
-- Module Contract: [`MODULE-CONTRACTS.md`](MODULE-CONTRACTS.md)
-- System/Function Contract: [`SYSTEM-FUNCTION-CONTRACTS.md`](SYSTEM-FUNCTION-CONTRACTS.md)
-- Greenfield 정책: [`GREENFIELD-BUILD-POLICY.md`](GREENFIELD-BUILD-POLICY.md)
-- 확정 동기화 Gate: [`AUTHORITY-RECONCILIATION-POLICY.md`](AUTHORITY-RECONCILIATION-POLICY.md)
+- Execution Layers: [`GREENFIELD-EXECUTION-LAYERS.md`](GREENFIELD-EXECUTION-LAYERS.md)
+- System Sequence: [`GREENFIELD-SYSTEM-SEQUENCE.md`](GREENFIELD-SYSTEM-SEQUENCE.md)
+- Code Contract: [`MODULE-CONTRACTS.md`](MODULE-CONTRACTS.md) + [`SYSTEM-FUNCTION-CONTRACTS.md`](SYSTEM-FUNCTION-CONTRACTS.md)
 
-## 현재 상태
-
-Repository 측 G0 사전 준비의 목표 상태는 다음이다.
+## 현재 실행 순서
 
 ```text
-Greenfield Project       = implementation/roblox/greenfield.project.json
-Canonical Source         = implementation/roblox/greenfield/src
-Focused Tests            = implementation/roblox/greenfield/tests
-Module Contracts         = Foundation + Exploration PLANNED
-System Contracts         = Foundation + Exploration PLANNED
-Stable Function Contracts= Foundation + Exploration DECLARED
-Legacy src               = READ_ONLY_REFERENCE
-G0 Source                = NOT_STARTED
+E0 Repository Core Engine
+→ E1 Roblox Runtime Integration
+→ E2 Presentation / Feel
 ```
 
-다음 실행의 첫 행동은 `GREENFIELD-PREFLIGHT.md`의 Repository 검증, Code Contract 검증, Studio/MCP Capability Handshake다. 허용 상태가 확인되면 선언된 G0 Contract를 그대로 구현한다.
+## E0 — 지금 먼저 할 것
 
-## Source 이전 순서
+GitHub `greenfield/src`에 다음 Engine을 구현하고 `greenfield/tests`에서 자동 테스트한다.
 
 ```text
-System Contract
-→ Module Contract
-→ Stable Function Contract
-→ validate_module_contracts.py
-→ Source
+CommandEnvelope
+ProjectionEnvelope
+WorldContract
+SessionAuthority
+WorldState
+AuthorizationService
+CommandRuntime
+ProjectionService
+MovementDomain
+ExplorationDomain
 ```
 
-다른 Contract-bearing Module이 호출할 함수는 Source를 쓰기 전에 Stable Function Contract가 있어야 한다. private/local helper는 이 대상이 아니다.
+Studio/MCP Handshake를 기다릴 필요가 없다.
 
-현재 `module-contracts.json.entryPoints`는 Function 이름 인덱스이고, 실제 입력/출력/authority/read/write/side-effect/failure/revision 의미는 `system-function-contracts.json`이 소유한다.
+E0 Done:
 
-## 고정 구현 순서
+- System/Module/Stable Function Contract 일치.
+- Repository automated tests PASS.
+- negative/fail-closed cases PASS.
+- unresolved Contract Drift 없음.
+
+## E1 — 그 다음
+
+Studio Integration Gate 후:
 
 ```text
-PRE-G0 Workbench Gate
-→ G0 Shared Contracts
-→ G1 Server Authority Core
-→ G2 Command Transport
-→ G3 Projection Pipeline
-→ G4 Client World Shell
-→ G5 Composition Boot
-→ S1 Selection
-→ 사용자 확인
+CommandGateway / CommandClient
+ProjectionGateway / ProjectionReplica
+SemanticInputRouter / WorldSystem
+ServerApp / ServerBootstrap
+ClientApp / ClientBootstrap
 ```
 
-`PRE-G0 Workbench Gate`는 Foundation Stage가 아니며 `G0→G5` 순서를 바꾸지 않는다.
+Codex/MCP가 Runtime Integration을 자동 테스트한다.
 
-## Exploration Checkpoint
+사용자에게 UX 테스트를 요구하지 않는다.
+
+PathfindingService/raycast/physics처럼 Roblox Runtime에 의존하는 Engine이 필요하면 `ROBLOX_RUNTIME_ENGINE`으로 E1에서 개발·검증하되 최종 Source는 GitHub에 canonicalize한다.
+
+## E2 — 그 다음 사용자 기능
 
 ```text
 S1 Selection
@@ -67,19 +69,44 @@ S1 Selection
 → I1 Interaction
 ```
 
-각 Checkpoint는 사용자 최종 수용 뒤 Authority Reconciliation, System/Module/Stable Function Contract 정합화, Canonical Source, Focused Test, Promotion Commit까지 완료되어야 다음 Checkpoint로 간다.
+각 기능은 Studio self-check 후 사용자에게 보여준다. 마음에 들지 않으면 같은 Checkpoint에서 즉시 수정한다.
+
+## Pathfinding
+
+현재는 구체 Module/API를 미리 만들지 않는다.
+
+Movement Checkpoint 직전에:
+
+```text
+pure contract/policy
+→ Repository
+
+PathfindingService/NavMesh/Collision/Raycast
+→ Studio Runtime Engine
+
+preview/response/smoothness
+→ Human Feel
+```
+
+원칙에 맞는 구체 Module split을 사용자에게 먼저 제안한다.
+
+## 확정 Gate
+
+```text
+사용자 수용
+→ Authority Reconciliation
+→ Execution/System/Module/Function Contract
+→ Canonical Source/Test
+→ Promotion Commit
+→ ACCEPTED
+```
 
 ## 금지
 
-- Contract 없이 Source/API 먼저 생성
-- undeclared cross-module function 사용
-- private helper를 암묵적인 cross-module API로 사용
-- 미래 P2~P10의 구체 Module/API를 현재 미리 발명
-- `default.project.json`을 Greenfield 실행 Project로 사용
-- Legacy `src/` 직접 수정
-- 기존 Production Place를 새 Build Baseline으로 사용
-- G0 전에 G1+ 책임 구현
-- G0~G5 순서 건너뛰기
-- 사용자 Checkpoint 건너뛰기
-
-더 좋은 Architecture·순서·Authority 방향이 보이면 적용하지 말고 사용자에게 먼저 제안한다.
+- Studio를 pure Engine 코드 에디터로 사용하고 GitHub 구현을 미룸.
+- Console 한번 성공으로 Engine PASS 선언.
+- E0/E1 완료 전 user-visible feature를 우회 구현.
+- Studio-only Runtime Engine Source.
+- 미래 미확정 P2~P10 Domain/API 선행 구현.
+- Legacy Source/Project 수정.
+- 사용자 승인 없이 Execution Class/Architecture/Authority 변경.
