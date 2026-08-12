@@ -39,7 +39,7 @@ Requirement Capability는 System 이름의 별칭이 아니다. 하나의 Requir
 ## 2. 권위 역할
 
 - `scenario-base-catalog.json`: Base 14 Scenario의 canonical body. legacy Greenfield capability/system/module mapping을 포함하지 않는다.
-- `architecture-scenarios.json`: Expanded 47 Scenario의 `scenarios[]` body source. top-level legacy metadata와 `capabilityRefs`는 새 Requirement/System mapping 권위가 아니다.
+- `architecture-scenarios.json`: Expanded 47 Scenario의 `scenarios[]` body source. `baseRegistry`는 canonical Base catalog를 가리키며, legacy `capabilityRefs`는 새 Requirement/System mapping 권위가 아니다.
 - `implementation-system-model.json`: 34 System, 30 Requirement Capability, 61 direct Scenario Requirement/System trace, v1 semanticStages.
 - `scenario-semantic-audit.json`: Scenario source blob binding, mutation semantic, typed ingress/recovery expansion, LKG owner set, 61 classification, full semantic schema digest.
 - `architecture-coverage.json`: authority corpus snapshot과 과거 Greenfield coverage/gap evidence 보존용. 안에 남은 Base Scenario 사본 및 system/module refs는 historical evidence일 뿐 canonical Scenario source가 아니다.
@@ -72,7 +72,7 @@ semanticSchemaDigest
 sha256:dcc766c1161332789e91aadc362c4765687af3efc2f7193cf23f748df0eb6489
 
 combinedAuditDigest
-sha256:48477cd70757d4450980162d49c62e12115229762bee4127542d6a167099a723
+sha256:2fa071defaa6ee6363378f9a31780f4d54328199fb4e21bc6eeae3c1b9e07bec
 ```
 
 Scenario body뿐 아니라 공통 의미/확장 규칙이 바뀌어도 semantic re-audit 없이 통과하지 못한다.
