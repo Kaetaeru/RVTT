@@ -302,3 +302,59 @@ SOURCE IMPLEMENTATION = FORBIDDEN
 STUDIO IMPLEMENTATION = FORBIDDEN
 DEDICATED IMPLEMENTATION BRANCH = NOT YET CREATED
 ```
+
+## 12. R3 Semantic Audit Addendum
+
+후속 재검증에서 machine-readable trace가 **형식적으로 유효한 것과 의미적으로 완전한 것은 다르다**는 점을 확인했다. 이에 61개 Scenario를 모두 단계 의미로 다시 감사했다.
+
+```text
+Scenario Semantic Audit = V1 · 61/61
+semantic digest = sha256:57e485a0cec6d753542e4bc202a881e10e2bd5ae63e314cc609c7e2d99f38140
+```
+
+각 Scenario는 `semanticStages[]`를 가진다.
+
+```text
+READ
+MUTATION
+EVENT
+PROJECTION
+RECOVERY
+HUMAN
+```
+
+불변식:
+
+```text
+MUTATION → A3 + REQ_ATOMIC_CONCURRENCY
+EVENT → A3 + A8 + REQ_COMMITTED_EVENT_PROPAGATION
+PROJECTION → A5 + A6 + REQ_VIEWER_SAFE_PROJECTION
+RECOVERY → A6 또는 A7 + recovery/session requirement
+HUMAN → C1/C2/C3/U1/U2 중 하나 이상
+```
+
+이 감사로 Actor publish/spawn, Character migration activation, Ready action, scene source commit, DM takeover, NPC publish/spawn 등에서 빠져 있던 Transaction/Event/Projection pressure를 보완했다. Restart/reconnect가 correctness에 포함되는 Rest/Craft/Travel 계열에는 Recovery pressure를 명시했다.
+
+### A8/A7 Durability Reconciliation
+
+Accepted Event 계약의 durable SubscriberReceipt/Outbox cursor/retry와 Persistence 계약의 storage ownership을 다음처럼 조정한다.
+
+```text
+A3
+= Outbox atomicity와 committed event 사실
+
+A8
+= delivery / subscription / retry / SubscriberReceipt / dead-letter 의미
+
+A7
+= durable persistence와 restart reconstruction mechanism
+
+A8 delivery semantics → A7 durability seam → StorageAdapter
+```
+
+- A8은 `StorageAdapter`를 직접 사용하지 않는다.
+- A7은 A8의 SubscriptionDefinition, ordering scope, retry/failure policy를 소유하지 않는다.
+- `STORAGE_ADAPTER` production consumer는 계속 A7 하나다.
+- Durable event delivery state는 A7이 제공하는 persistence seam을 통해서만 저장·복구한다.
+
+R3는 이 addendum 이후에도 자동 Freeze되지 않는다. 전체 Validator/CI가 최종 통과한 뒤 사용자 결정으로만 R3를 Freeze한다.
