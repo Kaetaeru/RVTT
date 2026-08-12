@@ -9,64 +9,59 @@
 - Module contract: [`manifests/module-contracts.json`](manifests/module-contracts.json)
 - 확정 동기화 Gate: [`AUTHORITY-RECONCILIATION-POLICY.md`](AUTHORITY-RECONCILIATION-POLICY.md)
 
-이 문서는 **Coverage에서 필요성이 확인된 시스템을 어떤 의존 순서로 준비하고, 언제 구현 Checkpoint를 구체화하며, 언제 Repository에서 Studio로 넘어갈지**를 소유한다.
+이 문서는 **Coverage에서 필요성이 확인된 시스템의 구현 순서, Checkpoint 구체화 시점, Repository→Studio 전환, Product UI Shell 선구축 시점**을 소유한다.
 
-핵심 원칙:
+## 0. 전체 실행 순서
 
 ```text
 Planning / Coverage
-→ 구현용 Authority Distillation
-→ E0 Core Engine Checkpoint 구체화
+→ Implementation Authority Distillation
+→ E0 Core Engine Checkpoint Freeze
 → Repository Core Engine 전체 구현·검증
 → CORE_ENGINE_COMPLETE
-→ E1 Studio Runtime Checkpoint 구체화
-→ 그때부터 Studio/MCP 시작
-→ Runtime Engine + Roblox Integration 완료
+→ E1 Studio Runtime Checkpoint Freeze
+→ Studio/MCP Runtime Engine + Integration
 → INTEGRATION_READY
-→ E2 사용자 Checkpoint를 하나씩 JIT 구체화
+→ U0-A HTML/UI Reference Distillation
+→ U0-B Product UI Shell Scaffold
+→ U0-C Human Shell Review
+→ UI_SHELL_READY
+→ E2 User Checkpoint JIT
 → Studio Presentation / Feel
-→ 사용자 수용
+→ Human Acceptance
 ```
 
-**Studio 작업은 `CORE_ENGINE_COMPLETE` 이전에 시작하지 않는다.**
+**`CORE_ENGINE_COMPLETE` 이전에는 Studio/MCP 구현·튜닝을 시작하지 않는다.** PathfindingService, Raycast, Physics처럼 Roblox Runtime이 필요한 엔진도 예외가 아니다.
 
-PathfindingService, Raycast, Physics처럼 Roblox Runtime이 필요한 엔진도 예외가 아니다. Repository에서 정의 가능한 Contract·Policy·Failure Semantics를 먼저 Core Engine 단계에서 완성하고, 실제 Roblox Runtime Provider 구현·튜닝은 `CORE_ENGINE_COMPLETE` 이후 E1에서 시작한다.
+| 순서 | 단계 | Checkpoint/결과 | Studio |
+|---:|---|---|---|
+| 0 | Architecture Coverage | Gap/Boundary 확인 | 금지 |
+| 1 | Authority Distillation | 구현 AI용 System/Scenario/Contract 압축 | 금지 |
+| 2 | E0 Checkpoint Freeze | Core Engine Checkpoint 상세화 | 금지 |
+| 3 | E0 Repository Core Engine | Source + Repository/Negative Test | 금지 |
+| 4 | `CORE_ENGINE_COMPLETE` | E0 종료 | 금지 종료점 |
+| 5 | E1 Checkpoint Freeze | Runtime Service/Manager/Controller/Adapter/Harness 상세화 | 실행 전 |
+| 6 | E1 Roblox Runtime | Runtime Engine + Integration | 최초 사용 |
+| 7 | `INTEGRATION_READY` | E1 자동 검증 완료 | 사용 |
+| 8 | U0-A Design Distillation | HTML/UI 참고자료 → UI 종류·철학·IA·디자인 원칙 글로 확정 | 사용 |
+| 9 | U0-B Product UI Shell | 전체 실제 Product Surface 껍데기 구축 | 사용 |
+| 10 | U0-C Human Shell Review | 전체 Shell 구조 사용자 확인 | 사용 |
+| 11 | `UI_SHELL_READY` | E2 진입 Gate | 사용 |
+| 12 | E2 User Checkpoint JIT | S1/C1/M1/X1/I1 하나씩 상세화 | 사용 |
+| 13 | Human Acceptance | 실제 조작감/UI/Presentation 수용 | 사용 |
 
-현재 Initial Architecture Coverage Audit에서 Foundation 책임 누락 후보가 발견됐다. 따라서 기존 G0~G5/System 목록은 **현재 계획의 의존 그래프**로 보존하지만 Gap Resolution 전 Source 실행 명령으로 사용하지 않는다.
-
-## 0. 전체 실행 순서와 Checkpoint 구체화 시점
-
-| 순서 | 단계 | 무엇을 확정하는가 | Checkpoint 상세화 | Studio 사용 |
-|---:|---|---|---|---|
-| 0 | Architecture Coverage | Product/ADR/Scenario가 요구하는 System Boundary와 Gap | 아직 구현 Checkpoint를 세부 확정하지 않음 | 금지 |
-| 1 | Implementation Authority Distillation | 구현 AI가 읽을 System Map, Scenario Working Set, Contract, Build Order | E0 후보만 정리 | 금지 |
-| 2 | E0 Checkpoint Freeze | Core Engine System/Module/Stable Function과 Repository Test Gate | **E0 구현 Checkpoint를 여기서 구체화** | 금지 |
-| 3 | E0 Repository Core Engine | 순수 Engine Source + Unit/Contract/Negative Test | 확정된 E0 Checkpoint대로 구현 | 금지 |
-| 4 | `CORE_ENGINE_COMPLETE` | 모든 E0 Checkpoint Source/Test/Contract 완료 | E0 종료 | 금지 종료점 |
-| 5 | E1 Checkpoint Freeze | Roblox Runtime Engine, Adapter, Controller/Manager/Service, Studio Test Harness | **Studio 구현 Checkpoint를 이때 처음 구체화** | 아직 실행 전 |
-| 6 | E1 Roblox Runtime | Pathfinding/Raycast/Remote/Player/Instance/Input/Composition 통합 | 확정된 E1 Checkpoint대로 구현 | **여기서 최초 시작** |
-| 7 | `INTEGRATION_READY` | Roblox Runtime 자동 통합 검증 완료 | E1 종료 | 사용 |
-| 8 | E2 User Checkpoint JIT | Selection/Camera/Move/Context/Interaction의 실제 보이는 동작 | **각 Checkpoint 직전에 하나씩 구체화** | 사용 |
-| 9 | Human Acceptance | Studio Play에서 조작감/UI/Presentation 평가 | 다음 Checkpoint는 이전 수용 후 구체화 | 사용 |
-
-Checkpoint를 너무 일찍 상세화하지 않는다.
+Checkpoint 상세화 시점:
 
 ```text
-Core Engine Checkpoint
-= Coverage Gap 해결 + System Boundary 확정 직후
-
-Studio Runtime Checkpoint
-= CORE_ENGINE_COMPLETE 직후
-
-Presentation / Feel Checkpoint
-= INTEGRATION_READY 이후, 현재 사용자 Checkpoint 직전 JIT
+E0 = Coverage Gap 해결 + System Boundary Freeze 뒤, Source 직전
+E1 = CORE_ENGINE_COMPLETE 뒤, Studio Runtime 구현 직전
+U0 = INTEGRATION_READY 뒤, E2 기능 연결 전 한 번
+E2 = UI_SHELL_READY 뒤, 현재 사용자 Checkpoint 하나씩 JIT
 ```
 
-이렇게 해서 미래 Studio 구조를 Core Engine이 아직 흔들리는 동안 발명하지 않고, 반대로 Core Engine 구현 중에 Studio 임시 구조가 Architecture를 끌고 가지 않게 한다.
+## 1. Architecture Coverage + Preflight
 
-## 1. Architecture Coverage + Preflight Gate
-
-Source 구현 전 먼저 `GREENFIELD-PREFLIGHT.md`의 P0 Architecture Coverage Gate를 통과한다.
+E0 Source 전:
 
 ```text
 python implementation/roblox/tooling/validate_architecture_coverage.py
@@ -83,57 +78,53 @@ GAP-007 Capability / Action Availability Projection
 GAP-008 RuleExecution Boundary
 ```
 
-이 Gap이 OPEN인 동안 E0 Source를 구현하지 않는다.
-
-Coverage가 READY가 된 뒤 Repository/Greenfield 경계를 확인한다.
-
-- `greenfield.project.json`은 `greenfield/src`만 Mapping한다.
-- Legacy `src`와 `default.project.json`은 read-only reference다.
-- Boundary / Coverage / Module / System / Function / Execution Layer Validator가 PASS한다.
-- Studio/MCP Capability 확인은 E0 시작 조건이 아니다.
-
-Preflight는 제품 시스템 Stage가 아니다.
+OPEN 동안 E0 Source를 만들지 않는다. Studio/MCP Capability 확인은 E0 시작 조건이 아니다.
 
 ## 2. Implementation Authority Distillation
 
-상세 Planning 문서는 설계 근거 저장소로 유지한다. 구현 AI의 기본 작업면에는 승인된 액기스만 내린다.
-
-구현용 Authority는 최소한 다음을 한 방향으로 설명해야 한다.
+상세 Planning 문서는 근거 저장소다. 실제 구현 AI의 기본 작업면에는 승인된 액기스만 내린다.
 
 ```text
 System Map
 → State / Authority Owner
 → Stable Contract
-→ Scenario Working Set
+→ Current Scenario Working Set
+→ Future Scenario Pressure Set
 → Build Order
 → Test Gate
 ```
 
-전체 61개 Scenario는 Coverage Database로 보존하되, 구현 AI는 현재 Phase를 압박하는 Scenario Working Set만 기본적으로 읽는다.
+전체 Scenario Catalog는 Planning에서 스캔하되 구현 AI에게는 현재 Checkpoint를 압박하는 Working Set만 기본 제공한다.
 
-Planning Authority와 구현용 Authority가 충돌하거나 구현에 필요한 책임이 없으면 Source로 우회하지 않고 Planning으로 Escalate한다.
-
-전용 Implementation Branch를 만들 때는 Planning 기준 SHA를 Baseline으로 기록하고, 구현 AI가 상세 Planning Tree 전체를 기본 탐색 경로로 사용하지 않게 한다.
-
-## 3. E0 Checkpoint Freeze — Repository Core Engine
-
-Coverage Gap Resolution이 끝나고 E0에 필요한 책임이 확정되면, **Source를 쓰기 전에 E0 구현 Checkpoint를 구체화한다.**
+## 3. E0 Checkpoint Freeze
 
 Checkpoint 하나는 최소 다음을 가진다.
 
 ```text
 Checkpoint ID
+Current Deliverable
 System / Module Scope
 Stable Function Scope
 Authority / State Ownership
 Input / Output Contract
-Required Scenario Set
+Current Scenario Working Set
+Future Consumers
+Future Scenario Pressure Set
+Extension Seams
+Stable Ownership / Identity Seams
+Persistence / Reconnect / Rollback Seams
+Observability / Failure Seams
+Forbidden Shortcuts
+Explicit Deferred Non-goals
 Repository Tests
 Negative / Fail-closed Tests
+Future Compatibility Contract Tests
 Completion Condition
 ```
 
-현재 Execution Registry에 분류된 E0 후보:
+미래 기능은 지금 구현하지 않지만, 미래 기능을 붙이려면 현재 public contract를 갈아엎어야 하는 구조는 Freeze하지 않는다.
+
+현재 E0 후보:
 
 ```text
 Shared Contracts
@@ -153,76 +144,32 @@ Core Projection / Domains
 - ExplorationDomain
 ```
 
-현재 의존 순서 후보:
+Coverage Resolution 후 최종화한다. Session Policy, Transaction/Event Barrier, Runtime Identity, Spatial Query, Navigation, Capability/Availability, RuleExecution 책임을 기존 Module에 임의 흡수하지 않는다.
 
-```text
-Shared Contract
-→ SessionAuthority / WorldState
-→ AuthorizationService
-→ CommandRuntime
-→ ProjectionService
-→ MovementDomain / ExplorationDomain
-```
-
-**이 목록과 순서는 Coverage Gap 해결 후 E0 Checkpoint Freeze에서 최종화한다.**
-
-특히 다음 책임을 현재 Module에 임의로 흡수하지 않는다.
-
-- Session Base Mode/Context/Overlay/Transition 정책
-- Cross-domain Transaction/Event/Projection Barrier
-- Runtime Object/Incarnation identity
-- Spatial Query
-- Navigation Planner/Coordinator/Executor
-- Capability/Action Availability
-- RuleExecution
-
-### 기존 G0~G5와 관계
-
-`module-contracts.json.systemStages`의 기존 값:
-
-```text
-G0 Shared Contracts
-→ G1 Server Authority Core
-→ G2 Command Transport
-→ G3 Projection Pipeline
-→ G4 Client World Shell
-→ G5 Composition Boot
-```
-
-은 dependency/lifecycle guard로 유지한다.
-
-Coverage Resolution이 Stage 추가/책임 변경/순서 변경을 요구하면 자동 적용하지 않고 사용자에게 먼저 제안한다.
-
-## 4. E0 Repository Core Engine 실행과 완료 Gate
-
-E0에서는 Studio를 열지 않는다.
+## 4. E0 Repository Core Engine
 
 ```text
 E0 Checkpoint Freeze
-→ greenfield/src 구현
-→ repository unit/contract test
-→ negative/fail-closed test
-→ checkpoint별 완료
-→ 모든 E0 checkpoint 완료
+→ greenfield/src
+→ repository unit/contract tests
+→ negative/fail-closed tests
+→ future compatibility contract tests
+→ 모든 E0 Checkpoint 완료
 → CORE_ENGINE_COMPLETE
 ```
 
 `CORE_ENGINE_COMPLETE` 조건:
 
-- Architecture Coverage의 E0 `blockedBy = []`.
-- 모든 E0 System/Module/Stable Function Contract와 Source가 일치.
-- 모든 E0 Repository automated tests PASS.
-- authority/permission/revision/disclosure/transaction semantics가 승인된 Architecture와 일치.
-- Runtime Provider가 필요한 영역도 Repository-side Contract/Policy/Failure Semantics가 완료됨.
-- Studio에서 임시로 검증해야만 설명 가능한 Core 책임이 남아 있지 않음.
+- E0 Coverage `blockedBy = []`.
+- System/Module/Stable Function Contract와 Source 일치.
+- Repository tests PASS.
+- authority/permission/revision/disclosure/transaction semantics 일치.
+- Runtime Provider가 필요한 영역도 Repository-side Contract/Policy/Failure Semantics 완료.
+- Studio에서 임시 검증해야만 설명 가능한 Core 책임 없음.
 
-사람에게 Engine 함수를 Studio에서 수동 테스트시키지 않는다.
+## 5. E1 Checkpoint Freeze + Roblox Runtime Integration
 
-## 5. E1 Checkpoint Freeze — Studio 진입 직전
-
-`CORE_ENGINE_COMPLETE`가 된 뒤에만 Studio Runtime 구현 계획을 상세화한다.
-
-여기서 처음으로 다음을 확정한다.
+`CORE_ENGINE_COMPLETE` 뒤에만 다음을 구체화한다.
 
 ```text
 Roblox Runtime Engine Module
@@ -235,81 +182,135 @@ Studio Test Harness
 Runtime Failure / Cleanup Gate
 ```
 
-즉 **직접 구현할 Studio의 Controller/Manager/Service 목록은 Core Engine 완료 후 E1 Checkpoint Freeze에서 확정**한다.
-
-현재 잠정 E1 후보:
-
-```text
-CommandGateway
-CommandClient
-ProjectionGateway
-ProjectionReplica
-SemanticInputRouter
-WorldSystem
-ServerApp / ServerBootstrap
-ClientApp / ClientBootstrap
-```
-
-Pathfinding/Spatial/Physics처럼 `ROBLOX_RUNTIME_ENGINE`으로 확정되는 Module도 E1 목록에 들어간다.
-
-## 6. E1 — Roblox Runtime Engine + Integration
-
-필수 흐름:
+E1 실행:
 
 ```text
 CORE_ENGINE_COMPLETE
 → E1 Coverage READY
 → E1 Checkpoint Freeze
 → Rojo Build
-→ Studio/MCP Capability Handshake
-→ Studio Boot
-→ Runtime Engine Provider 구현·튜닝
-→ Remote / Player / Instance / Input Adapter 연결
-→ Codex/MCP 자동 통합 테스트
-→ lifecycle/error/reconnect 확인
+→ Studio/MCP Handshake
+→ Runtime Engine Provider
+→ Remote / Player / Instance / Input Adapter
+→ automated runtime/integration tests
+→ lifecycle/error/reconnect tests
 → INTEGRATION_READY
 ```
 
-E1에서는 사용자 UX 판정을 요구하지 않는다.
+E1은 자동 Harness로 correctness를 검증한다. **기능 테스트를 위해 임시 UI를 만들지 않는다.**
 
-### Runtime-coupled Engine
+Pathfinding/Spatial/Physics Runtime Provider도 E1에서만 Studio 구현한다.
 
-대표 후보:
+## 6. U0 Product UI Shell Session
 
-```text
-PathfindingService / approved navigation provider
-Raycast / spatial provider
-Physics / Collision
-Streaming-sensitive resolution
-DataStore / MemoryStore adapters
-```
+U0는 별도 Execution Class가 아니라 **E1과 E2 사이의 필수 Presentation Preparation Gate**다.
 
-이들은 Roblox Runtime에서 구현·튜닝할 수 있지만 **E0 Core Engine 완료 전에는 Studio 작업을 시작하지 않는다.**
+### U0-A — HTML/UI Reference Distillation
 
-Pathfinding의 Repository-side 책임 예:
+`INTEGRATION_READY` 이후 Studio Shell을 만들기 전에:
 
-```text
-Request / Result Contract
-Movement permission / budget
-Failure / recompute semantics
-Workspace-independent normalization / policy
-```
-
-Studio-side 책임 예:
+1. 당시 Branch에서 실제 HTML UI 예시 파일을 다시 탐색해 `Reference HTML Inventory`를 만든다.
+2. `docs/remake/ui`의 최신 Global Policy, Shared UI, Character Sheet, Combat HUD, DM Workspace, Scene Editor, Common Input 등 현재 UI 권위를 읽는다.
+3. HTML 예시는 **디자인·정보구조 참고**로만 사용한다. Gameplay Authority/State Ownership/Rule 권위로 사용하지 않는다.
+4. 기대되는 HTML 예시를 실제로 찾거나 읽을 수 없으면 임의 디자인을 발명하지 않고 `BLOCK_U0_AND_ESCALATE_TO_PLANNING`한다.
+5. 다음 내용을 구현용 글로 먼저 확정한다.
 
 ```text
-PathfindingService provider
-actual NavMesh / Agent behavior
-obstacle / collision geometry
-raycast / spatial result
-runtime recompute
+Reference HTML Inventory
+Product UI Surface Inventory
+Design Philosophy
+Information Architecture
+Layout / Hierarchy Principles
+Visual Language
+Typography / Spacing / Color Roles
+Component Primitives
+Interaction / Focus / Hover / Selected / Disabled States
+Loading / Empty / Error / Stale / Reconnect States
+Modal / Overlay / Z-order Rules
+Responsive Scale / Accessibility
+Reduced Motion Policy
+Debug Fixture Policy
+Roblox GUI Mapping
+Explicit UI Non-goals
 ```
 
-최종 Source는 항상 `greenfield/src`에 canonicalize한다.
+HTML을 그대로 Roblox GUI로 복사하는 것이 아니라, **왜 그런 UI 구조와 시각 규칙을 사용하는지 글로 추출한 뒤 Roblox 제약에 맞게 매핑**한다.
 
-## 7. E2 — Presentation / Feel Checkpoint JIT
+### U0-B — Product UI Shell Scaffold
 
-`INTEGRATION_READY`가 된 뒤 사용자에게 보이는 Checkpoint를 만든다.
+Surface Inventory에서 확인된 실제 제품 Surface를 기능 없이 먼저 전부 자리 잡는다.
+
+예시 범위는 당시 UI Authority를 기준으로 확정하며, 현재 알려진 축은 다음과 같다.
+
+```text
+Global App Shell / Navigation
+Mode HUDs
+World / Exploration HUD
+Character Console
+Character Sheet
+Inventory / Loot
+Journal / Map
+Settings
+Encounter / Combat HUD
+DM Live Workspace
+Scene Authoring
+Entry / Rest / Death / Recovery
+Modal / Prompt / Context Surface
+Tooltip / Toast / Error / Loading / Empty State
+```
+
+규칙:
+
+- Shell은 실제 제품 구조다. throwaway mock/test GUI가 아니다.
+- 기능/규칙/권위 로직은 넣지 않는다.
+- Placeholder/Fixture 데이터는 허용한다.
+- Semantic Design Token과 공통 Component 방향을 사용한다.
+- Viewer/Mode/Role에 따라 어떤 Surface가 존재하는지 구조를 확인할 수 있어야 한다.
+
+### U0-C — Human Shell Review
+
+사용자가 Studio에서 최소 다음을 확인한다.
+
+```text
+전체 Surface 누락 여부
+Navigation과 Panel 관계
+Mode별 HUD 전환 구조
+Character/Inventory/Journal/Combat/DM/Scene 화면의 자리
+Modal/Overlay/Z-order
+화면 겹침과 정보 밀도
+기본 Scaling/Accessibility 방향
+```
+
+수정 후 `UI_SHELL_READY`가 되어야 E2를 시작한다.
+
+## 7. Debug / Fixture / Test UI 규칙
+
+`UI_SHELL_READY` 이후 별도 임시 `ScreenGui`나 기능별 Test Panel을 만들지 않는다.
+
+```text
+Presentation-only test
+→ Dev Fixture Adapter
+→ fake Projection / ViewModel
+→ actual Product Shell
+
+Gameplay test
+→ Product Shell의 dev-mode Debug Control
+→ actual CommandClient
+→ actual Server Authority / Transaction
+```
+
+Debug Control:
+
+- 실제 Product Shell 내부의 Dev Slot만 사용.
+- Production에서 제거/비활성화 가능.
+- Authority/World/Domain Store 직접 mutation 금지.
+- 별도 Remote/Authority Path 금지.
+- 제품에 필요한 UI라면 Surface Inventory와 실제 Shell에 추가.
+- 제품 UI가 아니라면 자동 Harness로 테스트.
+
+## 8. E2 Presentation / Feel JIT
+
+`UI_SHELL_READY` 이후:
 
 ```text
 S1_SELECTION
@@ -319,41 +320,32 @@ S1_SELECTION
 → I1_INTERACTION
 ```
 
-하지만 다섯 Checkpoint의 세부 UI/Controller 행동을 한 번에 고정하지 않는다.
+각 Checkpoint 직전에 해당 Coverage와 실제 Shell 연결만 상세화한다.
 
 ```text
-INTEGRATION_READY
-→ S1 상세 Checkpoint 구체화
-→ 구현 / Studio self-check
+UI_SHELL_READY
+→ 현재 Checkpoint Coverage READY
+→ 현재 Checkpoint Contract JIT
+→ 실제 Product Shell / World Presentation 연결
+→ Codex Studio self-check
 → READY_FOR_USER
+→ 사용자 Play
+→ 수정 반복
 → 사용자 수용
-→ Reconciliation / ACCEPTED
-→ C1 상세 Checkpoint 구체화
-→ ...
+→ Authority Reconciliation
+→ ACCEPTED
+→ 다음 Checkpoint
 ```
-
-따라서 사용자 피드백으로 앞 단계 UX가 바뀌어도 미래 Checkpoint 문서를 연쇄적으로 다시 쓰지 않는다.
 
 ### S1 Selection
 
-현재 잠정 흐름:
-
-```text
-SemanticInputRouter
-→ SelectionController
-→ local selection state
-→ WorldPresenter
-```
-
-`GAP-003 Runtime Object Identity`, `GAP-004 Spatial Query`, `GAP-009 Client ViewModel/Input Recovery`, `GAP-010 Visibility/Knowledge` 해결 결과를 반영해 S1 시작 직전에 최종화한다.
+`SemanticInputRouter → SelectionController → local selection state → WorldPresenter`. Runtime Identity, Spatial Query, ViewModel/Input Recovery, Visibility 결과를 반영해 최종화한다.
 
 ### C1 Camera
 
-Camera는 client-local Presentation/Feel이다. Input Context/Recovery 경계와 S1 수용 결과를 반영해 C1 시작 직전에 상세화한다.
+Client-local Presentation/Feel. Input Context/Recovery와 S1 결과를 반영한다.
 
 ### M1 Move
-
-현재 잠정 Command 경로:
 
 ```text
 MovementController
@@ -369,17 +361,13 @@ MovementController
 → WorldPresenter
 ```
 
-정확한 Navigation/Pathfinding/Transaction 중간 경계와 보이는 이동 UX는 M1 시작 직전에 확정한다.
+Navigation/Pathfinding/Transaction 경계는 M1 직전 승인된 계약을 따른다.
 
 ### X1 Context / I1 Interaction
 
-대상 타입별 하드코딩 메뉴나 feature-specific authority path로 구현하지 않는다.
+대상 타입별 하드코딩 메뉴나 feature-specific authority path를 만들지 않고 Capability/Availability, Interaction Query, RuleExecution, Visibility 경계를 재사용한다.
 
-Capability Availability / Interaction Query / RuleExecution / Visibility 경계를 재사용하고, 각각의 사용자 Checkpoint 직전에 필요한 표면만 상세화한다.
-
-## 8. Human Checkpoint 규칙
-
-각 사용자 Checkpoint 상태:
+## 9. Human Checkpoint 규칙
 
 ```text
 PLANNED
@@ -389,15 +377,11 @@ ACCEPTED
 BLOCKED
 ```
 
-- 해당 Coverage Phase Gate가 READY여야 `IMPLEMENTING` 가능.
-- `READY_FOR_USER`이면 다음 UI/Feel Checkpoint를 상세 구현하지 않는다.
-- 사용자가 마음에 들지 않으면 같은 Checkpoint를 즉시 수정한다.
-- Engine unit test 결과를 사용자에게 수동 검증시키지 않는다.
-- 사용자가 수용해도 즉시 `ACCEPTED`로 올리지 않는다.
-- Authority Reconciliation + Coverage 정합화 + Canonical Source + Focused Test + Promotion Commit 후 `ACCEPTED`다.
-- 다음 Checkpoint의 상세 계약은 이전 Checkpoint가 수용되기 전에 불필요하게 선행 확정하지 않는다.
+- Coverage Gate + `UI_SHELL_READY`가 E2 `IMPLEMENTING`의 선행 조건.
+- `READY_FOR_USER` 동안 다음 Feature Checkpoint를 상세 구현하지 않는다.
+- 사용자 수용 후 Authority Reconciliation + Coverage/Contract + Canonical Source + Focused Test + Promotion Commit 후 `ACCEPTED`.
 
-## 9. Exploration 이후 큰 제품 순서
+## 10. Exploration 이후 큰 제품 순서
 
 ```text
 P0 Foundation
@@ -413,11 +397,9 @@ P0 Foundation
 → P10 Release Acceptance
 ```
 
-각 P단계는 구현 직전 Architecture Coverage를 다시 수행하고, 해당 단계의 Core/Runtime/Presentation Checkpoint를 같은 원칙으로 JIT 상세화한다.
+각 P단계도 구현 직전 Coverage와 미래 Pressure를 재검토한다. 미래 Capability 추적과 미래 내부 API 선행 설계는 구분한다.
 
-미래 Product Capability를 Coverage Catalog에 추적하는 것과 미래 Module/API를 미리 발명하는 것을 구분한다.
-
-## 10. 비협상 기술 안전 규칙
+## 11. 비협상 기술 안전 규칙
 
 1. gameplay mutation 최종 권한은 Server다.
 2. Client Role/Owner/Controller claim은 untrusted다.
@@ -430,19 +412,21 @@ P0 Foundation
 9. UI/Presenter가 Remote를 직접 소유하지 않는다.
 10. Bootstrap/App은 composition/lifecycle만 담당한다.
 11. lifecycle cleanup을 명시한다.
-12. 오류를 조용히 삼키지 않고 structured diagnostic을 남긴다.
+12. 오류는 structured diagnostic으로 남긴다.
 13. Domain/Controller가 DataStore를 직접 호출하지 않는다.
 14. Studio-only production truth를 허용하지 않는다.
 15. Legacy Source/Project는 read-only reference다.
 16. undeclared cross-module Stable Function 호출을 허용하지 않는다.
 17. Coverage blocker를 임시 Source 구조로 우회하지 않는다.
-18. `CORE_ENGINE_COMPLETE` 이전 Studio/MCP 구현을 허용하지 않는다.
+18. `CORE_ENGINE_COMPLETE` 이전 Studio/MCP 구현 금지.
+19. `UI_SHELL_READY` 이후 throwaway test UI 금지.
+20. Debug UI의 direct authority/store mutation 금지.
 
-## 11. 변경 Gate
+## 12. 변경 Gate
 
-Coverage Gap 해결, Execution Class, 시스템 순서, Authority, state owner, Module responsibility, Checkpoint 구체화 시점 또는 개발 방식을 바꾸려면 사용자에게 먼저 제안한다.
+Coverage Gap, Execution Class, 시스템 순서, Authority, state owner, Module responsibility, Checkpoint 구체화 시점, U0 UI Shell 정책 또는 개발 방식을 바꾸려면 사용자에게 먼저 제안한다.
 
-사용자가 승인한 실행 방식은:
+현재 승인된 실행 방식:
 
 ```text
 Coverage / Planning
@@ -451,6 +435,8 @@ Coverage / Planning
 → Repository Core Engine COMPLETE
 → E1 Checkpoint Freeze
 → Studio Runtime Integration
+→ U0 HTML/UI Distillation + Product UI Shell + Human Shell Review
+→ UI_SHELL_READY
 → E2 User Checkpoint JIT
 → Human Presentation / Feel
 ```
