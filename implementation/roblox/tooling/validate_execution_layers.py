@@ -18,6 +18,14 @@ VALID_CLASSES = {
     "PRESENTATION_FEEL",
 }
 STARTED = {"IMPLEMENTED", "ACCEPTED"}
+VALID_UI_SHELL_STATUS = {
+    "WAITING_FOR_INTEGRATION_READY",
+    "READY_FOR_DISTILLATION",
+    "IMPLEMENTING",
+    "READY_FOR_USER",
+    "UI_SHELL_READY",
+    "BLOCKED",
+}
 
 
 def load_json(path: Path) -> tuple[dict, list[str]]:
@@ -73,6 +81,11 @@ def validate() -> list[str]:
         "futureScenarioPressureSetRequired": True,
         "extensionSeamsRequired": True,
         "forbiddenShortcutsRequired": True,
+        "uiShellSessionRequiredBeforePresentation": True,
+        "htmlReferenceReviewRequiredForUiShell": True,
+        "temporaryTestUiForbiddenAfterShell": True,
+        "debugControlsMustUseProductShell": True,
+        "debugControlsCannotBypassAuthority": True,
     }
     if not isinstance(policy, dict):
         errors.append("execution layers: policy must be an object")
@@ -84,13 +97,13 @@ def validate() -> list[str]:
     expected_concretization = {
         "E0_REPOSITORY_CORE_ENGINE": "AFTER_COVERAGE_AND_SYSTEM_BOUNDARY_FREEZE_BEFORE_SOURCE",
         "E1_ROBLOX_RUNTIME_INTEGRATION": "AFTER_CORE_ENGINE_COMPLETE_BEFORE_STUDIO",
-        "E2_PRESENTATION_AND_FEEL": "AFTER_INTEGRATION_READY_JIT_ONE_USER_CHECKPOINT_AT_A_TIME",
+        "E2_PRESENTATION_AND_FEEL": "AFTER_UI_SHELL_READY_JIT_ONE_USER_CHECKPOINT_AT_A_TIME",
     }
     concretization = execution.get("checkpointConcretization")
     if concretization != expected_concretization:
         errors.append(
             "execution layers: checkpointConcretization must preserve E0-before-source, "
-            "E1-after-core-before-Studio, and E2-JIT-after-integration timing"
+            "E1-after-core-before-Studio, and E2-JIT-after-UI-shell timing"
         )
 
     spec_requirements = execution.get("implementationSpecRequirements")
@@ -138,14 +151,74 @@ def validate() -> list[str]:
         if spec_requirements.get("implementationEscalation") != "ESCALATE_TO_PLANNING_ON_UNMODELED_FUTURE_CONFLICT":
             errors.append("execution layers: unmodeled future conflict must escalate to planning")
 
+    ui_shell = execution.get("presentationPreparation")
+    required_ui_notes = {
+        "referenceHtmlInventory",
+        "surfaceInventory",
+        "designPhilosophy",
+        "informationArchitecture",
+        "layoutPrinciples",
+        "visualLanguage",
+        "typographySpacingColorRoles",
+        "componentPrimitives",
+        "interactionStates",
+        "loadingEmptyErrorDisabledStaleReconnectStates",
+        "modalLayeringAndZOrder",
+        "responsiveScaleAndAccessibility",
+        "reducedMotionPolicy",
+        "debugFixturePolicy",
+        "robloxGuiMapping",
+        "explicitUiNonGoals",
+    }
+    exact_ui_shell = {
+        "id": "U0_PRODUCT_UI_SHELL_SESSION",
+        "isExecutionClass": False,
+        "runsAfter": "INTEGRATION_READY",
+        "runsBefore": "E2_PRESENTATION_AND_FEEL",
+        "requiresStudio": True,
+        "requiresCoreEngineComplete": True,
+        "requiresIntegrationReady": True,
+        "htmlReferenceDiscoveryAtSessionStart": True,
+        "htmlReferencesAreDesignOnly": True,
+        "htmlReferenceInventoryMustResolve": True,
+        "unresolvedHtmlReferencePolicy": "BLOCK_U0_AND_ESCALATE_TO_PLANNING",
+        "currentUiAuthorityRoot": "docs/remake/ui",
+        "surfaceInventoryFreezeRequired": True,
+        "designDistillationRequiredBeforeShellBuild": True,
+        "productShellOnly": True,
+        "featureLogicForbidden": True,
+        "temporaryTestUiForbidden": True,
+        "debugControlsInsideProductShellOnly": True,
+        "debugControlsDevModeOnly": True,
+        "debugControlsMayInjectProjectionFixtures": True,
+        "gameplayDebugControlsMustUseRealCommandAuthorityPath": True,
+        "debugControlsMayNotMutateAuthorityDirectly": True,
+        "humanShellReviewRequired": True,
+        "completionState": "UI_SHELL_READY",
+    }
+    if not isinstance(ui_shell, dict):
+        errors.append("execution layers: presentationPreparation U0 product UI shell session is required")
+        ui_shell_status = None
+    else:
+        ui_shell_status = ui_shell.get("status")
+        if ui_shell_status not in VALID_UI_SHELL_STATUS:
+            errors.append(f"execution layers: invalid U0 UI shell status {ui_shell_status!r}")
+        for key, expected in exact_ui_shell.items():
+            if ui_shell.get(key) != expected:
+                errors.append(f"execution layers: presentationPreparation.{key} must remain {expected!r}")
+        notes = ui_shell.get("requiredDesignNotes")
+        if not isinstance(notes, list) or set(notes) != required_ui_notes:
+            errors.append(
+                "execution layers: U0 requiredDesignNotes must cover HTML references, surface inventory, "
+                "design philosophy, IA, visual language, states, accessibility, debug policy and Roblox GUI mapping"
+            )
+
     class_defs = execution.get("executionClasses")
     if not isinstance(class_defs, dict):
         errors.append("execution layers: executionClasses must be an object")
     else:
         if set(class_defs) != VALID_CLASSES:
-            errors.append(
-                f"execution layers: executionClasses must be exactly {sorted(VALID_CLASSES)}"
-            )
+            errors.append(f"execution layers: executionClasses must be exactly {sorted(VALID_CLASSES)}")
         for class_id, spec in class_defs.items():
             if not isinstance(spec, dict):
                 errors.append(f"execution layers: {class_id} definition must be an object")
@@ -159,6 +232,9 @@ def validate() -> list[str]:
                 errors.append(f"execution layers: {class_id}.verification must be a non-empty string array")
             if not isinstance(spec.get("humanReview"), bool):
                 errors.append(f"execution layers: {class_id}.humanReview must be boolean")
+        presentation_class = class_defs.get("PRESENTATION_FEEL", {})
+        if presentation_class.get("authoring") != "STUDIO_MCP_AFTER_UI_SHELL_READY":
+            errors.append("execution layers: PRESENTATION_FEEL authoring must begin only after UI_SHELL_READY")
 
     runtime_rule = execution.get("runtimeCoupledRule")
     if not isinstance(runtime_rule, dict):
@@ -171,9 +247,7 @@ def validate() -> list[str]:
         if runtime_rule.get("coverageRequiredFirst") is not True:
             errors.append("execution layers: runtimeCoupledRule.coverageRequiredFirst must remain true")
         if runtime_rule.get("coreEngineCompleteRequiredBeforeStudio") is not True:
-            errors.append(
-                "execution layers: runtimeCoupledRule.coreEngineCompleteRequiredBeforeStudio must remain true"
-            )
+            errors.append("execution layers: runtimeCoupledRule.coreEngineCompleteRequiredBeforeStudio must remain true")
         for key in (
             "studioAuthoringAllowed",
             "studioAutomatedVerificationRequired",
@@ -227,9 +301,7 @@ def validate() -> list[str]:
     missing = sorted(module_ids - classified)
     extra = sorted(classified - module_ids)
     if missing or extra:
-        errors.append(
-            f"execution layers: module coverage must be exact; missing={missing} extra={extra}"
-        )
+        errors.append(f"execution layers: module coverage must be exact; missing={missing} extra={extra}")
 
     coverage_phase_gates = {}
     for gate in coverage.get("phaseGates", []):
@@ -259,7 +331,7 @@ def validate() -> list[str]:
             "studioAllowed": True,
         },
         "E2_PRESENTATION_AND_FEEL": {
-            "checkpointFreeze": "JIT_ONE_CHECKPOINT_AFTER_INTEGRATION_READY",
+            "checkpointFreeze": "JIT_ONE_CHECKPOINT_AFTER_UI_SHELL_READY",
             "studioAllowed": True,
         },
     }
@@ -309,9 +381,7 @@ def validate() -> list[str]:
     if orders and sorted(orders) != list(range(len(orders))):
         errors.append("execution layers: phase orders must be contiguous starting at 0")
     if phase_modules != module_ids:
-        errors.append(
-            "execution layers: phase module union must cover every current module exactly once"
-        )
+        errors.append("execution layers: phase module union must cover every current module exactly once")
 
     expected_phase_classes = {
         "E0_REPOSITORY_CORE_ENGINE": {"CORE_ENGINE"},
@@ -319,9 +389,7 @@ def validate() -> list[str]:
         "E2_PRESENTATION_AND_FEEL": {"PRESENTATION_FEEL"},
     }
     if set(phase_by_id) != set(expected_phase_classes):
-        errors.append(
-            f"execution layers: phases must be exactly {sorted(expected_phase_classes)}"
-        )
+        errors.append(f"execution layers: phases must be exactly {sorted(expected_phase_classes)}")
     for phase_id, allowed_classes in expected_phase_classes.items():
         phase = phase_by_id.get(phase_id)
         if not phase:
@@ -329,9 +397,7 @@ def validate() -> list[str]:
         for module_id in phase.get("modules", []):
             class_id = class_by_module.get(module_id)
             if class_id not in allowed_classes:
-                errors.append(
-                    f"execution layers: {module_id} class {class_id} cannot be in {phase_id}"
-                )
+                errors.append(f"execution layers: {module_id} class {class_id} cannot be in {phase_id}")
 
     for phase_id in ("E0_REPOSITORY_CORE_ENGINE", "E1_ROBLOX_RUNTIME_INTEGRATION"):
         phase = phase_by_id.get(phase_id, {})
@@ -343,9 +409,8 @@ def validate() -> list[str]:
         status = phase.get("status")
         if blockers and not isinstance(status, str):
             errors.append(f"execution layers: {phase_id} must expose blocked/waiting status")
-        if phase_id == "E0_REPOSITORY_CORE_ENGINE" and blockers:
-            if not str(status).startswith("BLOCKED"):
-                errors.append(f"execution layers: E0 must be BLOCKED while coverage blockers are open: {sorted(blockers)}")
+        if phase_id == "E0_REPOSITORY_CORE_ENGINE" and blockers and not str(status).startswith("BLOCKED"):
+            errors.append(f"execution layers: E0 must be BLOCKED while coverage blockers are open: {sorted(blockers)}")
         if phase_id == "E0_REPOSITORY_CORE_ENGINE" and not blockers and str(status).startswith("BLOCKED"):
             errors.append("execution layers: E0 remains BLOCKED after coverage blockers were resolved")
 
@@ -359,27 +424,20 @@ def validate() -> list[str]:
             key=lambda cp: cp["order"],
         )]
         if actual_order != expected_checkpoints:
-            errors.append(
-                f"execution layers: checkpoint order drifted: registry={actual_order} execution={expected_checkpoints}"
-            )
+            errors.append(f"execution layers: checkpoint order drifted: registry={actual_order} execution={expected_checkpoints}")
 
     core_modules = [mid for mid, cls in class_by_module.items() if cls == "CORE_ENGINE"]
-    integration_modules = [
-        mid for mid, cls in class_by_module.items()
-        if cls in {"ROBLOX_RUNTIME_ENGINE", "ROBLOX_INTEGRATION"}
-    ]
+    integration_modules = [mid for mid, cls in class_by_module.items() if cls in {"ROBLOX_RUNTIME_ENGINE", "ROBLOX_INTEGRATION"}]
     presentation_modules = [mid for mid, cls in class_by_module.items() if cls == "PRESENTATION_FEEL"]
 
     def started(module_id: str) -> bool:
         return by_id.get(module_id, {}).get("status") in STARTED
 
     e0_blocked = bool(
-        set(coverage_phase_gates.get("E0_REPOSITORY_CORE_ENGINE", {}).get("blockedBy", []))
-        & open_gaps
+        set(coverage_phase_gates.get("E0_REPOSITORY_CORE_ENGINE", {}).get("blockedBy", [])) & open_gaps
     )
     e1_blocked = bool(
-        set(coverage_phase_gates.get("E1_ROBLOX_RUNTIME_INTEGRATION", {}).get("blockedBy", []))
-        & open_gaps
+        set(coverage_phase_gates.get("E1_ROBLOX_RUNTIME_INTEGRATION", {}).get("blockedBy", [])) & open_gaps
     )
     if e0_blocked and any(started(mid) for mid in core_modules):
         errors.append("execution layers: core engine modules started while E0 architecture coverage is blocked")
@@ -389,16 +447,14 @@ def validate() -> list[str]:
     if any(started(mid) for mid in integration_modules):
         incomplete = [mid for mid in core_modules if not started(mid)]
         if incomplete:
-            errors.append(
-                f"execution layers: Roblox integration started before core engine completed: {incomplete}"
-            )
+            errors.append(f"execution layers: Roblox integration started before core engine completed: {incomplete}")
 
     if any(started(mid) for mid in presentation_modules):
         incomplete = [mid for mid in core_modules + integration_modules if not started(mid)]
         if incomplete:
-            errors.append(
-                f"execution layers: presentation started before engine/integration completed: {incomplete}"
-            )
+            errors.append(f"execution layers: presentation started before engine/integration completed: {incomplete}")
+        if ui_shell_status != "UI_SHELL_READY":
+            errors.append("execution layers: presentation started before U0 product UI shell reached UI_SHELL_READY")
 
     for module_id, class_id in class_by_module.items():
         module = by_id.get(module_id, {})
@@ -409,14 +465,9 @@ def validate() -> list[str]:
         if not isinstance(test_refs, list):
             continue
         if class_id == "CORE_ENGINE" and not test_refs:
-            errors.append(
-                f"execution layers: CORE_ENGINE module {module_id} is {status} but has no repository testRefs"
-            )
+            errors.append(f"execution layers: CORE_ENGINE module {module_id} is {status} but has no repository testRefs")
         if class_id in {"ROBLOX_RUNTIME_ENGINE", "ROBLOX_INTEGRATION"}:
-            if not any(
-                isinstance(ref, str) and ref.startswith("greenfield/tests/studio/")
-                for ref in test_refs
-            ):
+            if not any(isinstance(ref, str) and ref.startswith("greenfield/tests/studio/") for ref in test_refs):
                 errors.append(
                     f"execution layers: {class_id} module {module_id} is {status} but has no greenfield/tests/studio/ verification"
                 )
@@ -447,6 +498,8 @@ def main() -> int:
         + ", ".join(f"{class_id}={counts.get(class_id, 0)}" for class_id in sorted(VALID_CLASSES))
         + f"; phases={len(execution['phases'])}; checkpoints={len(execution['checkpointOrder'])}"
         + f"; future_spec_fields={len(execution['implementationSpecRequirements']['requiredAtCheckpointFreeze'])}"
+        + f"; ui_shell_status={execution['presentationPreparation']['status']}"
+        + f"; ui_design_notes={len(execution['presentationPreparation']['requiredDesignNotes'])}"
         + f"; open_architecture_blockers={len(open_blockers)}"
     )
     return 0
