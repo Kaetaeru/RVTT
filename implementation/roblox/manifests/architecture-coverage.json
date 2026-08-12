@@ -27,7 +27,7 @@
       {"path":"docs/remake/specs","expectedTreeSha":"54da95b3aec97cef9eba8c4a698b534abc29505c","role":"IMPLEMENTATION_SPEC_AUTHORITY"}
     ],
     "directFiles": [
-      {"path":"docs/remake/CURRENT-WORK-ORDER.md","expectedBlobSha":"cf48db8c6fb242405d5b628fb6620c35d11ba4ca8","role":"CURRENT_PLANNING_AUTHORITY"},
+      {"path":"docs/remake/CURRENT-WORK-ORDER.md","expectedBlobSha":"cf48db8c6fb242405d5b628fb6620c35d11ba4ca","role":"CURRENT_PLANNING_AUTHORITY"},
       {"path":"docs/remake/DOCUMENT-ROLE-ACCESS-AUTHORING-RULE.md","expectedBlobSha":"11956d2a5cca871eb4e3e85f43b03d746a2a15bf","role":"ROLE_ACCESS_AUTHORITY"}
     ]
   },
