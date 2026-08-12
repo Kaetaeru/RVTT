@@ -1,0 +1,64 @@
+name: Validate RVTT architecture coverage
+
+concurrency:
+  group: rvtt-architecture-coverage-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+    paths:
+      - "AGENTS.md"
+      - ".github/CODEX-ACTIVE-TASK.md"
+      - ".github/workflows/validate-architecture-coverage.yml"
+      - "docs/remake/CURRENT-WORK-ORDER.md"
+      - "docs/remake/DOCUMENT-ROLE-ACCESS-AUTHORING-RULE.md"
+      - "docs/remake/product/**"
+      - "docs/remake/decisions/**"
+      - "docs/remake/architecture/**"
+      - "docs/remake/systems/**"
+      - "docs/remake/ui/**"
+      - "docs/remake/specs/**"
+      - "implementation/roblox/ARCHITECTURE-COVERAGE-POLICY.md"
+      - "implementation/roblox/audits/ARCHITECTURE-COVERAGE-AUDIT-001.md"
+      - "implementation/roblox/manifests/architecture-coverage.json"
+      - "implementation/roblox/manifests/module-contracts.json"
+      - "implementation/roblox/manifests/system-function-contracts.json"
+      - "implementation/roblox/manifests/execution-layers.json"
+      - "implementation/roblox/tooling/validate_architecture_coverage.py"
+  push:
+    branches:
+      - planning/rvtt-remake
+    paths:
+      - "AGENTS.md"
+      - "docs/remake/CURRENT-WORK-ORDER.md"
+      - "docs/remake/product/**"
+      - "docs/remake/decisions/**"
+      - "docs/remake/architecture/**"
+      - "docs/remake/systems/**"
+      - "docs/remake/ui/**"
+      - "docs/remake/specs/**"
+      - "implementation/roblox/ARCHITECTURE-COVERAGE-POLICY.md"
+      - "implementation/roblox/manifests/architecture-coverage.json"
+      - "implementation/roblox/manifests/module-contracts.json"
+      - "implementation/roblox/manifests/system-function-contracts.json"
+      - "implementation/roblox/manifests/execution-layers.json"
+      - "implementation/roblox/tooling/validate_architecture_coverage.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate architecture coverage
+        run: python implementation/roblox/tooling/validate_architecture_coverage.py
