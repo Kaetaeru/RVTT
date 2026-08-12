@@ -22,12 +22,17 @@
     "futureCapabilitiesConstrainArchitectureWithoutExpandingScope": true,
     "futureScenarioPressureSetRequired": true,
     "extensionSeamsRequired": true,
-    "forbiddenShortcutsRequired": true
+    "forbiddenShortcutsRequired": true,
+    "uiShellSessionRequiredBeforePresentation": true,
+    "htmlReferenceReviewRequiredForUiShell": true,
+    "temporaryTestUiForbiddenAfterShell": true,
+    "debugControlsMustUseProductShell": true,
+    "debugControlsCannotBypassAuthority": true
   },
   "checkpointConcretization": {
     "E0_REPOSITORY_CORE_ENGINE": "AFTER_COVERAGE_AND_SYSTEM_BOUNDARY_FREEZE_BEFORE_SOURCE",
     "E1_ROBLOX_RUNTIME_INTEGRATION": "AFTER_CORE_ENGINE_COMPLETE_BEFORE_STUDIO",
-    "E2_PRESENTATION_AND_FEEL": "AFTER_INTEGRATION_READY_JIT_ONE_USER_CHECKPOINT_AT_A_TIME"
+    "E2_PRESENTATION_AND_FEEL": "AFTER_UI_SHELL_READY_JIT_ONE_USER_CHECKPOINT_AT_A_TIME"
   },
   "implementationSpecRequirements": {
     "scenarioSources": [
@@ -63,6 +68,51 @@
     ],
     "implementationEscalation": "ESCALATE_TO_PLANNING_ON_UNMODELED_FUTURE_CONFLICT"
   },
+  "presentationPreparation": {
+    "id": "U0_PRODUCT_UI_SHELL_SESSION",
+    "isExecutionClass": false,
+    "status": "WAITING_FOR_INTEGRATION_READY",
+    "runsAfter": "INTEGRATION_READY",
+    "runsBefore": "E2_PRESENTATION_AND_FEEL",
+    "requiresStudio": true,
+    "requiresCoreEngineComplete": true,
+    "requiresIntegrationReady": true,
+    "htmlReferenceDiscoveryAtSessionStart": true,
+    "htmlReferencesAreDesignOnly": true,
+    "htmlReferenceInventoryMustResolve": true,
+    "unresolvedHtmlReferencePolicy": "BLOCK_U0_AND_ESCALATE_TO_PLANNING",
+    "currentUiAuthorityRoot": "docs/remake/ui",
+    "surfaceInventoryFreezeRequired": true,
+    "designDistillationRequiredBeforeShellBuild": true,
+    "productShellOnly": true,
+    "featureLogicForbidden": true,
+    "temporaryTestUiForbidden": true,
+    "debugControlsInsideProductShellOnly": true,
+    "debugControlsDevModeOnly": true,
+    "debugControlsMayInjectProjectionFixtures": true,
+    "gameplayDebugControlsMustUseRealCommandAuthorityPath": true,
+    "debugControlsMayNotMutateAuthorityDirectly": true,
+    "humanShellReviewRequired": true,
+    "completionState": "UI_SHELL_READY",
+    "requiredDesignNotes": [
+      "referenceHtmlInventory",
+      "surfaceInventory",
+      "designPhilosophy",
+      "informationArchitecture",
+      "layoutPrinciples",
+      "visualLanguage",
+      "typographySpacingColorRoles",
+      "componentPrimitives",
+      "interactionStates",
+      "loadingEmptyErrorDisabledStaleReconnectStates",
+      "modalLayeringAndZOrder",
+      "responsiveScaleAndAccessibility",
+      "reducedMotionPolicy",
+      "debugFixturePolicy",
+      "robloxGuiMapping",
+      "explicitUiNonGoals"
+    ]
+  },
   "executionClasses": {
     "CORE_ENGINE": {
       "authoring": "GITHUB_FIRST",
@@ -83,10 +133,10 @@
       "description": "E1 Remote, Player, Instance, input, replica, composition, and lifecycle adapters that connect completed core engine code to Roblox runtime."
     },
     "PRESENTATION_FEEL": {
-      "authoring": "STUDIO_MCP_AFTER_INTEGRATION_READY",
+      "authoring": "STUDIO_MCP_AFTER_UI_SHELL_READY",
       "verification": ["STUDIO_SELF_CHECK", "HUMAN_ACCEPTANCE"],
       "humanReview": true,
-      "description": "Visible presentation and player feel, detailed just-in-time one user checkpoint at a time after runtime integration is ready."
+      "description": "Visible presentation and player feel, wired into the accepted product UI shell and detailed just-in-time one user checkpoint at a time."
     }
   },
   "runtimeCoupledRule": {
@@ -194,8 +244,8 @@
       "id": "E2_PRESENTATION_AND_FEEL",
       "order": 2,
       "coveragePhaseGate": "CHECKPOINT_SPECIFIC",
-      "status": "WAITING_FOR_E0_E1_AND_CHECKPOINT_COVERAGE",
-      "checkpointFreeze": "JIT_ONE_CHECKPOINT_AFTER_INTEGRATION_READY",
+      "status": "WAITING_FOR_UI_SHELL_AND_CHECKPOINT_COVERAGE",
+      "checkpointFreeze": "JIT_ONE_CHECKPOINT_AFTER_UI_SHELL_READY",
       "studioAllowed": true,
       "modules": [
         "client.world.selection",
@@ -207,7 +257,9 @@
       "gate": [
         "current checkpoint architecture coverage phase has no open blockers",
         "E0 and E1 are complete",
+        "U0 product UI shell session completed with UI_SHELL_READY",
         "only the current user-facing checkpoint has been concretized",
+        "current presentation checkpoint uses the real product shell instead of disposable test UI",
         "current presentation checkpoint does not reconstruct or bypass future shared engine authority",
         "current checkpoint is playable in Studio",
         "Codex Studio self-check passes",
