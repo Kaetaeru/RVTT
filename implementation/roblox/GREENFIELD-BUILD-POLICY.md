@@ -4,6 +4,7 @@
 - 최종 갱신일: 2026-08-12
 - Pre-G0 Gate: [`GREENFIELD-PREFLIGHT.md`](GREENFIELD-PREFLIGHT.md)
 - 시스템 순서 권위: [`GREENFIELD-SYSTEM-SEQUENCE.md`](GREENFIELD-SYSTEM-SEQUENCE.md)
+- Code Boundary: [`MODULE-CONTRACTS.md`](MODULE-CONTRACTS.md) + [`SYSTEM-FUNCTION-CONTRACTS.md`](SYSTEM-FUNCTION-CONTRACTS.md)
 - 확정 동기화 Gate: [`AUTHORITY-RECONCILIATION-POLICY.md`](AUTHORITY-RECONCILIATION-POLICY.md)
 
 ## 1. 기본 방식
@@ -11,9 +12,11 @@
 새 RVTT는 **Architecture-first Greenfield + Tight Human Feedback**으로 만든다.
 
 ```text
-다음 기능에 필요한 시스템 경계
+다음 기능에 필요한 System Contract
+→ Module Contract
+→ Stable Function Contract
 → Pre-G0 Workbench 확인
-→ 고정 System Sequence에 따라 Foundation 구현
+→ 고정 System Sequence에 따라 구현
 → 작은 Playable Capability
 → 사용자 직접 테스트
 → 즉시 수정 반복
@@ -40,7 +43,24 @@ greenfield.project.json
 
 G0 시작 전 `GREENFIELD-PREFLIGHT.md`의 Repository Gate와 Studio/MCP Capability Handshake를 통과한다. 이 Gate는 Foundation Stage를 추가하거나 순서를 바꾸지 않는다.
 
-## 3. 순서는 선택 사항이 아니다
+## 3. Code Contract가 Source보다 먼저다
+
+현재 또는 다음 구현 범위에서 Codex는 Source 파일을 만들기 전에 다음을 확인한다.
+
+1. 해당 기능의 `systemContracts`가 존재한다.
+2. 필요한 Contract-bearing Module이 `module-contracts.json`에 존재한다.
+3. 다른 Module이 호출할 모든 안정 함수가 `system-function-contracts.json`에 존재한다.
+4. `validate_module_contracts.py`가 PASS한다.
+
+그 뒤에만 Source를 구현한다.
+
+`entryPoints`는 함수 이름 인덱스이며 실제 함수 의미는 Stable Function Contract가 소유한다.
+
+다른 Contract-bearing Module이 호출하는 함수가 Registry에 없으면 **먼저 계약을 추가**한다. private helper를 cross-module API처럼 몰래 사용하지 않는다.
+
+단, 아직 멀리 있는 P2~P10 시스템의 세부 Module/API를 미리 상상해 대량 생성하지 않는다. 큰 시스템 순서는 미리 고정하고 구체 Code Contract는 구현 범위 직전에 만든다.
+
+## 4. 순서는 선택 사항이 아니다
 
 현재 Foundation 순서는 다음과 같다.
 
@@ -56,7 +76,7 @@ G0 Shared Contracts
 
 정확한 Module, Gate와 기술 안전 규칙은 `GREENFIELD-SYSTEM-SEQUENCE.md`가 소유한다. Codex는 편의를 위해 순서를 건너뛰거나 임시 Remote/authoritative path를 만들지 않는다.
 
-## 4. Bootstrap / App
+## 5. Bootstrap / App
 
 ```text
 ClientBootstrap.client.lua → ClientApp.start()
@@ -65,7 +85,9 @@ ServerBootstrap.server.lua → ServerApp.start()
 
 Bootstrap/App은 Composition Root와 lifecycle만 담당한다. Gameplay rule, input semantics, authorization, authoritative mutation, projection selection을 넣지 않는다.
 
-## 5. 사용자 Feedback Loop
+Bootstrap은 `AUTO_EXEC_SCRIPT` Surface이며 임의의 gameplay public function을 추가하지 않는다.
+
+## 6. 사용자 Feedback Loop
 
 Exploration 첫 Checkpoint:
 
@@ -79,26 +101,32 @@ S1 Selection
 
 각 Checkpoint가 `READY_FOR_USER`가 되면 다음 기능을 멈춘다. 수정 요청은 같은 Checkpoint에서 즉시 반영한다.
 
+반복 중 private/helper 구현은 빠르게 수정할 수 있다. 기존 Architecture 의미 안에서 필요한 Stable API가 달라지면 Function Contract를 먼저 수정하고 Source를 맞춘다.
+
+그 변경이 Authority, state owner, Module 책임, System flow를 바꾸면 사용자에게 먼저 제안한다.
+
 사용자 수용 자체는 아직 `ACCEPTED`가 아니다.
 
 ```text
 사용자 수용
 → 현재 Authority 충돌 검색
-→ 상위 문서부터 정합화
-→ Module Contract / Source / Test 정규화
+→ System/Module/Stable Function Contract 정합화
+→ Source / Test 정규화
 → 남은 충돌 없음 확인
 → Promotion Commit
 → ACCEPTED
 → 다음 Checkpoint
 ```
 
-## 6. 반복 중 문서 Churn 금지
+## 7. 반복 중 문서 Churn 금지
 
 사용자가 같은 기능을 여러 차례 수정하게 하는 동안 Product·ADR·Architecture를 매 반복마다 갱신하지 않는다. 현재 Checkpoint가 `IMPLEMENTING`/`READY_FOR_USER`인 동안에는 방금 요청된 동작이 임시 Working Truth가 될 수 있다.
 
-단, 비협상 Security·Authority 규칙과 Greenfield/Legacy 경계는 반복 중에도 유지한다.
+다만 실제 cross-module 호출 경계가 바뀌었다면 Stable Function Contract와 Source를 서로 어긋난 채 방치하지 않는다. Product/Architecture 상위 의미는 최종 수용 때 Reconciliation한다.
 
-## 7. Legacy Source
+비협상 Security·Authority 규칙과 Greenfield/Legacy 경계는 반복 중에도 유지한다.
+
+## 8. Legacy Source
 
 Legacy `src/`와 과거 Acceptance는 읽기 Reference다.
 
@@ -110,20 +138,21 @@ Legacy `src/`와 과거 Acceptance는 읽기 Reference다.
 
 Legacy 파일 구조를 복제하거나 Legacy 파일 자체를 현재 구현으로 고치는 것이 목표가 아니다.
 
-## 8. Canonicalization
+## 9. Canonicalization
 
 사용자가 수용한 구현은 현재 Authority를 먼저 맞춘 뒤 `greenfield/src`로 정규화한다.
 
 - Studio-only Production logic 제거
 - `greenfield.project.json`에서 Rojo 재현
-- Module Contract status 갱신
+- System/Module/Stable Function Contract 정합화
+- Module/Checkpoint status 갱신
 - `greenfield/tests` Focused Test 추가
 - 현재 Authority 문서의 충돌 제거
 - Promotion Commit으로 복원 기준점 고정
 
 사용자가 화면 동작을 수용했다고 해서 내부 Architecture·Authority 변경이 자동 승인되는 것은 아니다.
 
-## 9. 기술 안전
+## 10. 기술 안전
 
 Prototype 단계에서도 다음은 우회하지 않는다.
 
@@ -137,9 +166,10 @@ Prototype 단계에서도 다음은 우회하지 않는다.
 - lifecycle cleanup
 - fail closed permission/schema handling
 - Greenfield canonical source / Legacy read-only boundary
+- undeclared cross-module call 금지
 
-세부 안전 규칙은 `GREENFIELD-SYSTEM-SEQUENCE.md`가 유일한 현재 기준이다.
+세부 안전 규칙은 `GREENFIELD-SYSTEM-SEQUENCE.md`와 Stable Function Contract를 함께 따른다.
 
-## 10. 변경 Gate
+## 11. 변경 Gate
 
-현재보다 더 좋아 보이는 Architecture, 순서, 핵심 UX, Authority, 개발 방식 또는 Legacy 경계 변경이 발견되면 자동 적용하지 않는다. 먼저 사용자에게 제안한다.
+현재보다 더 좋아 보이는 Architecture, 순서, 핵심 UX, Authority, Module 책임/System flow, 개발 방식 또는 Legacy 경계 변경이 발견되면 자동 적용하지 않는다. 먼저 사용자에게 제안한다.
