@@ -179,7 +179,7 @@ R3 = NOT FROZEN
 
 ## 8. Validation Evidence Rule
 
-Repository 내부 Audit 문서에는 `Final validated branch HEAD = <SHA>`를 자기 자신의 current-state marker로 기록하지 않는다.
+Repository 내부 Audit 문서에는 current/final branch HEAD SHA를 current-state marker로 기록하지 않는다.
 
 이유:
 
@@ -190,15 +190,9 @@ Audit 파일에 current HEAD를 기록
 → 기록된 HEAD가 즉시 stale
 ```
 
-따라서 Repository Audit은 **검증된 reconciliation anchor와 검증 방법**을 기록하고, 실제 최종 branch HEAD와 그 HEAD의 Workflow 결과는 GitHub PR/Actions metadata에서 확인한다.
+따라서 Repository Audit은 검증 방법과 검증된 사실의 종류만 기록한다. 실제 current/final branch HEAD와 그 HEAD의 Workflow 결과는 GitHub PR/Actions metadata를 source of truth로 확인한다.
 
-검증 anchor:
-
-```text
-54eaa61739e62c35e3bfed33bf28e5b7ca6e0f14
-```
-
-이 anchor에서 다음 9개 Pull Request Workflow가 모두 `completed / success`를 기록했다.
+필수 검증 집합:
 
 ```text
 Validate RVTT architecture coverage
@@ -212,6 +206,6 @@ Validate RVTT content templates
 Validate remake documentation
 ```
 
-이 self-reference 제거 커밋도 동일 9개 Workflow 집합에서 검증한다. 최종 branch HEAD/CI는 GitHub metadata를 source of truth로 사용하며 Audit 파일을 다시 수정해 SHA를 따라가지 않는다.
+최종 branch HEAD/CI는 GitHub metadata를 source of truth로 사용하며 Audit 파일을 다시 수정해 SHA를 따라가지 않는다.
 
 검증 성공은 R3 자동 Freeze가 아니다. 사용자 Freeze 결정 후에만 R4로 이동한다.
