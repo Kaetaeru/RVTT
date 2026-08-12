@@ -392,3 +392,35 @@ R3 = NOT FROZEN
 ```
 
 후속 감사 결과는 기존 1~12절을 덮어쓰지 않고 추가 증거로 보존한다. R3 Freeze는 사용자 결정으로만 수행한다.
+
+## 16. Canonical Base Validator Reconciliation
+
+Section 10의 `legacy/base+expanded` 문구는 당시 validator 상태를 보존한 역사적 기록이다. 현재 active coverage validator는 더 이상 legacy Base Scenario 사본을 active Base source로 사용하지 않는다.
+
+현재 검증 경로:
+
+```text
+Base 14
+→ scenario-base-catalog.json
+
+Expanded 47
+→ architecture-scenarios.json scenarios[]
+
+Base 14 + Expanded 47 ID set
+→ implementation-system-model.json scenarioTrace ID set과 exact match
+
+architecture-coverage.json
+→ authorityCorpus snapshot + historical Greenfield coverage evidence only
+```
+
+`architecture-scenarios.json.baseRegistry`도 `scenario-base-catalog.json`을 가리킨다. Expanded Scenario body의 의미는 변경하지 않았으며 source blob binding만 새 metadata blob에 맞춰 다시 묶었다.
+
+```text
+expandedScenarioBlobSha
+93f275b373c9f88b12ed3078149ff562642a5b1d
+
+combinedAuditDigest
+sha256:2fa071defaa6ee6363378f9a31780f4d54328199fb4e21bc6eeae3c1b9e07bec
+```
+
+이 reconciliation은 System/Requirement/Scenario 의미, R3 상태, Source/Studio gate를 변경하지 않는다. 전체 CI 통과가 이 보정의 완료 조건이다.
