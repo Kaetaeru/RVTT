@@ -5,6 +5,8 @@
 - Pre-G0 authority: [`../implementation/roblox/GREENFIELD-PREFLIGHT.md`](../implementation/roblox/GREENFIELD-PREFLIGHT.md)
 - Greenfield project: `implementation/roblox/greenfield.project.json`
 - Sequence authority: [`../implementation/roblox/GREENFIELD-SYSTEM-SEQUENCE.md`](../implementation/roblox/GREENFIELD-SYSTEM-SEQUENCE.md)
+- Module authority: [`../implementation/roblox/MODULE-CONTRACTS.md`](../implementation/roblox/MODULE-CONTRACTS.md)
+- System/function authority: [`../implementation/roblox/SYSTEM-FUNCTION-CONTRACTS.md`](../implementation/roblox/SYSTEM-FUNCTION-CONTRACTS.md)
 - Acceptance promotion gate: [`../implementation/roblox/AUTHORITY-RECONCILIATION-POLICY.md`](../implementation/roblox/AUTHORITY-RECONCILIATION-POLICY.md)
 - Feedback mode: `TIGHT_USER_FEEDBACK_LOOP`
 
@@ -12,7 +14,16 @@
 
 새 RVTT를 안전한 dependency 순서로 시스템부터 구축한 뒤 가장 빠른 사용자 기능인 Selection을 보여준다.
 
-이 Command가 시작될 때 Repository는 G0 구현 직전 상태다. **첫 행동은 G0 코딩이 아니라 Pre-G0 Workbench 확인**이다.
+Source를 보면서 Architecture/API를 즉석에서 발명하지 않는다. 현재 Foundation+Exploration 범위는 이미 다음 순서로 선언되어 있다.
+
+```text
+System Contract
+→ Module Contract
+→ Stable Function Contract
+→ Source 구현
+```
+
+private/helper 분해만 구현 시점에 Source에서 결정한다.
 
 ## 구현 전 읽기
 
@@ -20,13 +31,15 @@
 2. `.github/CODEX-ACTIVE-TASK.md`
 3. `implementation/roblox/GREENFIELD-PREFLIGHT.md`
 4. `implementation/roblox/GREENFIELD-SYSTEM-SEQUENCE.md`
-5. `implementation/roblox/AUTHORITY-RECONCILIATION-POLICY.md`
-6. `implementation/roblox/GREENFIELD-BUILD-POLICY.md`
-7. `implementation/roblox/ROBLOX-STUDIO-MCP-TEST-POLICY.md`
-8. `implementation/roblox/MODULE-CONTRACTS.md`
-9. `implementation/roblox/manifests/module-contracts.json`
-10. 관련 Product·ADR·Spec
-11. 필요한 Legacy Source — 읽기 참고만
+5. `implementation/roblox/MODULE-CONTRACTS.md`
+6. `implementation/roblox/SYSTEM-FUNCTION-CONTRACTS.md`
+7. `implementation/roblox/manifests/module-contracts.json`
+8. `implementation/roblox/manifests/system-function-contracts.json`
+9. `implementation/roblox/AUTHORITY-RECONCILIATION-POLICY.md`
+10. `implementation/roblox/GREENFIELD-BUILD-POLICY.md`
+11. `implementation/roblox/ROBLOX-STUDIO-MCP-TEST-POLICY.md`
+12. 관련 Product·ADR·Spec
+13. 필요한 Legacy Source — 읽기 참고만
 
 ## 0. PRE-G0 WORKBENCH GATE
 
@@ -37,6 +50,8 @@ python implementation/roblox/tooling/validate_greenfield_boundary.py
 python implementation/roblox/tooling/validate_module_contracts.py
 rojo build implementation/roblox/greenfield.project.json --output <temp-place>
 ```
+
+`validate_module_contracts.py`는 이제 Module/Stage뿐 아니라 System Contract와 Stable Function Contract까지 검사한다.
 
 그 다음 Studio에서:
 
@@ -56,45 +71,112 @@ implementation/roblox/src/**
 
 이 둘은 Legacy Reference다. 읽을 수는 있지만 Greenfield 구현을 위해 수정하지 않는다.
 
-## 실행 순서
+## 1. 모든 Stage 공통 구현 규칙
+
+각 Module을 구현하기 직전에 해당 `moduleFunctionContracts`를 읽는다.
+
+Stable Function은 계약에 적힌 다음 의미를 지켜야 한다.
+
+```text
+name
+kind
+purpose
+inputs / output
+authority
+reads / writes
+sideEffects
+failureModes
+idempotency
+validation
+permission
+revisionBehavior
+```
+
+규칙:
+
+- `entryPoints`에 있는데 Function Contract가 없거나 반대인 상태에서 구현 금지.
+- 다른 Contract-bearing Module에서 호출할 함수가 필요하면 먼저 Function Contract를 만든다.
+- undeclared cross-module method를 임시로 만든 뒤 나중에 문서화하는 방식 금지.
+- private/local helper는 자유롭게 만들 수 있고 Registry에 쓰지 않는다.
+- private helper가 다른 Module의 의존 대상이 되는 순간 Stable Function으로 승격한다.
+- Function Contract 보완이 Authority/state owner/Module responsibility/System flow를 바꾸면 자동 적용하지 말고 사용자에게 먼저 제안한다.
+
+## 2. 고정 실행 순서
 
 ### G0_SHARED_CONTRACTS
 
-Pre-G0 Gate 통과 후에만 `CommandEnvelope`, `ProjectionEnvelope`, `WorldContract`를 구현한다. pure data contract로 유지하고 bounded validation을 넣는다.
+Pre-G0 Gate 통과 후 `system.shared-data-contracts`를 구현한다.
+
+```text
+CommandEnvelope.validate
+ProjectionEnvelope.validate
+WorldContract = DATA_ONLY_MODULE
+```
+
+bounded/serializable data만 허용하고 trusted role/owner/controller claim이나 Roblox Instance를 계약에 넣지 않는다.
 
 ### G1_SERVER_AUTHORITY_CORE
 
-`SessionAuthority → WorldState → AuthorizationService → CommandRuntime`을 구현한다.
+`system.server-authority-core`를 구현한다.
 
-- Client role claim을 신뢰하지 않는다.
-- mutation은 authorization + revision 검증 뒤에만 실행한다.
-- duplicate commandId와 stale revision을 안전하게 거부할 수 있게 한다.
+핵심 Stable Boundary:
+
+```text
+SessionAuthority.new/getRole/canControl/destroy
+WorldState.new/getSnapshot/getRevision/transact
+AuthorizationService.new/authorize
+CommandRuntime.new/register/execute
+```
+
+특히 `WorldState.transact`만 authoritative world state mutation과 revision 증가를 소유한다. network payload에서 mutation callback/capability를 받지 않는다.
 
 ### G2_COMMAND_TRANSPORT
 
-`CommandGateway`와 `CommandClient`를 연결한다.
+`system.command-transport`를 구현한다.
 
-- Gateway는 Remote adapter다. Gameplay logic을 넣지 않는다.
-- rate/size/type validation을 서버에서 적용한다.
+```text
+CommandClient.new/submit/destroy
+CommandGateway.new/start/destroy
+CommandRuntime.execute
+```
+
+Gateway는 Roblox transport adapter일 뿐 gameplay authority가 아니다.
 
 ### G3_PROJECTION_PIPELINE
 
-`ProjectionService → ProjectionGateway → ProjectionReplica`를 연결한다.
+`system.projection-pipeline`을 구현한다.
 
-- ProjectionService가 viewer-safe selection을 소유한다.
-- Gateway는 전달만 한다.
-- Replica는 epoch/revision 역행을 적용하지 않는다.
+```text
+ProjectionService.new/buildForViewer
+ProjectionGateway.new/start/publish/destroy
+ProjectionReplica.new/start/getSnapshot/subscribe/destroy
+```
+
+ProjectionService가 disclosure를 결정하고 Gateway는 전달만 한다. Replica는 accepted epoch/revision만 보관하고 `subscribe`는 immutable change observation만 제공한다.
 
 ### G4_CLIENT_WORLD_SHELL
 
-`SemanticInputRouter`와 `WorldSystem`을 구현한다.
+`system.client-world-shell`을 구현한다.
 
-- 물리 입력을 semantic action으로 바꾼다.
-- WorldSystem은 controller lifecycle만 소유한다.
+```text
+SemanticInputRouter.new/subscribe/start/destroy
+WorldSystem.new/start/destroy
+```
+
+Controller는 raw physical input을 각각 직접 구독하지 않고 `SemanticInputRouter.subscribe`를 사용한다.
 
 ### G5_COMPOSITION_BOOT
 
-`ServerApp/Bootstrap`, `ClientApp/Bootstrap`을 조립하고 Greenfield Studio Build를 Boot한다.
+`system.composition-boot`를 구현한다.
+
+```text
+ServerApp.new/start/destroy
+ServerBootstrap = AUTO_EXEC_SCRIPT
+ClientApp.new/start/destroy
+ClientBootstrap = AUTO_EXEC_SCRIPT
+```
+
+Bootstrap/App은 composition/lifecycle만 담당한다.
 
 Foundation Boot Gate:
 
@@ -107,16 +189,26 @@ Foundation Boot Gate:
 - Studio-only Production logic 없음
 - `greenfield.project.json`에서 clean rebuild 가능
 
-## S1_SELECTION
+## 3. S1_SELECTION
 
-G5 이후 즉시 다음을 연결한다.
+G5 이후 즉시 `system.selection`을 구현한다.
 
 ```text
-SemanticInputRouter
-→ SelectionController
-→ local selection state
-→ WorldPresenter
+SemanticInputRouter.subscribe
+→ SelectionController.start
+→ SelectionController local selected actor id
+→ SelectionController.subscribe/getSelection
+→ WorldPresenter.start
 ```
+
+Stable Boundary:
+
+```text
+SelectionController.new/start/getSelection/subscribe/destroy
+WorldPresenter.new/start/destroy
+```
+
+Selection은 client-local state이며 서버 gameplay mutation이 아니다.
 
 Selection이 실제 동작하면 Checkpoint를 `READY_FOR_USER`로 갱신하고 멈춘다.
 
@@ -126,11 +218,11 @@ Selection이 실제 동작하면 Checkpoint를 `READY_FOR_USER`로 갱신하고 
 CHECKPOINT: S1_SELECTION
 STATUS: READY_FOR_USER
 테스트 방법
-현재 Module 흐름
+현재 System / Module / Stable Function 흐름
 사용자가 판단할 항목
 ```
 
-사용자가 수정 요청:
+사용자 수정 요청:
 
 ```text
 S1 status → IMPLEMENTING
@@ -140,9 +232,9 @@ S1 status → IMPLEMENTING
 → 사용자 재확인
 ```
 
-반복 수정 중에는 Product·ADR·Architecture 문서를 매번 수정하지 않는다. 현재 사용자 요청을 Working Truth로 두고 같은 Checkpoint에서 빠르게 반복한다.
+private/helper 변경은 빠르게 반복한다. Stable Function 의미가 달라지면 Source보다 Contract를 먼저 맞춘다.
 
-## 사용자가 S1을 최종 수용했을 때
+## 4. 사용자가 S1을 최종 수용했을 때
 
 Camera로 가지 않는다. 먼저 Authority Reconciliation과 Promotion을 수행한다.
 
@@ -150,12 +242,13 @@ Camera로 가지 않는다. 먼저 Authority Reconciliation과 Promotion을 수�
 사용자 최종 수용
 → 확정된 Selection 동작 기록
 → 현재 Product·ADR·Architecture·Spec·Policy 충돌 검색
-→ 상위 Authority부터 수정 또는 Supersede
+→ System Contract 정합화
 → Module Contract 정합화
+→ Stable Function Contract 정합화
 → Studio 결과를 greenfield/src로 정규화
 → greenfield.project.json 재현 확인
 → Focused Test 추가·실행
-→ 현재 문서 충돌 재검색
+→ 현재 문서/Contract 충돌 재검색
 → UNRESOLVED CONFLICTS = none
 → S1 / 관련 Module을 ACCEPTED 상태로 준비
 → checkpoint(S1_SELECTION): accept <summary> Promotion Commit
@@ -165,7 +258,7 @@ Camera로 가지 않는다. 먼저 Authority Reconciliation과 Promotion을 수�
 
 Promotion Commit에는 다음 기능이나 임시 디버그 변경을 섞지 않는다.
 
-## 이후 Exploration
+## 5. 이후 Exploration
 
 ```text
 S1 Selection
@@ -175,26 +268,20 @@ S1 Selection
 → I1 Interaction
 ```
 
+현재 System/Function Registry에는 이 범위도 미리 선언되어 있다.
+
+- `system.camera`: CameraController `new/start/destroy`.
+- `system.movement`: MovementController → CommandClient → Gateway → Runtime → Authorization → MovementDomain → WorldState.transact → Projection pipeline → Presenter.
+- `system.context-interaction`: ContextActionController → standard Command/Authority/WorldState/Projection path.
+
 각 Checkpoint에서 동일하게 **수정 반복 → 사용자 최종 수용 → Authority Reconciliation → Promotion Commit → ACCEPTED → 다음** 순서를 사용한다.
 
-Move의 필수 경로:
+## 6. 금지
 
-```text
-MovementController
-→ CommandClient
-→ CommandGateway
-→ CommandRuntime
-→ AuthorizationService
-→ MovementDomain
-→ WorldState
-→ ProjectionService
-→ ProjectionGateway
-→ ProjectionReplica
-→ WorldPresenter
-```
-
-## 금지
-
+- Contract 없이 Source/API부터 생성
+- undeclared cross-module function 호출
+- private helper를 암묵적인 cross-module API로 사용
+- 미래 P2~P10 세부 API 선행 발명
 - Legacy `src` 또는 `default.project.json` 수정
 - 기존 Production Place를 Greenfield Baseline으로 사용
 - LocalScript 하나에 Input/Selection/Camera/Move/UI 결합
@@ -210,8 +297,8 @@ MovementController
 - Promotion Commit 없이 다음 Checkpoint 진행
 - Legacy Acceptance를 Greenfield PASS로 사용
 
-## Canonicalization
+## 7. Canonicalization
 
-Stage가 실제 구현되면 `greenfield/src`에 정리하고 `module-contracts.json` 상태를 맞춘다. Rojo 재현은 `greenfield.project.json`을 기준으로 한다.
+Stage가 실제 구현되면 `greenfield/src`에 정리하고 Module/Function Contract와 실제 Source를 맞춘다. Rojo 재현은 `greenfield.project.json`을 기준으로 한다.
 
-사용자 Checkpoint는 사용자 수용만으로 `ACCEPTED` 처리하지 않는다. Top-down 문서 정합화, Canonical Source, Rojo 재현, Focused Test가 끝난 최종 상태를 Promotion Commit으로 고정하고 그 SHA를 복원 기준점으로 기록한 뒤 다음 Checkpoint로 간다.
+사용자 Checkpoint는 사용자 수용만으로 `ACCEPTED` 처리하지 않는다. Top-down 문서 정합화, System/Module/Stable Function Contract, Canonical Source, Rojo 재현, Focused Test가 끝난 최종 상태를 Promotion Commit으로 고정한 뒤 다음 Checkpoint로 간다.
