@@ -44,8 +44,8 @@ def main() -> int:
     model = MODEL.read_text(encoding="utf-8")
     if "Studio/MCP 작업은 Repository Core Engine 전체 완료 후에만 시작한다" not in model:
         errors.append("implementation model must preserve Core Engine before Studio rule")
-    if "U0 Product UI Shell Session" not in model:
-        errors.append("implementation model must preserve U0 UI shell gate")
+    if "UI_SHELL_READY" not in model or "HTML/UI Reference Distillation" not in model:
+        errors.append("implementation model must preserve U0 UI shell preparation and UI_SHELL_READY gate")
 
     if errors:
         print("RVTT retired execution-layer validation failed:")
