@@ -31,10 +31,12 @@ on:
       - "implementation/roblox/tooling/validate_scenario_semantic_audit.py"
   push:
     branches:
+      - main
       - planning/rvtt-remake
     paths:
       - "AGENTS.md"
       - ".github/CODEX-ACTIVE-TASK.md"
+      - ".github/workflows/validate-architecture-coverage.yml"
       - "docs/remake/CURRENT-WORK-ORDER.md"
       - "docs/remake/DOCUMENT-ROLE-ACCESS-AUTHORING-RULE.md"
       - "docs/remake/product/**"
@@ -76,5 +78,5 @@ jobs:
       - name: Validate repaired system, requirement and scenario coverage
         run: python implementation/roblox/tooling/validate_architecture_coverage.py
 
-      - name: Validate scenario body, ingress and recovery semantic audit
+      - name: Validate full scenario semantic schema, ingress and recovery audit
         run: python implementation/roblox/tooling/validate_scenario_semantic_audit.py
