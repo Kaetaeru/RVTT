@@ -7,6 +7,8 @@ concurrency:
 on:
   pull_request:
     paths:
+      - "README.md"
+      - "implementation/README.md"
       - "AGENTS.md"
       - "AGENTS-PLANNING-ADDENDUM.md"
       - "AGENT-TEST-STATUS.md"
@@ -28,6 +30,7 @@ on:
       - "implementation/roblox/greenfield.project.json"
       - "implementation/roblox/IMPLEMENTATION-MODEL.md"
       - "implementation/roblox/SYSTEMS.md"
+      - "implementation/roblox/manifests/r3-authority-corpus.json"
       - "implementation/roblox/manifests/implementation-system-model.json"
       - "implementation/roblox/manifests/scenario-base-catalog.json"
       - "implementation/roblox/manifests/scenario-expanded-catalog.json"
@@ -50,6 +53,8 @@ on:
       - main
       - planning/rvtt-remake
     paths:
+      - "README.md"
+      - "implementation/README.md"
       - "AGENTS.md"
       - "AGENTS-PLANNING-ADDENDUM.md"
       - "AGENT-TEST-STATUS.md"
@@ -71,6 +76,7 @@ on:
       - "implementation/roblox/greenfield.project.json"
       - "implementation/roblox/IMPLEMENTATION-MODEL.md"
       - "implementation/roblox/SYSTEMS.md"
+      - "implementation/roblox/manifests/r3-authority-corpus.json"
       - "implementation/roblox/manifests/implementation-system-model.json"
       - "implementation/roblox/manifests/scenario-base-catalog.json"
       - "implementation/roblox/manifests/scenario-expanded-catalog.json"
