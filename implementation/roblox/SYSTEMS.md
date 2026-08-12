@@ -1,10 +1,12 @@
 # RVTT System Model v2
 
 - 상태: `ACTIVE · APPROVED_SYSTEM_AUTHORITY · R3_REPAIRED_PENDING_FREEZE`
+- R3 validation: `VALIDATED · AWAITING_USER_FREEZE_DECISION`
 - Source 구현: `BLOCKED`
 - Studio/MCP 구현: `BLOCKED`
 - Direct model: `manifests/implementation-system-model.json`
-- Effective Scenario audit: `manifests/scenario-semantic-audit.json`
+- Semantic classification evidence: `manifests/scenario-semantic-audit.json` (v2)
+- Effective Scenario audit: `manifests/scenario-semantic-audit-v3.json`
 
 이 문서는 폐기된 Greenfield System/Module/Stable Function 모델을 대체하는 현재 구현 System 권위다. System은 Manager/Controller/ModuleScript 개수가 아니라 제품 전체의 책임·상태·권위 경계다.
 
@@ -13,10 +15,11 @@
 ```text
 Product / Accepted ADR / Current Architecture / UI
 → Requirement Capability
-↔ Representative Scenario source
+↔ Clean Scenario sources: Base 14 + Expanded 47
 → 34 System Responsibility Model
 → Scenario Semantic Audit v1 direct-stage base
-→ Scenario Semantic Audit v2 effective body/ingress/recovery audit
+→ Scenario Semantic Audit v2 classification/schema evidence
+→ Scenario Semantic Audit v3 clean-source binding
 → R3 execution boundary
 → R4 E0 checkpoint
 → Source / Test / Runtime / Human evidence
@@ -128,30 +131,25 @@ StorageAdapter
 
 ## 6. Scenario Semantic Audit
 
-Base 14 + Expanded 47 = 61 Scenario다.
+Clean Base 14 + Clean Expanded 47 = 61 Scenario다.
+
+- `scenario-base-catalog.json`: canonical Base 14 body.
+- `scenario-expanded-catalog.json`: canonical Expanded 47 body.
+- `architecture-coverage.json`, `architecture-scenarios.json`: historical Greenfield evidence only.
 
 `implementation-system-model.json`의 **Scenario Semantic Audit v1 · 61/61**은 direct `Requirement/System/semanticStages` base layer다. 이것만으로 완전한 R3 audit이라고 부르지 않는다.
 
-현재 완전한 R3 semantic audit 권위는 `scenario-semantic-audit.json`의 **v2 effective audit**이다.
+v2 `scenario-semantic-audit.json`은 61개 entry/recovery classification, mutation semantic, ingress/recovery expansion, LKG owner set과 semantic schema를 보존하는 immutable evidence다.
 
-```text
-Scenario source bodies
-+ v1 direct trace digest
-+ mutation semantic
-+ entry kind definitions + System/Requirement expansion
-+ recovery kind definitions + System/Requirement expansion
-+ LKG owner set
-+ 61 scenario entry/recovery classifications
-→ semanticSchemaDigest
-→ combinedAuditDigest
-```
+현재 완전한 R3 semantic audit 권위는 **v3 `scenario-semantic-audit-v3.json`**이다. v3는 clean Base/Expanded blobs, v1 direct trace, immutable v2 audit blob, v2 semantic schema digest를 묶는다.
 
-현재 v2 typed recovery Scenario는 **27개**다. 특히 다음 누락을 다시 막는다.
+현재 typed recovery Scenario는 **27개**다. 특히 다음 누락을 다시 막는다.
 
 ```text
 SCN_ATTACK_REACTION_RESOLUTION → RECONNECT
 SCN_CHARACTER_SHEET_LIVE_DAMAGE_SYNC → CLIENT_RESYNC
 SCN_SCENE_CANDIDATE_TEST_PUBLISH → LAST_KNOWN_GOOD
+SCN_DM_RECOVERY_REVIEW_BRANCH → SERVER_RESTART + ROLLBACK_BRANCH + CLIENT_RESYNC
 ```
 
 Ingress는 System과 Requirement를 함께 강제한다.
@@ -169,7 +167,7 @@ TEST_HARNESS → S2 + REQ_DIAGNOSTICS_REPRODUCIBILITY
 ## 7. E0 / Studio 순서
 
 ```text
-R3 validation
+R3 validation complete
 → 사용자 R3 Freeze
 → R4 E0 Checkpoint Freeze
 → Dedicated Implementation Branch
