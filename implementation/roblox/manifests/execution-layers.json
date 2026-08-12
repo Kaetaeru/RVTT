@@ -1,0 +1,176 @@
+{
+  "schemaVersion": 1,
+  "registryId": "rvtt-greenfield-execution-layers-v1",
+  "authorityDocument": "implementation/roblox/GREENFIELD-EXECUTION-LAYERS.md",
+  "moduleRegistry": "implementation/roblox/manifests/module-contracts.json",
+  "canonicalSourceRoot": "greenfield/src",
+  "canonicalTestRoot": "greenfield/tests",
+  "policy": {
+    "canonicalSourceAlwaysGitHub": true,
+    "coreEngineRepositoryFirst": true,
+    "studioIsRuntimeIntegrationWorkbench": true,
+    "humanReviewIsForPresentationAndFeel": true,
+    "runtimeCoupledStudioAuthoringAllowed": true,
+    "runtimeCoupledMustCanonicalizeToGitHub": true,
+    "doNotHumanTestPureEngineFunctions": true
+  },
+  "executionClasses": {
+    "CORE_ENGINE": {
+      "authoring": "GITHUB_FIRST",
+      "verification": ["REPOSITORY_AUTOMATED", "NEGATIVE_CASES"],
+      "humanReview": false,
+      "description": "Roblox-runtime-independent contracts, authority, state, command, projection policy, and domain logic."
+    },
+    "ROBLOX_RUNTIME_ENGINE": {
+      "authoring": "STUDIO_MCP_ITERATION_ALLOWED_GITHUB_CANONICAL",
+      "verification": ["REPOSITORY_CONTRACT", "STUDIO_AUTOMATED_RUNTIME"],
+      "humanReview": false,
+      "description": "Engine behavior whose correctness depends on Roblox runtime geometry/services such as PathfindingService, raycasts, physics, collision, streaming, or DataStore adapters."
+    },
+    "ROBLOX_INTEGRATION": {
+      "authoring": "GITHUB_CANONICAL_STUDIO_INTEGRATION",
+      "verification": ["STUDIO_AUTOMATED_INTEGRATION"],
+      "humanReview": false,
+      "description": "Remote, Player, Instance, input, replica, composition, and lifecycle adapters that connect core engine code to Roblox runtime."
+    },
+    "PRESENTATION_FEEL": {
+      "authoring": "STUDIO_MCP",
+      "verification": ["STUDIO_SELF_CHECK", "HUMAN_ACCEPTANCE"],
+      "humanReview": true,
+      "description": "Visible presentation and player feel: selection visuals, camera, movement feel/preview, context presentation, and related interaction UX."
+    }
+  },
+  "runtimeCoupledRule": {
+    "class": "ROBLOX_RUNTIME_ENGINE",
+    "canonicalSource": "GITHUB",
+    "studioAuthoringAllowed": true,
+    "studioAutomatedVerificationRequired": true,
+    "humanAcceptanceRequiredOnlyForVisibleFeel": true,
+    "examples": [
+      "PathfindingService/navmesh result interpretation",
+      "Workspace raycast and spatial-query adapters",
+      "physics/collision-dependent resolution",
+      "StreamingEnabled-sensitive runtime behavior",
+      "DataStore/MemoryStore runtime adapters"
+    ],
+    "pathfindingExample": {
+      "repositorySide": [
+        "path request/response data contract",
+        "movement permission and budget rules",
+        "waypoint normalization independent of Workspace",
+        "failure/result semantics",
+        "pure fallback/path policy if one exists"
+      ],
+      "studioSide": [
+        "PathfindingService invocation",
+        "actual navmesh/agent-parameter behavior",
+        "obstacle and collision geometry",
+        "raycast/line-of-sight checks",
+        "dynamic obstruction and recompute behavior"
+      ],
+      "humanSide": [
+        "shown path readability when visible",
+        "click-to-move responsiveness",
+        "movement smoothness and perceived control"
+      ]
+    }
+  },
+  "phases": [
+    {
+      "id": "E0_REPOSITORY_CORE_ENGINE",
+      "order": 0,
+      "modules": [
+        "shared.protocol.command-envelope",
+        "shared.protocol.projection-envelope",
+        "shared.world.contract",
+        "server.session.authority",
+        "server.world.state",
+        "server.authorization",
+        "server.command.runtime",
+        "server.projection",
+        "server.domain.movement",
+        "server.domain.exploration"
+      ],
+      "gate": [
+        "contracts valid",
+        "canonical source implemented in greenfield/src",
+        "repository automated tests pass",
+        "negative authority/revision/disclosure/domain cases pass"
+      ]
+    },
+    {
+      "id": "E1_ROBLOX_RUNTIME_INTEGRATION",
+      "order": 1,
+      "modules": [
+        "server.transport.command-gateway",
+        "client.command",
+        "server.transport.projection-gateway",
+        "client.projection",
+        "client.input.semantic-router",
+        "client.world.system",
+        "server.app",
+        "server.bootstrap",
+        "client.app",
+        "client.bootstrap"
+      ],
+      "gate": [
+        "E0 core engine repository gate passed",
+        "greenfield Rojo build succeeds",
+        "Studio/MCP runtime integration tests pass",
+        "Remote/Player/Instance/lifecycle boundaries behave correctly",
+        "no human UX judgment required"
+      ]
+    },
+    {
+      "id": "E2_PRESENTATION_AND_FEEL",
+      "order": 2,
+      "modules": [
+        "client.world.selection",
+        "client.world.presenter",
+        "client.world.camera",
+        "client.world.movement",
+        "client.world.context"
+      ],
+      "gate": [
+        "E0 and E1 are available",
+        "current checkpoint is playable in Studio",
+        "Codex Studio self-check passes",
+        "visible behavior is handed to the user for acceptance"
+      ]
+    }
+  ],
+  "checkpointOrder": [
+    "S1_SELECTION",
+    "C1_CAMERA",
+    "M1_MOVE",
+    "X1_CONTEXT",
+    "I1_INTERACTION"
+  ],
+  "moduleExecution": [
+    {"moduleId":"shared.protocol.command-envelope","class":"CORE_ENGINE"},
+    {"moduleId":"shared.protocol.projection-envelope","class":"CORE_ENGINE"},
+    {"moduleId":"shared.world.contract","class":"CORE_ENGINE"},
+    {"moduleId":"server.session.authority","class":"CORE_ENGINE"},
+    {"moduleId":"server.world.state","class":"CORE_ENGINE"},
+    {"moduleId":"server.authorization","class":"CORE_ENGINE"},
+    {"moduleId":"server.command.runtime","class":"CORE_ENGINE"},
+    {"moduleId":"server.projection","class":"CORE_ENGINE"},
+    {"moduleId":"server.domain.movement","class":"CORE_ENGINE"},
+    {"moduleId":"server.domain.exploration","class":"CORE_ENGINE"},
+    {"moduleId":"server.transport.command-gateway","class":"ROBLOX_INTEGRATION"},
+    {"moduleId":"client.command","class":"ROBLOX_INTEGRATION"},
+    {"moduleId":"server.transport.projection-gateway","class":"ROBLOX_INTEGRATION"},
+    {"moduleId":"client.projection","class":"ROBLOX_INTEGRATION"},
+    {"moduleId":"client.input.semantic-router","class":"ROBLOX_INTEGRATION"},
+    {"moduleId":"client.world.system","class":"ROBLOX_INTEGRATION"},
+    {"moduleId":"server.app","class":"ROBLOX_INTEGRATION"},
+    {"moduleId":"server.bootstrap","class":"ROBLOX_INTEGRATION"},
+    {"moduleId":"client.app","class":"ROBLOX_INTEGRATION"},
+    {"moduleId":"client.bootstrap","class":"ROBLOX_INTEGRATION"},
+    {"moduleId":"client.world.selection","class":"PRESENTATION_FEEL"},
+    {"moduleId":"client.world.presenter","class":"PRESENTATION_FEEL"},
+    {"moduleId":"client.world.camera","class":"PRESENTATION_FEEL"},
+    {"moduleId":"client.world.movement","class":"PRESENTATION_FEEL"},
+    {"moduleId":"client.world.context","class":"PRESENTATION_FEEL"}
+  ]
+}
