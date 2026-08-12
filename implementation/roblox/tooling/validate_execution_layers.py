@@ -61,6 +61,8 @@ def validate() -> list[str]:
         "requireCoverageGateBeforePhase": True,
         "canonicalSourceAlwaysGitHub": True,
         "coreEngineRepositoryFirst": True,
+        "studioExecutionRequiresCoreEngineComplete": True,
+        "runtimeCoupledRunsOnlyAfterCoreEngineComplete": True,
         "studioIsRuntimeIntegrationWorkbench": True,
         "humanReviewIsForPresentationAndFeel": True,
         "runtimeCoupledStudioAuthoringAllowed": True,
@@ -73,6 +75,18 @@ def validate() -> list[str]:
         for key, expected in required_policy.items():
             if policy.get(key) is not expected:
                 errors.append(f"execution layers: policy.{key} must remain {expected}")
+
+    expected_concretization = {
+        "E0_REPOSITORY_CORE_ENGINE": "AFTER_COVERAGE_AND_SYSTEM_BOUNDARY_FREEZE_BEFORE_SOURCE",
+        "E1_ROBLOX_RUNTIME_INTEGRATION": "AFTER_CORE_ENGINE_COMPLETE_BEFORE_STUDIO",
+        "E2_PRESENTATION_AND_FEEL": "AFTER_INTEGRATION_READY_JIT_ONE_USER_CHECKPOINT_AT_A_TIME",
+    }
+    concretization = execution.get("checkpointConcretization")
+    if concretization != expected_concretization:
+        errors.append(
+            "execution layers: checkpointConcretization must preserve E0-before-source, "
+            "E1-after-core-before-Studio, and E2-JIT-after-integration timing"
+        )
 
     class_defs = execution.get("executionClasses")
     if not isinstance(class_defs, dict):
@@ -106,6 +120,10 @@ def validate() -> list[str]:
             errors.append("execution layers: runtime-coupled canonical source must remain GITHUB")
         if runtime_rule.get("coverageRequiredFirst") is not True:
             errors.append("execution layers: runtimeCoupledRule.coverageRequiredFirst must remain true")
+        if runtime_rule.get("coreEngineCompleteRequiredBeforeStudio") is not True:
+            errors.append(
+                "execution layers: runtimeCoupledRule.coreEngineCompleteRequiredBeforeStudio must remain true"
+            )
         for key in (
             "studioAuthoringAllowed",
             "studioAutomatedVerificationRequired",
@@ -181,6 +199,20 @@ def validate() -> list[str]:
         phases = []
     orders: set[int] = set()
     phase_by_id: dict[str, dict] = {}
+    expected_phase_runtime = {
+        "E0_REPOSITORY_CORE_ENGINE": {
+            "checkpointFreeze": "REQUIRED_BEFORE_FIRST_SOURCE",
+            "studioAllowed": False,
+        },
+        "E1_ROBLOX_RUNTIME_INTEGRATION": {
+            "checkpointFreeze": "AFTER_CORE_ENGINE_COMPLETE_BEFORE_STUDIO",
+            "studioAllowed": True,
+        },
+        "E2_PRESENTATION_AND_FEEL": {
+            "checkpointFreeze": "JIT_ONE_CHECKPOINT_AFTER_INTEGRATION_READY",
+            "studioAllowed": True,
+        },
+    }
     for phase in phases:
         if not isinstance(phase, dict):
             errors.append("execution layers: phase must be an object")
@@ -202,6 +234,11 @@ def validate() -> list[str]:
             errors.append(f"execution layers: duplicate phase order {order}")
         else:
             orders.add(order)
+        expected_runtime = expected_phase_runtime.get(phase_id)
+        if expected_runtime:
+            for key, expected in expected_runtime.items():
+                if phase.get(key) != expected:
+                    errors.append(f"execution layers: {phase_id}.{key} must remain {expected!r}")
         if not isinstance(modules_required, list) or not all(isinstance(item, str) for item in modules_required):
             errors.append(f"execution layers: {phase_id}.modules must be a string array")
             continue
