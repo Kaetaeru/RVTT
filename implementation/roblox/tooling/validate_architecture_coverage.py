@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -20,6 +21,19 @@ def load_json(path: Path) -> dict:
     return value
 
 
+def git_object(expr: str) -> str | None:
+    result = subprocess.run(
+        ["git", "rev-parse", expr],
+        cwd=REPO_ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        return None
+    return result.stdout.strip()
+
+
 def fail(errors: list[str]) -> int:
     print("RVTT implementation-model-neutral coverage validation failed:")
     for error in errors:
@@ -34,6 +48,41 @@ def main() -> int:
         expanded = load_json(SCENARIOS)
     except Exception as exc:
         return fail([str(exc)])
+
+    authority = coverage.get("authorityCorpus")
+    if not isinstance(authority, dict):
+        errors.append("authorityCorpus must be an object")
+    else:
+        for snapshot in authority.get("treeSnapshots", []):
+            if not isinstance(snapshot, dict):
+                errors.append("treeSnapshots entry must be object")
+                continue
+            path = snapshot.get("path")
+            expected = snapshot.get("expectedTreeSha")
+            if not isinstance(path, str) or not isinstance(expected, str):
+                errors.append("treeSnapshots entry requires path + expectedTreeSha")
+                continue
+            actual = git_object(f"HEAD:{path}")
+            if actual != expected:
+                errors.append(
+                    f"authority tree changed for {path}: expected={expected} actual={actual}; "
+                    "perform semantic coverage review before updating the snapshot"
+                )
+        for direct in authority.get("directFiles", []):
+            if not isinstance(direct, dict):
+                errors.append("directFiles entry must be object")
+                continue
+            path = direct.get("path")
+            expected = direct.get("expectedBlobSha")
+            if not isinstance(path, str) or not isinstance(expected, str):
+                errors.append("directFiles entry requires path + expectedBlobSha")
+                continue
+            actual = git_object(f"HEAD:{path}")
+            if actual != expected:
+                errors.append(
+                    f"authority file changed for {path}: expected={expected} actual={actual}; "
+                    "perform semantic coverage review before updating the snapshot"
+                )
 
     capabilities = coverage.get("capabilities")
     if not isinstance(capabilities, list) or not capabilities:
@@ -114,6 +163,10 @@ def main() -> int:
     if len(scenario_ids) != len(set(scenario_ids)):
         errors.append("base + expanded scenario ids must be unique")
 
+    gate = coverage.get("implementationGate")
+    if isinstance(gate, str) and gate.startswith("READY"):
+        errors.append("legacy coverage registry must not advertise READY while implementation model reset is active")
+
     if not MODEL.exists() or "IMPLEMENTATION_MODEL_RESET" not in MODEL.read_text(encoding="utf-8"):
         errors.append("IMPLEMENTATION-MODEL.md must declare IMPLEMENTATION_MODEL_RESET")
     if not ACTIVE_TASK.exists() or "IMPLEMENTATION_MODEL_RESET" not in ACTIVE_TASK.read_text(encoding="utf-8"):
@@ -126,7 +179,7 @@ def main() -> int:
         "RVTT implementation-model-neutral coverage validation passed: "
         f"capabilities={len(capability_ids)}; "
         f"scenarios={len(scenario_ids)} (base={len(base_scenarios)}, expanded={len(expanded_scenarios)}); "
-        "legacy systemRefs/moduleRefs ignored during model reset; source=BLOCKED; studio=BLOCKED"
+        "authority_snapshot=PASS; legacy systemRefs/moduleRefs ignored during model reset; source=BLOCKED; studio=BLOCKED"
     )
     return 0
 
