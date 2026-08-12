@@ -1,6 +1,6 @@
 # RVTT R3 Authority Hygiene Audit 003
 
-- 상태: `RECONCILED · PENDING_FINAL_HEAD_CI · R3_NOT_FROZEN`
+- 상태: `RECONCILED · VALIDATED · R3_NOT_FROZEN · AWAITING_USER_FREEZE_DECISION`
 - 작성일: 2026-08-13
 - 대상: `current execution/status surfaces + current authority corpus direction`
 - Architecture/System/Requirement/Scenario 의미 변경: `없음`
@@ -13,6 +13,9 @@ R3 Freeze 전 반복 재검증에서 semantic model 자체가 아니라 현재 �
 대표 충돌:
 
 ```text
+README.md / implementation/README.md
+→ Implementation Specs / Slice 01 Script Manifest 단계를 현재 다음 작업처럼 노출
+
 .github/README.md
 → 존재하지 않는 commandPath 중심 라우팅
 
@@ -68,7 +71,7 @@ Studio/MCP
 = CORE_ENGINE_COMPLETE 후 E1에서 직접 구현/Play loop 활성화
 ```
 
-`validate_greenfield_boundary.py`와 Workflow trigger를 확장해 current routing/status/process surface가 위 gate와 어긋나면 실패하도록 했다.
+`validate_greenfield_boundary.py`와 Workflow trigger를 확장해 repository entrypoint, current routing/status/process surface가 위 gate와 어긋나면 실패하도록 했다.
 
 ## 3. Historical Authority Snapshot Reverse-coupling
 
@@ -136,6 +139,8 @@ Product/ADR/Architecture/System/UI
 
 변경 시 재실행되며, push branch에 `main`도 포함한다.
 
+Planning-boundary Workflow도 root/implementation README와 current status/process surface를 감시한다.
+
 ## 6. 실행 권위 Read Path
 
 `AGENTS.md`와 `.github/CODEX-ACTIVE-TASK.md`에도 `r3-authority-corpus.json`을 current read path로 추가했다.
@@ -172,9 +177,15 @@ Studio/MCP = BLOCKED
 R3 = NOT FROZEN
 ```
 
-## 8. 완료 조건
+## 8. Validation Evidence
 
-이 Audit 003과 current authority corpus 변경을 포함한 **동일 최종 HEAD**에서 다음 9개 Pull Request Workflow가 모두 `completed / success`여야 한다.
+Reconciliation 변경을 포함한 HEAD:
+
+```text
+dab8ace91b31ed72355a6de3107cf8e0a8907961
+```
+
+이 HEAD에서 다음 9개 Pull Request Workflow가 모두 `completed / success`를 기록했다.
 
 ```text
 Validate RVTT architecture coverage
@@ -188,4 +199,6 @@ Validate RVTT content templates
 Validate remake documentation
 ```
 
-검증 성공은 R3 자동 Freeze가 아니다. 사용자 Freeze 결정 후에만 R4로 이동한다.
+Architecture coverage와 system-model은 current `r3-authority-corpus.json` 기준으로 성공했고, planning-boundary는 root/implementation entrypoint와 staged Source/Studio policy까지 포함해 성공했다.
+
+이 Audit 상태 갱신 commit 자체도 동일 Workflow 집합에서 회귀 검증해야 한다. 검증 성공은 R3 자동 Freeze가 아니다. 사용자 Freeze 결정 후에만 R4로 이동한다.
