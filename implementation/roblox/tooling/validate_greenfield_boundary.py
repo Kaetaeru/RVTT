@@ -8,6 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = ROOT.parents[1]
 ACTIVE_TASK = REPO_ROOT / ".github/CODEX-ACTIVE-TASK.md"
 MODEL = ROOT / "IMPLEMENTATION-MODEL.md"
+SYSTEMS = ROOT / "SYSTEMS.md"
 AGENTS = REPO_ROOT / "AGENTS.md"
 
 # User-directed implementation-model reset started from this PR head.
@@ -38,18 +39,23 @@ def main() -> int:
 
     active = ACTIVE_TASK.read_text(encoding="utf-8")
     model = MODEL.read_text(encoding="utf-8")
+    systems = SYSTEMS.read_text(encoding="utf-8") if SYSTEMS.exists() else ""
     agents = AGENTS.read_text(encoding="utf-8")
 
-    if "IMPLEMENTATION_MODEL_RESET" not in active:
-        errors.append("active task must remain in IMPLEMENTATION_MODEL_RESET")
+    if "R3_BOUNDARY_FREEZE" not in active:
+        errors.append("active task must remain in R3_BOUNDARY_FREEZE until user approves the boundary matrix")
     if "sourceImplementationAllowed: `false`" not in active:
-        errors.append("source implementation must remain disabled during model reset")
+        errors.append("source implementation must remain disabled during R3 planning")
     if "studioImplementationAllowed: `false`" not in active:
-        errors.append("Studio implementation must remain disabled during model reset")
+        errors.append("Studio implementation must remain disabled during R3 planning")
     if "OLD GREENFIELD MODEL = RETIRED" not in agents:
         errors.append("AGENTS.md must declare old Greenfield model retired")
+    if "SYSTEM_MODEL_V1_APPROVED" not in model:
+        errors.append("implementation model must declare approved System Model v1")
+    if "APPROVED_SYSTEM_AUTHORITY" not in systems:
+        errors.append("SYSTEMS.md approved authority marker missing")
     if "DEDICATED IMPLEMENTATION BRANCH = NOT YET CREATED" not in model:
-        errors.append("dedicated implementation branch must not be created before E0 checkpoint freeze")
+        errors.append("dedicated implementation branch must not be created before R4 E0 checkpoint freeze")
 
     for path in LEGACY_LOCK_PATHS:
         baseline = git_object(RESET_BASELINE_COMMIT, path)
@@ -64,14 +70,14 @@ def main() -> int:
             )
 
     if errors:
-        print("RVTT implementation model reset boundary validation failed:")
+        print("RVTT implementation planning boundary validation failed:")
         for error in errors:
             print("-", error)
         return 1
 
     print(
-        "RVTT implementation model reset boundary validation passed: "
-        f"resetBaseline={RESET_BASELINE_COMMIT[:12]}; old Greenfield model retired; "
+        "RVTT implementation planning boundary validation passed: "
+        f"resetBaseline={RESET_BASELINE_COMMIT[:12]}; systemModel=33-v1; R3=ACTIVE; "
         "source=BLOCKED; studio=BLOCKED; legacy write-lock=PASS"
     )
     return 0
