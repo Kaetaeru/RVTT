@@ -11,11 +11,18 @@
     "requireCoverageGateBeforePhase": true,
     "canonicalSourceAlwaysGitHub": true,
     "coreEngineRepositoryFirst": true,
+    "studioExecutionRequiresCoreEngineComplete": true,
+    "runtimeCoupledRunsOnlyAfterCoreEngineComplete": true,
     "studioIsRuntimeIntegrationWorkbench": true,
     "humanReviewIsForPresentationAndFeel": true,
     "runtimeCoupledStudioAuthoringAllowed": true,
     "runtimeCoupledMustCanonicalizeToGitHub": true,
     "doNotHumanTestPureEngineFunctions": true
+  },
+  "checkpointConcretization": {
+    "E0_REPOSITORY_CORE_ENGINE": "AFTER_COVERAGE_AND_SYSTEM_BOUNDARY_FREEZE_BEFORE_SOURCE",
+    "E1_ROBLOX_RUNTIME_INTEGRATION": "AFTER_CORE_ENGINE_COMPLETE_BEFORE_STUDIO",
+    "E2_PRESENTATION_AND_FEEL": "AFTER_INTEGRATION_READY_JIT_ONE_USER_CHECKPOINT_AT_A_TIME"
   },
   "executionClasses": {
     "CORE_ENGINE": {
@@ -25,27 +32,28 @@
       "description": "Roblox-runtime-independent contracts, authority, state, command, projection policy, and domain logic after architecture coverage for the phase is ready."
     },
     "ROBLOX_RUNTIME_ENGINE": {
-      "authoring": "STUDIO_MCP_ITERATION_ALLOWED_GITHUB_CANONICAL",
+      "authoring": "STUDIO_MCP_AFTER_CORE_ENGINE_COMPLETE_GITHUB_CANONICAL",
       "verification": ["REPOSITORY_CONTRACT", "STUDIO_AUTOMATED_RUNTIME"],
       "humanReview": false,
-      "description": "Engine behavior whose correctness depends on Roblox runtime geometry/services such as PathfindingService, raycasts, physics, collision, streaming, or DataStore adapters."
+      "description": "E1 engine behavior whose correctness depends on Roblox runtime geometry/services such as PathfindingService, raycasts, physics, collision, streaming, or DataStore adapters; Studio work begins only after all E0 core engine checkpoints complete."
     },
     "ROBLOX_INTEGRATION": {
-      "authoring": "GITHUB_CANONICAL_STUDIO_INTEGRATION",
+      "authoring": "GITHUB_CANONICAL_STUDIO_INTEGRATION_AFTER_CORE_ENGINE_COMPLETE",
       "verification": ["STUDIO_AUTOMATED_INTEGRATION"],
       "humanReview": false,
-      "description": "Remote, Player, Instance, input, replica, composition, and lifecycle adapters that connect coverage-ready core engine code to Roblox runtime."
+      "description": "E1 Remote, Player, Instance, input, replica, composition, and lifecycle adapters that connect completed core engine code to Roblox runtime."
     },
     "PRESENTATION_FEEL": {
-      "authoring": "STUDIO_MCP",
+      "authoring": "STUDIO_MCP_AFTER_INTEGRATION_READY",
       "verification": ["STUDIO_SELF_CHECK", "HUMAN_ACCEPTANCE"],
       "humanReview": true,
-      "description": "Visible presentation and player feel after the checkpoint architecture coverage gate is ready."
+      "description": "Visible presentation and player feel, detailed just-in-time one user checkpoint at a time after runtime integration is ready."
     }
   },
   "runtimeCoupledRule": {
     "class": "ROBLOX_RUNTIME_ENGINE",
     "coverageRequiredFirst": true,
+    "coreEngineCompleteRequiredBeforeStudio": true,
     "canonicalSource": "GITHUB",
     "studioAuthoringAllowed": true,
     "studioAutomatedVerificationRequired": true,
@@ -67,7 +75,7 @@
         "pure fallback/path policy if one exists"
       ],
       "studioSide": [
-        "PathfindingService or approved runtime navigation provider invocation",
+        "PathfindingService or approved runtime navigation provider invocation after CORE_ENGINE_COMPLETE",
         "actual navmesh/agent-parameter behavior",
         "obstacle and collision geometry",
         "raycast/spatial-provider behavior",
@@ -86,6 +94,8 @@
       "order": 0,
       "coveragePhaseGate": "E0_REPOSITORY_CORE_ENGINE",
       "status": "BLOCKED_BY_ARCHITECTURE_COVERAGE",
+      "checkpointFreeze": "REQUIRED_BEFORE_FIRST_SOURCE",
+      "studioAllowed": false,
       "modules": [
         "shared.protocol.command-envelope",
         "shared.protocol.projection-envelope",
@@ -100,10 +110,12 @@
       ],
       "gate": [
         "architecture coverage phase has no open blockers",
+        "E0 implementation checkpoints are concretized after system boundary freeze",
         "contracts valid",
         "canonical source implemented in greenfield/src",
         "repository automated tests pass",
-        "negative authority/revision/disclosure/domain cases pass"
+        "negative authority/revision/disclosure/domain cases pass",
+        "no Studio or MCP implementation was used to complete E0"
       ]
     },
     {
@@ -111,6 +123,8 @@
       "order": 1,
       "coveragePhaseGate": "E1_ROBLOX_RUNTIME_INTEGRATION",
       "status": "WAITING_FOR_E0_AND_COVERAGE",
+      "checkpointFreeze": "AFTER_CORE_ENGINE_COMPLETE_BEFORE_STUDIO",
+      "studioAllowed": true,
       "modules": [
         "server.transport.command-gateway",
         "client.command",
@@ -125,9 +139,10 @@
       ],
       "gate": [
         "architecture coverage phase has no open blockers",
-        "E0 core engine repository gate passed",
+        "all E0 core engine checkpoints are complete",
+        "E1 Studio controller manager service adapter and harness checkpoints are concretized",
         "greenfield Rojo build succeeds",
-        "Studio/MCP runtime integration tests pass",
+        "Studio/MCP runtime engine and integration tests pass",
         "Remote/Player/Instance/lifecycle boundaries behave correctly",
         "no human UX judgment required"
       ]
@@ -137,6 +152,8 @@
       "order": 2,
       "coveragePhaseGate": "CHECKPOINT_SPECIFIC",
       "status": "WAITING_FOR_E0_E1_AND_CHECKPOINT_COVERAGE",
+      "checkpointFreeze": "JIT_ONE_CHECKPOINT_AFTER_INTEGRATION_READY",
+      "studioAllowed": true,
       "modules": [
         "client.world.selection",
         "client.world.presenter",
@@ -146,7 +163,8 @@
       ],
       "gate": [
         "current checkpoint architecture coverage phase has no open blockers",
-        "E0 and E1 are available",
+        "E0 and E1 are complete",
+        "only the current user-facing checkpoint has been concretized",
         "current checkpoint is playable in Studio",
         "Codex Studio self-check passes",
         "visible behavior is handed to the user for acceptance"
