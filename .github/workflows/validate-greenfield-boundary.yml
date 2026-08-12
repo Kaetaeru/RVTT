@@ -8,8 +8,15 @@ on:
   pull_request:
     paths:
       - "AGENTS.md"
+      - ".github/README.md"
       - ".github/CODEX-ACTIVE-TASK.md"
       - ".github/workflows/validate-greenfield-boundary.yml"
+      - "implementation/roblox/README.md"
+      - "implementation/roblox/CURRENT-WORK-ORDER.md"
+      - "implementation/roblox/EXECUTION-TEST-RULES.md"
+      - "implementation/roblox/ROBLOX-STUDIO-MCP-TEST-POLICY.md"
+      - "implementation/roblox/greenfield-boundary.json"
+      - "implementation/roblox/greenfield.project.json"
       - "implementation/roblox/IMPLEMENTATION-MODEL.md"
       - "implementation/roblox/SYSTEMS.md"
       - "implementation/roblox/manifests/implementation-system-model.json"
@@ -35,7 +42,15 @@ on:
       - planning/rvtt-remake
     paths:
       - "AGENTS.md"
+      - ".github/README.md"
       - ".github/CODEX-ACTIVE-TASK.md"
+      - ".github/workflows/validate-greenfield-boundary.yml"
+      - "implementation/roblox/README.md"
+      - "implementation/roblox/CURRENT-WORK-ORDER.md"
+      - "implementation/roblox/EXECUTION-TEST-RULES.md"
+      - "implementation/roblox/ROBLOX-STUDIO-MCP-TEST-POLICY.md"
+      - "implementation/roblox/greenfield-boundary.json"
+      - "implementation/roblox/greenfield.project.json"
       - "implementation/roblox/IMPLEMENTATION-MODEL.md"
       - "implementation/roblox/SYSTEMS.md"
       - "implementation/roblox/manifests/implementation-system-model.json"
