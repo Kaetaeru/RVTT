@@ -1,165 +1,175 @@
 # RVTT Greenfield System Sequence
 
 - 상태: `ACTIVE · BUILD_ORDER_AUTHORITY`
-- 최종 갱신일: 2026-08-12
-- 적용 범위: 새 `greenfield/` RVTT 구현의 시스템 구축 순서와 기술 안전 경계
-- Pre-G0 Gate: [`GREENFIELD-PREFLIGHT.md`](GREENFIELD-PREFLIGHT.md)
-- 기계 가독 계약: [`manifests/module-contracts.json`](manifests/module-contracts.json)
+- 최종 갱신일: 2026-08-13
+- Execution environment authority: [`GREENFIELD-EXECUTION-LAYERS.md`](GREENFIELD-EXECUTION-LAYERS.md)
+- Machine-readable execution plan: [`manifests/execution-layers.json`](manifests/execution-layers.json)
+- Module contract: [`manifests/module-contracts.json`](manifests/module-contracts.json)
 - 확정 동기화 Gate: [`AUTHORITY-RECONCILIATION-POLICY.md`](AUTHORITY-RECONCILIATION-POLICY.md)
 
-이 문서는 **어떤 시스템을 어떤 순서로 만들지**를 소유한다. 현재 Active Task는 이 순서를 건너뛸 수 없다.
+이 문서는 **무엇을 어떤 의존 순서로 준비하고 언제 사용자 기능으로 올라갈지**를 소유한다.
 
-목표는 두 가지를 동시에 만족하는 것이다.
-
-1. 임시 Script가 권위를 가져 나중에 재설계하는 일을 막는다.
-2. Architecture만 오래 만들지 않고 가능한 빨리 실제 사용자 기능을 보여준다.
-
-따라서 의존성이 낮고 보안상 먼저 필요한 경계부터 만들고, Foundation이 Boot되는 즉시 작은 사용자 Checkpoint로 넘어간다.
-
-## 0. PRE-G0 Workbench Gate — Stage 아님
-
-`G0_SHARED_CONTRACTS`를 구현하기 전에 `GREENFIELD-PREFLIGHT.md`를 실행한다.
-
-Gate:
-
-- `greenfield.project.json`이 `greenfield/src`만 Rojo Mapping한다.
-- `greenfield/src`와 `greenfield/tests`가 존재한다.
-- Legacy `src`와 `default.project.json`이 Greenfield Lock 이후 변경되지 않았다.
-- `validate_greenfield_boundary.py`와 `validate_module_contracts.py`가 PASS한다.
-- `rojo build greenfield.project.json`이 독립적으로 성공한다.
-- Studio Place/Session이 Greenfield Workbench인지 확인한다.
-- 실제 MCP Capability Handshake를 수행하고 결과를 `MCP_AVAILABLE / HUMAN_REQUIRED / UNAVAILABLE`로 분류한다.
-
-이 Gate는 `G0` 앞에 새 Architecture Stage를 추가하지 않는다. Repository/Studio 작업장을 잘못 잡는 사고를 막기 위한 실행 전 확인이다.
-
-## 1. 고정 Foundation 순서
+현재 원칙은 `모든 것을 Studio에서 수직으로 하나씩 만드는 방식`이 아니다.
 
 ```text
-G0_SHARED_CONTRACTS
-→ G1_SERVER_AUTHORITY_CORE
-→ G2_COMMAND_TRANSPORT
-→ G3_PROJECTION_PIPELINE
-→ G4_CLIENT_WORLD_SHELL
-→ G5_COMPOSITION_BOOT
-→ S1_SELECTION
+E0 Repository Core Engine
+→ E1 Roblox Runtime Integration
+→ E2 Presentation / Feel Checkpoints
 ```
 
-이 순서는 현재 RVTT Greenfield의 고정 기본값이다. 변경하려면 개발 Architecture 변경으로 보고 사용자에게 먼저 제안한다.
+Studio는 일반 코드 작성 환경이 아니라 Roblox Runtime 검증과 사용자 경험 검증에 집중한다.
 
-### G0 — Shared Contracts
+## 0. PRE-G0 Workbench Gate
 
-먼저 네트워크와 World에서 공유되는 **데이터 모양만** 고정한다.
+구현 시작 전 Repository/Greenfield 경계를 확인한다.
+
+- `greenfield.project.json`은 `greenfield/src`만 Mapping한다.
+- Legacy `src`와 `default.project.json`은 read-only reference다.
+- Boundary / Module / System / Function / Execution Layer Validator가 PASS한다.
+- Greenfield Rojo Build가 성공한다.
+- Studio/MCP Capability를 확인한다.
+
+Preflight는 제품 시스템 Stage가 아니다.
+
+## 1. E0 — Repository Core Engine
+
+사용자가 직접 볼 필요가 없고 Roblox Runtime 없이 correctness를 검증할 수 있는 코드를 먼저 GitHub에서 구현·테스트한다.
+
+현재 E0:
 
 ```text
-CommandEnvelope
-ProjectionEnvelope
-WorldContract
+Shared Contracts
+- CommandEnvelope
+- ProjectionEnvelope
+- WorldContract
+
+Authority / State / Command
+- SessionAuthority
+- WorldState
+- AuthorizationService
+- CommandRuntime
+
+Core Projection / Domains
+- ProjectionService
+- MovementDomain
+- ExplorationDomain
 ```
 
-Gate:
-
-- Shared Contract는 순수 데이터 계약이며 Roblox Instance, callback, 실행 코드 참조를 포함하지 않는다.
-- Stable ID와 enum을 표시 문자열·Instance 이름과 분리한다.
-- Command에는 `commandId`, `sessionEpoch`, `expectedWorldRevision`, `commandType`, 제한된 payload를 표현할 수 있어야 한다.
-- Client가 보낸 Role, Owner, Controller 주장을 권위 정보로 사용하지 않는다.
-- Projection에는 `sessionEpoch`, 단조 증가 revision과 viewer-safe payload 경계를 표현할 수 있어야 한다.
-- 숫자·문자열·배열·중첩 깊이는 Validation에서 상한을 둘 수 있게 설계한다.
-
-### G1 — Server Authority Core
-
-네트워크 입력을 받기 전에 권위 코어를 만든다.
+핵심 순서:
 
 ```text
-SessionAuthority
-WorldState
-AuthorizationService
-CommandRuntime
-```
-
-Gate:
-
-- Session Role, Character Owner, Runtime Controller는 서버가 소유하고 서로 분리한다.
-- `WorldState`만 authoritative world actor state와 world revision을 소유한다.
-- `AuthorizationService`는 mutation을 수행하지 않는다.
-- `CommandRuntime`은 authorization과 revision 검증이 끝나기 전 handler를 실행하지 않는다.
-- mutation command는 `commandId` 중복과 stale `expectedWorldRevision`을 fail closed 처리할 수 있어야 한다.
-- Client가 보낸 userId/role/controller 값을 신뢰하지 않는다. Roblox가 제공한 실제 `Player`와 서버 상태를 사용한다.
-- 오류는 구조화된 failure로 반환하고 빈 `pcall`로 삼키지 않는다.
-
-### G2 — Command Transport
-
-권위 코어가 존재한 뒤 Remote 경계를 연다.
-
-```text
-Server CommandGateway
-Client CommandClient
-```
-
-Gate:
-
-- `CommandGateway`는 Remote 수신·coarse validation·payload limit·rate limit·runtime 호출만 담당한다.
-- Gateway 안에 Gameplay rule, ownership 결정, state mutation을 넣지 않는다.
-- UI/Presenter는 Remote를 직접 호출하지 않고 `CommandClient`를 거친다.
-- 네트워크를 통해 Roblox Instance를 보내지 않는다. Stable ID와 bounded primitive/table data만 사용한다.
-- malformed/oversized/flooded input은 서버에서 fail closed한다.
-
-### G3 — Projection Pipeline
-
-Client가 authoritative state를 직접 읽거나 추정하지 않도록 Projection 경계를 만든다.
-
-```text
-WorldState
+Shared Contract
+→ SessionAuthority / WorldState
+→ AuthorizationService
+→ CommandRuntime
 → ProjectionService
-→ ProjectionGateway
-→ ProjectionReplica
+→ MovementDomain / ExplorationDomain
 ```
 
-Gate:
+E0 Gate:
 
-- `ProjectionService`만 viewer별 공개 가능 데이터를 선택한다.
-- 숨은 Actor, private Rule/DM state, 권한 없는 object 존재 정보가 Projection에 섞이지 않는다.
-- `ProjectionGateway`는 이미 안전하게 만들어진 Projection을 전달만 한다.
-- `ProjectionReplica`는 서버가 보낸 state의 replica이며 authoritative mutation을 만들지 않는다.
-- epoch/revision이 뒤로 가는 Projection은 적용하지 않는다.
-- Viewer 변경·reconnect 시 full resync가 가능한 계약을 유지한다.
+- Stable Function Contract와 Source가 일치한다.
+- Repository automated test가 PASS한다.
+- malformed/unauthorized/duplicate/stale revision이 fail closed다.
+- `WorldState.transact` revision semantics가 검증된다.
+- viewer disclosure policy가 테스트된다.
+- Movement/Exploration Domain의 정상/실패 케이스가 테스트된다.
 
-### G4 — Client World Shell
+사람에게 이 함수들을 하나씩 Studio에서 테스트시키지 않는다.
 
-Server/Projection 경계가 준비된 뒤 Client 입력과 World 조립기를 만든다.
+### Module Contract의 G0~G5와 관계
+
+`module-contracts.json.systemStages`는 Architecture dependency와 lifecycle promotion guard로 유지된다.
+
+**Source authoring/test 환경의 현재 권위는 `execution-layers.json`이다.** 따라서 E0 Core Source는 Repository에서 먼저 작성·테스트할 수 있다. Module의 `IMPLEMENTED` 승격과 실제 wiring은 선언된 dependency가 충족될 때 수행한다.
+
+## 2. E1 — Roblox Runtime Integration
+
+E0에서 테스트된 Engine을 Roblox Runtime에 연결한다.
+
+현재 E1:
 
 ```text
+CommandGateway
+CommandClient
+ProjectionGateway
+ProjectionReplica
 SemanticInputRouter
 WorldSystem
+ServerApp / ServerBootstrap
+ClientApp / ClientBootstrap
 ```
 
-Gate:
-
-- 물리 입력은 Semantic Action으로 바뀐 뒤 Controller에 전달한다.
-- Controller는 `UserInputService`를 제각각 직접 구독해 서로 경쟁하지 않는다.
-- WorldSystem은 lifecycle/composition을 소유하고 Selection·Camera·Move 규칙 자체를 소유하지 않는다.
-- 모든 connection/task/temporary Instance는 `destroy()`에서 정리할 수 있어야 한다.
-
-### G5 — Composition + Boot
-
-구성 요소를 마지막에 App과 Bootstrap으로 조립한다.
+필수 흐름:
 
 ```text
-ServerBootstrap → ServerApp
-ClientBootstrap → ClientApp
+CORE_ENGINE_READY
+→ Rojo Build
+→ Studio Boot
+→ Remote / Player / Instance / Input Adapter 연결
+→ Codex/MCP 자동 통합 테스트
+→ lifecycle/error/reconnect 확인
+→ INTEGRATION_READY
 ```
 
-Gate:
+E1에서는 사용자 UX 판정을 요구하지 않는다.
 
-- Bootstrap은 `require/create → start → fatal boot report`만 담당한다.
-- App은 dependency wiring과 lifecycle만 담당한다.
-- Bootstrap/App에 Selection, Camera, Move, Authorization, Projection 계산을 넣지 않는다.
-- `start()`/`destroy()` lifecycle이 중복 호출과 부분 실패에서 상태를 망가뜨리지 않도록 설계한다.
-- Client는 Server readiness/initial projection을 명시적으로 기다리고 무한 대기하지 않는다.
-- Foundation 개발 중 DataStore를 켜지 않는다. State module은 DataStore를 직접 호출하지 않도록 유지한다.
+검증 대상:
 
-G5가 끝나면 Architecture Foundation을 더 확장하지 않고 즉시 `S1_SELECTION`으로 넘어간다.
+- Remote payload validation/rate limit
+- 실제 Roblox `Player` identity 전달
+- Command receipt correlation
+- viewer-safe Projection 송수신
+- epoch/revision regression rejection
+- semantic input routing
+- App/Bootstrap composition
+- cleanup / double-start / partial failure
 
-## 2. Exploration 사용자 Checkpoint 순서
+## 3. Runtime-coupled Engine 예외
+
+엔진 코드라도 실제 Roblox 환경 없이는 correctness를 판단할 수 없으면 `ROBLOX_RUNTIME_ENGINE`으로 분류한다.
+
+대표:
+
+```text
+PathfindingService
+Raycast / spatial query
+Physics / Collision
+Streaming-sensitive resolution
+DataStore / MemoryStore adapters
+```
+
+이 경우 Studio/MCP에서 엔진 구현·튜닝 루프를 도는 것을 허용한다.
+
+단 최종 Source는 항상 `greenfield/src`에 canonicalize한다.
+
+### Pathfinding의 고정 분리 원칙
+
+```text
+Repository
+= Request/Result Contract
+  + movement permission/budget
+  + failure/recompute semantics
+  + pure policy/normalization
+
+Studio Runtime
+= PathfindingService
+  + NavMesh/Agent parameter
+  + actual obstacle/collision geometry
+  + raycast
+  + dynamic obstruction/recompute
+
+Human Feel
+= path preview readability
+  + click response
+  + movement smoothness
+```
+
+Pathfinding의 구체 Module split/API는 Movement 구현 직전에 제안·확정한다. 현재 문서는 미리 특정 구조를 강제하지 않는다.
+
+## 4. E2 — Presentation / Feel
+
+Engine과 Runtime Integration이 준비된 뒤 사용자에게 보이는 수직 슬라이스를 만든다.
 
 ```text
 S1_SELECTION
@@ -169,7 +179,52 @@ S1_SELECTION
 → I1_INTERACTION
 ```
 
-각 Checkpoint 상태는 다음 중 하나다.
+### S1 Selection
+
+```text
+SemanticInputRouter
+→ SelectionController
+→ local selection state
+→ WorldPresenter
+→ READY_FOR_USER
+```
+
+### C1 Camera
+
+```text
+SemanticInputRouter
+→ CameraController
+→ local camera state
+→ READY_FOR_USER
+```
+
+### M1 Move
+
+Move 시점에는 Server Engine을 새로 만드는 것이 아니라 이미 테스트된 Engine/Integration을 사용한다.
+
+```text
+MovementController
+→ CommandClient
+→ CommandGateway
+→ CommandRuntime
+→ AuthorizationService
+→ MovementDomain
+→ WorldState.transact
+→ ProjectionService
+→ ProjectionGateway
+→ ProjectionReplica
+→ WorldPresenter
+```
+
+Pathfinding이 필요하면 `ROBLOX_RUNTIME_ENGINE` Gate를 Movement presentation 전에 통과한다.
+
+### X1 Context / I1 Interaction
+
+이미 테스트된 `ExplorationDomain`과 표준 Command/Projection 경로를 사용하고, 이 단계에서는 context presentation과 실제 조작 UX를 집중 검증한다.
+
+## 5. Human Checkpoint 규칙
+
+각 사용자 Checkpoint 상태:
 
 ```text
 PLANNED
@@ -179,83 +234,13 @@ ACCEPTED
 BLOCKED
 ```
 
-규칙:
+- `READY_FOR_USER`이면 다음 UI/Feel 기능을 진행하지 않는다.
+- 사용자가 마음에 들지 않으면 같은 Checkpoint를 즉시 수정한다.
+- Engine unit test 결과를 사용자에게 수동 검증시키지 않는다.
+- 사용자가 수용해도 즉시 `ACCEPTED`로 올리지 않는다.
+- Authority Reconciliation + Canonical Source + Focused Test + Promotion Commit 후 `ACCEPTED`다.
 
-- 이전 Checkpoint가 `ACCEPTED`가 아니면 다음 Checkpoint를 `IMPLEMENTING`으로 올리지 않는다.
-- `READY_FOR_USER`가 되면 다음 기능 개발을 멈춘다.
-- 사용자가 마음에 들지 않는다고 하면 같은 Checkpoint를 `IMPLEMENTING`으로 되돌려 즉시 수정한다.
-- 사용자 피드백을 나중 UX backlog로 미루지 않는다.
-- 사용자가 기능을 수용해도 즉시 `ACCEPTED`로 바꾸지 않는다. 먼저 Authority Reconciliation을 수행한다.
-- `ACCEPTED`는 사용자 수용 + 현재 상위 문서 정합화 + Canonical Source + Focused Test + Promotion Commit이 모두 끝난 상태다.
-
-### Checkpoint 확정 Gate
-
-```text
-READY_FOR_USER
-→ 사용자 수정 요청이면 IMPLEMENTING으로 복귀
-→ 사용자 최종 수용
-→ Authority Impact Scan
-→ 현재 상위 Authority부터 Top-down Reconciliation
-→ Module Contract / Source / Test 정규화
-→ 남은 현재 문서 충돌 없음 확인
-→ Promotion Commit
-→ ACCEPTED
-```
-
-정확한 절차는 `AUTHORITY-RECONCILIATION-POLICY.md`가 소유한다.
-
-사용자가 화면 동작을 수용했다는 사실만으로 보이지 않는 Architecture·Authority 변경까지 승인받은 것으로 해석하지 않는다. 정합화 중 미승인 Architecture 변경이 필요하면 사용자에게 먼저 제안한다.
-
-### S1 — Selection
-
-```text
-SemanticInputRouter
-→ SelectionController
-→ local selection state
-→ WorldPresenter
-```
-
-Selection은 Client local state이며 서버 gameplay mutation이 아니다.
-
-### C1 — Camera
-
-```text
-SemanticInputRouter
-→ CameraController
-→ local camera state
-```
-
-Camera는 Client local state다. 서버 Remote를 사용하지 않는다.
-
-### M1 — Move
-
-```text
-MovementController
-→ CommandClient
-→ CommandGateway
-→ CommandRuntime
-→ AuthorizationService
-→ MovementDomain
-→ WorldState
-→ ProjectionService
-→ ProjectionGateway
-→ ProjectionReplica
-→ WorldPresenter
-```
-
-Client가 Token CFrame/Position을 authoritative 결과로 직접 확정하지 않는다.
-
-### X1 — Context
-
-Right-click은 Client에서 현재 Projection을 이용해 메뉴 후보를 보여줄 수 있지만, 실제 gameplay action의 성공 여부는 서버 Command 경계가 최종 판정한다.
-
-### I1 — Interaction
-
-Interaction도 X1과 동일한 Command/Authority/Projection 경로를 재사용한다. 기능 하나를 위해 별도 Remote나 별도 authoritative state path를 만들지 않는다.
-
-## 3. Exploration 이후 제품 시스템 순서
-
-Exploration이 사용자에게 수용되고 Authority Reconciliation까지 끝난 뒤의 큰 순서는 다음으로 고정한다.
+## 6. Exploration 이후 큰 제품 순서
 
 ```text
 P0 Foundation
@@ -263,7 +248,6 @@ P0 Foundation
 → P2 Session·Role·Reconnect·Recovery
 → P3 Encounter + Character Console
 → P4 Character Data Surfaces
-   (Character Sheet · Inventory · Journal · Settings)
 → P5 DM Live Workspace
 → P6 Rules·Content Runtime
 → P7 Persistence·Migration·Rollback
@@ -272,49 +256,37 @@ P0 Foundation
 → P10 Release Acceptance
 ```
 
-이 순서의 이유:
+각 P단계도 내부적으로 가능한 범위에서 동일한 순서를 쓴다.
 
-- Session/Recovery를 늦추면 뒤의 모든 UI가 잘못된 Role 가정을 품게 된다.
-- Encounter는 Exploration의 World·Command·Projection 경계를 재사용할 수 있을 때 만든다.
-- Character surface는 Encounter와 공통 Character state 계약이 안정된 뒤 만든다.
-- DM Workspace는 Player 흐름과 권한 경계를 먼저 체감한 뒤 확장한다.
-- Persistence는 제품 흐름이 정해진 뒤 붙이되, 그 전부터 Domain/State가 DataStore를 직접 호출하지 않게 해 retrofit 비용을 막는다.
-- Multi-client·성능·Release Acceptance는 일상 개발 Gate가 아니지만 Release 전에는 필수다.
+```text
+Core Engine repository-first
+→ Runtime-coupled/Integration Studio automated
+→ Presentation/Feel Human checkpoint
+```
 
-사용자가 우선순위를 바꾸거나 더 좋은 제품 순서를 결정하면 이 문서를 갱신한다. 에이전트가 독단적으로 순서를 재배치하지 않는다.
+아직 Product 의미가 확정되지 않은 먼 미래 Domain/API를 미리 구현하지 않는다.
 
-## 4. 비협상 기술 안전 규칙
+## 7. 비협상 기술 안전 규칙
 
-다음은 Greenfield Build 전체에서 고정한다.
+1. gameplay mutation 최종 권한은 Server다.
+2. Client Role/Owner/Controller claim은 untrusted다.
+3. authoritative mutation은 단일 Command boundary를 통과한다.
+4. Remote payload type/size/depth/rate를 제한한다.
+5. Network에 Roblox Instance를 보내지 않는다.
+6. commandId/epoch/revision을 검증한다.
+7. duplicate/stale mutation은 fail closed다.
+8. Projection은 viewer-safe다.
+9. UI/Presenter가 Remote를 직접 소유하지 않는다.
+10. Bootstrap/App은 composition/lifecycle만 담당한다.
+11. lifecycle cleanup을 명시한다.
+12. 오류를 조용히 삼키지 않고 structured diagnostic을 남긴다.
+13. Domain/Controller가 DataStore를 직접 호출하지 않는다.
+14. Studio-only production truth를 허용하지 않는다.
+15. Legacy Source/Project는 read-only reference다.
+16. undeclared cross-module Stable Function 호출을 허용하지 않는다.
 
-1. **Server authoritative** — gameplay mutation 최종 권한은 Server에 있다.
-2. **Client input is untrusted** — Client가 보낸 Role/Owner/Controller/결과 값을 신뢰하지 않는다.
-3. **One command boundary** — authoritative mutation은 등록된 Command 경계를 통과한다.
-4. **Bounded network data** — Remote payload에 size/type/depth/rate 제한을 둔다.
-5. **No Instance over network** — Stable ID와 data contract만 사용한다.
-6. **Optimistic concurrency** — mutation은 epoch/revision 불일치를 감지하고 stale write를 거부한다.
-7. **Idempotent command identity** — commandId 중복을 안전하게 처리한다.
-8. **Viewer-safe projection** — Client는 허용된 Projection만 받는다. 존재 정보 누출도 금지한다.
-9. **UI cannot own transport** — UI/Presenter가 Remote를 직접 호출하지 않는다.
-10. **Bootstrap is composition only** — Gameplay logic을 Bootstrap/App에 넣지 않는다.
-11. **Lifecycle cleanup** — connection/task/Instance를 명확히 해제한다.
-12. **Fail closed** — 권한·schema·revision을 확인할 수 없으면 성공시키지 않는다.
-13. **Structured diagnostics** — 실패 원인과 Context를 남기며 오류를 조용히 삼키지 않는다.
-14. **No Studio-only production truth** — 수용된 동작은 GitHub Source와 Rojo Mapping에서 재현 가능해야 한다.
-15. **Persistence behind a boundary** — Domain/Controller가 DataStore를 직접 호출하지 않는다.
-16. **No premature release gates** — 빠른 Human feedback은 유지하되 Security/Authority 규칙은 Prototype에서도 우회하지 않는다.
-17. **Greenfield/Legacy isolation** — Greenfield 구현은 `greenfield.project.json` + `greenfield/src`를 사용하고 Legacy `src`/`default.project.json`을 직접 수정하지 않는다.
+## 8. 변경 Gate
 
-## 5. 변경 Gate
+Execution Class, 시스템 순서, Authority, state owner, Module responsibility 또는 개발 방식을 바꾸려면 사용자에게 먼저 제안한다.
 
-다음은 Codex가 임의로 바꾸지 않는다.
-
-- G0→G5 Foundation 순서
-- Server/Client Authority 경계
-- Command/Projection 방향
-- Checkpoint 순서
-- Product System P0→P10 순서
-- 비협상 안전 규칙
-- Greenfield/Legacy 작업장 경계
-
-더 좋은 방향이 발견되면 현재 문제, 제안, 장점, 비용·위험, 영향 범위를 사용자에게 먼저 보고한다.
+사용자가 승인한 현재 방식은 `Repository Core Engine → Studio Runtime Integration → Human Presentation/Feel`이다.
