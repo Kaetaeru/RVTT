@@ -1,14 +1,19 @@
 {
   "schemaVersion": 1,
-  "status": "ACTIVE_PRE_G0_BOUNDARY",
+  "status": "ACTIVE_R3_VALIDATED_AWAITING_FREEZE",
+  "currentAuthority": ".github/CODEX-ACTIVE-TASK.md",
+  "implementationModelAuthority": "implementation/roblox/IMPLEMENTATION-MODEL.md",
+  "systemAuthority": "implementation/roblox/SYSTEMS.md",
   "greenfieldProject": "greenfield.project.json",
   "sourceRoot": "greenfield/src",
   "testRoot": "greenfield/tests",
+  "sourceImplementationAllowed": false,
+  "studioImplementationAllowed": false,
   "legacySourceRoot": "src",
   "legacyProject": "default.project.json",
   "legacySourceTreeSha": "1ee8e18af88af57a26d4068e4d86b7da9a32aaaa",
   "legacyProjectBlobSha": "cba6c80daf1bb6d9af0b2c782c2e43e96c3eb595",
-  "lockedAtCommit": "adbbd239061eb67e8274a97ab8713dc0e628b7cf",
   "legacyWritePolicy": "READ_ONLY_REFERENCE",
-  "preflightAuthority": "GREENFIELD-PREFLIGHT.md"
+  "nextGate": "USER_R3_FREEZE_DECISION",
+  "studioActivationGate": "CORE_ENGINE_COMPLETE"
 }
