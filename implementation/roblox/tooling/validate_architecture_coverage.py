@@ -11,6 +11,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = ROOT.parents[1]
 LEGACY_COVERAGE = ROOT / "manifests/architecture-coverage.json"
+CURRENT_AUTHORITY = ROOT / "manifests/r3-authority-corpus.json"
 BASE_SCENARIOS = ROOT / "manifests/scenario-base-catalog.json"
 EXPANDED_SCENARIOS = ROOT / "manifests/scenario-expanded-catalog.json"
 CURRENT_MODEL = ROOT / "manifests/implementation-system-model.json"
@@ -28,6 +29,18 @@ EXPECTED_CATALOG_POLICY = {
     "requirementMappingOwnedBy": "implementation/roblox/manifests/implementation-system-model.json",
     "semanticAuditOwnedBy": "implementation/roblox/manifests/scenario-semantic-audit-v3.json",
     "negativeCaseRequired": True,
+}
+EXPECTED_AUTHORITY_PATHS = {
+    "docs/remake/product",
+    "docs/remake/decisions",
+    "docs/remake/architecture",
+    "docs/remake/systems",
+    "docs/remake/ui",
+}
+EXPECTED_AUTHORITY_POLICY = {
+    "legacyArchitectureCoverageHistoricalOnly": True,
+    "implementationSpecsReferenceOnly": True,
+    "currentAuthorityChangeRequiresR3Revalidation": True,
 }
 EXPECTED_GROUP_COUNTS = {"AUTHORITY": 8, "WORLD": 7, "RULES": 5, "DOMAIN": 7, "AUTHORING": 2, "CLIENT": 3, "SUPPORT": 2}
 EXPECTED_READY = {
@@ -79,40 +92,54 @@ def main() -> int:
     errors: list[str] = []
     try:
         legacy = load_json(LEGACY_COVERAGE)
+        authority = load_json(CURRENT_AUTHORITY)
         base = load_json(BASE_SCENARIOS)
         expanded = load_json(EXPANDED_SCENARIOS)
         current = load_json(CURRENT_MODEL)
     except Exception as exc:
         return fail([str(exc)])
 
-    authority = legacy.get("authorityCorpus")
-    if not isinstance(authority, dict):
-        errors.append("legacy authorityCorpus must remain an object")
-    else:
-        for snapshot in authority.get("treeSnapshots", []):
-            if not isinstance(snapshot, dict):
-                errors.append("treeSnapshots entry must be object")
-                continue
-            path = snapshot.get("path")
-            expected = snapshot.get("expectedTreeSha")
-            if not isinstance(path, str) or not isinstance(expected, str):
-                errors.append("treeSnapshots entry requires path + expectedTreeSha")
-                continue
-            actual = git_object(f"HEAD:{path}")
-            if actual != expected:
-                errors.append(f"authority tree changed for {path}: expected={expected} actual={actual}")
-        for direct in authority.get("directFiles", []):
-            if not isinstance(direct, dict):
-                errors.append("directFiles entry must be object")
-                continue
-            path = direct.get("path")
-            expected = direct.get("expectedBlobSha")
-            if not isinstance(path, str) or not isinstance(expected, str):
-                errors.append("directFiles entry requires path + expectedBlobSha")
-                continue
-            actual = git_object(f"HEAD:{path}")
-            if actual != expected:
-                errors.append(f"authority file changed for {path}: expected={expected} actual={actual}")
+    # The old Greenfield coverage registry is evidence only. Its historical
+    # authorityCorpus snapshot must never be rewritten to follow current HEAD.
+    if legacy.get("registryId") != "rvtt-greenfield-architecture-coverage-v1":
+        errors.append("legacy architecture coverage evidence identity drifted")
+    if not isinstance(legacy.get("authorityCorpus"), dict):
+        errors.append("legacy architecture coverage must retain its historical authorityCorpus evidence")
+
+    if authority.get("schemaVersion") != 1 or authority.get("registryId") != "rvtt-r3-authority-corpus-v1":
+        errors.append("current R3 authority corpus identity drifted")
+    if authority.get("status") != "ACTIVE_R3_VALIDATED_AWAITING_FREEZE":
+        errors.append("current R3 authority corpus must remain validated awaiting Freeze")
+    if authority.get("scope") != "CURRENT_PRODUCT_ADR_ARCHITECTURE_SYSTEM_UI_AUTHORITY_BINDING":
+        errors.append("current R3 authority corpus scope drifted")
+    if authority.get("authorityDocument") != "implementation/roblox/ARCHITECTURE-COVERAGE-POLICY.md":
+        errors.append("current R3 authority corpus must point to ARCHITECTURE-COVERAGE-POLICY.md")
+    if authority.get("policy") != EXPECTED_AUTHORITY_POLICY:
+        errors.append("current R3 authority corpus policy drifted")
+
+    snapshots = authority.get("treeSnapshots", [])
+    if not isinstance(snapshots, list):
+        errors.append("current R3 authority treeSnapshots must be an array")
+        snapshots = []
+    snapshot_paths: set[str] = set()
+    for snapshot in snapshots:
+        if not isinstance(snapshot, dict):
+            errors.append("current authority treeSnapshots entry must be object")
+            continue
+        path = snapshot.get("path")
+        expected = snapshot.get("expectedTreeSha")
+        if not isinstance(path, str) or not isinstance(expected, str):
+            errors.append("current authority treeSnapshots entry requires path + expectedTreeSha")
+            continue
+        snapshot_paths.add(path)
+        actual = git_object(f"HEAD:{path}")
+        if actual != expected:
+            errors.append(f"current authority tree changed for {path}: expected={expected} actual={actual}")
+    if snapshot_paths != EXPECTED_AUTHORITY_PATHS:
+        errors.append(
+            "current authority corpus must bind exactly Product/ADR/Architecture/System/UI trees; "
+            f"expected={sorted(EXPECTED_AUTHORITY_PATHS)} actual={sorted(snapshot_paths)}"
+        )
 
     if base.get("registryId") != "rvtt-scenario-base-catalog-v1":
         errors.append("canonical Base source must be rvtt-scenario-base-catalog-v1")
@@ -409,6 +436,8 @@ def main() -> int:
         ("SYSTEMS.md", systems_text, "A8 | Domain Event Delivery Runtime"),
         ("SYSTEMS.md", systems_text, "Scenario Semantic Audit v3"),
         ("Coverage Policy", policy_text, "SEMANTIC_AUDIT_V3_VALIDATED"),
+        ("Coverage Policy", policy_text, "r3-authority-corpus.json"),
+        ("Coverage Policy", policy_text, "architecture-coverage.json"),
         ("Active Task", task_text, "- status: `R3_VALIDATED_AWAITING_FREEZE_DECISION`"),
         ("Active Task", task_text, "scenarioSemanticAuditV3: `V3_CLEAN_SOURCE_BOUND_61_OF_61_VALIDATED`"),
         ("Active Task", task_text, "sourceImplementationAllowed: `false`"),
@@ -428,6 +457,7 @@ def main() -> int:
     stage_counts = Counter(stage for trace in traces for stage in trace.get("semanticStages", []))
     print(
         "RVTT architecture coverage validation passed: "
+        f"current_authority_trees={len(snapshot_paths)}; legacy_coverage=HISTORICAL; "
         f"systems={len(system_ids)}; requirement_capabilities={len(req_ids)}; "
         f"scenarios={len(trace_ids)} (base={len(base_scenarios)}, expanded={len(expanded_scenarios)}); "
         f"semantic_stages={dict(sorted(stage_counts.items()))}; direct_semantic_digest=PASS; "
