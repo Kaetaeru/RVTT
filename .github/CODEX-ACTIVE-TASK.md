@@ -1,9 +1,9 @@
 # RVTT Current Executable Task
 
 - executionAuthority: `ONLY_CURRENT_EXECUTABLE_TASK`
-- status: `R3_SEMANTIC_AUDIT_V2_AWAITING_FINAL_VALIDATION`
+- status: `R3_VALIDATED_AWAITING_FREEZE_DECISION`
 - priorRepairedBaseStatus: `R3_REPAIRED_AWAITING_FREEZE_DECISION`
-- commandId: `RVTT-R3-SEMANTIC-AUDIT-V2-HARDENED-002`
+- commandId: `RVTT-R3-VALIDATED-AWAITING-FREEZE-003`
 - repository: `Kaetaeru/RVTT`
 - pullRequest: `2`
 - branch: `agent/survival-logistics-token-authoring`
@@ -13,12 +13,14 @@
 - requirementCapabilityCatalog: `30_REQUIREMENT_CAPABILITY_V3`
 - scenarioTrace: `61_OF_61_MACHINE_READABLE`
 - scenarioSemanticAudit: `V1_61_OF_61`
-- scenarioSemanticAuditV2: `V2_FULL_SCHEMA_BOUND_61_OF_61`
+- scenarioSemanticAuditV2: `V2_FULL_SCHEMA_BOUND_61_OF_61_VALIDATED`
+- canonicalBaseScenarioCatalog: `implementation/roblox/manifests/scenario-base-catalog.json`
+- expandedScenarioCatalog: `implementation/roblox/manifests/architecture-scenarios.json#scenarios`
 - scenarioTraceDigest: `sha256:57e485a0cec6d753542e4bc202a881e10e2bd5ae63e314cc609c7e2d99f38140`
-- semanticSchemaDigest: `sha256:bba741b54f72b1320bafa7994ca1cc009cf55b3dc909b0035fffac36560a9797`
-- scenarioCombinedAuditDigest: `sha256:8d929e2fee969da391344d3877a73315c5b1a8c1cecf2055dcbe9fe40897173e`
+- semanticSchemaDigest: `sha256:dcc766c1161332789e91aadc362c4765687af3efc2f7193cf23f748df0eb6489`
+- scenarioCombinedAuditDigest: `sha256:48477cd70757d4450980162d49c62e12115229762bee4127542d6a167099a723`
 - effectiveRecoveryScenarios: `27`
-- r3BoundaryAudit: `REPAIRED_NOT_FROZEN`
+- r3BoundaryAudit: `VALIDATED_NOT_FROZEN`
 - updatedAt: `2026-08-13`
 
 `scenarioSemanticAudit: V1_61_OF_61`은 direct semantic-stage base layer다. 완전한 R3 Scenario audit 권위는 `scenarioSemanticAuditV2`다.
@@ -32,77 +34,49 @@
 4. implementation/roblox/SYSTEMS.md
 5. implementation/roblox/manifests/implementation-system-model.json
 6. implementation/roblox/manifests/scenario-semantic-audit.json
-7. 필요한 Product/Accepted ADR/Architecture/UI/Scenario 원문
+7. implementation/roblox/manifests/scenario-base-catalog.json
+8. 필요한 Expanded Scenario의 architecture-scenarios.json scenarios[]
+9. 필요한 Product/Accepted ADR/Architecture/UI 원문
 ```
 
-폐기된 Greenfield System/Module/Stable Function/Execution 문서는 기본 읽기 대상이 아니다.
+폐기된 Greenfield System/Module/Stable Function/Execution 문서는 기본 읽기 대상이 아니다. `architecture-coverage.json` 안의 legacy Base Scenario 사본과 capability/system/module refs도 새 구현 입력으로 사용하지 않는다.
 
-## 2. 현재 목표
+## 2. 현재 상태
 
-34-System 구조를 바꾸지 않는다. R3 Freeze 전에 Scenario 검증 사각지대를 완전히 닫는다.
-
-최종 검증 대상:
+34-System / 30 Requirement / 61 Scenario R3 모델은 전수 semantic audit와 GitHub Workflow 검증을 통과했다.
 
 ```text
 34 Systems / 30 Requirement Capabilities / 61 Scenarios
-Scenario source body blob binding
-v1 direct trace digest
-v2 full semantic schema digest
-entry System + Requirement expansion
-recovery System + Requirement expansion
+Canonical Base Scenario = 14
+Expanded Scenario = 47
+v1 direct trace = VALIDATED
+v2 full semantic schema = VALIDATED
 27 typed recovery Scenario
-A3/A8/A7 event durability
-A1 final Ready gate
-Reservation taxonomy
-Provider contracts
-E0 before Studio sequence
-Source/Studio block
+A3/A8/A7 event durability = VALIDATED
+A1 final Ready gate = VALIDATED
+Reservation taxonomy = VALIDATED
+Provider contracts = VALIDATED
+E0 before Studio sequence = VALIDATED
+Source/Studio block = ACTIVE
+R3 = NOT FROZEN
 ```
 
-## 3. Scenario Semantic Audit v2
-
-```text
-Base Scenario blob
-+ Expanded Scenario blob
-+ v1 direct trace digest
-+ mutationSemantic
-+ entry definitions/expansions
-+ recovery definitions/expansions
-+ LKG owner set
-+ 61 scenario classifications
-→ semanticSchemaDigest
-→ combinedAuditDigest
-```
-
-Ingress:
-
-```text
-COMMAND → A2 + A1 + REQ_REQUEST_PROTOCOL + REQ_CONTROL_PERMISSION
-READ_REQUEST → A2 + REQ_REQUEST_PROTOCOL
-SYNC_CONTROL → A6 + A1 + REQ_SESSION_PLAYABILITY
-EVENT_TRIGGER → A8 + REQ_COMMITTED_EVENT_PROPAGATION
-TEST_HARNESS → S2 + REQ_DIAGNOSTICS_REPRODUCIBILITY
-```
-
-Typed recovery kinds:
-
-```text
-CLIENT_RESYNC
-RECONNECT
-SERVER_RESTART
-ROLLBACK_BRANCH
-RETRY_AFTER_RESTART
-LAST_KNOWN_GOOD
-CONTROL_FAILOVER
-```
-
-현재 27개 Scenario가 typed recovery pressure를 가진다. 특히 다음 세 누락을 sentinel로 강제한다.
+추가 recovery sentinel:
 
 ```text
 SCN_ATTACK_REACTION_RESOLUTION → RECONNECT
 SCN_CHARACTER_SHEET_LIVE_DAMAGE_SYNC → CLIENT_RESYNC
 SCN_SCENE_CANDIDATE_TEST_PUBLISH → LAST_KNOWN_GOOD
+SCN_DM_RECOVERY_REVIEW_BRANCH → SERVER_RESTART + ROLLBACK_BRANCH + CLIENT_RESYNC
 ```
+
+## 3. Scenario Source Rule
+
+Base 14의 canonical source는 `scenario-base-catalog.json`이다. 이 파일은 legacy Greenfield mapping을 포함하지 않는다.
+
+Expanded 47은 현재 `architecture-scenarios.json`의 `scenarios[]`만 Scenario body source로 사용한다. 그 파일의 legacy top-level metadata와 capabilityRefs는 Requirement/System mapping 권위가 아니다.
+
+Requirement/System/semantic stage mapping은 `implementation-system-model.json`, typed ingress/recovery 의미는 `scenario-semantic-audit.json`만 소유한다.
 
 ## 4. 기존 시스템 불변식
 
@@ -128,8 +102,7 @@ C1 clientReplicaReady
 ## 5. 실행 순서
 
 ```text
-Scenario Semantic Audit v2 final validation
-→ 사용자 R3 Freeze 결정
+사용자 R3 Freeze 결정
 → R4 E0 Checkpoint Freeze
 → R5 Dedicated Implementation Branch
 → E0 Core Engine 구현/자동 검증
@@ -146,13 +119,14 @@ Scenario Semantic Audit v2 final validation
 
 ## 6. 지금 하지 않는 것
 
+- R3 자동 Freeze.
 - Source 생성.
 - Studio/MCP 진입.
-- R3 자동 Freeze.
 - 새 System/Capability 추가.
 - Module/Stable Function 대량 설계.
 - 폐기 Greenfield 계약 복원.
+- legacy Base Scenario mapping 재사용.
 
 ## 7. 다음 행동
 
-최종 HEAD에서 전체 Workflow를 한 번 검증한다. 통과해도 자동 Freeze하지 않고 사용자에게 결과를 보고한다.
+자동으로 진행하지 않는다. 사용자 R3 Freeze 결정이 내려오면 R4 E0 Checkpoint Freeze로 이동한다.
