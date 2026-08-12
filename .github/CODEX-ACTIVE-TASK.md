@@ -2,7 +2,7 @@
 
 - executionAuthority: `ONLY_CURRENT_EXECUTABLE_TASK`
 - status: `R3_VALIDATED_AWAITING_FREEZE_DECISION`
-- commandId: `RVTT-R3-VALIDATED-AWAITING-FREEZE-005`
+- commandId: `RVTT-R3-VALIDATED-AWAITING-FREEZE-006`
 - repository: `Kaetaeru/RVTT`
 - pullRequest: `2`
 - branch: `agent/survival-logistics-token-authoring`
@@ -14,6 +14,7 @@
 - scenarioSemanticAudit: `V1_61_OF_61_DIRECT_TRACE`
 - scenarioSemanticAuditV2: `V2_61_OF_61_CLASSIFICATION_EVIDENCE_VALIDATED`
 - scenarioSemanticAuditV3: `V3_CLEAN_SOURCE_BOUND_61_OF_61_VALIDATED`
+- currentAuthorityCorpus: `implementation/roblox/manifests/r3-authority-corpus.json`
 - canonicalBaseScenarioCatalog: `implementation/roblox/manifests/scenario-base-catalog.json`
 - canonicalExpandedScenarioCatalog: `implementation/roblox/manifests/scenario-expanded-catalog.json`
 - historicalExpandedScenarioEvidence: `implementation/roblox/manifests/architecture-scenarios.json`
@@ -26,6 +27,8 @@
 
 v1은 direct Requirement/System/semanticStages trace다. v2는 61개 entry/recovery classification과 semantic schema의 immutable evidence다. 현재 완전한 R3 Scenario audit 권위는 clean Base/Expanded source를 v2 classification evidence에 묶는 v3다.
 
+현재 Product/Accepted ADR/Architecture/System/UI tree binding은 `r3-authority-corpus.json`이 소유한다. `architecture-coverage.json`의 과거 `authorityCorpus`는 historical evidence이며 current HEAD lock으로 사용하지 않는다.
+
 ## 1. 기본 읽기 경로
 
 ```text
@@ -33,22 +36,24 @@ v1은 direct Requirement/System/semanticStages trace다. v2는 61개 entry/recov
 2. .github/CODEX-ACTIVE-TASK.md
 3. implementation/roblox/IMPLEMENTATION-MODEL.md
 4. implementation/roblox/SYSTEMS.md
-5. implementation/roblox/manifests/implementation-system-model.json
-6. implementation/roblox/manifests/scenario-semantic-audit-v3.json
-7. implementation/roblox/manifests/scenario-semantic-audit.json
-8. implementation/roblox/manifests/scenario-base-catalog.json
-9. implementation/roblox/manifests/scenario-expanded-catalog.json
-10. 필요한 Product/Accepted ADR/Architecture/UI 원문
+5. implementation/roblox/manifests/r3-authority-corpus.json
+6. implementation/roblox/manifests/implementation-system-model.json
+7. implementation/roblox/manifests/scenario-semantic-audit-v3.json
+8. implementation/roblox/manifests/scenario-semantic-audit.json
+9. implementation/roblox/manifests/scenario-base-catalog.json
+10. implementation/roblox/manifests/scenario-expanded-catalog.json
+11. 필요한 Product/Accepted ADR/Architecture/UI 원문
 ```
 
-폐기된 Greenfield System/Module/Stable Function/Execution 문서는 기본 읽기 대상이 아니다. `architecture-coverage.json`의 legacy Base 사본과 `architecture-scenarios.json`의 legacy capabilityRefs/status도 새 구현 입력으로 사용하지 않는다.
+폐기된 Greenfield System/Module/Stable Function/Execution 문서는 기본 읽기 대상이 아니다. `architecture-coverage.json`의 legacy Base/authority snapshot과 `architecture-scenarios.json`의 legacy capabilityRefs/status도 새 구현 입력으로 사용하지 않는다.
 
 ## 2. 현재 상태
 
-34-System / 30 Requirement / 61 Scenario R3 모델은 전수 semantic audit와 GitHub Workflow 검증을 통과한 상태를 유지한다. 이번 authority-hygiene 재검증에서는 clean Scenario source에서 남아 있던 legacy coverage metadata와 historical evidence coupling을 제거했다.
+34-System / 30 Requirement / 61 Scenario R3 모델은 전수 semantic audit와 GitHub Workflow 검증을 통과한 상태를 유지한다. current authority corpus는 Product/ADR/Architecture/System/UI의 현재 tree를 별도 manifest로 묶으며, historical Greenfield snapshot과 분리한다.
 
 ```text
 34 Systems / 30 Requirement Capabilities / 61 Scenarios
+Current Authority Corpus = Product + ADR + Architecture + System + UI
 Canonical Base Scenario = 14 clean body-only
 Canonical Expanded Scenario = 47 clean body-only
 v1 direct trace = VALIDATED
@@ -64,13 +69,15 @@ Source/Studio block = ACTIVE
 R3 = VALIDATED · NOT FROZEN
 ```
 
-## 3. Scenario Source Rule
+## 3. Scenario / Authority Source Rule
 
 Base 14의 canonical source는 `scenario-base-catalog.json`, Expanded 47의 canonical source는 `scenario-expanded-catalog.json`이다. 두 파일의 Scenario object는 `id / phase / steps / expectedOutcome / negativeCases`만 소유하며 legacy Greenfield capability/system/module/coverage status를 포함하지 않는다.
 
-`architecture-scenarios.json`은 historical Greenfield evidence다. clean Expanded 추출 시 semantic body equivalence는 이미 검증됐으며, 이후에는 historical blob 자체를 immutable evidence로 고정한다. canonical Scenario가 정상적인 semantic re-audit를 통해 진화할 때 historical evidence를 같이 다시 쓰거나 계속 exact-match시킬 필요가 없다.
+`architecture-scenarios.json`은 historical Greenfield evidence다. clean Expanded 추출 시 semantic body equivalence는 이미 검증됐으며, 이후에는 historical blob 자체를 evidence로 고정한다.
 
 Requirement/System/direct semantic stage mapping은 `implementation-system-model.json`, entry/recovery classification과 semantic schema evidence는 v2 `scenario-semantic-audit.json`, clean-source + historical-evidence binding은 v3 `scenario-semantic-audit-v3.json`이 소유한다.
+
+현재 Product/ADR/Architecture/System/UI tree snapshot은 `r3-authority-corpus.json`이 소유한다. Specs와 Work Order는 이 corpus에 포함하지 않으며 각각 reference corpus / planning boundary로 검증한다.
 
 ## 4. 기존 시스템 불변식
 
@@ -126,7 +133,7 @@ Product/Accepted ADR/Authority/state ownership/System responsibility/input gramm
 - Module/Stable Function 대량 설계.
 - 폐기 Greenfield 계약 복원.
 - legacy Scenario mapping/status 재사용.
-- historical evidence를 canonical Scenario 변경에 맞춰 재작성.
+- historical evidence를 current authority 변화에 맞춰 재작성.
 
 ## 8. 다음 행동
 
