@@ -2,8 +2,7 @@
 
 - executionAuthority: `ONLY_CURRENT_EXECUTABLE_TASK`
 - status: `R3_VALIDATED_AWAITING_FREEZE_DECISION`
-- priorRepairedBaseStatus: `R3_REPAIRED_AWAITING_FREEZE_DECISION`
-- commandId: `RVTT-R3-VALIDATED-AWAITING-FREEZE-003`
+- commandId: `RVTT-R3-VALIDATED-AWAITING-FREEZE-004`
 - repository: `Kaetaeru/RVTT`
 - pullRequest: `2`
 - branch: `agent/survival-logistics-token-authoring`
@@ -12,18 +11,20 @@
 - systemModel: `34_SYSTEM_V2_REPAIRED`
 - requirementCapabilityCatalog: `30_REQUIREMENT_CAPABILITY_V3`
 - scenarioTrace: `61_OF_61_MACHINE_READABLE`
-- scenarioSemanticAudit: `V1_61_OF_61`
-- scenarioSemanticAuditV2: `V2_FULL_SCHEMA_BOUND_61_OF_61_VALIDATED`
+- scenarioSemanticAudit: `V1_61_OF_61_DIRECT_TRACE`
+- scenarioSemanticAuditV2: `V2_61_OF_61_CLASSIFICATION_EVIDENCE_VALIDATED`
+- scenarioSemanticAuditV3: `V3_CLEAN_SOURCE_BOUND_61_OF_61_VALIDATED`
 - canonicalBaseScenarioCatalog: `implementation/roblox/manifests/scenario-base-catalog.json`
-- expandedScenarioCatalog: `implementation/roblox/manifests/architecture-scenarios.json#scenarios`
+- canonicalExpandedScenarioCatalog: `implementation/roblox/manifests/scenario-expanded-catalog.json`
+- historicalExpandedScenarioEvidence: `implementation/roblox/manifests/architecture-scenarios.json`
 - scenarioTraceDigest: `sha256:57e485a0cec6d753542e4bc202a881e10e2bd5ae63e314cc609c7e2d99f38140`
 - semanticSchemaDigest: `sha256:dcc766c1161332789e91aadc362c4765687af3efc2f7193cf23f748df0eb6489`
-- scenarioCombinedAuditDigest: `sha256:2fa071defaa6ee6363378f9a31780f4d54328199fb4e21bc6eeae3c1b9e07bec`
+- scenarioCombinedAuditDigestV3: `sha256:3d548607d17c7ca7fb13cb44b6b3e8f305f0cb5e5a3a46eacdae7ee19497e46e`
 - effectiveRecoveryScenarios: `27`
 - r3BoundaryAudit: `VALIDATED_NOT_FROZEN`
 - updatedAt: `2026-08-13`
 
-`scenarioSemanticAudit: V1_61_OF_61`은 direct semantic-stage base layer다. 완전한 R3 Scenario audit 권위는 `scenarioSemanticAuditV2`다.
+v1은 direct Requirement/System/semanticStages trace다. v2는 61개 entry/recovery classification과 semantic schema의 immutable evidence다. 현재 완전한 R3 Scenario audit 권위는 clean Base/Expanded source를 v2 classification evidence에 묶는 v3다.
 
 ## 1. 기본 읽기 경로
 
@@ -33,13 +34,14 @@
 3. implementation/roblox/IMPLEMENTATION-MODEL.md
 4. implementation/roblox/SYSTEMS.md
 5. implementation/roblox/manifests/implementation-system-model.json
-6. implementation/roblox/manifests/scenario-semantic-audit.json
-7. implementation/roblox/manifests/scenario-base-catalog.json
-8. 필요한 Expanded Scenario의 architecture-scenarios.json scenarios[]
-9. 필요한 Product/Accepted ADR/Architecture/UI 원문
+6. implementation/roblox/manifests/scenario-semantic-audit-v3.json
+7. implementation/roblox/manifests/scenario-semantic-audit.json
+8. implementation/roblox/manifests/scenario-base-catalog.json
+9. implementation/roblox/manifests/scenario-expanded-catalog.json
+10. 필요한 Product/Accepted ADR/Architecture/UI 원문
 ```
 
-폐기된 Greenfield System/Module/Stable Function/Execution 문서는 기본 읽기 대상이 아니다. `architecture-coverage.json` 안의 legacy Base Scenario 사본과 capability/system/module refs도 새 구현 입력으로 사용하지 않는다.
+폐기된 Greenfield System/Module/Stable Function/Execution 문서는 기본 읽기 대상이 아니다. `architecture-coverage.json`의 legacy Base 사본과 `architecture-scenarios.json`의 legacy capabilityRefs도 새 구현 입력으로 사용하지 않는다.
 
 ## 2. 현재 상태
 
@@ -47,10 +49,11 @@
 
 ```text
 34 Systems / 30 Requirement Capabilities / 61 Scenarios
-Canonical Base Scenario = 14
-Expanded Scenario = 47
+Canonical Base Scenario = 14 clean
+Canonical Expanded Scenario = 47 clean
 v1 direct trace = VALIDATED
-v2 full semantic schema = VALIDATED
+v2 semantic classification/schema = VALIDATED EVIDENCE
+v3 clean source binding = VALIDATED
 27 typed recovery Scenario
 A3/A8/A7 event durability = VALIDATED
 A1 final Ready gate = VALIDATED
@@ -58,25 +61,16 @@ Reservation taxonomy = VALIDATED
 Provider contracts = VALIDATED
 E0 before Studio sequence = VALIDATED
 Source/Studio block = ACTIVE
-R3 = NOT FROZEN
-```
-
-추가 recovery sentinel:
-
-```text
-SCN_ATTACK_REACTION_RESOLUTION → RECONNECT
-SCN_CHARACTER_SHEET_LIVE_DAMAGE_SYNC → CLIENT_RESYNC
-SCN_SCENE_CANDIDATE_TEST_PUBLISH → LAST_KNOWN_GOOD
-SCN_DM_RECOVERY_REVIEW_BRANCH → SERVER_RESTART + ROLLBACK_BRANCH + CLIENT_RESYNC
+R3 = VALIDATED · NOT FROZEN
 ```
 
 ## 3. Scenario Source Rule
 
-Base 14의 canonical source는 `scenario-base-catalog.json`이다. 이 파일은 legacy Greenfield mapping을 포함하지 않는다.
+Base 14의 canonical source는 `scenario-base-catalog.json`, Expanded 47의 canonical source는 `scenario-expanded-catalog.json`이다. 두 파일 모두 legacy Greenfield capability/system/module mapping을 포함하지 않는다.
 
-Expanded 47은 현재 `architecture-scenarios.json`의 `scenarios[]`만 Scenario body source로 사용한다. 이 파일의 `baseRegistry`도 canonical Base catalog를 가리키며, legacy `capabilityRefs`는 Requirement/System mapping 권위가 아니다.
+`architecture-scenarios.json`은 historical Greenfield evidence다. v3 validator는 그 파일의 semantic body projection이 clean Expanded 47과 정확히 같은지만 검증하며, legacy capabilityRefs를 구현 권위로 읽지 않는다.
 
-Requirement/System/semantic stage mapping은 `implementation-system-model.json`, typed ingress/recovery 의미는 `scenario-semantic-audit.json`만 소유한다.
+Requirement/System/direct semantic stage mapping은 `implementation-system-model.json`, entry/recovery classification과 semantic schema evidence는 v2 `scenario-semantic-audit.json`, clean-source binding은 v3 `scenario-semantic-audit-v3.json`이 소유한다.
 
 ## 4. 기존 시스템 불변식
 
@@ -117,7 +111,13 @@ C1 clientReplicaReady
 → E2
 ```
 
-## 6. 지금 하지 않는 것
+## 6. 검증 중 발견 사항 처리
+
+현재 합의 방향 안의 명백한 stale pointer, 문서 상태 drift, validator false-green, workflow trigger 누락은 발견 즉시 수정하고 최종 HEAD에서 다시 검증한다.
+
+Product/Accepted ADR/Authority/state ownership/System responsibility/input grammar/개발 순서 변경은 이 규칙에 포함되지 않으며 사용자에게 문제·대안·영향을 먼저 보고한다.
+
+## 7. 지금 하지 않는 것
 
 - R3 자동 Freeze.
 - Source 생성.
@@ -125,8 +125,8 @@ C1 clientReplicaReady
 - 새 System/Capability 추가.
 - Module/Stable Function 대량 설계.
 - 폐기 Greenfield 계약 복원.
-- legacy Base Scenario mapping 재사용.
+- legacy Scenario mapping 재사용.
 
-## 7. 다음 행동
+## 8. 다음 행동
 
-자동으로 진행하지 않는다. 사용자 R3 Freeze 결정이 내려오면 R4 E0 Checkpoint Freeze로 이동한다.
+자동으로 다음 Architecture 단계로 진행하지 않는다. 사용자 R3 Freeze 결정이 내려오면 R4 E0 Checkpoint Freeze로 이동한다.
