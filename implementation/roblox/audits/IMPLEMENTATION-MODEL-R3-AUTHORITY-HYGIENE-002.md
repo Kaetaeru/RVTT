@@ -131,3 +131,59 @@ Validate remake documentation
 이 상태 표기 커밋이 만든 최종 HEAD에서도 동일 9개 Workflow 성공을 다시 확인하는 것을 최종 완료 조건으로 한다.
 
 R3는 검증 성공으로 자동 Freeze되지 않는다.
+
+## 7. Second Independent Revalidation · Authority Direction Repair
+
+사용자 요청으로 Freeze 전 다시 독립 재검증했다. 이 과정에서 Architecture 변경이 아닌 세 가지 추가 authority-hygiene 결함을 발견했다.
+
+```text
+Clean Base 14
+→ legacy coverage status(BLOCKED/MAPPED/DEFERRED...)가 Scenario object에 남아 있었음
+
+Clean Base/Expanded policy
+→ semanticAuditOwnedBy가 effective v3가 아니라 v2 classification evidence를 가리키고 있었음
+
+Historical Expanded validation
+→ historical-only라고 선언하면서 매 실행 clean Expanded와 exact equality를 요구해
+  향후 canonical Scenario 변경이 historical evidence 재작성까지 요구하는 역방향 의존성이 생김
+```
+
+즉시 수정 결과:
+
+```text
+Clean Base/Expanded Scenario object
+→ id / phase / steps / expectedOutcome / negativeCases만 허용
+→ legacy coverage status/mapping metadata 금지
+
+semanticAuditOwnedBy
+→ scenario-semantic-audit-v3.json
+
+architecture-scenarios.json
+→ immutable historical evidence blob
+→ clean Expanded 추출 당시 equivalence는 과거 검증 evidence로 보존
+→ 이후 canonical Scenario의 정상적 semantic re-audit와 독립
+→ historical evidence를 canonical 변화에 맞춰 재작성하지 않음
+```
+
+이 섹션의 규칙이 §3의 동적 exact-equality 설명과 §4의 이전 v3 digest를 **현재 상태에 대해 supersede**한다. §3~§4는 당시 reconciliation 이력으로 보존하며 다시 쓰지 않는다.
+
+현재 v3 combined digest:
+
+```text
+sha256:bd2db9a2d97c224c73265cd11dc6db32e81a17fc24b7fe6909254a5185196f38
+```
+
+현재 combined binding:
+
+```text
+Clean Base blob
++ Clean Expanded blob
++ immutable Historical Expanded evidence blob
++ v1 direct trace digest
++ immutable v2 classification-audit blob
++ v2 semantic schema digest
+```
+
+이번 변경은 System 34, Requirement 30, Scenario 61의 의미, Authority/state ownership, ingress grammar, 개발 순서, Source/Studio gate를 변경하지 않는다.
+
+최종 완료 조건은 이 second revalidation 변경을 포함한 동일 HEAD에서 9개 Pull Request Workflow가 모두 성공하는 것이다.
