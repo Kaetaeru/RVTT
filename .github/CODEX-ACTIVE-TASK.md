@@ -1,14 +1,17 @@
 # RVTT Current Executable Task
 
 - executionAuthority: `ONLY_CURRENT_EXECUTABLE_TASK`
-- status: `IMPLEMENTATION_MODEL_RESET`
-- commandId: `RVTT-IMPLEMENTATION-MODEL-RESET-001`
+- status: `R3_BOUNDARY_FREEZE`
+- commandId: `RVTT-R3-BOUNDARY-FREEZE-001`
 - repository: `Kaetaeru/RVTT`
 - pullRequest: `2`
 - branch: `agent/survival-logistics-token-authoring`
-- taskMode: `WHOLE_PRODUCT_SYSTEM_MODEL_DERIVATION`
+- taskMode: `CORE_RUNTIME_PRESENTATION_BOUNDARY_FREEZE`
 - sourceImplementationAllowed: `false`
 - studioImplementationAllowed: `false`
+- systemModel: `33_SYSTEM_V1_APPROVED`
+- capabilityCatalog: `34_CAPABILITY_V2_ACTIVE`
+- scenarioPressureReview: `61_OF_61_COMPLETE`
 - updatedAt: `2026-08-13`
 
 ## 1. 기본 읽기 경로
@@ -19,213 +22,163 @@ Codex는 기본적으로 다음만 읽는다.
 1. AGENTS.md
 2. .github/CODEX-ACTIVE-TASK.md
 3. implementation/roblox/IMPLEMENTATION-MODEL.md
-4. implementation/roblox/ARCHITECTURE-COVERAGE-POLICY.md
-5. implementation/roblox/manifests/architecture-coverage.json
-6. implementation/roblox/manifests/architecture-scenarios.json
+4. implementation/roblox/SYSTEMS.md
 ```
 
-그 뒤 필요한 Requirement Evidence만 Product / Accepted ADR / Current Architecture / UI에서 선택적으로 읽는다.
+R3의 특정 책임을 검증할 때만 다음을 선택적으로 읽는다.
+
+```text
+implementation/roblox/audits/IMPLEMENTATION-MODEL-R2-SCENARIO-PRESSURE-001.md
+implementation/roblox/manifests/architecture-scenarios.json
+implementation/roblox/manifests/architecture-coverage.json   # legacy requirement evidence only
+docs/remake/product/**
+docs/remake/decisions/**
+docs/remake/architecture/**
+docs/remake/ui/**
+```
 
 기존 Greenfield System/Module/Stable Function/Execution 문서는 기본 읽기 대상이 아니다.
 
-## 2. 폐기된 구현 모델
+## 2. 승인된 현재 모델
 
-다음은 모두 `RETIRED_IMPLEMENTATION_MODEL`이다.
-
-```text
-25-module Greenfield registry
-10-system Greenfield registry
-64 stable function registry
-G0~G5 stage model
-기존 E0/E1 module classification
-기존 controller/service/manager wiring
-기존 WorldState.transact 중심 mutation 구조
-```
-
-새 모델은 이것을 고치는 방식으로 만들지 않는다.
-
-기존 이름이나 경계가 최종적으로 다시 등장할 수는 있지만, **22 Capability + 61 Scenario + 상위 Authority를 처음부터 검토한 결과로만 재채택**한다.
-
-## 3. 현재 목표
-
-현재 목표는 Source가 아니라 **전체 제품 System Model을 처음부터 다시 만드는 것**이다.
+현재 구현 System 권위:
 
 ```text
-Authority / Capability / Scenario
-→ Domain responsibility extraction
-→ State / Authority owner inventory
-→ System Model From Scratch
-→ 61 Scenario end-to-end pressure review
-→ Cross-cutting review
-→ Core Engine / Roblox Runtime / Presentation boundary freeze
-→ E0 Checkpoint freeze
-→ Dedicated Implementation Branch
+implementation/roblox/SYSTEMS.md
+33 systems
+34 capability v2
 ```
 
-## 4. R0 — Requirement Distillation
-
-22 Capability와 61 Scenario를 훑어 다음을 추출한다.
+R2 결과:
 
 ```text
-Domain responsibilities
-Authoritative state kinds
-Client-local state kinds
-Identity/version/revision requirements
-Command/read/projection/event flows
-Concurrency/transaction requirements
-Disclosure/visibility requirements
-Persistence/reconnect/rollback seams
-Roblox-runtime dependencies
-Presentation/human-feedback dependencies
-Failure/observability/security requirements
+61/61 scenarios reviewed
+0 empty responsibility path
+0 old Greenfield module assumption
 ```
 
-`architecture-coverage.json`의 과거 `systemRefs/moduleRefs`는 참고하지 않는다. 해당 필드는 이전 Greenfield 매핑 기록일 뿐이다.
+기존 22 Capability는 legacy coverage vocabulary다. 새 구현 경계는 `SYSTEMS.md`의 Capability v2와 System mapping을 사용한다.
 
-## 5. R1 — System Model From Scratch
+## 3. 현재 목표 — R3
 
-새 System마다 최소 다음을 작성한다.
-
-```text
-System ID / Name
-Purpose
-Owns State
-Does Not Own
-Authority
-Inputs
-Outputs
-Depends On
-Consumed By
-Current Scenario Set
-Future Scenario Pressure Set
-Persistence/Reconnect/Rollback Seam
-Failure/Observability Seam
-Security/Disclosure Constraints
-```
-
-Manager나 Module 이름을 먼저 정하지 않는다.
-
-System은 "어떤 책임을 누가 소유해서 결과가 나오는가"로 설명 가능해야 한다.
-
-## 6. R2 — Scenario Pressure Review
-
-새 System Model을 61 Scenario에 다시 대입한다.
-
-FAIL 조건:
-
-- Scenario 중간 단계에 소유 System이 없음.
-- Client가 Server authority/rules를 재구성해야 함.
-- Character/Encounter/Inventory/Rules/Persistence/DM을 붙이려면 shared public boundary를 갈아엎어야 함.
-- 한 System이 UI, transport, rules, persistence 등 독립 책임을 과도하게 소유함.
-- Disclosure/Concurrency/Recovery/Failure path가 없음.
-- Roblox Runtime 세부 구현을 Core Engine 책임으로 잘못 끌어옴.
-
-이 단계에서 발견한 문제는 기존 GAP 번호에 맞추기 위해 억지로 분류하지 않는다. 필요하면 새 모델 관점에서 다시 정의한다.
-
-## 7. R3 — 실행 환경 경계
-
-System Model이 Scenario Pressure Review를 통과한 뒤에만 실행 환경을 분류한다.
+33개 System의 책임을 다음 세 층으로 나눈다.
 
 ```text
 Repository Core Engine
-= Roblox Runtime 없이 correctness 자동 검증 가능
-
-Roblox Runtime Engine / Integration
-= Roblox 서비스/geometry/runtime 결과가 correctness에 필요
-
-Presentation / Feel
-= 사람이 보고 만져야 판단 가능
+Roblox Runtime Engine / Adapter
+Presentation / Human Feel
 ```
 
-**Repository Core Engine 전체 완료 전 Studio/MCP 구현 금지.**
+System 전체를 하나의 층에 강제로 배치하지 않는다.
 
-Pathfinding/Raycast/Physics도 Repository에서 contract/policy/failure seam을 먼저 완성하고 실제 provider는 이후 Studio에서 구현한다.
-
-## 8. R4 — E0 Checkpoint Freeze
-
-Core Engine 구현 직전에만 System → Module → Stable Function을 구체화한다.
-
-필수 필드:
+각 System에 대해 다음을 작성한다.
 
 ```text
-Checkpoint ID
-Current Deliverable
-System / Module Scope
-Stable Function Scope
-Authority / State Ownership
-Input / Output Contract
-Current Scenario Working Set
-Future Consumers
-Future Scenario Pressure Set
-Extension Seams
-Stable Ownership / Identity Seams
-Persistence / Reconnect / Rollback Seams
-Observability / Failure Seams
-Forbidden Shortcuts
-Explicit Deferred Non-goals
-Repository Tests
-Negative / Fail-closed Tests
-Future Compatibility Contract Tests
-Completion Condition
+Core responsibilities
+Roblox-runtime responsibilities
+Presentation/human responsibilities
+External adapter seams
+Forbidden cross-boundary shortcuts
+Future consumers
+Scenario pressure
+Test evidence class
 ```
 
-미래 기능 자체를 지금 구현하지 않는다. 하지만 미래 기능 때문에 public contract를 재작성해야 하는 구조도 허용하지 않는다.
+## 4. 분류 기준
 
-## 9. R5 — Dedicated Implementation Branch
+### Repository Core Engine
 
-E0 Checkpoint Freeze가 끝난 뒤 별도 구현 브랜치를 만든다.
+Roblox Runtime 없이 correctness를 자동 검증할 수 있는 책임.
 
-그 Branch의 기본 작업면에는 압축된 구현 Pack만 둔다.
+예:
+
+- policy
+- state machine
+- schema / contract
+- deterministic orchestration
+- revision/identity rules
+- pure calculation
+- serialization-neutral domain logic
+- failure semantics
+
+### Roblox Runtime Engine / Adapter
+
+Roblox 서비스나 geometry/runtime 결과가 correctness의 일부인 책임.
+
+예:
+
+- PathfindingService / NavMesh
+- raycast / overlap / collision / physics
+- Instance / Player lifecycle
+- Remote transport adapter
+- StreamingEnabled / materialization
+- Roblox input adapter
+
+### Presentation / Human Feel
+
+실제 사용자에게 보이는 감각과 읽기성 검토가 필요한 책임.
+
+예:
+
+- final UI layout / shell feel
+- VFX timing
+- camera feel
+- path preview readability
+- movement perceived intent
+- hover/highlight readability
+
+## 5. 절대 순서
 
 ```text
-IMPLEMENTATION.md
-SYSTEMS.md
-Scenario Working Set
-CONTRACTS.json
-BUILD-ORDER.md
-TEST-GATES.md
-BASELINE.json
-src/
-tests/
-```
-
-`BASELINE.json`은 승인된 Planning commit SHA를 기록한다.
-
-구현 AI는 Planning Tree 전체를 기본 검색하지 않는다. 필요한 책임이 없거나 충돌하면 `ESCALATE_TO_PLANNING`한다.
-
-## 10. Studio + UI 순서
-
-```text
-E0 Repository Core Engine 전체 구현/검증
+R3 Boundary Freeze
+→ R4 E0 Checkpoint Freeze
+→ R5 Dedicated Implementation Branch
+→ E0 Repository Core Engine 전체 구현/자동 검증
 → CORE_ENGINE_COMPLETE
 → E1 Runtime Checkpoint Freeze
 → Studio/MCP Runtime Engine + Integration
 → INTEGRATION_READY
-→ U0-A HTML/UI Reference Distillation
-→ U0-B Product UI Shell 전체 Scaffold
-→ U0-C Human Shell Review
+→ U0 HTML/UI distillation + full Product UI Shell
 → UI_SHELL_READY
-→ E2 User-facing Checkpoint JIT
+→ E2 user-facing checkpoints
 ```
 
-U0에서는 실제 HTML 예시와 최신 UI Authority를 함께 읽어 UI Surface 종류, 철학, IA, 시각 언어, 상태 표현, 접근성, Roblox mapping을 글로 먼저 정리한다.
+**CORE_ENGINE_COMPLETE 전 Studio/MCP 작업 금지.**
 
-`UI_SHELL_READY` 이후 throwaway Test ScreenGui를 만들지 않는다.
+Pathfinding/Raycast/Physics도 Core contract/policy/failure seam을 먼저 확정하고 실제 Roblox Provider는 E1에서 만든다.
 
-## 11. 지금 하지 않는 것
+## 6. 미래 호환성
 
-- GAP-002를 기존 Module 구조 안에서 구현.
-- 기존 Module/Function Registry를 보완.
+R3/R4는 현재 Foundation만 보지 않는다.
+
+최소 미래 소비 압력:
+
+```text
+Character creation / level-up / sheet
+Encounter / reaction / ready / death save
+Inventory / equipment / consumables
+Spell / dice / concentration / effects
+Rest / travel / crafting / survival settlement
+Journal / scene authoring / live DM
+Content migration / actor authoring
+Reconnect / restart / rollback / branch recovery
+Streaming / accessibility / low-end fallback
+```
+
+미래 기능 자체를 구현하지 않되, 미래 기능 때문에 shared public boundary를 재작성해야 하는 구조는 Reject한다.
+
+## 7. 지금 하지 않는 것
+
 - Source 생성.
 - Studio/MCP 진입.
-- 구현 브랜치 조기 생성.
-- 미래 시스템 API 대량 선설계.
-- 기존 이름을 기본값으로 재사용.
+- Module/Stable Function 대량 설계.
+- Controller/Manager 이름 확정.
+- 폐기된 Greenfield 계약 복원.
+- 기존 GAP 번호를 맞추기 위한 System 왜곡.
+- UI Shell 조기 제작.
 
-## 12. 다음 행동
+## 8. 다음 행동
 
-**R0/R1 Whole-product System Model Derivation을 시작한다.**
+**R3 Boundary Matrix를 작성하고 61 Scenario pressure에 다시 대조한다.**
 
-먼저 22 Capability + 61 Scenario를 책임/상태/권위 관점으로 클러스터링하고, 사용자에게 첫 System Model Draft를 제시한다.
-
-그 Draft는 새 Architecture 제안이므로 사용자 승인 전에는 Module/Stable Function/Source를 만들지 않는다.
+R3 결과는 사용자 검토 전 R4 Module/Stable Function/Source 권위를 만들지 않는다.
