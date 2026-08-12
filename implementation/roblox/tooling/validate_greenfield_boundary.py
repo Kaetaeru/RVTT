@@ -10,20 +10,27 @@ ACTIVE_TASK = REPO_ROOT / ".github/CODEX-ACTIVE-TASK.md"
 MODEL = ROOT / "IMPLEMENTATION-MODEL.md"
 AGENTS = REPO_ROOT / "AGENTS.md"
 
+# User-directed implementation-model reset started from this PR head.
+# Legacy files already changed earlier in the planning PR are accepted as historical baseline,
+# but no new Legacy mutation is allowed after this point.
+RESET_BASELINE_COMMIT = "cce0f4fbc01e91437ccbfc8b2341d903f15bc785"
+LEGACY_LOCK_PATHS = [
+    "implementation/roblox/src",
+    "implementation/roblox/default.project.json",
+]
 
-def changed_paths() -> list[str]:
-    candidates = ["origin/main...HEAD", "HEAD^...HEAD"]
-    for diff_range in candidates:
-        result = subprocess.run(
-            ["git", "diff", "--name-only", diff_range],
-            cwd=REPO_ROOT,
-            text=True,
-            capture_output=True,
-            check=False,
-        )
-        if result.returncode == 0:
-            return [line.strip() for line in result.stdout.splitlines() if line.strip()]
-    return []
+
+def git_object(commit: str, path: str) -> str | None:
+    result = subprocess.run(
+        ["git", "rev-parse", f"{commit}:{path}"],
+        cwd=REPO_ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        return None
+    return result.stdout.strip()
 
 
 def main() -> int:
@@ -44,14 +51,17 @@ def main() -> int:
     if "DEDICATED IMPLEMENTATION BRANCH = NOT YET CREATED" not in model:
         errors.append("dedicated implementation branch must not be created before E0 checkpoint freeze")
 
-    legacy_prefix = "implementation/roblox/src/"
-    forbidden_legacy_files = {"implementation/roblox/default.project.json"}
-    legacy_changes = [
-        path for path in changed_paths()
-        if path.startswith(legacy_prefix) or path in forbidden_legacy_files
-    ]
-    if legacy_changes:
-        errors.append(f"legacy implementation source/project changed during reset: {legacy_changes}")
+    for path in LEGACY_LOCK_PATHS:
+        baseline = git_object(RESET_BASELINE_COMMIT, path)
+        current = git_object("HEAD", path)
+        if baseline is None:
+            errors.append(f"cannot resolve reset baseline object for {path}")
+            continue
+        if current != baseline:
+            errors.append(
+                f"legacy write-lock drift after reset for {path}: "
+                f"baseline={baseline} current={current}"
+            )
 
     if errors:
         print("RVTT implementation model reset boundary validation failed:")
@@ -61,7 +71,8 @@ def main() -> int:
 
     print(
         "RVTT implementation model reset boundary validation passed: "
-        "old Greenfield model retired; source=BLOCKED; studio=BLOCKED; legacy write-lock=PASS"
+        f"resetBaseline={RESET_BASELINE_COMMIT[:12]}; old Greenfield model retired; "
+        "source=BLOCKED; studio=BLOCKED; legacy write-lock=PASS"
     )
     return 0
 
