@@ -12,6 +12,7 @@
 - systemModel: `33_SYSTEM_V1_APPROVED`
 - capabilityCatalog: `34_CAPABILITY_V2_ACTIVE`
 - scenarioPressureReview: `61_OF_61_COMPLETE`
+- r3BoundaryAudit: `DRAFT_USER_APPROVAL_REQUIRED`
 - updatedAt: `2026-08-13`
 
 ## 1. 기본 읽기 경로
@@ -23,6 +24,7 @@ Codex는 기본적으로 다음만 읽는다.
 2. .github/CODEX-ACTIVE-TASK.md
 3. implementation/roblox/IMPLEMENTATION-MODEL.md
 4. implementation/roblox/SYSTEMS.md
+5. implementation/roblox/audits/IMPLEMENTATION-MODEL-R3-BOUNDARY-001.md
 ```
 
 R3의 특정 책임을 검증할 때만 다음을 선택적으로 읽는다.
@@ -71,7 +73,15 @@ Presentation / Human Feel
 
 System 전체를 하나의 층에 강제로 배치하지 않는다.
 
-각 System에 대해 다음을 작성한다.
+현재 제안 Boundary Matrix는:
+
+```text
+implementation/roblox/audits/IMPLEMENTATION-MODEL-R3-BOUNDARY-001.md
+```
+
+이며 **사용자 승인 전에는 R3 FROZEN이나 R4 진입으로 간주하지 않는다.**
+
+각 System에 대해 다음을 확인한다.
 
 ```text
 Core responsibilities
@@ -179,6 +189,6 @@ Streaming / accessibility / low-end fallback
 
 ## 8. 다음 행동
 
-**R3 Boundary Matrix를 작성하고 61 Scenario pressure에 다시 대조한다.**
+**R3 Boundary Matrix 사용자 결정.**
 
-R3 결과는 사용자 검토 전 R4 Module/Stable Function/Source 권위를 만들지 않는다.
+승인되면 R3를 `FROZEN`으로 올리고 R4 Foundation Core Checkpoint를 JIT로 구체화한다.
