@@ -9,21 +9,24 @@
     "legacyExpandedEvidencePath": "implementation/roblox/manifests/architecture-scenarios.json",
     "directModelPath": "implementation/roblox/manifests/implementation-system-model.json",
     "semanticClassificationAuditV2Path": "implementation/roblox/manifests/scenario-semantic-audit.json",
-    "baseScenarioBlobSha": "641c62df521d9afff740d5478657c4732c0afe2f",
-    "expandedScenarioBlobSha": "afa20db48a78ca9e758d19f2476f57f64fc89433",
+    "baseScenarioBlobSha": "3e6d79839b4fc280ae8777cbeb778c22540943be",
+    "expandedScenarioBlobSha": "61fe859057dcc36587e5893a653b844647168928",
+    "legacyExpandedEvidenceBlobSha": "93f275b373c9f88b12ed3078149ff562642a5b1d",
     "semanticClassificationAuditV2BlobSha": "839f05d0d7ba1f53eec87fd35981d4b961d513ef",
     "scenarioTraceDigest": "sha256:57e485a0cec6d753542e4bc202a881e10e2bd5ae63e314cc609c7e2d99f38140",
     "semanticSchemaDigest": "sha256:dcc766c1161332789e91aadc362c4765687af3efc2f7193cf23f748df0eb6489",
-    "combinedAuditDigest": "sha256:3d548607d17c7ca7fb13cb44b6b3e8f305f0cb5e5a3a46eacdae7ee19497e46e",
-    "combinedDigestInput": "base:<blob>\nexpanded:<blob>\ntrace:<digest>\nv2audit:<blob>\nschema:<digest>"
+    "combinedAuditDigest": "sha256:bd2db9a2d97c224c73265cd11dc6db32e81a17fc24b7fe6909254a5185196f38",
+    "combinedDigestInput": "base:<blob>\nexpanded:<blob>\nlegacyEvidence:<blob>\ntrace:<digest>\nv2audit:<blob>\nschema:<digest>"
   },
   "policy": {
     "v2SemanticClassificationPreserved": true,
     "cleanCatalogsForbidLegacyMappingKeys": true,
+    "cleanCatalogsForbidLegacyCoverageStatus": true,
     "legacyExpandedRegistryHistoricalOnly": true,
-    "legacyExpandedProjectionMustMatchCleanExpanded": true,
+    "legacyExpandedProjectionVerifiedAtExtraction": true,
+    "legacyExpandedEvidenceImmutable": true,
     "scenarioMeaningChanged": false
   },
   "effectiveRecoveryScenarioCount": 27,
-  "interpretation": "The clean Base 14 and Expanded 47 catalogs are the only canonical Scenario body sources. The v2 audit remains immutable evidence for the 61 entry/recovery classifications and semantic schema. This v3 binding proves that the clean Expanded catalog is the semantic-body projection of the historical Greenfield registry and binds the clean catalogs, direct trace, v2 classification audit, and schema digest into the effective R3 audit."
+  "interpretation": "The clean Base 14 and Expanded 47 catalogs are the only canonical Scenario body sources. The v2 audit remains immutable evidence for the 61 entry/recovery classifications and semantic schema. Historical architecture-scenarios is frozen evidence of the extraction that produced the clean Expanded catalog; it is not an ongoing source constraint and canonical Scenario bodies may evolve through normal semantic re-audit without rewriting historical evidence. This v3 binding covers the clean catalogs, immutable historical evidence blob, direct trace, v2 classification audit, and schema digest."
 }
