@@ -2,6 +2,8 @@
 
 - repository: `Kaetaeru/RVTT`
 - branch: `agent/survival-logistics-token-authoring`
+- run_id: `rvtt-rerun-20260817-0100-8f6c2d41`
+- sequence: `0`
 - task_id: `RERUN-RVTT-R3-FREEZE-001`
 - project_phase: `R3_VALIDATED_AWAITING_FREEZE_DECISION`
 
@@ -31,7 +33,7 @@ R3 validation complete
 
 ### `RERUN-RVTT-R3-FREEZE-001` — R3 Freeze readiness revalidation and decision handoff
 
-Rerun이 처음 `continue` authorization을 받으면 실제 Production Source나 Studio/MCP 작업을 시작하지 않는다.
+Rerun이 `continue` authorization을 받으면 실제 Production Source나 Studio/MCP 작업을 시작하지 않는다.
 
 대신 다음을 수행한다.
 
@@ -40,6 +42,22 @@ Rerun이 처음 `continue` authorization을 받으면 실제 Production Source�
 3. R3 Freeze 전에 새로 생긴 blocker, stale pointer, validator/workflow 실패, authority drift가 없는지 확인한다.
 4. 기존 검증이 유효하면 사용자가 결정할 수 있도록 현재 Freeze 대상, 다음 R4 단계, 금지 사항을 짧게 정리한다.
 5. **R3를 자동 Freeze하지 않는다.** 사용자의 명시적 Freeze 결정이 없으면 `needs_user`로 checkpoint한다.
+
+## Sequence 0 checkpoint
+
+2026-08-17 재개 preflight에서 readiness revalidation을 완료했다.
+
+- current PR: `#2`, open/draft, head `agent/survival-logistics-token-authoring`
+- revalidated head: `9bf13d38f1eebb655a36e03a9985eec72f7b1d78`
+- 마지막 프로젝트 검증 상태 이후 변경: `.chatgpt-rerun/` 연결 문서 5개 추가뿐이며 Product/ADR/Architecture/System/UI/Scenario/Source 권위에는 변경 없음
+- current authority: `R3_VALIDATED_AWAITING_FREEZE_DECISION`
+- Source implementation: `BLOCKED`
+- Studio/MCP implementation: `BLOCKED`
+- current-head required workflows: 9개 모두 `completed / success`
+- new blocker: 없음
+- authority drift: 없음
+
+따라서 sequence 0의 다음 단계는 구현이 아니라 **사용자의 명시적 R3 Freeze 결정**이다. 결정 전에는 동일 task를 `needs_user` 상태로 보존한다.
 
 ## Dependencies
 
