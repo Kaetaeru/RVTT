@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "registryId": "rvtt-retired-greenfield-execution-layers",
+  "status": "RETIRED_IMPLEMENTATION_MODEL",
+  "retiredAt": "2026-08-13",
+  "replacementAuthority": "implementation/roblox/IMPLEMENTATION-MODEL.md",
+  "historicalMeaning": "The former Greenfield E0/E1/E2 module classification. It is not a current implementation constraint.",
+  "preservedProcessRules": {
+    "studioStartsOnlyAfterCoreEngineComplete": true,
+    "uiShellSessionRunsAfterIntegrationReadyBeforePresentation": true,
+    "throwawayTestUiForbiddenAfterUiShellReady": true,
+    "dedicatedImplementationBranchCreatedAfterE0CheckpointFreeze": true
+  },
+  "currentExecutionClasses": [],
+  "currentPhases": []
+}

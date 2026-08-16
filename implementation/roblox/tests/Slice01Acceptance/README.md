@@ -1,19 +1,31 @@
-# Slice 01 Studio Acceptance Harness
+# Slice 01 Studio Acceptance Harness — Legacy
 
-This test-only harness validates the production authority, projection, networking, and persistence path without extending the placeholder production UI.
+- 상태: `ARCHIVED_LEGACY_HARNESS · NOT_CURRENT_TASK · NOT_MOUNTED_BY_CURRENT_SLICE01_PROJECT`
+- 용도: 과거 persistence-era Slice 01 흐름 기록
+- 현재 실행 기준: [`../../slice01-acceptance.project.json`](../../slice01-acceptance.project.json)
 
-## Project
+**이 문서의 아래 절차는 현재 개발 절차가 아니다.** 현재 `slice01-acceptance.project.json`은 이 디렉터리의 `Slice01Acceptance.client.lua`를 마운트하지 않으며, `tests/WorldTokenAcceptance`와 `tests/ContextInputAcceptance`를 마운트하고 `EnableStudioPersistence=false`를 사용한다.
 
-Build `slice01-acceptance.project.json` and publish it to the existing Studio persistence test Place.
+현재 개발 작업은 Acceptance Harness가 아니라 `.github/CODEX-ACTIVE-TASK.md`의 Studio-first Production 작업을 따른다.
 
-The project enables two test-only flags:
+---
+
+## Historical procedure
+
+This test-only harness validated the production authority, projection, networking, and persistence path without extending the placeholder production UI.
+
+### Historical Project Assumption
+
+The old procedure built `slice01-acceptance.project.json` and published it to a Studio persistence test Place with assumptions that no longer match the current project mapping.
+
+It expected two test-only flags:
 
 - `ServerStorage.RVTT.EnableStudioPersistence=true`
 - `ServerStorage.RVTT.Slice01AcceptanceMode=true`
 
-The second flag grants the single Studio tester the DM role only in this acceptance build. It is absent from `default.project.json`.
+The current project now sets `EnableStudioPersistence=false` and mounts the newer focused World/Context harnesses instead.
 
-## Flow
+### Historical Flow
 
 1. Join the session and refresh the DM membership.
 2. Create and activate a test character.
@@ -27,6 +39,6 @@ The second flag grants the single Studio tester the DM role only in this accepta
 10. Stop and Play again.
 11. Verify character, scene, actor position, connection, avatar suppression, and Accent recovery.
 
-The harness resolves `ClientRuntime` dynamically because it is mounted only by the acceptance project. That test-only require boundary is explicitly typed as `any`; production runtime modules remain strictly typed.
+The old harness resolved `ClientRuntime` dynamically because it was mounted only by the acceptance project at that time. This text is retained only to explain historical evidence and old commits.
 
-The screen is an acceptance instrument, not a production visual design candidate. Production UI styling remains deferred to the separate UI Visual Redesign Gate.
+The screen was an acceptance instrument, not a production visual design candidate.

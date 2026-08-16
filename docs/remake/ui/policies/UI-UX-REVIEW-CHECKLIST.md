@@ -30,8 +30,9 @@ NOT_APPLICABLE — 이유 필수
 - [ ] 현재 대상·비용·위험·예상 결과가 우선 표시된다.
 - [ ] 같은 Authority 값을 여러 Surface에서 독립 편집하지 않는다.
 - [ ] 중앙 전장 안전 영역을 지속 Panel이 가리지 않는다.
-- [ ] Map·Journal·System의 명시적 진입점이 있다.
-- [ ] Inventory·Journal·Map·Settings Panel을 Gameplay Mode로 사용하지 않는다.
+- [ ] Journal·System의 명시적 진입점이 있다.
+- [ ] Inventory·Journal·Settings Panel을 Gameplay Mode로 사용하지 않는다.
+- [ ] Player·Observer 상시 UI에 Minimap·별도 Map·Objective Tracker가 없다.
 - [ ] Loading·Empty·Filtered Empty·Denied·Not Ready·Stale·Unavailable·Error가 구분된다.
 - [ ] Panel 닫기 후 Actor Selection과 Gameplay Mode가 유지된다.
 
@@ -57,7 +58,6 @@ NOT_APPLICABLE — 이유 필수
 - [ ] Text Scale 기본 1.00, 범위 0.90–1.30이 적용된다.
 - [ ] Hotbar 기본 2행, 범위 1–4가 적용된다.
 - [ ] PartyRail 기본 `auto`, CombatLog 기본 `recent`가 적용된다.
-- [ ] Minimap 기본 `medium·camera_up`이 적용된다.
 - [ ] Theme·Scale 변경 중 Focus·Selection·Pending·Modal·Input Context가 유지된다.
 - [ ] Role·Authority·Success·Warning·Danger·Pending·Hidden·Content 의미색이 Accent로 변경되지 않는다.
 - [ ] Category Reset과 전체 Reset이 구분된다.
@@ -120,9 +120,8 @@ NOT_APPLICABLE — 이유 필수
 ## 8. Exploration HUD
 
 - [ ] InitiativeRibbon·EndTurn 없이 Exploration 셸이 구성된다.
-- [ ] PartyRail·ActiveActorPanel·Hotbar·Minimap·Objective가 전장 안전 영역을 지킨다.
+- [ ] Character Console·World Feedback이 전장 안전 영역을 지킨다.
 - [ ] Exploration Hotbar가 Capability·Item·Pinned Action에서 생성된다.
-- [ ] Objective Tracker가 비공개 단계와 Count를 누출하지 않는다.
 - [ ] Player 연결·제어권·Summon Group 상태가 구분된다.
 - [ ] World Action Label과 Movement Preview가 실제 Pointer 결과와 일치한다.
 
@@ -149,14 +148,12 @@ NOT_APPLICABLE — 이유 필수
 - [ ] 절도·소유권 분쟁은 공개 가능한 경고와 DM Adjudication 경로를 가진다.
 - [ ] Filtered Empty와 실제 Empty가 구분된다.
 
-## 11. Journal·Map·Ping
+## 11. Journal·Ping
 
 - [ ] Journal Folder·Recent·Search, Document, Outline·Backlink 영역이 구분된다.
 - [ ] Stable Document·Section·Anchor ID를 사용한다.
 - [ ] 화면 내 Back History와 Q 취소가 충돌하지 않는다.
 - [ ] 비공개 문서가 Search·Recent·Count·Backlink에 나타나지 않는다.
-- [ ] Map은 공개된 지형·Fog·Actor·Ping·Anchor만 표시한다.
-- [ ] Map Click이 Character 이동을 자동 Commit하지 않는다.
 - [ ] World Link가 Camera·Selection·Transition Proposal만 만든다.
 - [ ] Ping이 Movement·Targeting·Journal Anchor를 자동 생성하지 않는다.
 

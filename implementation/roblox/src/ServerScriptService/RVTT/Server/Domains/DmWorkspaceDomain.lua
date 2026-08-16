@@ -58,12 +58,16 @@ function Domain.register(registry: any)
 		validate = function(payload: any)
 			return Helpers.hasString(payload, "targetId") and type(payload.patch) == "table"
 		end,
-		execute = function(_: any, state: any, payload: any)
+		execute = function(context: any, state: any, payload: any)
 			local previous = state.runtimePatches[payload.targetId]
 			state.runtimePatches[payload.targetId] = {
+				id = "patch:" .. payload.targetId,
+				targetId = payload.targetId,
 				patch = payload.patch,
 				revision = if previous ~= nil then previous.revision + 1 else 1,
 				promoted = false,
+				commandId = context.commandId,
+				createdAt = os.time(),
 			}
 			return state.runtimePatches[payload.targetId]
 		end,

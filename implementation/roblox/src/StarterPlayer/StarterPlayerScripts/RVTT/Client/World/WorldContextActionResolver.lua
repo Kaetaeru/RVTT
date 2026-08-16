@@ -17,6 +17,11 @@ export type Action = {
 	commandType: string,
 	payload: { [string]: any },
 	isDefault: boolean,
+	enabled: boolean,
+	disabledReason: string?,
+	category: string,
+	sortOrder: number,
+	projectionRevision: number,
 }
 
 local Resolver = {}
@@ -37,6 +42,16 @@ local INTERACTION_PRIORITY = {
 	inspect = 30,
 	close = 40,
 	deactivate = 50,
+}
+
+local CATEGORY_PRIORITY: { [string]: number } = {
+	default = 0,
+	action = 100,
+	bonus_action = 200,
+	movement = 300,
+	interaction = 400,
+	information = 500,
+	dm = 600,
 }
 
 local function domains(replica: any): any
@@ -75,9 +90,13 @@ local function activeTurn(allDomains: any, actorId: string): (boolean, any?)
 	if type(active) ~= "table" then
 		return true, nil
 	end
-	local timeline = active.timeline
-	local entry = type(timeline) == "table" and timeline[active.cursor] or nil
-	return type(entry) == "table" and entry.actorId == actorId, active
+	local currentActorId = active.activeActorId
+	if type(currentActorId) ~= "string" then
+		local timeline = active.timeline
+		local entry = type(timeline) == "table" and timeline[active.cursor] or nil
+		currentActorId = if type(entry) == "table" then entry.actorId else nil
+	end
+	return currentActorId == actorId, active
 end
 
 local function attackProfiles(allDomains: any, actorId: string): { string }
@@ -162,16 +181,61 @@ local function preferredInteraction(object: any, available: { string }): string?
 	return available[1]
 end
 
-function Resolver.new(replica: any): any
+local function sortActions(actions: { Action })
+	table.sort(actions, function(left, right)
+		if left.isDefault ~= right.isDefault then
+			return left.isDefault
+		end
+		if left.sortOrder ~= right.sortOrder then
+			return left.sortOrder < right.sortOrder
+		end
+		return left.id < right.id
+	end)
+end
+
+function Resolver.new(replica: any, playerId: number?): any
+	local localPlayer = Players.LocalPlayer
 	return setmetatable({
 		replica = replica,
-		player = Players.LocalPlayer,
+		playerId = playerId or (if localPlayer ~= nil then localPlayer.UserId else 0),
 	}, Resolver)
+end
+
+function Resolver:isControllable(actorId: string): boolean
+	return controlsActor(domains(self.replica), self.playerId, actorId)
+end
+
+function Resolver:defaultControllableActorId(): string?
+	local allDomains = domains(self.replica)
+	local session = allDomains.session
+	local selectedCharacters = if type(session) == "table" then session.selectedCharacter else nil
+	local selectedCharacterId = if type(selectedCharacters) == "table"
+		then selectedCharacters[tostring(self.playerId)]
+		else nil
+	local scene = allDomains.scene
+	local actors = if type(scene) == "table" then scene.actors else nil
+	local candidates = {}
+	if type(actors) == "table" then
+		for actorId, value in actors do
+			if type(actorId) == "string" and controlsActor(allDomains, self.playerId, actorId) then
+				if
+					type(selectedCharacterId) == "string"
+					and type(value) == "table"
+					and value.sourceCharacterId == selectedCharacterId
+				then
+					return actorId
+				end
+				table.insert(candidates, actorId)
+			end
+		end
+	end
+	table.sort(candidates)
+	return candidates[1]
 end
 
 function Resolver:resolve(selectedActorId: string, target: Target): { Action }
 	local allDomains = domains(self.replica)
-	local playerId = self.player.UserId
+	local playerId = self.playerId
 	if not controlsActor(allDomains, playerId, selectedActorId) then
 		return {}
 	end
@@ -180,27 +244,47 @@ function Resolver:resolve(selectedActorId: string, target: Target): { Action }
 	local ownsTurn, activeEncounter = activeTurn(allDomains, selectedActorId)
 
 	if target.kind == "actor" and target.actorId ~= nil and target.actorId ~= selectedActorId then
-		local canAttack = activeEncounter ~= nil
-			and ownsTurn
-			and type(activeEncounter.opportunities) == "table"
-			and activeEncounter.opportunities.action == true
-		if canAttack then
-			local profiles = attackProfiles(allDomains, selectedActorId)
-			for index, profileId in profiles do
-				table.insert(actions, {
-					id = "attack:" .. profileId,
-					label = if index == 1 then "공격" else "공격 · " .. profileId,
-					kind = "attack",
-					commandType = "rules.attack",
-					payload = {
-						attackerId = selectedActorId,
-						targetId = target.actorId,
-						profileId = profileId,
-					},
-					isDefault = index == 1,
-				})
-			end
+		local targetActor = sceneActor(allDomains, target.actorId)
+		if type(targetActor) ~= "table" or controlsActor(allDomains, playerId, target.actorId) then
+			return actions
 		end
+		local enabled = true
+		local disabledReason = nil
+		if activeEncounter ~= nil and not ownsTurn then
+			enabled = false
+			disabledReason = "현재 턴이 아닙니다"
+		elseif
+			activeEncounter ~= nil
+			and (
+				type(activeEncounter.opportunities) ~= "table"
+				or activeEncounter.opportunities.action ~= true
+			)
+		then
+			enabled = false
+			disabledReason = "행동을 이미 사용했습니다"
+		end
+		local hostile = targetActor.disposition == "hostile"
+		local profiles = attackProfiles(allDomains, selectedActorId)
+		for index, profileId in profiles do
+			table.insert(actions, {
+				id = "attack:" .. profileId,
+				label = if index == 1 then "공격" else "공격 · " .. profileId,
+				kind = "attack",
+				commandType = "rules.attack",
+				payload = {
+					attackerId = selectedActorId,
+					targetId = target.actorId,
+					profileId = profileId,
+				},
+				isDefault = hostile and activeEncounter ~= nil and index == 1,
+				enabled = enabled,
+				disabledReason = disabledReason,
+				category = "action",
+				sortOrder = CATEGORY_PRIORITY.action + index,
+				projectionRevision = self.replica.revision,
+			})
+		end
+		sortActions(actions)
 		return actions
 	end
 
@@ -228,6 +312,14 @@ function Resolver:resolve(selectedActorId: string, target: Target): { Action }
 					interactionId = interactionId,
 				},
 				isDefault = interactionId == preferred,
+				enabled = true,
+				disabledReason = nil,
+				category = if interactionId == "inspect" then "information" else "interaction",
+				sortOrder = if interactionId == "inspect"
+					then CATEGORY_PRIORITY.information + (INTERACTION_PRIORITY[interactionId] or 100)
+					else CATEGORY_PRIORITY.interaction
+						+ (INTERACTION_PRIORITY[interactionId] or 100),
+				projectionRevision = self.replica.revision,
 			})
 		end
 		table.insert(actions, {
@@ -240,54 +332,78 @@ function Resolver:resolve(selectedActorId: string, target: Target): { Action }
 				objectId = target.objectId,
 			},
 			isDefault = false,
+			enabled = true,
+			disabledReason = nil,
+			category = "information",
+			sortOrder = CATEGORY_PRIORITY.information + 200,
+			projectionRevision = self.replica.revision,
 		})
+		sortActions(actions)
 		return actions
 	end
 
-	if target.kind == "surface" and target.position ~= nil and ownsTurn then
+	if target.kind == "surface" and target.position ~= nil then
 		local actor = sceneActor(allDomains, selectedActorId)
 		local current = type(actor) == "table" and actor.position or nil
-		local movementAllowed = true
-		if activeEncounter ~= nil then
+		local movementAllowed = ownsTurn
+		local disabledReason = if ownsTurn then nil else "현재 턴이 아닙니다"
+		if movementAllowed and activeEncounter ~= nil then
 			local remaining = activeEncounter.movementRemaining
 			if type(remaining) ~= "number" or type(current) ~= "table" then
 				movementAllowed = false
+				disabledReason = "남은 이동 거리를 확인할 수 없습니다"
 			else
 				local dx = target.position.X - current.x
 				local dy = target.position.Y - current.y
 				local dz = target.position.Z - current.z
 				movementAllowed = math.sqrt(dx * dx + dy * dy + dz * dz) <= remaining
+				if not movementAllowed then
+					disabledReason = "남은 이동 거리가 부족합니다"
+				end
 			end
 		end
-		if movementAllowed then
-			table.insert(actions, {
-				id = "move",
-				label = "이동",
-				kind = "move",
-				commandType = "movement.commit",
-				payload = {
-					actorId = selectedActorId,
-					destination = {
-						x = target.position.X,
-						y = target.position.Y,
-						z = target.position.Z,
-					},
+		table.insert(actions, {
+			id = "move",
+			label = "이동",
+			kind = "move",
+			commandType = "movement.commit",
+			payload = {
+				actorId = selectedActorId,
+				destination = {
+					x = target.position.X,
+					y = target.position.Y,
+					z = target.position.Z,
 				},
-				isDefault = true,
-			})
-		end
+			},
+			isDefault = true,
+			enabled = movementAllowed,
+			disabledReason = disabledReason,
+			category = "movement",
+			sortOrder = CATEGORY_PRIORITY.movement,
+			projectionRevision = self.replica.revision,
+		})
 	end
 
+	sortActions(actions)
 	return actions
 end
 
 function Resolver.defaultAction(_: any, actions: { Action }): Action?
 	for _, action in actions do
+		if action.isDefault and action.enabled then
+			return action
+		end
+	end
+	return nil
+end
+
+function Resolver.previewAction(_: any, actions: { Action }): Action?
+	for _, action in actions do
 		if action.isDefault then
 			return action
 		end
 	end
-	return actions[1]
+	return nil
 end
 
 return Resolver

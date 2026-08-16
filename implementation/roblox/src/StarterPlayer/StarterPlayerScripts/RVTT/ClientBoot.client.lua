@@ -42,12 +42,15 @@ local function resolveRemoteSet(folder: Folder): any?
 	local receipt = uniqueTypedChild(folder, Names.RECEIPT, "RemoteEvent")
 	local projection = uniqueTypedChild(folder, Names.PROJECTION, "RemoteEvent")
 	local sync = uniqueTypedChild(folder, Names.SYNC, "RemoteFunction")
+	local viewerProjectionPreview =
+		uniqueTypedChild(folder, Names.VIEWER_PROJECTION_PREVIEW, "RemoteFunction")
 	local clientReady = uniqueTypedChild(folder, Names.CLIENT_READY, "RemoteEvent")
 	if
 		command == nil
 		or receipt == nil
 		or projection == nil
 		or sync == nil
+		or viewerProjectionPreview == nil
 		or clientReady == nil
 	then
 		return nil
@@ -57,6 +60,7 @@ local function resolveRemoteSet(folder: Folder): any?
 		receipt = receipt :: RemoteEvent,
 		projection = projection :: RemoteEvent,
 		sync = sync :: RemoteFunction,
+		viewerProjectionPreview = viewerProjectionPreview :: RemoteFunction,
 		clientReady = clientReady :: RemoteEvent,
 	}
 end
@@ -114,13 +118,18 @@ local CommandClient = require(clientModules.CommandClient)
 local InputContextStack = require(clientModules.InputContextStack)
 local SemanticInputRouter = require(clientModules.SemanticInputRouter)
 local ClientRuntime = require(clientModules.ClientRuntime)
+local UiPreferenceStore = require(clientModules.UiPreferenceStore)
+local UIRecoveryCoordinator = require(clientModules.UIRecoveryCoordinator)
+local ViewerProjectionPreviewClient = require(clientModules.ViewerProjectionPreviewClient)
 local WorldTokenRuntime = require(clientModules.World.WorldTokenRuntime)
 
 local replica = ProjectionReplica.new()
 local command = CommandClient.new(remotes, replica)
 local inputStack = InputContextStack.new()
 local inputRouter = SemanticInputRouter.new(inputStack)
-local worldTokens = WorldTokenRuntime.new(replica, command)
+local worldTokens = WorldTokenRuntime.new(replica, command, inputStack)
+local preferences = UiPreferenceStore.new()
+local viewerPreview = ViewerProjectionPreviewClient.new(remotes.viewerProjectionPreview, replica)
 local syncInFlight = false
 
 local function fullResync()
@@ -128,16 +137,27 @@ local function fullResync()
 		return
 	end
 	syncInFlight = true
+	replica:beginRebuild("full_sync")
+	command:invalidatePending("STALE_EPOCH")
 	local succeeded, snapshot = pcall(function()
 		return remotes.sync:InvokeServer()
 	end)
 	syncInFlight = false
-	if succeeded and snapshot ~= nil then
-		replica:apply(snapshot :: any, true)
-	elseif not succeeded then
+	if succeeded and snapshot ~= nil and replica:apply(snapshot :: any, true) then
+		return
+	else
 		warn("[RVTT ClientBoot] full resync failed", snapshot)
+		replica:failRebuild(if succeeded then "invalid_snapshot" else "transport_error")
 	end
 end
+
+local recovery = UIRecoveryCoordinator.new(replica, function()
+	task.spawn(fullResync)
+end)
+replica.RebuildStarted:Connect(function()
+	worldTokens:invalidateTransientState()
+	viewerPreview:invalidate()
+end)
 
 command:start(function(message)
 	if message.phase == "terminal" and message.result ~= nil and not message.result.ok then
@@ -165,6 +185,10 @@ ClientRuntime.set({
 	Command = command,
 	Input = inputStack,
 	WorldTokens = worldTokens,
+	Preferences = preferences,
+	Recovery = recovery,
+	ViewerPreview = viewerPreview,
+	RequestFullSync = fullResync,
 })
 
 local loadingGui = playerGui:FindFirstChild("RVTT_Loading")

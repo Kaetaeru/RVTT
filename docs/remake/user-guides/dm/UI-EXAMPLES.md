@@ -1,7 +1,10 @@
 # DM UI 예시 순서
 
 - 전체 HTML: [`../html/index.html`](../html/index.html)
-- 상위 결정: [`ADR-0089`](../../decisions/ADR-0089-observer-first-session-and-ui-surface-realignment.md)
+- Survival·Actor Authoring HTML: [`../html/survival-and-token-authoring.html`](../html/survival-and-token-authoring.html)
+- 상위 결정:
+  - [`ADR-0092`](../../decisions/ADR-0092-campaign-survival-logistics-and-dm-authored-actor-tokens.md)
+  - [`ADR-0089`](../../decisions/ADR-0089-observer-first-session-and-ui-surface-realignment.md)
 
 ## Session 운영
 
@@ -14,7 +17,7 @@
 
 ```text
 상단
-→ Scene, Scene Editor, Quick Edit, Fog, Time, Encounter, Journal, Players, Rollback
+→ Scene, Scene Editor, Quick Edit, Fog, Time, Encounter, Journal, Players, Campaign Rules, Rollback
 
 왼쪽
 → Selection Inspector
@@ -22,6 +25,18 @@
 중앙
 → Live Scene
 ```
+
+## Campaign Survival Supplemental
+
+1. [`Campaign Rules`](../html/survival-and-token-authoring.html#campaign)
+2. [`Time Advance Supply Settlement`](../html/survival-and-token-authoring.html#settlement)
+3. [`Supply Ledger`](../html/survival-and-token-authoring.html#ledger)
+
+## Actor Token Authoring Supplemental
+
+1. [`Actor Model Registry`](../html/survival-and-token-authoring.html#registry)
+2. [`AI Prompt Builder`](../html/survival-and-token-authoring.html#prompt)
+3. [`JSON Validator & Actor Preview`](../html/survival-and-token-authoring.html#validator)
 
 ## Full Scene Edit
 
@@ -31,7 +46,7 @@
 상단 Tool Bar
 + 왼쪽 Inspector
 + 중앙 Build Viewport
-+ 하단 Tile·Prop·Prefab·Blueprint Catalog
++ 하단 Tile·Prop·Actor Token·Prefab·Blueprint Catalog
 ```
 
 Quick Action은 큰 창이 아니며 선택 대상 옆의 작은 Popover다.

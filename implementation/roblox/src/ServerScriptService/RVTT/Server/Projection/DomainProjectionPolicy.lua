@@ -5,6 +5,37 @@ local DeepCopy = require(ReplicatedStorage.RVTT.Shared.Core.DeepCopy)
 
 local DomainProjectionPolicy = {}
 
+local function actorVisible(actor: any, viewer: any): boolean
+	return viewer.role == "dm"
+		or actor.hidden ~= true
+		or actor.ownerUserId == viewer.userId
+		or actor.controllerUserId == viewer.userId
+end
+
+local function projectedActorVisible(domains: any, viewer: any, actorId: any): boolean
+	if type(actorId) ~= "string" then
+		return false
+	end
+	local scene = domains.scene
+	local actors = if type(scene) == "table" then scene.actors else nil
+	local actor = if type(actors) == "table" then actors[actorId] else nil
+	return type(actor) == "table" and actorVisible(actor, viewer)
+end
+
+local function viewerControlsActor(domains: any, viewer: any, actorId: any): boolean
+	if viewer.role == "dm" then
+		return true
+	end
+	if type(actorId) ~= "string" then
+		return false
+	end
+	local scene = domains.scene
+	local actors = if type(scene) == "table" then scene.actors else nil
+	local actor = if type(actors) == "table" then actors[actorId] else nil
+	return type(actor) == "table"
+		and (actor.ownerUserId == viewer.userId or actor.controllerUserId == viewer.userId)
+end
+
 local function publicActor(actor: any): any
 	return {
 		id = actor.id,
@@ -14,6 +45,7 @@ local function publicActor(actor: any): any
 		controllerUserId = actor.controllerUserId,
 		position = actor.position,
 		incarnation = actor.incarnation,
+		disposition = actor.disposition,
 	}
 end
 
@@ -36,12 +68,7 @@ end
 local function projectScene(state: any, viewer: any): any
 	local actors: { [string]: any } = {}
 	for actorId, actor in state.actors do
-		if
-			viewer.role == "dm"
-			or actor.hidden ~= true
-			or actor.ownerUserId == viewer.userId
-			or actor.controllerUserId == viewer.userId
-		then
+		if actorVisible(actor, viewer) then
 			actors[actorId] = publicActor(actor)
 		end
 	end
@@ -64,6 +91,45 @@ local function projectScene(state: any, viewer: any): any
 		actors = actors,
 		objects = objects,
 		sceneRevision = state.sceneRevision,
+	}
+end
+
+local function projectEncounter(state: any, viewer: any, domains: any): any
+	if viewer.role == "dm" or type(state.active) ~= "table" then
+		return if viewer.role == "dm" then DeepCopy(state) else { active = nil }
+	end
+	local active = state.active
+	local currentEntry = if type(active.timeline) == "table"
+			and type(active.cursor) == "number"
+		then active.timeline[active.cursor]
+		else nil
+	local currentActorId = if type(currentEntry) == "table" then currentEntry.actorId else nil
+	local timeline = {}
+	local visibleCursor = nil
+	if type(active.timeline) == "table" then
+		for index, entry in active.timeline do
+			if type(entry) == "table" and projectedActorVisible(domains, viewer, entry.actorId) then
+				table.insert(timeline, DeepCopy(entry))
+				if index == active.cursor then
+					visibleCursor = #timeline
+				end
+			end
+		end
+	end
+	local controlsCurrent = viewerControlsActor(domains, viewer, currentActorId)
+	return {
+		active = {
+			id = active.id,
+			round = active.round,
+			status = active.status,
+			timeline = timeline,
+			cursor = visibleCursor,
+			activeActorId = if projectedActorVisible(domains, viewer, currentActorId)
+				then currentActorId
+				else nil,
+			opportunities = if controlsCurrent then DeepCopy(active.opportunities) else nil,
+			movementRemaining = if controlsCurrent then active.movementRemaining else nil,
+		},
 	}
 end
 
@@ -139,7 +205,35 @@ local function projectExploration(state: any, viewer: any): any
 	}
 end
 
-local function projectRules(state: any, viewer: any): any
+local function recordVisible(record: any, viewer: any, domains: any): boolean
+	if type(record) ~= "table" then
+		return false
+	end
+	if record.audience ~= "public" then
+		if
+			viewer.role ~= "dm"
+			and not (record.audience == "owner" and record.ownerUserId == viewer.userId)
+		then
+			return false
+		end
+	end
+	if viewer.role == "dm" then
+		return true
+	end
+	local data = record.data
+	if type(data) ~= "table" then
+		return true
+	end
+	for _, key in { "actorId", "attackerId", "targetId" } do
+		local actorId = data[key]
+		if actorId ~= nil and not projectedActorVisible(domains, viewer, actorId) then
+			return false
+		end
+	end
+	return true
+end
+
+local function projectRules(state: any, viewer: any, domains: any): any
 	local challenges: { [string]: any } = {}
 	for challengeId, challenge in state.challenges do
 		challenges[challengeId] = {
@@ -153,11 +247,33 @@ local function projectRules(state: any, viewer: any): any
 			challenges[challengeId].difficultyClass = challenge.difficultyClass
 		end
 	end
+	local rollRecords: { [string]: any } = {}
+	for recordId, record in state.rollRecords do
+		if recordVisible(record, viewer, domains) then
+			rollRecords[recordId] = DeepCopy(record)
+		end
+	end
+	local actorStates: { [string]: any } = {}
+	for actorId, actorState in state.actorStates do
+		if projectedActorVisible(domains, viewer, actorId) then
+			actorStates[actorId] = DeepCopy(actorState)
+		end
+	end
+	local conditions: { [string]: any } = {}
+	for conditionId, condition in state.conditions do
+		if
+			type(condition) ~= "table"
+			or condition.actorId == nil
+			or projectedActorVisible(domains, viewer, condition.actorId)
+		then
+			conditions[conditionId] = DeepCopy(condition)
+		end
+	end
 	return {
-		rollRecords = DeepCopy(state.rollRecords),
-		actorStates = DeepCopy(state.actorStates),
+		rollRecords = rollRecords,
+		actorStates = actorStates,
 		challenges = challenges,
-		conditions = DeepCopy(state.conditions),
+		conditions = conditions,
 	}
 end
 
@@ -204,8 +320,11 @@ function DomainProjectionPolicy.project(
 	if domainId == "exploration" then
 		return projectExploration(state, viewer)
 	end
+	if domainId == "encounter" then
+		return projectEncounter(state, viewer, domains)
+	end
 	if domainId == "rules" then
-		return projectRules(state, viewer)
+		return projectRules(state, viewer, domains)
 	end
 	if domainId == "journal" then
 		return projectJournal(state, viewer)

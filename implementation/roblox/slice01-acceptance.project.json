@@ -11,6 +11,9 @@
     "ReplicatedStorage": {
       "RVTT": {
         "$path": "src/ReplicatedStorage/RVTT",
+        "AcceptanceShared": {
+          "$path": "tests/AcceptanceShared"
+        },
         "Slice01AcceptanceMode": {
           "$className": "BoolValue",
           "$properties": {"Value": true}

@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "registryId": "rvtt-retired-greenfield-system-function-contracts",
+  "status": "RETIRED_IMPLEMENTATION_MODEL",
+  "retiredAt": "2026-08-13",
+  "replacementAuthority": "implementation/roblox/IMPLEMENTATION-MODEL.md",
+  "historicalMeaning": "The former 10-system and 64-stable-function Greenfield registry. It is not a current implementation constraint.",
+  "reusePolicy": "NO_AUTOMATIC_REUSE_REDERIVE_SYSTEMS_MODULES_AND_STABLE_FUNCTIONS",
+  "currentSystems": [],
+  "currentStableFunctions": []
+}

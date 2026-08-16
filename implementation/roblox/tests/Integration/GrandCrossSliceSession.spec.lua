@@ -33,6 +33,11 @@ return function(harness: any)
 			version = "1.0.0",
 			rightsStatus = "original",
 			dependencies = {},
+			definitions = {
+				items = {
+					["item:grand-sword"] = { equipSlot = "main-hand" },
+				},
+			},
 		},
 	})
 	if
@@ -126,7 +131,6 @@ return function(harness: any)
 	local equip = scenario:executeAs("player", 1602, "inventory.equip", {
 		itemId = itemId,
 		characterId = heroId,
-		slot = "main-hand",
 	})
 	if scenario:expectOutcome(harness, equip, "Grand session equips world loot") == nil then
 		return
@@ -149,7 +153,8 @@ return function(harness: any)
 		interactionId = "open",
 	})
 	if
-		scenario:expectOutcome(harness, interact, "Grand session opens the exploration door") == nil
+		scenario:expectOutcome(harness, interact, "Grand session opens the exploration door")
+		== nil
 	then
 		return
 	end

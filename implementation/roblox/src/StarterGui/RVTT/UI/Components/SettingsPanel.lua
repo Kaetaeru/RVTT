@@ -2,26 +2,20 @@
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local AccentPalette = require(ReplicatedStorage.RVTT.Shared.UI.AccentPalette)
-local AccentPreference = require(ReplicatedStorage.RVTT.Shared.UI.AccentPreference)
+local PreferencePresentation = require(ReplicatedStorage.RVTT.Shared.UI.PreferencePresentation)
+local PreferenceSchema = require(ReplicatedStorage.RVTT.Shared.UI.PreferenceSchema)
 local Tokens = require(ReplicatedStorage.RVTT.Shared.UI.DesignTokens)
 local ThemeApplicator = require(script.Parent.Parent.ThemeApplicator)
 
 local SettingsPanel = {}
 SettingsPanel.__index = SettingsPanel
 
-local function corner(parent: Instance, radius: UDim)
-	local value = Instance.new("UICorner")
-	value.CornerRadius = radius
-	value.Parent = parent
-end
-
-local function stroke(parent: Instance, token: string, thickness: number): UIStroke
-	local value = Instance.new("UIStroke")
-	value.Thickness = thickness
-	value.Transparency = 0.18
-	value:SetAttribute("RVTTStrokeToken", token)
-	value.Parent = parent
-	return value
+local function decorate(value: GuiObject, token: string)
+	value.BorderSizePixel = 0
+	value:SetAttribute("RVTTBackgroundToken", token)
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = Tokens.Radius.SM
+	corner.Parent = value
 end
 
 local function label(
@@ -29,33 +23,54 @@ local function label(
 	name: string,
 	text: string,
 	size: UDim2,
-	position: UDim2,
-	textSize: number,
-	token: string
+	position: UDim2
 ): TextLabel
 	local value = Instance.new("TextLabel")
 	value.Name = name
 	value.Size = size
 	value.Position = position
 	value.BackgroundTransparency = 1
+	value.Font = Enum.Font.GothamMedium
 	value.Text = text
-	value.TextSize = textSize
+	value.TextSize = Tokens.TextSize.Caption
 	value.TextXAlignment = Enum.TextXAlignment.Left
-	value.TextYAlignment = Enum.TextYAlignment.Center
-	value:SetAttribute("RVTTTextToken", token)
+	value:SetAttribute("RVTTTextToken", "textPrimary")
 	value.Parent = parent
 	return value
 end
 
-function SettingsPanel.new(onSelect: (string) -> (), onClose: () -> ()): any
+local function button(
+	parent: Instance,
+	name: string,
+	text: string,
+	size: UDim2,
+	position: UDim2
+): TextButton
+	local value = Instance.new("TextButton")
+	value.Name = name
+	value.Size = size
+	value.Position = position
+	value.AutoButtonColor = false
+	value.Font = Enum.Font.GothamBold
+	value.Text = text
+	value.TextSize = Tokens.TextSize.Caption
+	value.Selectable = true
+	value:SetAttribute("RVTTTextToken", "textPrimary")
+	value.Parent = parent
+	decorate(value, "surfaceRaised")
+	return value
+end
+
+function SettingsPanel.new(
+	onSet: (string, any) -> (),
+	onReset: (string) -> (),
+	onResetAll: () -> (),
+	onClose: () -> ()
+): any
 	local self: any = setmetatable({}, SettingsPanel)
-	self.onSelect = onSelect
-	self.onClose = onClose
-	self.selectedId = AccentPreference.DEFAULT_ID
-	self.hovered = {}
-	self.buttons = {}
-	self.strokes = {}
-	self.checks = {}
+	self.preferences = PreferenceSchema.defaults()
+	self.accentButtons = {}
+	self.valueLabels = {}
 
 	local root = Instance.new("Frame")
 	root.Name = "SettingsModal"
@@ -66,230 +81,191 @@ function SettingsPanel.new(onSelect: (string) -> (), onClose: () -> ()): any
 	root:SetAttribute("RVTTBackgroundToken", "scrim")
 	self.Root = root
 
-	local panel = Instance.new("Frame")
+	local panel = Instance.new("ScrollingFrame")
 	panel.Name = "SettingsPanel"
-	panel.Size = UDim2.fromOffset(620, 430)
+	panel.Size = UDim2.fromOffset(700, 620)
 	panel.AnchorPoint = Vector2.new(0.5, 0.5)
 	panel.Position = UDim2.fromScale(0.5, 0.5)
-	panel.BorderSizePixel = 0
+	panel.CanvasSize = UDim2.fromOffset(0, 760)
+	panel.ScrollBarThickness = 7
 	panel.ZIndex = Tokens.Layer.Modal + 1
-	panel:SetAttribute("RVTTBackgroundToken", "surface")
 	panel.Parent = root
-	corner(panel, Tokens.Radius.LG)
-	stroke(panel, "accent", 1)
-
-	local constraint = Instance.new("UISizeConstraint")
-	constraint.MinSize = Vector2.new(520, 390)
-	constraint.MaxSize = Vector2.new(720, 520)
-	constraint.Parent = panel
-
-	local topBar = Instance.new("Frame")
-	topBar.Name = "AccentBar"
-	topBar.Size = UDim2.new(1, 0, 0, 4)
-	topBar.BorderSizePixel = 0
-	topBar.ZIndex = Tokens.Layer.Modal + 2
-	topBar:SetAttribute("RVTTBackgroundToken", "accent")
-	topBar.Parent = panel
-	corner(topBar, Tokens.Radius.LG)
+	decorate(panel, "surface")
 
 	local title = label(
 		panel,
 		"Title",
 		"인터페이스 설정",
-		UDim2.new(1, -160, 0, 38),
-		UDim2.fromOffset(28, 24),
-		Tokens.TextSize.Title,
-		"textPrimary"
+		UDim2.fromOffset(360, 36),
+		UDim2.fromOffset(28, 22)
 	)
-	title.ZIndex = Tokens.Layer.Modal + 2
+	title.TextSize = Tokens.TextSize.Title
+	local close =
+		button(panel, "Close", "닫기  Q", UDim2.fromOffset(100, 38), UDim2.new(1, -128, 0, 22))
+	close.Activated:Connect(onClose)
 
-	local subtitle = label(
-		panel,
-		"Subtitle",
-		"선호 강조색을 선택하세요. 기본값은 황금색입니다.",
-		UDim2.new(1, -56, 0, 28),
-		UDim2.fromOffset(28, 67),
-		Tokens.TextSize.Body,
-		"textSecondary"
-	)
-	subtitle.ZIndex = Tokens.Layer.Modal + 2
-
-	local closeButton = Instance.new("TextButton")
-	closeButton.Name = "CloseButton"
-	closeButton.Size = UDim2.fromOffset(108, 38)
-	closeButton.Position = UDim2.new(1, -136, 0, 26)
-	closeButton.AutoButtonColor = false
-	closeButton.Text = "닫기  Q"
-	closeButton.TextSize = Tokens.TextSize.Body
-	closeButton.BorderSizePixel = 0
-	closeButton.Selectable = true
-	closeButton.SelectionOrder = 1
-	closeButton.ZIndex = Tokens.Layer.Modal + 2
-	closeButton:SetAttribute("RVTTBackgroundToken", "surfaceRaised")
-	closeButton:SetAttribute("RVTTTextToken", "textPrimary")
-	closeButton.Parent = panel
-	corner(closeButton, Tokens.Radius.SM)
-	stroke(closeButton, "stroke", 1)
-	closeButton.Activated:Connect(onClose)
-
-	local divider = Instance.new("Frame")
-	divider.Name = "Divider"
-	divider.Size = UDim2.new(1, -56, 0, 1)
-	divider.Position = UDim2.fromOffset(28, 112)
-	divider.BorderSizePixel = 0
-	divider.ZIndex = Tokens.Layer.Modal + 2
-	divider:SetAttribute("RVTTBackgroundToken", "stroke")
-	divider.Parent = panel
-
-	local grid = Instance.new("Frame")
-	grid.Name = "AccentGrid"
-	grid.Size = UDim2.new(1, -56, 0, 224)
-	grid.Position = UDim2.fromOffset(28, 136)
-	grid.BackgroundTransparency = 1
-	grid.ZIndex = Tokens.Layer.Modal + 2
-	grid.Parent = panel
-
-	local gridLayout = Instance.new("UIGridLayout")
-	gridLayout.CellSize = UDim2.new(0.5, -7, 0, 68)
-	gridLayout.CellPadding = UDim2.fromOffset(14, 10)
-	gridLayout.FillDirectionMaxCells = 2
-	gridLayout.SortOrder = Enum.SortOrder.LayoutOrder
-	gridLayout.Parent = grid
-
+	label(panel, "AccentLabel", "강조색", UDim2.fromOffset(200, 24), UDim2.fromOffset(28, 76)).TextSize =
+		Tokens.TextSize.Label
+	local accentGrid = Instance.new("Frame")
+	accentGrid.Name = "AccentGrid"
+	accentGrid.Position = UDim2.fromOffset(28, 106)
+	accentGrid.Size = UDim2.new(1, -56, 0, 120)
+	accentGrid.BackgroundTransparency = 1
+	accentGrid.Parent = panel
+	local grid = Instance.new("UIGridLayout")
+	grid.CellSize = UDim2.new(0.25, -8, 0, 52)
+	grid.CellPadding = UDim2.fromOffset(10, 8)
+	grid.FillDirectionMaxCells = 4
+	grid.Parent = accentGrid
 	for index, palette in AccentPalette.list() do
-		local button = Instance.new("TextButton")
-		button.Name = "Accent_" .. palette.id
-		button.LayoutOrder = index
-		button.AutoButtonColor = false
-		button.Text = ""
-		button.BorderSizePixel = 0
-		button.Selectable = true
-		button.SelectionOrder = index + 1
-		button.ZIndex = Tokens.Layer.Modal + 2
-		button:SetAttribute("RVTTBackgroundToken", "surfaceRaised")
-		button.Parent = grid
-		corner(button, Tokens.Radius.MD)
-		local buttonStroke = stroke(button, "stroke", 1)
-
-		local swatch = Instance.new("Frame")
-		swatch.Name = "Swatch"
-		swatch.Size = UDim2.fromOffset(34, 34)
-		swatch.Position = UDim2.fromOffset(14, 17)
-		swatch.BackgroundColor3 = palette.primary
-		swatch.BorderSizePixel = 0
-		swatch.ZIndex = Tokens.Layer.Modal + 3
-		swatch.Parent = button
-		corner(swatch, UDim.new(1, 0))
-		stroke(swatch, "textPrimary", 1)
-
-		local displayName = label(
-			button,
-			"DisplayName",
+		local accent = button(
+			accentGrid,
+			"Accent_" .. palette.id,
 			palette.displayName,
-			UDim2.new(1, -88, 0, 25),
-			UDim2.fromOffset(62, 11),
-			Tokens.TextSize.Label,
-			"textPrimary"
+			UDim2.new(),
+			UDim2.new()
 		)
-		displayName.ZIndex = Tokens.Layer.Modal + 3
-
-		local paletteId = label(
-			button,
-			"PaletteId",
-			palette.id,
-			UDim2.new(1, -88, 0, 20),
-			UDim2.fromOffset(62, 37),
-			Tokens.TextSize.Caption,
-			"textMuted"
-		)
-		paletteId.ZIndex = Tokens.Layer.Modal + 3
-
-		local check = label(
-			button,
-			"SelectedMark",
-			"선택됨",
-			UDim2.fromOffset(62, 22),
-			UDim2.new(1, -72, 0, 23),
-			Tokens.TextSize.Caption,
-			"accent"
-		)
-		check.TextXAlignment = Enum.TextXAlignment.Right
-		check.ZIndex = Tokens.Layer.Modal + 3
-
-		self.buttons[palette.id] = button
-		self.strokes[palette.id] = buttonStroke
-		self.checks[palette.id] = check
-
-		button.MouseEnter:Connect(function()
-			self.hovered[palette.id] = true
-			self:_refreshButton(palette.id)
+		accent.LayoutOrder = index
+		accent.Activated:Connect(function()
+			onSet("accentPaletteId", palette.id)
 		end)
-		button.MouseLeave:Connect(function()
-			self.hovered[palette.id] = nil
-			self:_refreshButton(palette.id)
+		self.accentButtons[palette.id] = accent
+	end
+
+	label(
+		panel,
+		"LayoutLabel",
+		"읽기·레이아웃",
+		UDim2.fromOffset(240, 24),
+		UDim2.fromOffset(28, 246)
+	).TextSize =
+		Tokens.TextSize.Label
+	for index, row in PreferencePresentation.rows() do
+		local y = 280 + (index - 1) * 52
+		label(
+			panel,
+			row.key .. "Label",
+			row.label,
+			UDim2.fromOffset(230, 38),
+			UDim2.fromOffset(28, y)
+		)
+		local minus = button(
+			panel,
+			row.key .. "Minus",
+			"−",
+			UDim2.fromOffset(42, 36),
+			UDim2.fromOffset(272, y)
+		)
+		local valueLabel =
+			label(panel, row.key .. "Value", "", UDim2.fromOffset(92, 36), UDim2.fromOffset(326, y))
+		valueLabel.TextXAlignment = Enum.TextXAlignment.Center
+		self.valueLabels[row.key] = valueLabel
+		local plus = button(
+			panel,
+			row.key .. "Plus",
+			"+",
+			UDim2.fromOffset(42, 36),
+			UDim2.fromOffset(430, y)
+		)
+		local reset = button(
+			panel,
+			row.key .. "Reset",
+			"기본값",
+			UDim2.fromOffset(82, 36),
+			UDim2.fromOffset(488, y)
+		)
+		minus.Activated:Connect(function()
+			local valid, value =
+				PreferencePresentation.adjust(row.key, self.preferences[row.key], -row.step)
+			if valid then
+				onSet(row.key, value)
+			end
 		end)
-		button.Activated:Connect(function()
-			self:setSelected(palette.id)
-			onSelect(palette.id)
+		plus.Activated:Connect(function()
+			local valid, value =
+				PreferencePresentation.adjust(row.key, self.preferences[row.key], row.step)
+			if valid then
+				onSet(row.key, value)
+			end
+		end)
+		reset.Activated:Connect(function()
+			onReset(row.key)
 		end)
 	end
 
-	local note = label(
+	local motionY = 280 + #PreferencePresentation.rows() * 52
+	label(panel, "MotionLabel", "모션", UDim2.fromOffset(230, 38), UDim2.fromOffset(28, motionY))
+	self.Motion =
+		button(panel, "Motion", "", UDim2.fromOffset(196, 36), UDim2.fromOffset(272, motionY))
+	self.Motion.Activated:Connect(function()
+		onSet("motion", PreferencePresentation.nextMotion(self.preferences.motion))
+	end)
+	local resetMotion = button(
 		panel,
-		"Note",
-		"역할·성공·경고·위험 등 의미색은 선택한 강조색과 분리됩니다.",
-		UDim2.new(1, -56, 0, 36),
-		UDim2.fromOffset(28, 378),
-		Tokens.TextSize.Caption,
-		"textMuted"
+		"ResetMotion",
+		"기본값",
+		UDim2.fromOffset(82, 36),
+		UDim2.fromOffset(488, motionY)
 	)
-	note.TextWrapped = true
-	note.ZIndex = Tokens.Layer.Modal + 2
+	resetMotion.Activated:Connect(function()
+		onReset("motion")
+	end)
 
-	self:setSelected(AccentPreference.DEFAULT_ID)
+	self.BindingNote = label(
+		panel,
+		"BindingNote",
+		"",
+		UDim2.new(1, -56, 0, 46),
+		UDim2.fromOffset(28, motionY + 48)
+	)
+	self.BindingNote.TextWrapped = true
+	self.ResetAll = button(
+		panel,
+		"ResetAll",
+		"모든 설정 초기화",
+		UDim2.fromOffset(180, 40),
+		UDim2.fromOffset(28, motionY + 104)
+	)
+	self.ResetAll.Activated:Connect(onResetAll)
 	return self
 end
 
-function SettingsPanel._refreshButton(self: any, id: string)
-	local button = self.buttons[id]
-	local buttonStroke = self.strokes[id]
-	local check = self.checks[id]
-	if button == nil or buttonStroke == nil or check == nil then
-		return
+function SettingsPanel.setPreferences(self: any, preferences: any)
+	self.preferences = if type(preferences) == "table"
+		then preferences
+		else PreferenceSchema.defaults()
+	for id, accent in self.accentButtons do
+		accent:SetAttribute(
+			"RVTTBackgroundToken",
+			if id == self.preferences.accentPaletteId then "accent" else "surfaceRaised"
+		)
 	end
-
-	if id == self.selectedId then
-		button:SetAttribute("RVTTBackgroundToken", "accentSoft")
-		buttonStroke:SetAttribute("RVTTStrokeToken", "accent")
-		buttonStroke.Thickness = 2
-		check.Visible = true
-	elseif self.hovered[id] == true then
-		button:SetAttribute("RVTTBackgroundToken", "surfaceSoft")
-		buttonStroke:SetAttribute("RVTTStrokeToken", "accentHover")
-		buttonStroke.Thickness = 1
-		check.Visible = false
+	for _, row in PreferencePresentation.rows() do
+		local value = self.preferences[row.key]
+		self.valueLabels[row.key].Text = if row.key == "actionMatrixRows"
+			then tostring(value)
+			else string.format("%.2f", value)
+	end
+	self.Motion.Text = tostring(self.preferences.motion)
+	local conflicts = PreferencePresentation.bindingConflicts(self.preferences.bindings)
+	if #conflicts > 0 then
+		self.BindingNote.Text = string.format(
+			"키 바인딩 충돌 %d건. 현재 입력 라우터는 재바인딩을 지원하지 않아 이 화면에서는 수정하지 않습니다.",
+			#conflicts
+		)
+		self.BindingNote:SetAttribute("RVTTTextToken", "warning")
 	else
-		button:SetAttribute("RVTTBackgroundToken", "surfaceRaised")
-		buttonStroke:SetAttribute("RVTTStrokeToken", "stroke")
-		buttonStroke.Thickness = 1
-		check.Visible = false
+		self.BindingNote.Text =
+			"현재 입력 라우터는 키 재바인딩을 지원하지 않습니다. 지원되지 않는 편집 UI는 노출하지 않습니다."
+		self.BindingNote:SetAttribute("RVTTTextToken", "textMuted")
 	end
-
-	ThemeApplicator.apply(button, self.selectedId)
-end
-
-function SettingsPanel.setSelected(self: any, value: any)
-	self.selectedId = AccentPreference.normalize(value)
-	for id in self.buttons do
-		self:_refreshButton(id)
-	end
-	ThemeApplicator.apply(self.Root, self.selectedId)
+	ThemeApplicator.apply(self.Root, self.preferences)
 end
 
 function SettingsPanel.setVisible(self: any, visible: boolean)
 	self.Root.Visible = visible
 	if visible then
-		ThemeApplicator.apply(self.Root, self.selectedId)
+		ThemeApplicator.apply(self.Root, self.preferences)
 	end
 end
 

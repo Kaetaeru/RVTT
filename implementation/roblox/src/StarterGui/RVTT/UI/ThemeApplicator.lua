@@ -1,16 +1,14 @@
 --!strict
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local AccentPalette = require(ReplicatedStorage.RVTT.Shared.UI.AccentPalette)
-local AccentPreference = require(ReplicatedStorage.RVTT.Shared.UI.AccentPreference)
+local ThemeContract = require(ReplicatedStorage.RVTT.Shared.UI.ThemeContract)
 local Tokens = require(ReplicatedStorage.RVTT.Shared.UI.DesignTokens)
 
 type ColorMap = { [string]: Color3 }
 
 local ThemeApplicator = {}
 
-local function buildColors(accentId: any): ColorMap
-	local accent = AccentPalette.resolve(accentId)
+local function buildColors(theme: any): ColorMap
 	return {
 		canvas = Tokens.Color.Canvas,
 		surface = Tokens.Color.Surface,
@@ -21,18 +19,19 @@ local function buildColors(accentId: any): ColorMap
 		textPrimary = Tokens.Color.TextPrimary,
 		textSecondary = Tokens.Color.TextSecondary,
 		textMuted = Tokens.Color.TextMuted,
-		accent = accent.primary,
-		accentHover = accent.hover,
-		accentPressed = accent.pressed,
-		accentSoft = accent.soft,
-		accentOn = accent.on,
-		focus = accent.focus,
-		glow = accent.glow,
+		accent = theme.colors.accent,
+		accentHover = theme.colors.accentHover,
+		accentPressed = theme.colors.accentPressed,
+		accentSoft = theme.colors.accentSoft,
+		accentOn = theme.colors.accentOn,
+		focus = theme.colors.focus,
+		glow = theme.colors.glow,
 		success = Tokens.Color.Success,
 		warning = Tokens.Color.Warning,
 		danger = Tokens.Color.Danger,
 		info = Tokens.Color.Info,
 		pending = Tokens.Color.Pending,
+		disabled = Tokens.Color.Disabled,
 	}
 end
 
@@ -77,14 +76,39 @@ local function applyInstance(instance: Instance, colors: ColorMap)
 	end
 end
 
-function ThemeApplicator.apply(root: Instance, accentId: any): string
-	local normalized = AccentPreference.normalize(accentId)
-	local colors = buildColors(normalized)
+local function applyTextScale(instance: Instance, scale: number)
+	if instance:IsA("TextLabel") or instance:IsA("TextButton") or instance:IsA("TextBox") then
+		local textObject = instance :: any
+		local storedSize = instance:GetAttribute("RVTTBaseTextSize")
+		local baseSize: number
+		if type(storedSize) == "number" then
+			baseSize = storedSize
+		else
+			baseSize = textObject.TextSize
+			instance:SetAttribute("RVTTBaseTextSize", baseSize)
+		end
+		textObject.TextSize = math.floor(baseSize * scale + 0.5)
+	end
+end
+
+function ThemeApplicator.apply(root: Instance, preferences: any): string
+	local input = if type(preferences) == "string"
+		then { accentPaletteId = preferences }
+		else preferences
+	local theme = ThemeContract.resolve(input)
+	local colors = buildColors(theme)
 	applyInstance(root, colors)
+	applyTextScale(root, theme.textScale)
 	for _, descendant in root:GetDescendants() do
 		applyInstance(descendant, colors)
+		applyTextScale(descendant, theme.textScale)
+		if descendant:IsA("UIScale") and descendant.Name == "RVTT_UI_SCALE" then
+			descendant.Scale = theme.uiScale
+		end
 	end
-	return normalized
+	root:SetAttribute("RVTTMotion", theme.motion)
+	root:SetAttribute("RVTTMotionScale", theme.motionScale)
+	return theme.accentId
 end
 
 return table.freeze(ThemeApplicator)

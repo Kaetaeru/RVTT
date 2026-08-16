@@ -90,8 +90,8 @@ return function(harness)
 	local observerMembership = lookup(memberships, "303")
 	harness:expect(tostring(dmMembership.role) == "dm", "DM membership retains its role")
 	harness:expect(
-		tostring(playerMembership.role) == "player",
-		"player membership retains its role"
+		tostring(playerMembership.role) == "observer",
+		"non-DM membership enters observer-first regardless of transport role"
 	)
 	harness:expect(
 		tostring(observerMembership.role) == "observer",

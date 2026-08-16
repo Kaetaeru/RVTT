@@ -25,6 +25,10 @@ export type Runtime = {
 	Command: any,
 	Input: InputContextStack,
 	WorldTokens: any,
+	Preferences: any,
+	Recovery: any,
+	ViewerPreview: any,
+	RequestFullSync: () -> (),
 }
 
 local current: Runtime? = nil

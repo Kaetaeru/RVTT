@@ -3,6 +3,7 @@
 local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Result = require(ReplicatedStorage.RVTT.Shared.Core.Result)
+local Signal = require(ReplicatedStorage.RVTT.Shared.Core.Signal)
 local Version = require(ReplicatedStorage.RVTT.Shared.Core.Version)
 
 local RETRY_INTERVAL_SECONDS = 1.5
@@ -19,10 +20,12 @@ export type CommandClient = {
 	clock: () -> number,
 	running: boolean,
 	receiptConnection: any?,
+	Received: any,
 	start: (self: CommandClient, callback: ReceiptCallback?, automaticSweep: boolean?) -> (),
 	stop: (self: CommandClient) -> (),
 	tick: (self: CommandClient, now: number?) -> (),
 	submit: (self: CommandClient, commandType: string, payload: { [string]: unknown }) -> string,
+	invalidatePending: (self: CommandClient, code: string?) -> (),
 }
 
 local CommandClient = {}
@@ -32,9 +35,27 @@ CommandClient.COMMAND_TIMEOUT_SECONDS = COMMAND_TIMEOUT_SECONDS
 CommandClient.MAX_ATTEMPTS = MAX_ATTEMPTS
 
 local function notify(self: CommandClient, message: any)
+	self.Received:Fire(message)
 	local callback = self.receiptCallback
 	if callback ~= nil then
 		callback(message)
+	end
+end
+
+function CommandClient.invalidatePending(self: CommandClient, code: string?)
+	local pending = self.pending
+	self.pending = {}
+	for commandId, record in pending do
+		notify(self, {
+			commandId = commandId,
+			phase = "terminal",
+			result = Result.err(
+				code or "STALE_EPOCH",
+				"error.authority.stale_epoch",
+				true,
+				{ attempts = record.attempts }
+			),
+		})
 	end
 end
 
@@ -57,6 +78,7 @@ function CommandClient.new(
 		clock = clockOverride or os.clock,
 		running = false,
 		receiptConnection = nil,
+		Received = Signal.new(),
 	}, CommandClient) :: any
 end
 

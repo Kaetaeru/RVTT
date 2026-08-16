@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rvtt.local/schemas/actor-model-catalog.schema.json",
+  "title": "RVTT Visible Actor Model Catalog Projection",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "catalogRevision",
+    "packageVersionSet",
+    "models",
+    "disclosureDigest"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "rvtt.actor-model-catalog.v1"
+    },
+    "catalogRevision": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "packageVersionSet": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 240
+      },
+      "uniqueItems": true
+    },
+    "models": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/model"
+      }
+    },
+    "disclosureDigest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    }
+  },
+  "$defs": {
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "actorModelAssetId",
+        "displayName",
+        "modelKind",
+        "rigProfile",
+        "sizeCompatibility",
+        "defaultFootprint",
+        "scaleRange",
+        "thumbnailViewRef",
+        "rightsSummary",
+        "availabilityState"
+      ],
+      "properties": {
+        "actorModelAssetId": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:[._-][a-z0-9]+)*$",
+          "maxLength": 180
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "modelKind": {
+          "enum": [
+            "rigless_mesh",
+            "rigless_model",
+            "registered_rig",
+            "placeholder"
+          ]
+        },
+        "rigProfile": {
+          "type": ["string", "null"],
+          "maxLength": 160
+        },
+        "sizeCompatibility": {
+          "type": "array",
+          "items": {
+            "enum": ["tiny", "small", "medium", "large", "huge", "gargantuan"]
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "defaultFootprint": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 100
+        },
+        "scaleRange": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["minimum", "maximum"],
+          "properties": {
+            "minimum": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 20
+            },
+            "maximum": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 20
+            }
+          }
+        },
+        "thumbnailViewRef": {
+          "type": ["string", "null"],
+          "maxLength": 240
+        },
+        "rightsSummary": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        },
+        "availabilityState": {
+          "enum": ["available", "placeholder_only", "unavailable"]
+        }
+      }
+    }
+  }
+}

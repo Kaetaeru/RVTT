@@ -1,10 +1,12 @@
 --!strict
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local GameplayHudViewModel = require(ReplicatedStorage.RVTT.Shared.UI.GameplayHudViewModel)
 local WorldActionMenu = require(script.Parent.WorldActionMenu)
 local WorldCameraController = require(script.Parent.WorldCameraController)
 local WorldContextActionResolver = require(script.Parent.WorldContextActionResolver)
 local WorldTokenRenderer = require(script.Parent.WorldTokenRenderer)
+local WorldPreviewRenderer = require(script.Parent.WorldPreviewRenderer)
 local WorldTokenInputController = require(script.Parent.WorldTokenInputController)
 
 export type Runtime = {
@@ -15,6 +17,7 @@ export type Runtime = {
 	ActionMenu: any,
 	Input: any,
 	Camera: any,
+	PreviewRenderer: any,
 	SelectionChanged: any,
 	PickResolved: any,
 	MoveRequested: any,
@@ -22,12 +25,14 @@ export type Runtime = {
 	ContextActionRequested: any,
 	ContextActionResolved: any,
 	ActionMenuChanged: any,
+	PreviewChanged: any,
 	Reconciled: any,
 	DestinationChanged: any,
 	connection: any,
-	cameraCompatibilityConnection: any,
+	previewConnection: any,
 	started: boolean,
 	start: (self: Runtime) -> (),
+	invalidateTransientState: (self: Runtime) -> (),
 	destroy: (self: Runtime) -> (),
 }
 
@@ -59,29 +64,25 @@ local function logProjection(summary: any)
 	)
 end
 
-function Runtime.new(replica: any, command: any): Runtime
+function Runtime.invalidateTransientState(self: Runtime)
+	self.Input:invalidateTransientState()
+	self.PreviewRenderer:clear()
+end
+
+function Runtime.new(replica: any, command: any, inputStack: any): Runtime
 	local renderer = WorldTokenRenderer.new(nil, nil)
 	local actionResolver = WorldContextActionResolver.new(replica)
 	local actionMenu = WorldActionMenu.new()
-	local input =
-		WorldTokenInputController.new(renderer, replica, command, actionResolver, actionMenu)
+	local input = WorldTokenInputController.new(
+		renderer,
+		replica,
+		command,
+		actionResolver,
+		actionMenu,
+		inputStack
+	)
 	local camera = WorldCameraController.new(renderer, ACCEPTANCE_MODE)
-	local compatibilityConnection = nil
-	if ACCEPTANCE_MODE then
-		compatibilityConnection = camera.InputResolved:Connect(
-			function(action, _source, applied, changed, processed)
-				if action == "orbit" then
-					camera.InputResolved:Fire(
-						"pan",
-						"mouse-middle-orbit",
-						applied,
-						changed,
-						processed
-					)
-				end
-			end
-		)
-	end
+	local previewRenderer = WorldPreviewRenderer.new(renderer)
 	return setmetatable({
 		Replica = replica,
 		Command = command,
@@ -90,6 +91,7 @@ function Runtime.new(replica: any, command: any): Runtime
 		ActionMenu = actionMenu,
 		Input = input,
 		Camera = camera,
+		PreviewRenderer = previewRenderer,
 		SelectionChanged = renderer.SelectionChanged,
 		PickResolved = input.PickResolved,
 		MoveRequested = input.MoveRequested,
@@ -97,10 +99,11 @@ function Runtime.new(replica: any, command: any): Runtime
 		ContextActionRequested = input.ContextActionRequested,
 		ContextActionResolved = input.ContextActionResolved,
 		ActionMenuChanged = input.ActionMenuChanged,
+		PreviewChanged = input.PreviewChanged,
 		Reconciled = renderer.Reconciled,
 		DestinationChanged = renderer.DestinationChanged,
 		connection = nil,
-		cameraCompatibilityConnection = compatibilityConnection,
+		previewConnection = nil,
 		started = false,
 	}, Runtime) :: any
 end
@@ -111,12 +114,25 @@ function Runtime.start(self: Runtime)
 	end
 	self.started = true
 	logProjection(self.Renderer:reconcile(self.Replica.payload, self.Replica.revision))
+	self.Input:ensureSemanticSelection()
+	self.previewConnection = self.Input.PreviewChanged:Connect(function(rawPreview)
+		self.PreviewRenderer:render(
+			GameplayHudViewModel.preview(
+				self.Replica.payload,
+				self.Renderer:getSelectedActorId(),
+				rawPreview,
+				self.Replica.revision
+			)
+		)
+	end)
 	self.connection = self.Replica.Changed:Connect(function(payload, envelope)
 		local revision = if type(envelope) == "table"
 				and type(envelope.revision) == "number"
 			then envelope.revision
 			else self.Replica.revision
 		logProjection(self.Renderer:reconcile(payload, revision))
+		self.Input:ensureSemanticSelection()
+		self.Input:refreshPreview()
 	end)
 	self.Input:start()
 	self.Camera:start()
@@ -131,13 +147,14 @@ function Runtime.destroy(self: Runtime)
 		self.connection:Disconnect()
 		self.connection = nil
 	end
-	if self.cameraCompatibilityConnection ~= nil then
-		self.cameraCompatibilityConnection:Disconnect()
-		self.cameraCompatibilityConnection = nil
+	if self.previewConnection ~= nil then
+		self.previewConnection:Disconnect()
+		self.previewConnection = nil
 	end
 	self.Camera:destroy()
 	self.Input:destroy()
 	self.ActionMenu:destroy()
+	self.PreviewRenderer:destroy()
 	self.Renderer:destroy()
 end
 

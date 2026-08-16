@@ -5,6 +5,7 @@ local Ability = require(ReplicatedStorage.RVTT.Shared.Rules.Ability)
 
 export type AbilityScores = { [string]: number }
 export type AttackProfile = {
+	label: string?,
 	ability: string?,
 	proficient: boolean?,
 	count: number?,
@@ -20,6 +21,7 @@ export type ActorProfile = {
 	maximumHitPoints: number,
 	speedStuds: number,
 	attacks: { [string]: AttackProfile },
+	attackSource: string,
 }
 
 local ActorProfileResolver = {}
@@ -52,6 +54,7 @@ local function profileFromCharacter(character: any): ActorProfile
 	local dexterityModifier = Ability.modifier(abilities.dexterity)
 	local maximum =
 		math.max(1, 8 + constitutionModifier + (level - 1) * math.max(1, 5 + constitutionModifier))
+	local hasTrustedAttacks = type(character.attacks) == "table"
 	return {
 		source = "character",
 		abilities = abilities,
@@ -68,6 +71,7 @@ local function profileFromCharacter(character: any): ActorProfile
 				damageModifier = 0,
 			},
 		},
+		attackSource = if hasTrustedAttacks then "character_definition" else "fallback",
 	}
 end
 
@@ -82,6 +86,7 @@ local function profileFromNpc(instance: any): ActorProfile
 		maximumHitPoints = runtime.maximumHitPoints or 1,
 		speedStuds = runtime.speedStuds or 24,
 		attacks = runtime.attacks or {},
+		attackSource = if type(runtime.attacks) == "table" then "npc_runtime" else "none",
 	}
 end
 
@@ -113,6 +118,7 @@ function ActorProfileResolver.resolve(actorId: string, domains: any): ActorProfi
 		maximumHitPoints = actor.maximumHitPoints or 1,
 		speedStuds = actor.speedStuds or 24,
 		attacks = actor.attacks or {},
+		attackSource = if type(actor.attacks) == "table" then "scene_runtime" else "none",
 	}
 end
 

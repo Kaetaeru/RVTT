@@ -27,9 +27,64 @@ local specs: { Spec } = {
 		runner = require(script.Parent.Unit["Core.spec"]) :: any,
 	},
 	{
+		id = "unit-asset-registry",
+		name = "AssetRegistry.spec",
+		runner = require(script.Parent.Unit["AssetRegistry.spec"]) :: any,
+	},
+	{
+		id = "unit-rule-package-resolver",
+		name = "RulePackageResolver.spec",
+		runner = require(script.Parent.Unit["RulePackageResolver.spec"]) :: any,
+	},
+	{
+		id = "unit-release-content-leak-gate",
+		name = "ReleaseContentLeakGate.spec",
+		runner = require(script.Parent.Unit["ReleaseContentLeakGate.spec"]) :: any,
+	},
+	{
 		id = "unit-accent-theme",
 		name = "AccentTheme.spec",
 		runner = require(script.Parent.Unit["AccentTheme.spec"]) :: any,
+	},
+	{
+		id = "unit-ui-foundation",
+		name = "UiFoundation.spec",
+		runner = require(script.Parent.Unit["UiFoundation.spec"]) :: any,
+	},
+	{
+		id = "unit-entry-recovery",
+		name = "EntryRecovery.spec",
+		runner = require(script.Parent.Unit["EntryRecovery.spec"]) :: any,
+	},
+	{
+		id = "unit-input-context",
+		name = "InputContext.spec",
+		runner = require(script.Parent.Unit["InputContext.spec"]) :: any,
+	},
+	{
+		id = "unit-gameplay-hud",
+		name = "GameplayHud.spec",
+		runner = require(script.Parent.Unit["GameplayHud.spec"]) :: any,
+	},
+	{
+		id = "unit-management",
+		name = "Management.spec",
+		runner = require(script.Parent.Unit["Management.spec"]) :: any,
+	},
+	{
+		id = "unit-official-character-sheet",
+		name = "OfficialCharacterSheet.spec",
+		runner = require(script.Parent.Unit["OfficialCharacterSheet.spec"]) :: any,
+	},
+	{
+		id = "unit-dice-slot-reveal-notice",
+		name = "DiceSlotRevealNotice.spec",
+		runner = require(script.Parent.Unit["DiceSlotRevealNotice.spec"]) :: any,
+	},
+	{
+		id = "unit-dm-workspace",
+		name = "DmWorkspace.spec",
+		runner = require(script.Parent.Unit["DmWorkspace.spec"]) :: any,
 	},
 	{
 		id = "unit-envelope",
@@ -107,6 +162,11 @@ local specs: { Spec } = {
 		runner = require(script.Parent.Integration["AuthorityFlow.spec"]) :: any,
 	},
 	{
+		id = "integration-entry-role-recovery",
+		name = "EntryRoleRecovery.spec",
+		runner = require(script.Parent.Integration["EntryRoleRecovery.spec"]) :: any,
+	},
+	{
 		id = "integration-security-boundary",
 		name = "SecurityBoundary.spec",
 		runner = require(script.Parent.Integration["SecurityBoundary.spec"]) :: any,
@@ -125,6 +185,11 @@ local specs: { Spec } = {
 		id = "integration-multi-viewer",
 		name = "MultiViewerFlow.spec",
 		runner = require(script.Parent.Integration["MultiViewerFlow.spec"]) :: any,
+	},
+	{
+		id = "integration-viewer-projection-preview",
+		name = "ViewerProjectionPreview.spec",
+		runner = require(script.Parent.Integration["ViewerProjectionPreview.spec"]) :: any,
 	},
 	{
 		id = "slice01-session-flow",

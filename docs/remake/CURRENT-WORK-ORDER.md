@@ -1,68 +1,48 @@
 # RVTT Remake 현재 작업 순서
 
-- 상태: `PLANNING COMPLETE · MERGE GATE`
-- 최종 갱신일: 2026-08-06
-- 최종 UI·Content 결정: [`ADR-0091`](decisions/ADR-0091-asset-registry-interactive-sheet-dice-and-core-rules.md)
-- 고정밀 HTML: [`user-guides/html/index.html`](user-guides/html/index.html)
-- Final UI Audit: [`audits/final-ui-surface-gap-audit.md`](audits/final-ui-surface-gap-audit.md)
+- 상태: `ACTIVE · CONTEXT_ONLY · R3_VALIDATED_AWAITING_FREEZE_DECISION`
+- 최종 갱신일: 2026-08-13
+- 현재 실행 포인터: [`.github/CODEX-ACTIVE-TASK.md`](../../.github/CODEX-ACTIVE-TASK.md)
 
-## 현재 단계
+## 현재 결정
+
+기존 Product·Accepted ADR·Current Architecture·Global UI 요구는 제품 권위로 보존한다. Roblox 구현은 Greenfield로 처음부터 재구축하며 기존 Production Source는 `READ_ONLY_REFERENCE`다.
+
+현재 실행 순서는 이 문서의 과거 Slice/Module 순서가 아니라 Active Task와 `implementation/roblox/IMPLEMENTATION-MODEL.md`가 소유한다.
+
+## 현재 상태
 
 ```text
-ADR-0088 Direct Play
-→ ACCEPTED
-
-ADR-0089 Observer-first Surface
-→ ACCEPTED
-
-ADR-0090 Console Matrix·DM Windows
-→ ACCEPTED
-
-ADR-0091 Asset·Official Sheet·Dice·Rule Profiles
-→ ACCEPTED
-
-Development/Test Rule Default
-→ rvtt.test.rules.2024.integrated.ko
-→ PRIVATE OWNER-ONLY · PINNED SOURCE
-
-Public/Release Rule Default
-→ rvtt.core.rules
-→ SRD 5.2.1 ONLY
-
-Final High-Fidelity HTML
-→ COMPLETE · 33 SCREENS
-
-Production Runtime
-→ IMPLEMENTATION REQUIRED AFTER MERGE
+34 Systems / 30 Requirement Capabilities / 61 Scenarios
+R3 semantic + authority hygiene validation = COMPLETE
+R3 = VALIDATED · NOT FROZEN
+SOURCE = BLOCKED
+STUDIO/MCP = BLOCKED
+NEXT = USER R3 FREEZE DECISION
 ```
 
-## 확정된 Production 순서
+## 현재 구현 순서
 
-1. Content Package Registry·Asset Compile
-2. Private Integrated Rule Importer·Profile Resolver
-3. Public SRD Release Leak Gate
-4. Theme Token·Shared Component Library
-5. Session Invite→Observer→Assignment Projection
-6. Character Console Matrix·Resource Rail
-7. Interactive Official 2024 Sheet·VTT Inventory synchronization
-8. Dice Slot Reveal Notice
-9. Core Rules Package·Chunk Reader·Search
-10. DM Window Host·Asset Registry·Scene Editor
-11. Static·Rojo·Luau·Security
-12. Browser·Studio Screenshot comparison
-13. Multi-client Authority·Permission Evidence
-14. Accessibility·Performance·Persistence
+```text
+사용자 R3 Freeze 결정
+→ R4 E0 Checkpoint Freeze
+→ Dedicated Implementation Branch
+→ E0 Repository Core Engine 구현/자동 검증
+→ CORE_ENGINE_COMPLETE
+→ E1 Runtime Checkpoint Freeze
+→ Studio/MCP Runtime Provider + Integration
+→ INTEGRATION_READY
+→ U0 Product UI Shell
+→ UI_SHELL_READY
+→ E2 Presentation / Feel
+```
 
-## Merge 후 첫 Runtime Gate
+과거 `Greenfield Module Contract → Foundation → S1/C1/M1/X1/I1` 순서는 폐기된 Greenfield implementation model의 historical context다. 현재 TODO나 구현 순서로 사용하지 않는다.
 
-- `rvtt.core.baseline` Token/Prop sample package compile
-- `Kaetaeru/D-D-2024-@d3d5747`의 `10-RULEBOOKS/integrated-2024` Private Import
-- `rvtt.test.rules.2024.integrated.ko` 12/48/16/10/75/391 Count 검증
-- Private Source Missing·Revision Mismatch Fail-closed 검증
-- `rvtt.core.rules` SRD Module manifest load
-- Public·Release Artifact Private Rule Content Leak Scan
-- Official Sheet Roll/Equip command smoke
-- Dice Notice state machine smoke
-- 200,000자 synthetic Rule Package virtualization
+## 이후 기능군
 
-문서·HTML PASS는 Runtime PASS가 아니다. Private 통합판 본문은 공개 RVTT Git Tree와 Release Artifact에 포함하지 않는다.
+Character, Encounter, Inventory, Downtime, Journal, DM, Content, Logistics, Actor Authoring 등은 현재 System Model의 future compatibility pressure다. 실제 구현 scope와 checkpoint 순서는 R4에서 JIT로 확정한다.
+
+## Historical Tooling
+
+기존 Acceptance, Grand, Persistence, Production Source와 과거 Runtime Evidence는 regression/reference evidence다. 새 Greenfield 구현의 현재 PASS를 대신하지 않는다.

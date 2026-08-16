@@ -41,12 +41,23 @@ jobs:
       - name: Validate implementation structure and policies
         run: python implementation/roblox/tooling/validate_implementation.py
 
+      - name: Build public rules release staging
+        run: python implementation/roblox/tooling/build_public_release_staging.py "$RUNNER_TEMP/rvtt-public-rules-release"
+
+      - name: Validate public rules release staging
+        run: python implementation/roblox/tooling/validate_rules_profile_release_gate.py --staging-root "$RUNNER_TEMP/rvtt-public-rules-release"
+
   toolchain:
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
 
       - name: Add local tool directory to PATH
         run: |
@@ -128,6 +139,10 @@ jobs:
           stylua --version
           selene --version
           timeout 10s luau-lsp analyze --help >/dev/null
+
+      - name: Validate private rules runtime pipeline
+        working-directory: implementation/roblox
+        run: python tooling/validate_private_rules_runtime_pipeline.py --rojo "$(command -v rojo)"
 
       - name: Check Luau formatting
         working-directory: implementation/roblox

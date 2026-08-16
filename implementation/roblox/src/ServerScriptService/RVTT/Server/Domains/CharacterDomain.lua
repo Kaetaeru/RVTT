@@ -4,6 +4,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Identity = require(ReplicatedStorage.RVTT.Shared.Core.Identity)
 local Result = require(ReplicatedStorage.RVTT.Shared.Core.Result)
 local Helpers = require(script.Parent.DomainHelpers)
+local ContentDefinitionResolver = require(script.Parent.Parent.Rules.ContentDefinitionResolver)
 
 local Domain = { id = "character", slice = 5 }
 local DRAFT_FIELDS = {
@@ -13,6 +14,25 @@ local DRAFT_FIELDS = {
 	backgroundId = true,
 	classId = true,
 	choices = true,
+}
+local SHEET_FIELDS = {
+	appearance = true,
+	attacks = true,
+	backstoryAndPersonality = true,
+	classFeatures = true,
+	coins = true,
+	deathSaves = true,
+	hitDice = true,
+	inspiration = true,
+	languages = true,
+	passivePerception = true,
+	preparedSpells = true,
+	saves = true,
+	size = true,
+	skills = true,
+	spellcasting = true,
+	speciesTraitsAndFeats = true,
+	training = true,
 }
 
 function Domain.initialState()
@@ -92,13 +112,23 @@ function Domain.register(registry: any)
 		validate = function(payload: any)
 			return Helpers.hasString(payload, "characterId")
 		end,
-		execute = function(_: any, state: any, payload: any)
+		execute = function(_: any, state: any, payload: any, domains: any)
 			local draft = state.drafts[payload.characterId]
 			if draft == nil then
 				return Helpers.notFound("character_draft", payload.characterId)
 			end
 			if #draft.name == 0 or not Helpers.validateAbilityScores(draft.abilities) then
 				return Helpers.conflict("character draft is incomplete")
+			end
+			if type(draft.classId) == "string" then
+				local definition =
+					ContentDefinitionResolver.resolve(domains, "characterSheets", draft.classId)
+				if type(definition) == "table" then
+					for field, value in Helpers.copyFields(definition, SHEET_FIELDS) do
+						draft[field] = value
+					end
+					draft.sheetDefinitionId = draft.classId
+				end
 			end
 			draft.status = "active"
 			draft.revision += 1
@@ -130,6 +160,118 @@ function Domain.register(registry: any)
 			character.choices[level] = payload.choices or {}
 			character.revision += 1
 			return character
+		end,
+	})
+
+	registry:register({
+		commandType = "character.sheet_spend_inspiration",
+		domainId = Domain.id,
+		authorize = function(context: any, domains: any, payload: any)
+			return Helpers.ownsCharacter(context, domains, payload.characterId)
+		end,
+		validate = function(payload: any)
+			return Helpers.hasString(payload, "characterId")
+		end,
+		execute = function(_: any, state: any, payload: any)
+			local character = state.characters[payload.characterId]
+			if character == nil then
+				return Helpers.notFound("character", payload.characterId)
+			end
+			if character.inspiration ~= true then
+				return Helpers.conflict("inspiration is unavailable")
+			end
+			character.inspiration = false
+			character.revision += 1
+			return { characterId = payload.characterId, inspiration = false }
+		end,
+	})
+
+	registry:register({
+		commandType = "character.sheet_set_prepared",
+		domainId = Domain.id,
+		authorize = function(context: any, domains: any, payload: any)
+			return Helpers.ownsCharacter(context, domains, payload.characterId)
+		end,
+		validate = function(payload: any)
+			return Helpers.hasString(payload, "characterId")
+				and Helpers.hasString(payload, "spellId")
+				and type(payload.prepared) == "boolean"
+		end,
+		execute = function(_: any, state: any, payload: any)
+			local character = state.characters[payload.characterId]
+			if character == nil then
+				return Helpers.notFound("character", payload.characterId)
+			end
+			local spellcasting = character.spellcasting
+			local available = if type(spellcasting) == "table"
+				then spellcasting.availableSpells
+				else nil
+			if type(available) ~= "table" or available[payload.spellId] == nil then
+				return Helpers.notFound("spell", payload.spellId)
+			end
+			character.preparedSpells = if type(character.preparedSpells) == "table"
+				then character.preparedSpells
+				else {}
+			character.preparedSpells[payload.spellId] = if payload.prepared then true else nil
+			character.revision += 1
+			return {
+				characterId = payload.characterId,
+				spellId = payload.spellId,
+				prepared = payload.prepared,
+			}
+		end,
+	})
+
+	registry:register({
+		commandType = "character.sheet_set_hotbar",
+		domainId = Domain.id,
+		authorize = function(context: any, domains: any, payload: any)
+			if not Helpers.ownsCharacter(context, domains, payload.characterId) then
+				return false
+			end
+			if payload.targetKind == "item" then
+				return Helpers.ownsItem(context, domains, payload.targetId)
+			end
+			return false
+		end,
+		validate = function(payload: any)
+			return Helpers.hasString(payload, "characterId")
+				and payload.targetKind == "item"
+				and Helpers.hasString(payload, "targetId")
+				and type(payload.pinned) == "boolean"
+		end,
+		execute = function(_: any, state: any, payload: any, domains: any)
+			local character = state.characters[payload.characterId]
+			if character == nil then
+				return Helpers.notFound("character", payload.characterId)
+			end
+			local inventory = domains.inventory
+			local item = if type(inventory) == "table"
+				then inventory.items[payload.targetId]
+				else nil
+			local location = if type(inventory) == "table"
+				then inventory.locations[payload.targetId]
+				else nil
+			if type(item) ~= "table" then
+				return Helpers.notFound("item", payload.targetId)
+			end
+			if item.hotbarCapable ~= true then
+				return Helpers.conflict("item is not hotbar capable")
+			end
+			if
+				type(location) ~= "table"
+				or location.characterId ~= payload.characterId
+				or (location.kind ~= "inventory" and location.kind ~= "equipped")
+			then
+				return Helpers.conflict("item does not belong to the requested character")
+			end
+			character.hotbarPins = if type(character.hotbarPins) == "table"
+				then character.hotbarPins
+				else {}
+			local key = payload.targetKind .. ":" .. payload.targetId
+			character.hotbarPins[key] = if payload.pinned then true else nil
+			character.revision += 1
+			return { characterId = payload.characterId, target = key, pinned = payload.pinned }
 		end,
 	})
 end

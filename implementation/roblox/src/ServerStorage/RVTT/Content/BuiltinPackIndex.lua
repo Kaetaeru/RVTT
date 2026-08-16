@@ -1,4 +1,6 @@
 --!strict
+local BaselineAssets = script.Parent.Packs["rvtt.core.baseline"]
+
 return {
 	{
 		packageId = "rvtt.core.rules",
@@ -40,8 +42,10 @@ return {
 			"studio-acceptance",
 		},
 		sourceMode = "external_private_import",
+		sourceRepository = "Kaetaeru/D-D-2024-",
 		sourceBindingKey = "RVTT_PRIVATE_DND2024_KO_SOURCE",
 		sourceRoot = "10-RULEBOOKS/integrated-2024",
+		expectedSourceDigest = "47ad33532e95a2a8834d470085524673231dd260",
 		expectedContentCounts = {
 			classes = 12,
 			subclasses = 48,
@@ -88,5 +92,11 @@ return {
 		redistributable = true,
 		publicBuildAllowed = true,
 		clientExportAllowed = true,
+		assetRegistry = {
+			sourceIdentity = require(BaselineAssets.SourceIdentity),
+			manifest = require(BaselineAssets.Manifest),
+			assets = require(BaselineAssets.AssetRegistry),
+			profile = require(BaselineAssets.ValidationProfile),
+		},
 	},
 }

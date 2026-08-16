@@ -1,0 +1,42 @@
+name: Validate RVTT content templates
+
+concurrency:
+  group: rvtt-content-templates-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+    paths:
+      - "implementation/roblox/content-templates/**"
+      - "implementation/roblox/tooling/validate_content_templates.py"
+      - "docs/remake/decisions/ADR-0092-campaign-survival-logistics-and-dm-authored-actor-tokens.md"
+      - "docs/remake/architecture/dm-authored-actor-token-and-statblock-import-runtime-contract.md"
+      - ".github/workflows/validate-rvtt-content-templates.yml"
+  push:
+    branches:
+      - planning/rvtt-remake
+    paths:
+      - "implementation/roblox/content-templates/**"
+      - "implementation/roblox/tooling/validate_content_templates.py"
+      - "docs/remake/decisions/ADR-0092-campaign-survival-logistics-and-dm-authored-actor-tokens.md"
+      - "docs/remake/architecture/dm-authored-actor-token-and-statblock-import-runtime-contract.md"
+      - ".github/workflows/validate-rvtt-content-templates.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate actor schemas, authority documents, and canonical fixtures
+        run: python implementation/roblox/tooling/validate_content_templates.py

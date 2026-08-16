@@ -36,7 +36,9 @@ local SnapshotJournal = require(Server.Persistence.SnapshotJournal)
 local RemoteBootstrap = require(Server.Networking.RemoteBootstrap)
 local CommandRouter = require(Server.Networking.CommandRouter)
 local ProjectionPublisher = require(Server.Networking.ProjectionPublisher)
+local ViewerProjectionQuery = require(Server.Networking.ViewerProjectionQuery)
 local ProjectionBuilder = require(Server.Projection.ProjectionBuilder)
+local ViewerProjectionPreview = require(Server.Projection.ViewerProjectionPreview)
 local RateLimiter = require(Server.Security.RateLimiter)
 local ServiceGraph = require(Server.Bootstrap.ServiceGraph)
 
@@ -158,14 +160,24 @@ local function roleResolver(player: Player): string
 		return "dm"
 	end
 	local role = player:GetAttribute("RVTT_Role")
-	if role == "dm" or role == "observer" then
-		return role
+	if role == "dm" then
+		return "dm"
 	end
-	return "player"
+	local state = runtime:snapshot()
+	local session = state.domains.session
+	local membership = if type(session) == "table"
+		then session.memberships[tostring(player.UserId)]
+		else nil
+	if type(membership) == "table" and membership.role == "player" then
+		return "player"
+	end
+	return "observer"
 end
 
 local builder = ProjectionBuilder.new()
 local publisher: any = ProjectionPublisher.new(runtime, builder, remotes, roleResolver, nil)
+local viewerProjectionQuery =
+	ViewerProjectionQuery.new(runtime, remotes, roleResolver, ViewerProjectionPreview, nil)
 
 local persistenceAttributeEnabled = game:GetAttribute("RVTT_EnableStudioPersistence") == true
 local persistenceProjectEnabled = projectBoolFlag("EnableStudioPersistence")
@@ -491,6 +503,7 @@ local router: any = CommandRouter.new(
 )
 
 publisher:start()
+viewerProjectionQuery:start()
 remotes.clientReady.OnServerEvent:Connect(function(player)
 	publisher:publish(player)
 end)
