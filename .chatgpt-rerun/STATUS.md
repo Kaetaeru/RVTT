@@ -2,21 +2,41 @@
 
 > Human-readable projection only. This file is **not** a reconciliation source of truth.
 
-- connection: `CONNECTED_PENDING_WATCHER_START`
+- connection: `CONNECTED`
 - repository: `Kaetaeru/RVTT`
 - branch: `agent/survival-logistics-token-authoring`
 - run_id: `rvtt-rerun-20260817-0100-8f6c2d41`
 - sequence: `0`
-- control_status: `continue`
+- control_status: `needs_user`
 - task_id: `RERUN-RVTT-R3-FREEZE-001`
 - project_phase: `R3_VALIDATED_AWAITING_FREEZE_DECISION`
-- updated_at: `2026-08-17T01:00:00+09:00`
+- checkpoint: `R3_FREEZE_READINESS_VALIDATED_AWAITING_USER_DECISION`
+- updated_at: `2026-08-17T01:01:00+09:00`
 
 ## Current status
 
-Rerun 연결 문서가 신규 생성되었다. 실제 구현 task는 아직 시작하지 않았다.
+Sequence 0의 R3 Freeze readiness 재검증을 완료했다.
 
-첫 dispatch는 현재 R3 Freeze readiness를 재검증하고 사용자 결정을 위한 handoff를 만드는 작업이다. 사용자 승인 없이 R3 Freeze, Production Source 작성, Studio/MCP 진입을 수행하지 않는다.
+- R3 authority: validated, not frozen
+- Source implementation: blocked
+- Studio/MCP implementation: blocked
+- authority drift: 없음
+- 새 blocker: 없음
+- revalidation 시작 HEAD의 required workflow 9개: 모두 success
+
+실제 Production Source나 Studio/MCP 작업은 시작하지 않았다.
+
+현재 필요한 것은 사용자 명시적 결정이다.
+
+```text
+FREEZE R3
+→ 검증된 R3 모델을 Freeze하고 R4 E0 Checkpoint Freeze로 진행
+
+HOLD R3
+→ Not Frozen 상태 유지
+```
+
+단순한 resume/continue 지시는 R3 Freeze 승인으로 확대 해석하지 않는다.
 
 ## Freshness policy
 
